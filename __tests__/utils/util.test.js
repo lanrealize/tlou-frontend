@@ -198,27 +198,34 @@ describe('util 工具函数', () => {
   describe('业务相关函数', () => {
     describe('generateDefaultCircleName', () => {
       test('应该生成正确的朋友圈名称', () => {
-        const mockDate = new Date('2024-07-15'); // 夏天
-        jest.spyOn(global, 'Date').mockImplementation(() => mockDate);
+        const originalDate = Date;
+        const mockDate = new originalDate('2024-07-15'); // 夏天
+        
+        global.Date = jest.fn(() => mockDate);
+        global.Date.now = originalDate.now;
 
         const name = util.generateDefaultCircleName();
         expect(name).toBe('2024年 夏天');
 
-        global.Date.mockRestore();
+        global.Date = originalDate;
       });
 
       test('应该根据月份判断季节', () => {
+        const originalDate = Date;
+        
         // 测试春季
-        const springDate = new Date('2024-04-15');
-        jest.spyOn(global, 'Date').mockImplementation(() => springDate);
+        const springDate = new originalDate('2024-04-15');
+        global.Date = jest.fn(() => springDate);
+        global.Date.now = originalDate.now;
         expect(util.generateDefaultCircleName()).toBe('2024年 春天');
 
         // 测试冬季
-        const winterDate = new Date('2024-12-15');
-        jest.spyOn(global, 'Date').mockImplementation(() => winterDate);
+        const winterDate = new originalDate('2024-12-15');
+        global.Date = jest.fn(() => winterDate);
+        global.Date.now = originalDate.now;
         expect(util.generateDefaultCircleName()).toBe('2024年 冬天');
 
-        global.Date.mockRestore();
+        global.Date = originalDate;
       });
     });
 

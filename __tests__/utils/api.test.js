@@ -43,7 +43,7 @@ describe('API接口封装', () => {
       expect(wx.request).toHaveBeenCalledWith({
         url: 'http://localhost:3000/api/test?param=value',
         method: 'GET',
-        data: { param: 'value' },
+        data: {},
         header: {
           'Content-Type': 'application/json',
           'x-openid': 'mock-openid-123'

@@ -10,7 +10,12 @@
     "test:unit": "jest --testPathPattern=__tests__",
     "test:e2e": "jest --testPathPattern=e2e"
   },
-  "keywords": ["miniprogram", "wechat", "social", "circle"],
+  "keywords": [
+    "miniprogram",
+    "wechat",
+    "social",
+    "circle"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -18,11 +23,12 @@
     "mobx-miniprogram-bindings": "^5.1.1"
   },
   "devDependencies": {
-    "mongodb": "^6.18.0",
-    "jest": "^29.7.0",
-    "miniprogram-simulate": "^1.6.1",
     "@babel/core": "^7.23.0",
     "@babel/preset-env": "^7.23.0",
-    "babel-jest": "^29.7.0"
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^30.0.5",
+    "miniprogram-simulate": "^1.6.1",
+    "mongodb": "^6.18.0"
   }
 }
