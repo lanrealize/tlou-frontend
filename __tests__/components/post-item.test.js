@@ -66,6 +66,27 @@ describe('post-item 帖子组件逻辑', () => {
           post: this.data.post,
           replyToUser: { id: userId, username }
         });
+      },
+
+      onDeletePost() {
+        return this.triggerEvent('deletePost', {
+          postId: this.data.post._id,
+          post: this.data.post
+        });
+      },
+
+      onDeleteComment(e) {
+        const { commentId } = e.currentTarget.dataset;
+        
+        if (!commentId) {
+          throw new Error('删除失败：评论ID缺失');
+        }
+        
+        return this.triggerEvent('deleteComment', {
+          postId: this.data.post._id,
+          commentId,
+          post: this.data.post
+        });
       }
     };
   };
@@ -210,6 +231,45 @@ describe('post-item 帖子组件逻辑', () => {
       expect(() => {
         comp.onReplyComment(mockEvent);
       }).toThrow('回复失败：用户信息缺失');
+    });
+
+    test('删除帖子事件应该返回正确的数据', () => {
+      const result = comp.onDeletePost();
+      
+      expect(result.eventName).toBe('deletePost');
+      expect(result.detail.postId).toBe('post123');
+      expect(result.detail.post).toEqual(comp.data.post);
+    });
+
+    test('删除评论事件应该返回正确的数据', () => {
+      const mockEvent = {
+        currentTarget: {
+          dataset: {
+            commentId: 'comment123'
+          }
+        }
+      };
+
+      const result = comp.onDeleteComment(mockEvent);
+      
+      expect(result.eventName).toBe('deleteComment');
+      expect(result.detail.postId).toBe('post123');
+      expect(result.detail.commentId).toBe('comment123');
+      expect(result.detail.post).toEqual(comp.data.post);
+    });
+
+    test('删除评论时缺少评论ID应该抛出错误', () => {
+      const mockEvent = {
+        currentTarget: {
+          dataset: {
+            commentId: ''
+          }
+        }
+      };
+
+      expect(() => {
+        comp.onDeleteComment(mockEvent);
+      }).toThrow('删除失败：评论ID缺失');
     });
   });
 

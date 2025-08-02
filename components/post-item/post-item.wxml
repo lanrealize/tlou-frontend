@@ -20,7 +20,7 @@
     <!-- 删除按钮（仅作者可见） -->
     <view 
       class="delete-btn" 
-      wx:if="{{showActions && currentUser._id === post.author._id}}"
+      wx:if="{{showActions && currentUser && currentUser._id && post.author && post.author._id && currentUser._id === post.author._id}}"
       bindtap="onDeletePost"
     >
       <text class="delete-icon">×</text>
@@ -78,7 +78,19 @@
     <view class="likes-section" wx:if="{{post.likes && post.likes.length > 0}}">
       <view class="likes-container">
         <text class="like-icon">❤️</text>
-        <text class="likes-text">{{post.likes.length}}人觉得很赞</text>
+        <view class="likes-text">
+          <text wx:if="{{post.likedUsers && post.likedUsers.length > 0}}">
+            <!-- 显示前3个用户名 -->
+            <text wx:for="{{post.likedUsers}}" wx:for-item="user" wx:key="_id" wx:for-index="idx" wx:if="{{idx < 3}}">
+              <text class="liked-username">{{user.username}}</text>
+              <text wx:if="{{idx < 2 && idx < post.likedUsers.length - 1}}">、</text>
+            </text>
+            <!-- 如果超过3人，显示等X人 -->
+            <text wx:if="{{post.likedUsers.length > 3}}"> 等{{post.likes.length}}人</text>
+            觉得很赞
+          </text>
+          <text wx:else>{{post.likes.length}}人觉得很赞</text>
+        </view>
       </view>
     </view>
 

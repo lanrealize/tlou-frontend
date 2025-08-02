@@ -324,15 +324,30 @@ Page({
         console.error('部分图片上传失败:', uploadResult.errors);
         // 如果有部分成功，使用成功的结果
         if (uploadResult.results.length > 0) {
-          const successUrls = uploadResult.results.map(result => result.url);
-          return successUrls;
+          const successImages = uploadResult.results.map(result => ({
+            url: result.url,
+            key: result.key,
+            size: result.size || 0,
+            hash: result.hash || '',
+            uploadTime: result.uploadTime
+          }));
+          console.log('⚠️ 部分图片上传成功:', successImages);
+          return successImages;
         } else {
           throw new Error('所有图片上传失败');
         }
       }
 
-      // 提取所有成功上传的图片URL
-      const uploadedImages = uploadResult.results.map(result => result.url);
+      // 提取所有成功上传的图片信息（包含URL和key）
+      const uploadedImages = uploadResult.results.map(result => ({
+        url: result.url,
+        key: result.key,
+        size: result.size || 0,
+        hash: result.hash || '',
+        uploadTime: result.uploadTime
+      }));
+      
+      console.log('📸 上传完成，图片信息:', uploadedImages);
       return uploadedImages;
       
     } catch (error) {
@@ -437,7 +452,7 @@ Page({
       const postData = {
         circleId: this.data.circleId,
         content: this.data.content.trim(),
-        images: uploadedImages
+        images: uploadedImages  // 现在包含完整的图片信息 {url, key, size, hash, uploadTime}
       };
 
       console.log('发布帖子数据:', postData);

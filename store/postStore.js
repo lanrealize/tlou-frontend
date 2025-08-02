@@ -178,6 +178,9 @@ const postStore = observable({
       // 确保likes数组存在
       post.likes = post.likes || [];
       
+      // 确保likedUsers数组存在
+      post.likedUsers = post.likedUsers || [];
+      
       // 统一使用 _id 作为用户标识符
       const userIdentifier = userInfo._id;
       
@@ -198,11 +201,23 @@ const postStore = observable({
         const normalizedUserId = userIdentifier.toString();
         if (!post.likes.some(id => id.toString() === normalizedUserId)) {
           post.likes.push(userIdentifier);
+          
+          // 同时更新likedUsers数组
+          if (!post.likedUsers.some(user => user._id.toString() === normalizedUserId)) {
+            post.likedUsers.push({
+              _id: userInfo._id,
+              username: userInfo.username,
+              avatar: userInfo.avatar
+            });
+          }
         }
       } else {
         // 移除点赞：精确匹配用户ID
         const normalizedUserId = userIdentifier.toString();
         post.likes = post.likes.filter(id => id.toString() !== normalizedUserId);
+        
+        // 同时从likedUsers数组移除
+        post.likedUsers = post.likedUsers.filter(user => user._id.toString() !== normalizedUserId);
       }
       
       // 重新计算点赞状态
@@ -395,7 +410,8 @@ const postStore = observable({
     console.log('🔧 格式化帖子数据:', {
       postId: post._id,
       originalLikes: post.likes,
-      originalComments: post.comments?.length || 0
+      originalComments: post.comments?.length || 0,
+      hasLikedUsers: !!post.likedUsers
     });
     
     // 格式化时间
@@ -411,8 +427,23 @@ const postStore = observable({
     // 确保likes数组存在
     post.likes = post.likes || [];
     
-    // 确保images数组存在
+    // 确保likedUsers数组存在
+    post.likedUsers = post.likedUsers || [];
+    
+    // 确保images数组存在并标准化格式
     post.images = post.images || [];
+    
+    // 兼容新旧图片数据格式：确保images数组包含URL用于显示
+    post.images = post.images.map(img => {
+      if (typeof img === 'string') {
+        // 旧格式：直接是URL字符串
+        return img;
+      } else if (typeof img === 'object' && img.url) {
+        // 新格式：包含完整信息的对象，提取URL用于显示
+        return img.url;
+      }
+      return img; // 兜底处理
+    });
     
     // 正确设置点赞状态
     post.isLiked = this._checkIfUserLiked(post.likes);
@@ -421,6 +452,7 @@ const postStore = observable({
       postId: post._id,
       isLiked: post.isLiked,
       likesCount: post.likes.length,
+      likedUsersCount: post.likedUsers.length,
       commentsCount: post.comments?.length || 0
     });
     
