@@ -1,0 +1,82 @@
+<!--pages/userInfo/userInfo.wxml-->
+<view class="container">
+  <!-- 状态栏占位 -->
+  <view class="status-bar" style="height: {{safeAreaInfo.statusBarHeight}}px;"></view>
+  
+  <!-- 返回按钮 -->
+  <view class="header-bar">
+    <view class="back-btn" bindtap="navigateToMain">
+      <text class="back-icon">←</text>
+      <text>返回主页</text>
+    </view>
+  </view>
+  
+  <view class="header">
+    <text class="title">完善个人信息</text>
+    <text class="subtitle">请设置您的头像和昵称</text>
+  </view>
+
+  <form bindsubmit="onFormSubmit" bindreset="onFormReset">
+    <view class="form-section">
+      <!-- 头像选择区域 -->
+      <view class="avatar-section">
+        <text class="label">设置头像</text>
+        <!-- 头像选择按钮 -->
+        <button 
+          class="avatar-wrapper" 
+          open-type="chooseAvatar" 
+          bind:chooseavatar="onChooseAvatar"
+          disabled="{{isUploadingAvatar}}">
+          <image 
+            class="avatar" 
+            src="{{avatarUrl}}" 
+            mode="aspectFill"></image>
+          <view class="avatar-overlay" wx:if="{{isUploadingAvatar}}">
+            <text class="avatar-tip">正在上传...</text>
+          </view>
+        </button>
+        <text class="avatar-help">点击选择头像</text>
+      </view>
+
+      <!-- 昵称填写区域 -->
+      <view class="nickname-section">
+        <text class="label">设置昵称</text>
+        <view class="input-wrapper">
+          <input 
+            type="nickname" 
+            class="nickname-input" 
+            name="nickname"
+            placeholder="请输入昵称" 
+            value="{{nickname}}"
+            bindinput="onNicknameInput"
+            maxlength="20"
+            placeholder-class="input-placeholder"/>
+          <text class="char-count">{{nickname.length}}/20</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="button-section">
+      <button 
+        form-type="submit" 
+        class="submit-btn primary-btn"
+        disabled="{{!canSubmit}}"
+        loading="{{isSubmitting}}">
+        {{isSubmitting ? '注册中...' : '完成注册'}}
+      </button>
+      <button 
+        bindtap="onCancel"
+        class="cancel-btn secondary-btn"
+        disabled="{{isSubmitting}}">
+        取消
+      </button>
+    </view>
+  </form>
+
+  <!-- 提示信息 -->
+  <view class="tip-section">
+    <text class="tip-text">• 您的头像和昵称将用于在小程序中展示</text>
+    <text class="tip-text">• 请确保信息真实有效，符合社区规范</text>
+  </view>
+</view>

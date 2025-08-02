@@ -1,0 +1,11 @@
+{
+  "navigationBarTitleText": "完善个人信息",
+  "navigationStyle": "custom",
+  "navigationBarBackgroundColor": "#667eea",
+  "navigationBarTextStyle": "white",
+  "backgroundColor": "#667eea",
+  "backgroundTextStyle": "light",
+  "enablePullDownRefresh": false,
+  "disableScroll": true,
+  "usingComponents": {}
+}

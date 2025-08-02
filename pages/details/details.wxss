@@ -1,0 +1,272 @@
+/* pages/details/details.wxss */
+
+.container {
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+/* 状态栏占位 */
+.status-bar {
+  background-color: #ffffff;
+  width: 100%;
+}
+
+.post-detail {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 标签页样式 */
+.tab-bar {
+  display: flex;
+  background-color: #fff;
+  border-bottom: 1rpx solid #e0e0e0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 30rpx 0;
+  font-size: 28rpx;
+  color: #666;
+  border-bottom: 3rpx solid transparent;
+  transition: all 0.3s ease;
+}
+
+.tab-item.active {
+  color: #07c160;
+  border-bottom-color: #07c160;
+  font-weight: 500;
+}
+
+/* 标签页内容 */
+.tab-content {
+  flex: 1;
+  height: calc(100vh - 120rpx);
+  padding: 20rpx;
+}
+
+/* 帖子卡片 */
+.post-card {
+  margin-bottom: 20rpx;
+}
+
+.post-menu {
+  display: flex;
+  align-items: center;
+}
+
+.menu-btn {
+  background-color: #ff4757;
+  color: #fff;
+  border: none;
+  border-radius: 20rpx;
+  padding: 10rpx 20rpx;
+  font-size: 24rpx;
+}
+
+/* 统计信息 */
+.post-stats {
+  display: flex;
+  justify-content: space-around;
+  padding: 20rpx 0;
+  margin: 20rpx 0;
+  border-top: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  font-size: 26rpx;
+  color: #666;
+}
+
+.stat-item .icon {
+  font-size: 32rpx;
+  margin-right: 8rpx;
+}
+
+/* 操作栏增强 */
+.action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 20rpx;
+}
+
+.share-btn {
+  display: flex;
+  align-items: center;
+  background-color: #f5f5f5;
+  color: #666;
+  border: none;
+  border-radius: 20rpx;
+  padding: 10rpx 20rpx;
+  font-size: 26rpx;
+}
+
+.share-btn .icon {
+  font-size: 28rpx;
+  margin-right: 8rpx;
+}
+
+/* 评论容器 */
+.comments-container {
+  padding-bottom: 100rpx;
+}
+
+.comment-item {
+  margin-bottom: 15rpx;
+}
+
+.comment-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15rpx;
+}
+
+.comment-user-info {
+  flex: 1;
+  margin-left: 20rpx;
+}
+
+.comment-user {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+  display: block;
+}
+
+.comment-time {
+  font-size: 22rpx;
+  color: #999;
+  display: block;
+  margin-top: 5rpx;
+}
+
+.comment-actions {
+  display: flex;
+  align-items: center;
+}
+
+.delete-btn {
+  color: #ff4757;
+  font-size: 24rpx;
+  padding: 8rpx 15rpx;
+  border-radius: 15rpx;
+  background-color: #fff0f0;
+}
+
+.comment-content {
+  margin-left: 80rpx;
+}
+
+.comment-text {
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.6;
+  padding: 5rpx 0;
+}
+
+.reply-user {
+  color: #1890ff;
+  font-weight: 500;
+}
+
+/* 回复信息样式 */
+.reply-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15rpx 25rpx;
+  background-color: #f0f0f0;
+  border-radius: 25rpx;
+  margin-bottom: 15rpx;
+  font-size: 26rpx;
+  color: #666;
+}
+
+.cancel-reply {
+  color: #999;
+  font-size: 32rpx;
+  padding: 5rpx 10rpx;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+}
+
+/* 空状态优化 */
+.empty-state {
+  text-align: center;
+  padding: 80rpx 40rpx;
+}
+
+.empty-state .btn {
+  margin-top: 30rpx;
+  width: 200rpx;
+}
+
+/* 输入框样式增强 */
+.input-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #fff;
+  padding: 20rpx;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.input-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.comment-input {
+  flex: 1;
+  background-color: #f5f5f5;
+  border-radius: 25rpx;
+  padding: 20rpx 30rpx;
+  font-size: 28rpx;
+  margin-bottom: 15rpx;
+  border: 1rpx solid #e0e0e0;
+}
+
+.send-btn {
+  align-self: flex-end;
+  background-color: #07c160;
+  color: #fff;
+  border-radius: 25rpx;
+  padding: 15rpx 40rpx;
+  font-size: 28rpx;
+  border: none;
+  min-width: 120rpx;
+}
+
+.send-btn.disabled {
+  background-color: #ccc;
+  color: #999;
+}
+
+/* 响应式适配 */
+@media (max-width: 400px) {
+  .tab-item {
+    padding: 25rpx 0;
+    font-size: 26rpx;
+  }
+  
+  .post-stats {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .stat-item {
+    margin-bottom: 10rpx;
+  }
+}

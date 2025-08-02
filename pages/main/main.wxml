@@ -1,0 +1,161 @@
+<!--pages/main/main.wxml-->
+<view class="container">
+  <!-- 状态栏占位 -->
+  <view class="status-bar" style="height: {{safeAreaInfo.statusBarHeight}}px;"></view>
+  
+  <!-- 顶部用户信息区域 -->
+  <view class="header-section">
+    <view class="user-header">
+      <!-- 已登录状态 -->
+      <block wx:if="{{loginStatus === 'loggedIn'}}">
+        <image class="user-avatar" src="{{avatarUrl}}" mode="aspectFill"></image>
+        <view class="header-content">
+          <text class="welcome-text">你好，{{displayName}}</text>
+          <text class="app-title">两个人的朋友圈</text>
+        </view>
+      </block>
+      
+      <!-- 未注册状态 -->
+      <block wx:elif="{{loginStatus === 'unregistered'}}">
+        <view class="login-avatar-container" bindtap="handleUserAuth">
+          <image class="user-avatar login-avatar" src="/images/default_avatar.png" mode="aspectFill"></image>
+          <view class="login-overlay">
+            <text class="login-text">点击登录</text>
+          </view>
+        </view>
+        <view class="header-content">
+          <text class="welcome-text">欢迎来到</text>
+          <text class="app-title">两个人的朋友圈</text>
+        </view>
+      </block>
+      
+      <!-- 错误状态 -->
+      <block wx:elif="{{loginStatus === 'error'}}">
+        <view class="error-avatar-container" bindtap="handleUserAuth">
+          <image class="user-avatar error-avatar" src="/images/default_avatar.png" mode="aspectFill"></image>
+          <view class="error-overlay">
+            <text class="error-text">⚠️</text>
+          </view>
+        </view>
+        <view class="header-content">
+          <text class="welcome-text error-text">登录异常</text>
+          <text class="app-title">点击处理</text>
+        </view>
+      </block>
+      
+      <!-- 加载状态 -->
+      <block wx:else>
+        <view class="loading-avatar-container">
+          <image class="user-avatar loading-avatar" src="/images/default_avatar.png" mode="aspectFill"></image>
+          <view class="loading-overlay">
+            <text class="loading-text">🔄</text>
+          </view>
+        </view>
+        <view class="header-content">
+          <text class="welcome-text">检查中...</text>
+          <text class="app-title">两个人的朋友圈</text>
+        </view>
+      </block>
+      
+
+    </view>
+    
+    <!-- 状态指示器 -->
+    <view class="status-indicator" wx:if="{{loginStatus !== 'loggedIn'}}">
+      <block wx:if="{{loginStatus === 'loading'}}">
+        <text class="status-text loading">🔄 正在检查登录状态...</text>
+      </block>
+      <block wx:elif="{{loginStatus === 'unregistered'}}">
+        <text class="status-text unregistered">👻 你可以浏览内容，点击感兴趣的功能登录</text>
+      </block>
+      <block wx:elif="{{loginStatus === 'error'}}">
+        <text class="status-text error">❌ {{errorMessage || '登录状态异常，点击上方头像处理'}}</text>
+      </block>
+    </view>
+  </view>
+
+  <!-- 朋友圈状态卡片 -->
+  <view class="circle-status-card" wx:if="{{isLoggedIn}}">
+    <!-- 没有朋友圈的提示卡片 -->
+    <view class="empty-circle-content" wx:if="{{circles.length === 0}}">
+      <text class="empty-title">没有正在进行的朋友圈</text>
+      <view class="empty-description">
+        <text>点击"创建朋友圈"按钮，邀请朋友一起开始吧！</text>
+      </view>
+      <button class="create-circle-btn" bindtap="createCircleDirectly">
+        创建朋友圈
+      </button>
+    </view>
+
+    <!-- 最近朋友圈卡片 -->
+    <view class="recent-circle-content" wx:else bindtap="goToRecentCircle">
+      <view class="recent-circle-header">
+        <text class="recent-title">最近的朋友圈</text>
+        <text class="recent-time">{{recentCircle.formattedTime}}</text>
+      </view>
+      <view class="recent-circle-info">
+        <text class="circle-name">{{recentCircle.name}}</text>
+        <view class="circle-meta">
+          <text class="meta-item">{{recentCircle.memberCount}}人</text>
+          <text class="meta-item">{{recentCircle.isPublic ? '公开' : '私密'}}</text>
+        </view>
+      </view>
+      <view class="recent-circle-action">
+        <text class="action-text">点击进入 ></text>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 未登录时的浏览提示 -->
+  <view class="browse-tip-card" wx:if="{{!isLoggedIn}}">
+    <view class="browse-tip-content">
+      <text class="tip-icon">👀</text>
+      <text class="tip-title">浏览模式</text>
+      <view class="tip-description">
+        <text>你现在可以浏览内容，当你想要创建、点赞、评论时，系统会引导你快速登录</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 创建新朋友圈区域 -->
+  <view class="create-section">
+    <view class="create-item" bindtap="createCircleDirectly">
+      <view class="create-icon">
+        <text class="plus-icon">+</text>
+      </view>
+      <view class="create-content">
+        <text class="create-title">创建新的朋友圈</text>
+        <text class="create-subtitle">邀请朋友"归一归"一起开始吧!</text>
+      </view>
+    </view>
+    <view class="refresh-btn" bindtap="refreshData">
+      <text class="refresh-icon">🔄</text>
+    </view>
+  </view>
+
+  <!-- 发现有趣朋友圈 -->
+  <view class="discover-section">
+    <view class="discover-header">
+      <text class="discover-title">发现有趣朋友圈</text>
+      <view class="refresh-btn" bindtap="refreshDiscover">
+        <text class="refresh-icon">🔄</text>
+      </view>
+    </view>
+    
+    <!-- 推荐朋友圈内容 -->
+    <view class="discover-content">
+      <view class="discover-item" wx:for="{{discoverItems}}" wx:key="id">
+        <image class="discover-avatar" src="{{item.avatar}}" mode="aspectFill"></image>
+        <view class="discover-info">
+          <text class="discover-text">{{item.content}}</text>
+          <view class="discover-action">
+            <text class="action-link" bindtap="viewDiscover" data-id="{{item.id}}">点击查看 ></text>
+          </view>
+        </view>
+        <image class="discover-image" src="{{item.image}}" mode="aspectFill" wx:if="{{item.image}}"></image>
+      </view>
+    </view>
+  </view>
+
+
+</view>

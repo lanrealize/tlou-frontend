@@ -1,0 +1,19 @@
+{
+  "name": "tlou-frontend",
+  "version": "1.0.0",
+  "description": "这是一个类似微信朋友圈的微信小程序前端项目。",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mobx-miniprogram": "^6.12.3",
+    "mobx-miniprogram-bindings": "^5.1.1"
+  },
+  "devDependencies": {
+    "mongodb": "^6.18.0"
+  }
+}

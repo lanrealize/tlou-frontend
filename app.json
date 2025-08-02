@@ -1,0 +1,24 @@
+{
+  "pages": [
+    "pages/main/main",
+    "pages/list/list",
+    "pages/details/details",
+    "pages/setting/setting",
+    "pages/userInfo/userInfo"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#fff",
+    "navigationBarTitleText": "朋友圈",
+    "navigationBarTextStyle": "black",
+    "enablePullDownRefresh": true,
+    "backgroundColor": "#f5f5f5"
+  },
+
+  "permission": {
+    "scope.userInfo": {
+      "desc": "您的用户信息将用于小程序展示"
+    }
+  },
+  "sitemapLocation": "sitemap.json"
+}
