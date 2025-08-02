@@ -20,6 +20,12 @@ Page({
     commentPostId: '',    // 当前评论的帖子ID
     commentText: '',      // 评论内容
     replyToUser: null,    // 回复的用户
+    
+    // 请求状态管理
+    isLoadingCircles: false,    // 是否正在加载朋友圈
+    lastCirclesLoadTime: 0,     // 上次加载朋友圈的时间戳
+    circlesLoadThrottle: 3000,  // 节流时间（3秒）
+    
     discoverItems: [      // 发现内容
       {
         id: 1,
@@ -61,10 +67,25 @@ Page({
   },
 
   onUnload() {
-    // 清理MobX绑定
+    console.log('🧹 主页面卸载，清理资源');
+    
+    // 清理MobX绑定，防止内存泄漏
     if (this.storeBindings) {
-      this.storeBindings.destroyStoreBindings();
+      try {
+        this.storeBindings.destroyStoreBindings();
+        this.storeBindings = null;
+        console.log('✅ MobX绑定已清理');
+      } catch (error) {
+        console.warn('⚠️ 清理MobX绑定失败:', error);
+      }
     }
+
+    // 清理其他可能的引用
+    this.setData({
+      circles: [],
+      posts: [],
+      currentCircleId: ''
+    });
   },
 
   // 设置MobX Store绑定
@@ -136,8 +157,8 @@ Page({
     
     if (shouldLoadData) {
       console.log('✅ 用户已登录，开始加载朋友圈数据');
-      // 每次回到主页都重新加载朋友圈列表，确保显示最新数据
-      this.loadCircles();
+      // 使用节流机制加载朋友圈列表，避免频繁请求
+      this.loadCirclesWithThrottle();
     } else {
       console.log('❌ 用户未登录，跳过数据加载');
     }
@@ -154,7 +175,7 @@ Page({
       
       // 注册成功后加载数据
       if (this.data.isLoggedIn) {
-        this.loadCircles();
+        this.loadCirclesWithThrottle(true); // 强制刷新
       }
     } else if (this.data.hasError) {
       // 错误状态，提示用户重新启动
@@ -274,7 +295,7 @@ Page({
   // 刷新数据
   refreshData() {
     this.requireUserAuth(() => {
-      this.loadCircles();
+      this.loadCirclesWithThrottle(true); // 强制刷新
     });
   },
 
@@ -297,10 +318,12 @@ Page({
   onPullDownRefresh() {
     if (this.data.isLoggedIn) {
       this.setData({ refreshing: true });
-      this.loadCircles().finally(() => {
+      this.loadCirclesWithThrottle(true); // 强制刷新
+      // 设置延时停止刷新，因为loadCirclesWithThrottle没有返回Promise
+      setTimeout(() => {
         wx.stopPullDownRefresh();
         this.setData({ refreshing: false });
-      });
+      }, 1000);
     } else {
       wx.stopPullDownRefresh();
       wx.showToast({ title: '请先登录', icon: 'none' });
@@ -314,8 +337,33 @@ Page({
     }
   },
 
+  // 带节流的加载朋友圈列表
+  loadCirclesWithThrottle(forceRefresh = false) {
+    const now = Date.now();
+    const timeSinceLastLoad = now - this.data.lastCirclesLoadTime;
+    
+    // 如果正在加载中，跳过（除非强制刷新）
+    if (this.data.isLoadingCircles && !forceRefresh) {
+      console.log('⏱️ 朋友圈正在加载中，跳过重复请求');
+      return;
+    }
+    
+    // 如果距离上次加载时间小于节流时间，且不是强制刷新，跳过
+    if (timeSinceLastLoad < this.data.circlesLoadThrottle && !forceRefresh) {
+      console.log(`⏱️ 距离上次加载仅${timeSinceLastLoad}ms，跳过请求（节流时间：${this.data.circlesLoadThrottle}ms）`);
+      return;
+    }
+    
+    if (forceRefresh) {
+      console.log('🚀 执行朋友圈强制刷新');
+    } else {
+      console.log('🚀 执行朋友圈加载（节流检查通过）');
+    }
+    this.loadCircles();
+  },
+
   // 加载朋友圈列表
-  async loadCircles() {
+  async loadCircles(retryCount = 0) {
     // 检查多个状态源确保准确性
     const app = getApp();
     const userStore = app.getUserStore();
@@ -331,6 +379,12 @@ Page({
       console.log('❌ 用户未登录，跳过加载朋友圈');
       return;
     }
+
+    // 设置加载状态
+    this.setData({
+      isLoadingCircles: true,
+      lastCirclesLoadTime: Date.now()
+    });
 
     try {
       console.log('📡 调用API获取朋友圈列表...');
@@ -353,7 +407,8 @@ Page({
       
       this.setData({ 
         circles,
-        recentCircle 
+        recentCircle,
+        isLoadingCircles: false
       });
       
       console.log('✅ 数据更新完成，circles长度:', this.data.circles.length, '最近朋友圈:', this.data.recentCircle?.name);
@@ -364,7 +419,36 @@ Page({
       }
     } catch (error) {
       console.error('❌ 加载朋友圈失败:', error);
-      util.showToast('加载朋友圈失败');
+      
+      // 处理429错误（请求过于频繁）
+      if (error.message && error.message.includes('HTTP 429')) {
+        console.log('⚠️ 检测到429错误，请求过于频繁');
+        
+        // 如果重试次数少于3次，等待后重试
+        if (retryCount < 3) {
+          const retryDelay = Math.pow(2, retryCount) * 1000; // 指数退避：1s, 2s, 4s
+          console.log(`🔄 将在${retryDelay}ms后进行第${retryCount + 1}次重试`);
+          
+          setTimeout(() => {
+            this.loadCircles(retryCount + 1);
+          }, retryDelay);
+          
+          // 显示用户友好的提示
+          if (retryCount === 0) {
+            util.showToast('请求过于频繁，正在重试...');
+          }
+          return;
+        } else {
+          util.showToast('网络繁忙，请稍后再试');
+        }
+      } else {
+        util.showToast('加载朋友圈失败');
+      }
+      
+      // 重置加载状态
+      this.setData({
+        isLoadingCircles: false
+      });
     }
   },
 
@@ -506,10 +590,12 @@ Page({
     try {
       const data = {
         content: commentText.trim(),
-        replyToUserId: replyToUser ? replyToUser.id : undefined
+        replyToUserId: replyToUser ? replyToUser.id : undefined,
+        replyToUsername: replyToUser ? replyToUser.username : undefined
       };
       
-      await api.posts.addComment(commentPostId, data);
+      // 使用postStore的addComment方法，确保数据更新一致性
+      await this.addComment(commentPostId, data);
       
       util.showToast('评论成功');
       
@@ -520,8 +606,6 @@ Page({
         replyToUser: null
       });
       
-      // 重新加载帖子
-      this.loadPosts(this.data.currentCircleId);
     } catch (error) {
       console.error('发表评论失败:', error);
       util.showToast('评论失败');

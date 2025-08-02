@@ -1,8 +1,10 @@
 /* pages/setting/setting.wxss */
+@import '../../styles/common.wxss';
 
 .container {
   background-color: #f5f5f5;
   min-height: 100vh;
+  padding-bottom: 60rpx;
 }
 
 /* 状态栏占位 */
@@ -11,178 +13,145 @@
   width: 100%;
 }
 
-.user-card {
-  display: flex;
-  align-items: center;
-  padding: 40rpx 30rpx;
-  margin-bottom: 30rpx;
-}
-
-.user-avatar-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-right: 40rpx;
-}
-
-.user-avatar {
-  margin-bottom: 15rpx;
-}
-
-.avatar-tip {
-  font-size: 22rpx;
-  color: #999;
-  text-align: center;
-}
-
-.user-info-section {
-  flex: 1;
-}
-
-.user-name-container {
+/* 页面头部 */
+.header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 15rpx;
+  padding: 30rpx 40rpx;
+  background-color: #f5f5f5;
 }
 
-.user-name {
+.back-btn {
+  display: flex;
+  align-items: center;
+  color: #1A73E8;
   font-size: 32rpx;
-  font-weight: 500;
+}
+
+.back-icon {
+  margin-right: 10rpx;
+  font-size: 36rpx;
+}
+
+.page-title {
+  font-size: 36rpx;
+  font-weight: 600;
   color: #333;
 }
 
-.edit-btn {
-  background-color: #07c160;
-  color: #fff;
-  border: none;
-  border-radius: 20rpx;
-  padding: 8rpx 20rpx;
-  font-size: 24rpx;
+.header-action {
+  width: 80rpx; /* 占位保持居中 */
 }
 
-.user-id {
-  font-size: 24rpx;
+/* 卡片容器 */
+.section-card {
+  margin: 30rpx 40rpx;
+  padding: 40rpx;
+}
+
+/* 设置项 */
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.setting-content {
+  flex: 1;
+  margin-right: 30rpx;
+}
+
+.setting-title {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8rpx;
+  display: block;
+}
+
+.setting-desc {
+  font-size: 26rpx;
   color: #666;
-  font-family: monospace;
-  background-color: #f5f5f5;
-  padding: 8rpx 12rpx;
-  border-radius: 8rpx;
-  display: inline-block;
+  line-height: 1.4;
+  display: block;
 }
 
-/* 功能区域 */
-.section {
+.setting-switch {
+  transform: scale(1.2);
+}
+
+/* 成员管理 */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 30rpx;
 }
 
 .section-title {
-  font-size: 28rpx;
-  color: #333;
+  font-size: 32rpx;
   font-weight: 500;
-  padding: 0 20rpx 20rpx;
+  color: #333;
 }
 
-.list-container {
-  background-color: #fff;
-  border-radius: 16rpx;
-  overflow: hidden;
-  margin: 0 20rpx;
+.add-btn {
+  border: none;
+  border-radius: 20rpx;
+  padding: 12rpx 24rpx;
+  font-size: 26rpx;
 }
 
-.list-item {
+.member-list {
+  margin-top: 20rpx;
+}
+
+.member-item {
   display: flex;
   align-items: center;
-  padding: 30rpx;
+  padding: 20rpx 0;
   border-bottom: 1rpx solid #f0f0f0;
-  background-color: transparent;
-  border: none;
-  width: 100%;
-  text-align: left;
-  border-radius: 0;
 }
 
-.list-item:last-child {
+.member-item:last-child {
   border-bottom: none;
 }
 
-.list-item:active {
-  background-color: #f5f5f5;
+.member-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  margin-right: 24rpx;
 }
 
-.list-item-content {
+.member-name {
   flex: 1;
-}
-
-.list-item-title {
   font-size: 30rpx;
   color: #333;
-  display: block;
-  margin-bottom: 8rpx;
 }
 
-.list-item-desc {
-  font-size: 26rpx;
-  color: #666;
-  display: block;
+.member-action {
+  padding: 12rpx;
 }
 
-.list-item-arrow {
-  color: #ccc;
-  font-size: 32rpx;
+.remove-icon {
+  font-size: 36rpx;
+  color: #ff4757;
 }
 
-/* 系统信息 */
-.system-info-card {
-  margin: 0 20rpx;
-  padding: 30rpx;
+.empty-member {
+  padding: 60rpx 0;
+  text-align: center;
 }
 
-.info-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20rpx;
-}
-
-.info-row:last-child {
-  margin-bottom: 0;
-}
-
-.info-label {
+.empty-text {
   font-size: 28rpx;
-  color: #333;
+  color: #999;
 }
 
-.info-value {
-  font-size: 26rpx;
-  color: #666;
-  font-family: monospace;
-  background-color: #f5f5f5;
-  padding: 6rpx 12rpx;
-  border-radius: 6rpx;
-}
 
-/* 退出登录 */
-.logout-section {
-  margin: 60rpx 20rpx 40rpx;
-}
 
-.logout-btn {
-  width: 100%;
-  background-color: #ff4757;
-  color: #fff;
-  border: none;
-  border-radius: 16rpx;
-  padding: 25rpx;
-  font-size: 30rpx;
-}
-
-.logout-btn:active {
-  background-color: #ff3742;
-}
-
-/* 模态框样式复用 */
+/* 模态框样式 */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -203,6 +172,7 @@
   max-width: 90%;
   max-height: 80%;
   overflow: hidden;
+  box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.25);
 }
 
 .modal-header {
@@ -254,7 +224,7 @@
 }
 
 .form-input:focus {
-  border-color: #07c160;
+  border-color: #1A73E8;
 }
 
 .modal-footer {
@@ -268,95 +238,45 @@
 
 .modal-footer .btn {
   min-width: 120rpx;
-}
-
-/* 关于页面样式 */
-.about-content {
-  text-align: center;
-}
-
-.about-logo {
-  margin-bottom: 30rpx;
-}
-
-.logo-text {
-  font-size: 120rpx;
-}
-
-.about-info {
-  margin-bottom: 40rpx;
-}
-
-.app-name {
-  font-size: 36rpx;
-  font-weight: 500;
-  color: #333;
-  display: block;
-  margin-bottom: 10rpx;
-}
-
-.app-version {
-  font-size: 26rpx;
-  color: #666;
-  display: block;
-  margin-bottom: 20rpx;
-}
-
-.app-desc {
+  padding: 16rpx 30rpx;
+  border-radius: 12rpx;
   font-size: 28rpx;
+  border: none;
+}
+
+.btn-secondary {
+  background-color: #f5f5f5;
   color: #666;
-  line-height: 1.6;
-  display: block;
 }
 
-.about-features {
-  text-align: left;
-  margin-bottom: 40rpx;
+.btn-secondary:active {
+  background-color: #e8e8e8;
 }
 
-.features-title {
-  font-size: 28rpx;
-  color: #333;
-  font-weight: 500;
-  display: block;
-  margin-bottom: 15rpx;
+.disabled {
+  opacity: 0.5;
 }
 
-.features-item {
-  font-size: 26rpx;
-  color: #666;
-  line-height: 1.8;
-  display: block;
-}
 
-.about-footer {
-  padding-top: 30rpx;
-  border-top: 1rpx solid #f0f0f0;
-}
-
-.copyright {
-  font-size: 24rpx;
-  color: #999;
-}
 
 /* 响应式适配 */
 @media (max-width: 400px) {
-  .user-card {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .user-avatar-section {
-    margin-right: 0;
-    margin-bottom: 30rpx;
-  }
-  
-  .user-name-container {
-    justify-content: center;
-    gap: 20rpx;
+  .section-card {
+    margin: 20rpx 30rpx;
+    padding: 30rpx;
   }
   
   .modal-content {
     width: 95%;
+  }
+  
+  .member-item {
+    padding: 15rpx 0;
+  }
+  
+  .member-avatar {
+    width: 60rpx;
+    height: 60rpx;
+    margin-right: 20rpx;
   }
 }

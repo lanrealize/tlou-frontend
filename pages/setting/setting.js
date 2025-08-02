@@ -1,29 +1,88 @@
 // pages/setting/setting.js
 const api = require('../../utils/api');
 const util = require('../../utils/util');
-const qiniuUploader = require('../../utils/qiniuUploader');
-const qiniuConfig = require('../../utils/qiniuConfig');
 const auth = require('../../utils/auth');
+
+// 状态常量
+const STATUS_CONSTANTS = {
+  LOADING: 'loading',
+  SUCCESS: 'success',
+  ERROR: 'error',
+  UPDATING: 'updating'
+};
 
 Page({
   data: {
-    userInfo: null,           // 用户信息
-    version: '1.0.0',         // 应用版本
-    cacheSize: '0KB',         // 缓存大小
-    showAbout: false,         // 显示关于对话框
-    showUserInfoDialog: false, // 显示用户信息编辑对话框
-    newUsername: '',          // 新用户名
-    systemInfo: null,         // 系统信息
+    // 朋友圈基本信息
+    circleId: '',
+    circle: null,
+    
+    // 设置数据
+    settingData: {
+      isPublic: false            // 是否公开
+    },
+    
+    // 成员管理
+    circleMembers: [],
+    showAddMemberDialog: false,
+    newMemberInput: '',
+    
+    // 页面状态
+    status: STATUS_CONSTANTS.LOADING,
+    
     // 安全区域信息
     safeAreaInfo: {
       statusBarHeight: 44
     }
   },
 
+  // 设置状态
+  setStatus(statusConstant, extraData = {}) {
+    this.setData({
+      status: statusConstant,
+      ...extraData
+    });
+  },
+
+  // 检查网络状态
+  checkNetworkStatus() {
+    return new Promise((resolve) => {
+      wx.getNetworkType({
+        success: (res) => {
+          const isConnected = res.networkType !== 'none' && res.networkType !== 'unknown';
+          resolve({
+            isConnected,
+            networkType: res.networkType
+          });
+        },
+        fail: () => {
+          resolve({
+            isConnected: false,
+            networkType: 'unknown'
+          });
+        }
+      });
+    });
+  },
+
   onLoad(options) {
-    console.log('设置页面加载', options);
+    console.log('朋友圈设置页面加载', options);
     this.getSafeAreaInfo();
-    this.initPage();
+    
+    const { circleId } = options;
+    if (!circleId) {
+      wx.showToast({
+        title: '缺少朋友圈参数',
+        icon: 'none'
+      });
+      setTimeout(() => {
+        wx.navigateBack();
+      }, 1500);
+      return;
+    }
+    
+    this.setData({ circleId });
+    this.loadCircleSettings();
   },
 
   // 获取安全区域信息
@@ -36,366 +95,226 @@ Page({
     }
   },
 
-  onShow() {
-    console.log('设置页面显示');
-    this.loadUserInfo();
-  },
+  // 加载朋友圈设置
+  async loadCircleSettings() {
+    const { circleId } = this.data;
+    if (!circleId) return;
 
-  // 返回主页面
-  navigateToMain() {
-    util.navigateToMain();
-  },
+    this.setStatus(STATUS_CONSTANTS.LOADING);
 
-  // 初始化页面
-  initPage() {
-    this.initQiniuConfig();
-    this.loadUserInfo();
-    this.calculateCacheSize();
-    this.getSystemInfo();
-  },
-
-  /**
-   * 初始化七牛云配置
-   */
-  initQiniuConfig() {
     try {
-      const config = qiniuConfig.getQiniuConfig();
-      qiniuConfig.validateConfig(config);
-      qiniuUploader.init(config);
-      console.log('✅ 七牛云配置初始化成功');
-    } catch (error) {
-      console.error('❌ 七牛云配置初始化失败:', error);
-      console.warn('请检查 utils/qiniuConfig.js 中的配置参数');
-    }
-  },
-
-  // 加载用户信息
-  loadUserInfo() {
-    const app = getApp();
-    this.setData({
-      userInfo: app.globalData.userInfo
-    });
-  },
-
-  // 获取系统信息
-  getSystemInfo() {
-    wx.getSystemInfo({
-      success: (res) => {
-        this.setData({ systemInfo: res });
+      // 获取朋友圈详情 (与details页面保持一致的实现方式)
+      const circlesRes = await api.circles.getMy();
+      const circle = circlesRes.data.circles.find(c => c._id === circleId);
+      
+      if (!circle) {
+        throw new Error('朋友圈不存在或已被删除');
       }
-    });
-  },
 
-  // 计算缓存大小
-  calculateCacheSize() {
-    wx.getStorageInfo({
-      success: (res) => {
-        const sizeKB = Math.round(res.currentSize);
-        let sizeText = '';
-        
-        if (sizeKB < 1024) {
-          sizeText = sizeKB + 'KB';
-        } else {
-          sizeText = (sizeKB / 1024).toFixed(1) + 'MB';
-        }
-        
-        this.setData({ cacheSize: sizeText });
-      },
-      fail: () => {
-        this.setData({ cacheSize: '未知' });
-      }
-    });
-  },
-
-  // 显示用户信息编辑对话框
-  showUserInfoDialog() {
-    this.setData({
-      showUserInfoDialog: true,
-      newUsername: this.data.userInfo ? this.data.userInfo.username : ''
-    });
-  },
-
-  // 隐藏用户信息编辑对话框
-  hideUserInfoDialog() {
-    this.setData({ showUserInfoDialog: false });
-  },
-
-  // 输入新用户名
-  onUsernameInput(e) {
-    this.setData({ newUsername: e.detail.value });
-  },
-
-  // 更新用户信息
-  async updateUserInfo() {
-    const { newUsername } = this.data;
-
-    if (util.isEmpty(newUsername)) {
-      util.showToast('请输入用户名');
-      return;
-    }
-
-    if (newUsername.length > 20) {
-      util.showToast('用户名不能超过20个字符');
-      return;
-    }
-
-    try {
-      util.showLoading('更新中...');
-
-      // 更新本地存储和全局数据
-      const app = getApp();
-      const userInfo = { ...app.globalData.userInfo, username: newUsername.trim() };
-      
-      wx.setStorageSync('userInfo', userInfo);
-      app.globalData.userInfo = userInfo;
-
-      this.setData({ userInfo });
-
-      util.hideLoading();
-      util.showToast('更新成功');
-
-      // 隐藏对话框
-      this.hideUserInfoDialog();
-
-    } catch (error) {
-      util.hideLoading();
-      console.error('更新用户信息失败:', error);
-      util.showToast('更新失败');
-    }
-  },
-
-  // 选择头像
-  async chooseAvatar() {
-    try {
-      const res = await util.chooseImage(1, ['compressed'], ['album', 'camera']);
-      const tempFilePath = res.tempFilePaths[0];
-      
-      console.log('✅ 选择头像成功:', tempFilePath);
-      
-      // 立即显示预览图片
-      const app = getApp();
-      const userInfo = { ...app.globalData.userInfo, avatar: tempFilePath };
-      this.setData({ userInfo });
-      
-      // 上传到七牛云
-      await this.uploadAvatarToQiniu(tempFilePath);
-      
-    } catch (error) {
-      console.error('选择头像失败:', error);
-      if (error.errMsg && !error.errMsg.includes('cancel')) {
-        util.showToast('选择头像失败');
-      }
-    }
-  },
-
-  /**
-   * 上传头像到七牛云
-   */
-  async uploadAvatarToQiniu(tempFilePath) {
-    try {
-      util.showLoading('正在上传头像...');
-      
-      // 获取用户openid作为userId
-      const openid = await auth.getOpenid();
-      
-      // 上传到七牛云
-      const uploadResult = await qiniuUploader.uploadImage(tempFilePath, openid, {
-        pathType: 'avatar', // 指定为头像类型
-        onProgress: (progress) => {
-          console.log('📊 上传进度:', progress);
-        }
-      });
-      
-      if (uploadResult.success) {
-        // 上传成功，更新头像URL
-        const app = getApp();
-        const userInfo = { ...app.globalData.userInfo, avatar: uploadResult.url };
-        
-        wx.setStorageSync('userInfo', userInfo);
-        app.globalData.userInfo = userInfo;
-        
-        this.setData({ userInfo });
-        
-        util.hideLoading();
-        util.showToast('头像更新成功', 'success');
-        console.log('✅ 头像上传成功:', uploadResult);
+      // 优先使用朋友圈详情中的成员信息，如果没有则单独获取
+      let members = [];
+      if (circle.members && Array.isArray(circle.members)) {
+        members = circle.members;
+        console.log('使用朋友圈详情中的成员信息:', members);
       } else {
-        throw new Error(uploadResult.error || '上传失败');
-      }
-      
-    } catch (error) {
-      console.error('❌ 头像上传失败:', error);
-      util.hideLoading();
-      
-      let errorMessage = '头像上传失败';
-      if (error.error) {
-        errorMessage = error.error;
-      } else if (typeof error === 'string') {
-        errorMessage = error;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      util.showToast(errorMessage, 'error');
-      
-      // 恢复原头像
-      this.loadUserInfo();
-    }
-  },
-
-  // 清除缓存
-  async clearCache() {
-    const confirm = await util.showConfirm('确定要清除所有缓存数据吗？此操作不可恢复。', '清除缓存');
-    if (!confirm) return;
-
-    try {
-      util.showLoading('清除中...');
-
-      // 保留重要数据
-      const openid = wx.getStorageSync('openid');
-      const userInfo = wx.getStorageSync('userInfo');
-
-      // 清除所有缓存
-      wx.clearStorageSync();
-
-      // 恢复重要数据
-      if (openid) wx.setStorageSync('openid', openid);
-      if (userInfo) wx.setStorageSync('userInfo', userInfo);
-
-      util.hideLoading();
-      util.showToast('缓存清除成功');
-
-      // 重新计算缓存大小
-      this.calculateCacheSize();
-
-    } catch (error) {
-      util.hideLoading();
-      console.error('清除缓存失败:', error);
-      util.showToast('清除失败');
-    }
-  },
-
-  // 检查更新
-  checkUpdate() {
-    if (wx.getUpdateManager) {
-      const updateManager = wx.getUpdateManager();
-
-      updateManager.onCheckForUpdate((res) => {
-        if (res.hasUpdate) {
-          util.showToast('发现新版本，准备下载');
-          
-          updateManager.onUpdateReady(() => {
-            wx.showModal({
-              title: '更新提示',
-              content: '新版本已准备好，是否重启应用？',
-              success: (res) => {
-                if (res.confirm) {
-                  updateManager.applyUpdate();
-                }
-              }
-            });
-          });
-
-          updateManager.onUpdateFailed(() => {
-            util.showToast('新版本下载失败');
-          });
-        } else {
-          util.showToast('当前已是最新版本');
+        try {
+          const membersRes = await api.circles.getMembers(circleId);
+          members = membersRes.data || [];
+          console.log('单独获取的成员信息:', members);
+        } catch (memberError) {
+          console.warn('获取成员信息失败，使用空数组:', memberError);
+          members = [];
         }
+      }
+
+      // 设置数据
+      this.setData({
+        circle,
+        circleMembers: members,
+        'settingData.isPublic': circle.isPublic || false
       });
-    } else {
-      util.showToast('当前微信版本过低，无法使用该功能');
-    }
-  },
-
-  // 显示关于对话框
-  showAbout() {
-    this.setData({ showAbout: true });
-  },
-
-  // 隐藏关于对话框
-  hideAbout() {
-    this.setData({ showAbout: false });
-  },
-
-  // 打开图片上传测试页面
-  openUploadTest() {
-    wx.navigateTo({
-      url: '/pages/test-upload/test-upload'
-    });
-  },
-
-  // 意见反馈
-  feedback() {
-    wx.navigateTo({
-      url: '/pages/feedback/feedback'
-    });
-  },
-
-  // 用户协议
-  userAgreement() {
-    wx.navigateTo({
-      url: '/pages/agreement/agreement'
-    });
-  },
-
-  // 隐私政策
-  privacyPolicy() {
-    wx.navigateTo({
-      url: '/pages/privacy/privacy'
-    });
-  },
-
-  // 退出登录
-  async logout() {
-    const confirm = await util.showConfirm('确定要退出登录吗？', '退出登录');
-    if (!confirm) return;
-
-    try {
-      const app = getApp();
-      app.logout();
-
-      util.showToast('已退出登录');
-
-      // 跳转到登录页面或重新初始化
-      setTimeout(() => {
-        wx.reLaunch({
-          url: '/pages/main/main'
-        });
-      }, 1000);
+      
+      this.setStatus(STATUS_CONSTANTS.SUCCESS);
 
     } catch (error) {
-      console.error('退出登录失败:', error);
-      util.showToast('退出失败');
+      console.error('加载朋友圈设置失败:', error);
+      this.setStatus(STATUS_CONSTANTS.ERROR);
+      wx.showToast({
+        title: error.message || '加载失败',
+        icon: 'none'
+      });
     }
   },
 
-  // 联系客服
-  contactService() {
-    wx.makePhoneCall({
-      phoneNumber: '400-000-0000',
-      fail: () => {
-        util.setClipboardData('400-000-0000');
-        util.showToast('客服电话已复制');
-      }
+  onShow() {
+    console.log('朋友圈设置页面显示');
+    this.loadCircleSettings();
+  },
+
+  // 切换公开状态（乐观更新模式）
+  async togglePublicStatus(e) {
+    const newValue = e.detail.value;
+    const oldValue = this.data.settingData.isPublic;
+    
+    // 乐观更新：先更新UI，提供即时反馈
+    this.setData({
+      'settingData.isPublic': newValue
+    });
+    
+    // 检查网络状态
+    const networkInfo = await this.checkNetworkStatus();
+    if (!networkInfo.isConnected) {
+      wx.showToast({
+        title: '网络不可用，设置将在网络恢复后同步',
+        icon: 'none',
+        duration: 2000
+      });
+      return;
+    }
+    
+    try {
+      // 异步同步到后端 (使用正确的PATCH接口)
+      await api.circles.updateSettings(this.data.circleId, {
+        isPublic: newValue
+      });
+      
+      // 成功后给轻量提示
+      console.log('✅ 公开状态设置已同步:', newValue ? '公开' : '私密');
+      
+    } catch (error) {
+      console.error('❌ 更新公开状态失败:', error);
+      
+      // 失败时回滚并给出明确提示
+      this.setData({
+        'settingData.isPublic': oldValue
+      });
+      
+      wx.showToast({
+        title: '设置失败，请检查网络后重试',
+        icon: 'none',
+        duration: 2000
+      });
+    }
+  },
+
+  // 显示添加成员对话框
+  addMember() {
+    this.setData({
+      showAddMemberDialog: true,
+      newMemberInput: ''
     });
   },
 
-  // 分享应用
-  onShareAppMessage() {
-    return {
-      title: '朋友圈小程序 - 记录生活，分享美好',
-      path: '/pages/main/main',
-      imageUrl: '/images/share_cover.jpg'
-    };
+  // 隐藏添加成员对话框
+  hideAddMemberDialog() {
+    this.setData({
+      showAddMemberDialog: false,
+      newMemberInput: ''
+    });
   },
 
-  // 分享到朋友圈
-  onShareTimeline() {
-    return {
-      title: '朋友圈小程序 - 记录生活，分享美好',
-      query: '',
-      imageUrl: '/images/share_cover.jpg'
-    };
+  // 输入新成员信息
+  onMemberInput(e) {
+    this.setData({
+      newMemberInput: e.detail.value
+    });
+  },
+
+  // 确认添加成员
+  async confirmAddMember() {
+    const { newMemberInput, circleId } = this.data;
+    
+    if (!newMemberInput.trim()) {
+      wx.showToast({
+        title: '请输入用户信息',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    try {
+      this.setStatus(STATUS_CONSTANTS.UPDATING);
+      
+      await api.circles.addMember(circleId, {
+        identifier: newMemberInput.trim()
+      });
+      
+      wx.showToast({
+        title: '添加成功',
+        icon: 'success'
+      });
+      
+      this.hideAddMemberDialog();
+      this.loadCircleSettings(); // 重新加载成员列表
+      
+    } catch (error) {
+      console.error('添加成员失败:', error);
+      wx.showToast({
+        title: error.message || '添加失败',
+        icon: 'none'
+      });
+      
+      this.setStatus(STATUS_CONSTANTS.ERROR);
+    }
+  },
+
+  // 移除成员
+  async removeMember(e) {
+    const memberId = e.currentTarget.dataset.memberId;
+    
+    if (!memberId) {
+      wx.showToast({
+        title: '成员信息错误',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    const confirm = await util.showConfirm('确定要移除该成员吗？', '移除成员');
+    if (!confirm) return;
+    
+    try {
+      this.setStatus(STATUS_CONSTANTS.UPDATING);
+      
+      await api.circles.removeMember(this.data.circleId, memberId);
+      
+      wx.showToast({
+        title: '移除成功',
+        icon: 'success'
+      });
+      
+      // 从本地数据中移除 (支持多种ID字段)
+      const updatedMembers = this.data.circleMembers.filter(member => 
+        (member._id !== memberId) && (member.id !== memberId)
+      );
+      this.setData({
+        circleMembers: updatedMembers
+      });
+      
+      this.setStatus(STATUS_CONSTANTS.SUCCESS);
+      
+    } catch (error) {
+      console.error('移除成员失败:', error);
+      wx.showToast({
+        title: error.message || '移除失败',
+        icon: 'none'
+      });
+      
+      this.setStatus(STATUS_CONSTANTS.ERROR);
+    }
+  },
+
+
+
+  // 返回上一页
+  navigateBack() {
+    wx.navigateBack({
+      fail: () => {
+        // 如果无法返回，则跳转到朋友圈详情页
+        wx.redirectTo({
+          url: `/pages/details/details?circleId=${this.data.circleId}`
+        });
+      }
+    });
   }
 });

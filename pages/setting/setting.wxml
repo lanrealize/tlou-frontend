@@ -3,212 +3,77 @@
   <!-- 状态栏占位 -->
   <view class="status-bar" style="height: {{safeAreaInfo.statusBarHeight}}px;"></view>
   
-  <!-- 返回按钮 -->
-  <view class="header-bar">
-    <view class="back-btn" bindtap="navigateToMain">
+  <!-- 页面头部 -->
+  <view class="header">
+    <view class="back-btn" bindtap="navigateBack">
       <text class="back-icon">←</text>
-      <text>返回主页</text>
     </view>
-    <text class="page-title">设置</text>
+    <text class="page-title">朋友圈设置</text>
+    <view class="header-action"></view>
   </view>
   
-  <!-- 用户信息卡片 -->
-  <view class="user-card card" wx:if="{{userInfo}}">
-    <view class="user-avatar-section">
-      <image class="user-avatar avatar-large" 
-             src="{{userInfo.avatar || '/images/default_avatar.png'}}" 
-             mode="aspectFill"
-             bindtap="chooseAvatar"></image>
-      <text class="avatar-tip">点击更换头像</text>
+  <!-- 朋友圈成员管理 -->
+  <view class="section-card card">
+    <view class="section-header">
+      <text class="section-title">朋友圈成员管理</text>
+      <button class="add-btn theme-btn-small" bindtap="addMember">添加</button>
     </view>
-    <view class="user-info-section">
-      <view class="user-name-container">
-        <text class="user-name">{{userInfo.username || '未设置用户名'}}</text>
-        <button class="edit-btn btn-small" bindtap="showUserInfoDialog">编辑</button>
-      </view>
-      <text class="user-id">ID: {{userInfo.openid || 'unknown'}}</text>
-    </view>
-  </view>
-
-  <!-- 功能列表 -->
-  <view class="section">
-    <view class="section-title">应用管理</view>
-    <view class="list-container">
-      <view class="list-item" bindtap="clearCache">
-        <view class="list-item-content">
-          <text class="list-item-title">清除缓存</text>
-          <text class="list-item-desc">当前缓存: {{cacheSize}}</text>
+    
+    <view class="member-list">
+      <view class="member-item" wx:for="{{circleMembers}}" wx:key="_id">
+        <image class="member-avatar" 
+               src="{{item.avatar || item.avatarUrl || '/images/default_avatar.png'}}" 
+               mode="aspectFill" />
+        <text class="member-name">{{item.username || item.nickName || item.displayName || '未知用户'}}</text>
+        <view class="member-action" bindtap="removeMember" data-member-id="{{item._id || item.id}}">
+          <text class="remove-icon">🗑</text>
         </view>
-        <text class="list-item-arrow">></text>
       </view>
       
-      <view class="list-item" bindtap="checkUpdate">
-        <view class="list-item-content">
-          <text class="list-item-title">检查更新</text>
-          <text class="list-item-desc">版本 {{version}}</text>
-        </view>
-        <text class="list-item-arrow">></text>
-      </view>
-      
-      <view class="list-item" bindtap="openUploadTest">
-        <view class="list-item-content">
-          <text class="list-item-title">🧪 图片上传测试</text>
-          <text class="list-item-desc">测试七牛云上传功能</text>
-        </view>
-        <text class="list-item-arrow">></text>
+      <view class="empty-member" wx:if="{{circleMembers.length === 0}}">
+        <text class="empty-text">暂无成员</text>
       </view>
     </view>
   </view>
 
-  <!-- 帮助与反馈 -->
-  <view class="section">
-    <view class="section-title">帮助与反馈</view>
-    <view class="list-container">
-      <view class="list-item" bindtap="feedback">
-        <view class="list-item-content">
-          <text class="list-item-title">意见反馈</text>
-          <text class="list-item-desc">问题反馈与建议</text>
-        </view>
-        <text class="list-item-arrow">></text>
+  <!-- 公开设置 -->
+  <view class="section-card card">
+    <view class="setting-item">
+      <view class="setting-content">
+        <text class="setting-title">设为公开朋友圈</text>
+        <text class="setting-desc">幻法后朋友圈会被其他用户看到</text>
       </view>
-      
-      <view class="list-item" bindtap="contactService">
-        <view class="list-item-content">
-          <text class="list-item-title">联系客服</text>
-          <text class="list-item-desc">获取帮助与支持</text>
-        </view>
-        <text class="list-item-arrow">></text>
-      </view>
-
-      <button class="list-item" open-type="share">
-        <view class="list-item-content">
-          <text class="list-item-title">分享给朋友</text>
-          <text class="list-item-desc">推荐给好友使用</text>
-        </view>
-        <text class="list-item-arrow">></text>
-      </button>
+      <switch class="setting-switch" 
+             checked="{{settingData.isPublic}}" 
+             bindchange="togglePublicStatus" />
     </view>
   </view>
-
-  <!-- 关于我们 -->
-  <view class="section">
-    <view class="section-title">关于</view>
-    <view class="list-container">
-      <view class="list-item" bindtap="userAgreement">
-        <view class="list-item-content">
-          <text class="list-item-title">用户协议</text>
-        </view>
-        <text class="list-item-arrow">></text>
-      </view>
-      
-      <view class="list-item" bindtap="privacyPolicy">
-        <view class="list-item-content">
-          <text class="list-item-title">隐私政策</text>
-        </view>
-        <text class="list-item-arrow">></text>
-      </view>
-      
-      <view class="list-item" bindtap="showAbout">
-        <view class="list-item-content">
-          <text class="list-item-title">关于朋友圈</text>
-          <text class="list-item-desc">了解更多信息</text>
-        </view>
-        <text class="list-item-arrow">></text>
-      </view>
-    </view>
-  </view>
-
-  <!-- 系统信息 -->
-  <view class="section" wx:if="{{systemInfo}}">
-    <view class="section-title">系统信息</view>
-    <view class="system-info-card card">
-      <view class="info-row">
-        <text class="info-label">设备型号:</text>
-        <text class="info-value">{{systemInfo.model}}</text>
-      </view>
-      <view class="info-row">
-        <text class="info-label">系统版本:</text>
-        <text class="info-value">{{systemInfo.system}}</text>
-      </view>
-      <view class="info-row">
-        <text class="info-label">微信版本:</text>
-        <text class="info-value">{{systemInfo.version}}</text>
-      </view>
-      <view class="info-row">
-        <text class="info-label">基础库版本:</text>
-        <text class="info-value">{{systemInfo.SDKVersion}}</text>
-      </view>
-    </view>
-  </view>
-
-  <!-- 退出登录 -->
-  <view class="logout-section">
-    <button class="logout-btn btn btn-danger" bindtap="logout">退出登录</button>
-  </view>
-
-  <!-- 用户信息编辑对话框 -->
-  <view class="modal-overlay" wx:if="{{showUserInfoDialog}}" bindtap="hideUserInfoDialog">
+  
+  <!-- 添加成员对话框 -->
+  <view class="modal-overlay" wx:if="{{showAddMemberDialog}}" bindtap="hideAddMemberDialog">
     <view class="modal-content" catchtap="true">
       <view class="modal-header">
-        <text class="modal-title">编辑用户信息</text>
-        <text class="modal-close" bindtap="hideUserInfoDialog">✕</text>
+        <text class="modal-title">添加成员</text>
+        <text class="modal-close" bindtap="hideAddMemberDialog">✕</text>
       </view>
       
       <view class="modal-body">
         <view class="form-group">
-          <text class="form-label">用户名</text>
+          <text class="form-label">用户ID或用户名</text>
           <input class="form-input" 
-                 placeholder="请输入用户名" 
-                 value="{{newUsername}}" 
-                 bindinput="onUsernameInput"
-                 maxlength="20" />
+                 placeholder="请输入用户ID或用户名" 
+                 value="{{newMemberInput}}" 
+                 bindinput="onMemberInput" />
         </view>
       </view>
       
       <view class="modal-footer">
-        <button class="btn btn-secondary" bindtap="hideUserInfoDialog">取消</button>
-        <button class="btn btn-primary {{newUsername ? '' : 'disabled'}}" 
-                bindtap="updateUserInfo" 
-                disabled="{{!newUsername}}">
-          保存
+        <button class="btn btn-secondary" bindtap="hideAddMemberDialog">取消</button>
+        <button class="btn theme-btn {{newMemberInput ? '' : 'disabled'}}" 
+                bindtap="confirmAddMember" 
+                disabled="{{!newMemberInput}}">
+          添加
         </button>
-      </view>
-    </view>
-  </view>
-
-  <!-- 关于对话框 -->
-  <view class="modal-overlay" wx:if="{{showAbout}}" bindtap="hideAbout">
-    <view class="modal-content" catchtap="true">
-      <view class="modal-header">
-        <text class="modal-title">关于朋友圈</text>
-        <text class="modal-close" bindtap="hideAbout">✕</text>
-      </view>
-      
-      <view class="modal-body">
-        <view class="about-content">
-          <view class="about-logo">
-            <text class="logo-text">🌟</text>
-          </view>
-          <view class="about-info">
-            <text class="app-name">朋友圈小程序</text>
-            <text class="app-version">版本 {{version}}</text>
-            <text class="app-desc">一个简单易用的社交分享平台，记录生活，分享美好时光。</text>
-          </view>
-          <view class="about-features">
-            <text class="features-title">主要功能:</text>
-            <text class="features-item">• 创建和加入朋友圈</text>
-            <text class="features-item">• 发布图文动态</text>
-            <text class="features-item">• 点赞和评论互动</text>
-            <text class="features-item">• 隐私保护设置</text>
-          </view>
-          <view class="about-footer">
-            <text class="copyright">© 2024 朋友圈小程序团队</text>
-          </view>
-        </view>
-      </view>
-      
-      <view class="modal-footer">
-        <button class="btn btn-primary" bindtap="hideAbout">确定</button>
       </view>
     </view>
   </view>

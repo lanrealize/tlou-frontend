@@ -1,4 +1,7 @@
 /**app.wxss**/
+/* 引入共用UI库样式 */
+@import "styles/common.wxss";
+
 /* 全局样式 */
 
 /* 通用样式 */

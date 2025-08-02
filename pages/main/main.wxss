@@ -1,5 +1,49 @@
 /* pages/main/main.wxss */
 
+/* 加载状态样式 */
+.loading-circle-content {
+  text-align: center;
+  padding: 60rpx 40rpx;
+  color: #666666;
+}
+
+.loading-title {
+  font-size: 32rpx;
+  margin-bottom: 20rpx;
+  color: #666666;
+}
+
+.loading-description {
+  font-size: 28rpx;
+  line-height: 1.5;
+  color: #999999;
+}
+
+/* 错误状态样式 */
+.error-circle-content {
+  text-align: center;
+  padding: 60rpx 40rpx;
+  color: #ff4444;
+}
+
+.error-title {
+  font-size: 32rpx;
+  margin-bottom: 20rpx;
+  color: #ff4444;
+}
+
+.error-description {
+  font-size: 28rpx;
+  line-height: 1.5;
+  color: #999999;
+  margin-bottom: 30rpx;
+}
+
+.login-btn,
+.retry-btn {
+  margin-top: 30rpx;
+}
+
 .container {
   background-color: #f5f5f5;
   min-height: 100vh;

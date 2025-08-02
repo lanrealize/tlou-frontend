@@ -30,6 +30,14 @@ const userStore = observable({
         this._syncToStorage(data.userInfo);
         this._syncToGlobal(status, data.userInfo);
         console.log('✅ 已登录:', data.userInfo?.username);
+        // 调试：检查用户信息结构
+        console.log('🔍 用户信息结构检查:', {
+          hasId: !!data.userInfo?._id,
+          hasOpenid: !!data.userInfo?.openid,
+          userId: data.userInfo?._id,
+          userOpenid: data.userInfo?.openid,
+          allFields: Object.keys(data.userInfo || {})
+        });
         break;
         
       case USER_STATUS.ERROR:
@@ -122,7 +130,23 @@ const userStore = observable({
   
   _syncToStorage(userInfo) {
     if (userInfo) {
-      wx.setStorageSync('userInfo', userInfo);
+      // 使用异步存储避免阻塞UI线程
+      wx.setStorage({
+        key: 'userInfo',
+        data: userInfo,
+        success: () => {
+          console.log('✅ 用户信息已异步保存到本地存储');
+        },
+        fail: (error) => {
+          console.warn('⚠️ 保存用户信息到本地存储失败:', error);
+          // 降级到同步存储
+          try {
+            wx.setStorageSync('userInfo', userInfo);
+          } catch (syncError) {
+            console.error('❌ 同步存储也失败:', syncError);
+          }
+        }
+      });
     }
   },
 

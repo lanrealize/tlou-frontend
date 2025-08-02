@@ -8,143 +8,121 @@
     <text>加载中...</text>
   </view>
 
-  <!-- 朋友圈详情 -->
-  <view class="circle-detail" wx:elif="{{circle}}">
-    <!-- 返回按钮 -->
-    <view class="header-bar">
-      <view class="back-btn" bindtap="navigateBack">
-        <text class="back-icon">←</text>
-        <text>返回主页</text>
+  <!-- 朋友圈详情页面 -->
+  <view class="moment-page" wx:else>
+    <!-- 顶部导航栏 -->
+    <view class="nav-header card-shadow">
+      <view class="nav-left">
+        <view class="back-btn" bindtap="navigateBack">
+          <text class="back-icon">‹</text>
+        </view>
+        <text class="nav-title">两个人的朋友圈</text>
       </view>
-    </view>
-
-    <!-- 朋友圈信息卡片 -->
-    <view class="circle-info-card card">
-      <view class="circle-header">
-        <text class="circle-name">{{circle.name}}</text>
-        <view class="circle-status">
-          <text class="status-tag {{circle.isPublic ? 'public' : 'private'}}">
-            {{circle.isPublic ? '公开' : '私密'}}
-          </text>
+      <view class="nav-right">
+        <view class="more-btn" bindtap="showMoreOptions">
+          <text class="more-icon">...</text>
+        </view>
+        <view class="timer-btn">
+          <text class="timer-icon">⏰</text>
         </view>
       </view>
-      
-      <view class="circle-meta">
-        <text class="meta-item">创建时间：{{circle.formattedTime}}</text>
-        <text class="meta-item">成员数量：{{circle.memberCount}}人</text>
-        <text class="meta-item">朋友圈ID：{{circle._id}}</text>
+    </view>
+
+    <!-- 用户信息区域 -->
+    <view class="user-section card-shadow">
+      <view class="user-count-row">
+        <text class="user-count">{{circle.memberCount || 1}} 名用户在内</text>
+        <view class="setting-btn theme-btn-small" bindtap="openSettings">
+          <text>设置</text>
+        </view>
+      </view>
+      <view class="user-row">
+        <view class="user-avatar-container" wx:for="{{circle.members || []}}" wx:for-item="member" wx:key="_id" wx:if="{{index < 5}}">
+          <image class="user-avatar" src="{{member.avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+        </view>
+        <!-- 如果没有成员信息，显示默认头像 -->
+        <view class="user-avatar-container" wx:if="{{!circle.members || circle.members.length === 0}}">
+          <image class="user-avatar" src="/images/default_avatar.png" mode="aspectFill"></image>
+        </view>
+        <view class="add-user-btn" bindtap="addUser">
+          <text class="add-icon">+</text>
+        </view>
       </view>
     </view>
 
-    <!-- 朋友圈帖子列表 -->
-    <view class="circle-posts">
-      <view class="section-header">
-        <text class="section-title">动态 ({{posts.length}})</text>
+    <!-- 帖子列表区域 -->
+    <view class="posts-container">
+      <!-- 空状态 -->
+      <view class="empty-content" wx:if="{{posts.length === 0 && !loading}}">
+        <view class="empty-title">朋友圈内容为空</view>
+        <view class="empty-subtitle">还没有人发布动态，快来发布第一条吧！</view>
       </view>
-      
+
       <!-- 帖子列表 -->
-      <view class="posts-container" wx:if="{{posts.length > 0}}">
-        <view class="post-item card" wx:for="{{posts}}" wx:for-item="post" wx:key="_id">
-          <!-- 用户信息 -->
-          <view class="user-info">
-            <image class="avatar" src="{{post.author.avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
-            <view class="user-details">
-              <text class="user-name">{{post.author.username}}</text>
-              <text class="user-time">{{post.formattedTime}}</text>
-            </view>
-          </view>
+      <view class="posts-list" wx:else>
+        <post-item
+          wx:for="{{posts}}"
+          wx:key="_id"
+          post="{{item}}"
+          current-user="{{currentUser}}"
+          show-actions="{{true}}"
+          bind:like="onPostLike"
+          bind:comment="onPostComment"
+          bind:replyComment="onPostReplyComment"
+          bind:deletePost="onPostDelete"
+          bind:deleteComment="onCommentDelete"
+          bind:previewImage="onPreviewImage"
+          bind:tapAvatar="onTapAvatar"
+          bind:longPress="onPostLongPress"
+        ></post-item>
 
-          <!-- 帖子内容 -->
-          <view class="post-content">
-            <text class="content-text" wx:if="{{post.content}}">{{post.content}}</text>
-            
-            <!-- 图片网格 -->
-            <view class="image-grid" wx:if="{{post.images && post.images.length > 0}}">
-              <view class="image-item" wx:for="{{post.images}}" wx:for-item="img" wx:key="*this" 
-                    bindtap="previewImage" data-current="{{img}}" data-urls="{{post.images}}">
-                <image src="{{img}}" mode="aspectFill"></image>
-              </view>
-            </view>
-          </view>
+        <!-- 加载更多提示 -->
+        <view class="load-more" wx:if="{{hasMore && posts.length > 0}}">
+          <text class="load-more-text">上拉加载更多</text>
+        </view>
 
-          <!-- 操作栏 -->
-          <view class="post-actions">
-            <view class="action-left">
-              <view class="like-btn {{post.isLiked ? 'liked' : ''}}" bindtap="toggleLike" data-post-id="{{post._id}}">
-                <text class="icon">{{post.isLiked ? '❤️' : '🤍'}}</text>
-                <text>{{post.likes ? post.likes.length : 0}}</text>
-              </view>
-              <view class="comment-btn" bindtap="showCommentInput" data-post-id="{{post._id}}">
-                <text class="icon">💬</text>
-                <text>{{post.comments ? post.comments.length : 0}}</text>
-              </view>
-            </view>
-            <!-- 操作菜单 -->
-            <view class="post-menu" wx:if="{{post.author._id === app.globalData.openid}}">
-              <button class="menu-btn" bindtap="deletePost" data-post-id="{{post._id}}">删除</button>
-            </view>
-          </view>
+        <!-- 没有更多数据提示 -->
+        <view class="no-more" wx:if="{{!hasMore && posts.length > 0}}">
+          <text class="no-more-text">没有更多动态了</text>
+        </view>
+      </view>
+    </view>
 
-          <!-- 评论列表 -->
-          <view class="comments-section" wx:if="{{post.comments && post.comments.length > 0}}">
-            <view class="comment-item" wx:for="{{post.comments}}" wx:for-item="comment" wx:key="_id">
-              <view class="comment-header">
-                <image class="avatar avatar-small" src="{{comment.author.avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
-                <view class="comment-user-info">
-                  <text class="comment-user">{{comment.author.username}}</text>
-                  <text class="comment-time">{{comment.formattedTime}}</text>
-                </view>
-                <!-- 删除按钮（只有评论作者才能看到） -->
-                <view class="comment-actions" wx:if="{{comment.author._id === app.globalData.openid}}">
-                  <text class="delete-btn" bindtap="deleteComment" data-comment-id="{{comment._id}}" data-post-id="{{post._id}}">删除</text>
-                </view>
-              </view>
-              
-              <view class="comment-content">
-                <view class="comment-text" bindtap="replyComment" 
-                      data-user-id="{{comment.author._id}}" data-username="{{comment.author.username}}" data-post-id="{{post._id}}">
-                  <text wx:if="{{comment.replyTo}}">回复 <text class="reply-user">@{{comment.replyTo.username}}</text>: </text>
-                  {{comment.content}}
-                </view>
-              </view>
-            </view>
+    <!-- 发布按钮 -->
+    <view class="publish-button-container">
+      <button class="main-publish-btn theme-btn" bindtap="navigateToPublish">
+        发布新动态
+      </button>
+    </view>
+
+    <!-- 评论输入框 -->
+    <view class="comment-input-modal" wx:if="{{showCommentInput}}">
+      <view class="comment-input-overlay" bindtap="cancelComment"></view>
+      <view class="comment-input-container card-shadow">
+        <view class="comment-input-header">
+          <text class="comment-title">{{replyToUser ? '回复 ' + replyToUser.username : '发表评论'}}</text>
+          <text class="cancel-btn" bindtap="cancelComment">取消</text>
+        </view>
+        <view class="comment-input-content">
+          <textarea
+            class="comment-textarea"
+            placeholder="{{replyToUser ? '@' + replyToUser.username + ' ' : '说点什么...'}}"
+            value="{{commentText}}"
+            bindinput="onCommentInput"
+            auto-focus="{{focusInput}}"
+            adjust-position="{{true}}"
+            hold-keyboard="{{true}}"
+            show-confirm-bar="{{false}}"
+            auto-height
+            maxlength="500"
+            cursor-spacing="20"
+          ></textarea>
+          <view class="comment-input-footer">
+            <text class="char-count">{{commentText.length}}/500</text>
+            <button class="send-btn theme-btn-small" bindtap="sendComment">发送</button>
           </view>
         </view>
       </view>
-
-      <!-- 空动态状态 -->
-      <view class="empty-state" wx:else>
-        <view class="empty-icon">📝</view>
-        <view class="empty-text">还没有动态，快去发布第一条动态吧</view>
-      </view>
-    </view>
-  </view>
-
-  <!-- 错误状态 -->
-  <view class="empty-state" wx:else>
-    <view class="empty-icon">😵</view>
-    <view class="empty-text">朋友圈不存在或已被删除</view>
-  </view>
-
-  <!-- 评论输入框 -->
-  <view class="input-bar" wx:if="{{showCommentInput}}">
-    <view class="input-container">
-      <view class="reply-info" wx:if="{{replyToUser}}">
-        <text>回复 @{{replyToUser.username}}</text>
-        <text class="cancel-reply" bindtap="cancelComment">✕</text>
-      </view>
-      <input class="comment-input" 
-             placeholder="{{replyToUser ? '回复评论...' : '写评论...'}}" 
-             value="{{commentText}}" 
-             bindinput="onCommentInput"
-             confirm-type="send"
-             bindconfirm="sendComment"
-             focus="{{showCommentInput}}" />
-      <button class="send-btn {{commentText ? '' : 'disabled'}}" 
-              bindtap="sendComment" 
-              disabled="{{!commentText}}">
-        发送
-      </button>
     </view>
   </view>
 </view>

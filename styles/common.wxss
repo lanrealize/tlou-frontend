@@ -1,0 +1,68 @@
+/* 共用UI库样式 */
+
+/* 主题色 */
+:root {
+  --theme-color: #1A73E8;
+  --theme-shadow: 0px 0px 3px rgba(0, 0, 0, 0.25);
+}
+
+/* 主题色相关样式 */
+.theme-bg {
+  background-color: #1A73E8;
+}
+
+.theme-color {
+  color: #1A73E8;
+}
+
+.theme-border {
+  border: 1rpx solid #1A73E8;
+}
+
+/* 卡片阴影 */
+.card-shadow {
+  box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.25);
+}
+
+/* 主题按钮 */
+.theme-btn {
+  background-color: #1A73E8;
+  color: #ffffff;
+  border: none;
+  border-radius: 30rpx;
+  padding: 24rpx 60rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+  box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.25);
+}
+
+.theme-btn::after {
+  border: none;
+}
+
+/* 小型主题按钮 */
+.theme-btn-small {
+  background-color: #1A73E8;
+  color: #ffffff;
+  padding: 12rpx 24rpx;
+  border-radius: 20rpx;
+  font-size: 26rpx;
+}
+
+/* 卡片容器 */
+.card {
+  background-color: #ffffff;
+  border-radius: 20rpx;
+  box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.25);
+}
+
+/* 主题文字 */
+.theme-text {
+  color: #1A73E8;
+}
+
+/* 禁用状态按钮 */
+.theme-btn-disabled {
+  background-color: #ccc;
+  color: #999;
+}

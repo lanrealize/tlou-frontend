@@ -2,5 +2,8 @@
   "navigationBarTitleText": "动态详情",
   "navigationStyle": "custom",
   "enablePullDownRefresh": true,
+  "usingComponents": {
+    "post-item": "/components/post-item/post-item"
+  },
   "backgroundColor": "#f5f5f5"
 }

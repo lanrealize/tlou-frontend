@@ -78,6 +78,11 @@ class API {
     return this.request({ url, method: 'DELETE', data });
   }
 
+  // PATCH请求
+  patch(url, data = {}) {
+    return this.request({ url, method: 'PATCH', data });
+  }
+
   // 朋友圈相关API
   circles = {
     // 获取我创建的朋友圈列表（原有方法）
@@ -86,20 +91,38 @@ class API {
     // 获取我参与的所有朋友圈列表（包含最新帖子）
     getMyParticipated: () => this.get('/circles/my'),
     
+    // 获取朋友圈详情
+    getDetail: (circleId) => this.get(`/circles/${circleId}`),
+    
+    // 获取朋友圈成员
+    getMembers: (circleId) => this.get(`/circles/${circleId}/members`),
+    
     // 创建朋友圈
     create: (data) => this.post('/circles', data),
+    
+    // 更新朋友圈设置
+    update: (circleId, data) => this.put(`/circles/${circleId}`, data),
+    
+    // 更新朋友圈设置 (使用PATCH接口)
+    updateSettings: (circleId, data) => this.patch(`/circles/${circleId}/settings`, data),
     
     // 加入朋友圈
     join: (circleId) => this.post(`/circles/${circleId}/join`),
     
     // 退出朋友圈
-    leave: (circleId) => this.delete(`/circles/${circleId}/leave`)
+    leave: (circleId) => this.delete(`/circles/${circleId}/leave`),
+    
+    // 添加成员
+    addMember: (circleId, data) => this.post(`/circles/${circleId}/members`, data),
+    
+    // 移除成员
+    removeMember: (circleId, memberId) => this.delete(`/circles/${circleId}/members/${memberId}`)
   };
 
   // 帖子相关API
   posts = {
     // 获取朋友圈的帖子列表
-    getList: (circleId) => this.get('/posts', { circleId }),
+    getList: (circleId, params = {}) => this.get('/posts', { circleId, ...params }),
     
     // 创建帖子
     create: (data) => this.post('/posts', data),

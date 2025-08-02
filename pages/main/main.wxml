@@ -75,20 +75,17 @@
   </view>
 
   <!-- 朋友圈状态卡片 -->
-  <view class="circle-status-card" wx:if="{{isLoggedIn}}">
-    <!-- 没有朋友圈的提示卡片 -->
-    <view class="empty-circle-content" wx:if="{{circles.length === 0}}">
-      <text class="empty-title">没有正在进行的朋友圈</text>
-      <view class="empty-description">
-        <text>点击"创建朋友圈"按钮，邀请朋友一起开始吧！</text>
+  <view class="circle-status-card">
+    <!-- 加载状态 -->
+    <view class="loading-circle-content" wx:if="{{isLoading}}">
+      <text class="loading-title">正在检查登录状态...</text>
+      <view class="loading-description">
+        <text>请稍等，正在为您加载内容</text>
       </view>
-      <button class="create-circle-btn" bindtap="createCircleDirectly">
-        创建朋友圈
-      </button>
     </view>
 
-    <!-- 最近朋友圈卡片 -->
-    <view class="recent-circle-content" wx:else bindtap="goToRecentCircle">
+    <!-- 已登录且有朋友圈 -->
+    <view class="recent-circle-content" wx:elif="{{isLoggedIn && circles.length > 0}}" bindtap="goToRecentCircle">
       <view class="recent-circle-header">
         <text class="recent-title">最近的朋友圈</text>
         <text class="recent-time">{{recentCircle.formattedTime}}</text>
@@ -104,16 +101,39 @@
         <text class="action-text">点击进入 ></text>
       </view>
     </view>
-  </view>
-  
-  <!-- 未登录时的浏览提示 -->
-  <view class="browse-tip-card" wx:if="{{!isLoggedIn}}">
-    <view class="browse-tip-content">
+
+    <!-- 已登录但没有朋友圈 -->
+    <view class="empty-circle-content" wx:elif="{{isLoggedIn && circles.length === 0}}">
+      <text class="empty-title">还没有朋友圈</text>
+      <view class="empty-description">
+        <text>点击"创建朋友圈"按钮，邀请朋友一起开始吧！</text>
+      </view>
+      <button class="create-circle-btn" bindtap="createCircleDirectly">
+        创建朋友圈
+      </button>
+    </view>
+
+    <!-- 未登录时的浏览提示 -->
+    <view class="browse-tip-content" wx:elif="{{!isLoggedIn && !isLoading}}">
       <text class="tip-icon">👀</text>
       <text class="tip-title">浏览模式</text>
       <view class="tip-description">
         <text>你现在可以浏览内容，当你想要创建、点赞、评论时，系统会引导你快速登录</text>
       </view>
+      <button class="login-btn theme-btn-small" bindtap="handleUserAuth">
+        点击登录
+      </button>
+    </view>
+
+    <!-- 错误状态 -->
+    <view class="error-circle-content" wx:elif="{{hasError}}">
+      <text class="error-title">登录状态异常</text>
+      <view class="error-description">
+        <text>{{errorMessage || '请重新登录或重启应用'}}</text>
+      </view>
+      <button class="retry-btn theme-btn-small" bindtap="handleUserAuth">
+        重试
+      </button>
     </view>
   </view>
 
