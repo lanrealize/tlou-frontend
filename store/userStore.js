@@ -41,16 +41,6 @@ const userStore = observable({
         this._syncToStorage(data.userInfo);
         this._syncToGlobal(status, data.userInfo);
         console.log('✅ 已登录:', data.userInfo?.username);
-        // 调试：检查用户信息结构
-        console.log('🔍 用户信息结构检查:', {
-          hasId: !!data.userInfo?._id,
-          hasOpenid: !!data.userInfo?.openid,
-          hasIsAdmin: !!data.userInfo?.hasOwnProperty('isAdmin'),
-          isAdminValue: data.userInfo?.isAdmin,
-          userId: data.userInfo?._id,
-          userOpenid: data.userInfo?.openid,
-          allFields: Object.keys(data.userInfo || {})
-        });
         break;
         
       case USER_STATUS.ERROR:
@@ -323,16 +313,7 @@ const userStore = observable({
   get isAdmin() {
     // 检查真实身份或当前身份是否为admin
     const checkUser = this.realUserInfo || this.userInfo;
-    const result = checkUser?.isAdmin === true;
-    
-    // 临时调试：强制设置特定用户为管理员
-    // TODO: 删除此临时代码，确保后端正确返回isAdmin字段
-    if (checkUser && checkUser.username && checkUser.username.toLowerCase().includes('admin')) {
-      console.log('🔧 临时强制设置管理员权限 (请检查后端isAdmin字段)');
-      return true;
-    }
-    
-    return result;
+    return checkUser?.isAdmin === true;
   },
 
   get isVirtualIdentity() {

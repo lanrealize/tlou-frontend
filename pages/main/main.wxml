@@ -23,6 +23,8 @@
         <view class="admin-management-btn" wx:if="{{isAdmin && isLoggedIn}}" bindtap="goToManagement">
           <text class="management-icon">⚙️</text>
         </view>
+        
+
       </block>
       
       <!-- 未注册状态 -->
