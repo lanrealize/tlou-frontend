@@ -332,6 +332,50 @@
   min-width: 120rpx;
 }
 
+/* 历史记录模式特殊样式 */
+.circle-item.history-mode {
+  border-left: 4rpx solid #52c41a;
+  padding-left: 20rpx;
+}
+
+.circle-item.history-mode .circle-name {
+  color: #333;
+}
+
+.circle-item.history-mode .latest-post {
+  background-color: #f6ffed;
+  border: 1rpx solid #d9f7be;
+}
+
+.circle-item.history-mode .latest-post-title {
+  color: #52c41a;
+}
+
+/* 历史记录模式时间标签 */
+.meta-item.last-activity {
+  background-color: #f6ffed;
+  color: #52c41a;
+  padding: 6rpx 12rpx;
+  border-radius: 12rpx;
+  font-size: 22rpx;
+  border: 1rpx solid #d9f7be;
+}
+
+.meta-item.last-activity .icon {
+  color: #52c41a;
+}
+
+/* 历史记录模式进入按钮 */
+.action-btn.enter-btn {
+  background-color: #52c41a;
+}
+
+.action-btn.enter-btn .icon {
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 32rpx;
+}
+
 /* 响应式适配 */
 @media (max-width: 400px) {
   .circle-name-container {

@@ -257,7 +257,125 @@
   opacity: 0.5;
 }
 
+/* === 申请列表管理样式 === */
 
+.section-subtitle {
+  font-size: 24rpx;
+  color: #999;
+  font-weight: normal;
+  margin-left: 20rpx;
+}
+
+/* 申请者列表 */
+.applier-list {
+  margin-top: 30rpx;
+}
+
+.applier-item {
+  display: flex;
+  align-items: center;
+  padding: 25rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.applier-item:last-child {
+  border-bottom: none;
+}
+
+.applier-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  margin-right: 24rpx;
+  border: 2rpx solid #f0f0f0;
+}
+
+.applier-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.applier-name {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 8rpx;
+}
+
+.applier-time {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.applier-actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.action-btn {
+  min-width: 100rpx;
+  height: 60rpx;
+  padding: 0 24rpx;
+  border-radius: 30rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.action-btn::after {
+  border: none;
+}
+
+.approve-btn {
+  background-color: #4caf50;
+  color: #fff;
+}
+
+.approve-btn:active {
+  background-color: #45a049;
+  transform: scale(0.98);
+}
+
+.reject-btn {
+  background-color: #f44336;
+  color: #fff;
+}
+
+.reject-btn:active {
+  background-color: #da190b;
+  transform: scale(0.98);
+}
+
+.action-btn.disabled {
+  opacity: 0.7;
+  transform: none;
+}
+
+/* 加载和空状态 */
+.loading-appliers {
+  text-align: center;
+  padding: 40rpx 0;
+}
+
+.loading-text {
+  font-size: 26rpx;
+  color: #999;
+}
+
+.empty-appliers {
+  text-align: center;
+  padding: 60rpx 0;
+}
+
+.empty-appliers .empty-text {
+  font-size: 26rpx;
+  color: #ccc;
+}
 
 /* 响应式适配 */
 @media (max-width: 400px) {

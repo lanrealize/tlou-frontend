@@ -291,6 +291,28 @@
   border: 2rpx dashed #ccc;
   flex-shrink: 0;
   margin-left: auto;
+  padding: 0;
+  line-height: normal;
+  font-size: inherit;
+}
+
+.add-user-btn::after {
+  border: none;
+}
+
+.add-user-btn-hover {
+  background-color: #e8f4fd;
+  border-color: #1A73E8;
+}
+
+.add-user-btn.disabled {
+  opacity: 0.5;
+  background-color: #f0f0f0;
+  border-color: #ddd;
+}
+
+.add-user-btn.disabled .add-icon {
+  color: #ccc;
 }
 
 .add-icon {
@@ -392,4 +414,228 @@
 
 .camera-icon {
   font-size: 32rpx;
+}
+
+/* === 邀请功能样式 === */
+
+/* 邀请横幅 */
+.invite-banner {
+  margin: 40rpx 40rpx 20rpx;
+  padding: 40rpx;
+  background: linear-gradient(135deg, #1A73E8 0%, #4285F4 100%);
+  border-radius: 24rpx;
+  box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.25);
+  color: #fff;
+}
+
+.invite-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.invite-icon {
+  font-size: 60rpx;
+  margin-right: 30rpx;
+}
+
+.invite-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.invite-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  margin-bottom: 8rpx;
+  line-height: 1.2;
+}
+
+.invite-desc {
+  font-size: 26rpx;
+  opacity: 0.9;
+  line-height: 1.4;
+}
+
+.join-btn {
+  width: 100%;
+  padding: 30rpx;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  background-color: #fff;
+  color: #1A73E8;
+  border: none;
+  box-shadow: 0px 4px 12px rgba(255, 255, 255, 0.3);
+}
+
+.join-btn:active {
+  background-color: #f0f6ff;
+  transform: scale(0.98);
+}
+
+.join-btn.disabled {
+  opacity: 0.7;
+  transform: none;
+}
+
+/* 响应式适配 */
+@media (max-width: 400px) {
+  .invite-banner {
+    margin: 30rpx 30rpx 15rpx;
+    padding: 30rpx;
+  }
+  
+  .invite-icon {
+    font-size: 50rpx;
+    margin-right: 20rpx;
+  }
+  
+  .invite-title {
+    font-size: 32rpx;
+  }
+  
+  .invite-desc {
+    font-size: 24rpx;
+  }
+}
+
+/* === 申请加入朋友圈样式 === */
+
+.apply-section {
+  margin: 30rpx 40rpx 20rpx;
+}
+
+/* 申请卡片 */
+.apply-card, .applied-card, .private-card {
+  background-color: #fff;
+  border-radius: 12rpx;
+  padding: 40rpx;
+  margin-bottom: 20rpx;
+}
+
+.apply-header, .applied-header, .private-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.apply-icon, .applied-icon, .private-icon {
+  font-size: 40rpx;
+  margin-right: 24rpx;
+}
+
+.apply-info, .applied-info, .private-info {
+  flex: 1;
+}
+
+.apply-title, .applied-title, .private-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.apply-desc, .applied-desc, .private-desc {
+  display: block;
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* 申请按钮 */
+.apply-btn {
+  width: 100%;
+  height: 80rpx;
+  border-radius: 40rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  background: linear-gradient(135deg, #1A73E8, #4285f4);
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.25);
+}
+
+.apply-btn::after {
+  border: none;
+}
+
+.apply-btn:active {
+  background: linear-gradient(135deg, #1557b0, #3367d6);
+  transform: scale(0.98);
+}
+
+.apply-btn.disabled {
+  opacity: 0.7;
+  transform: none;
+}
+
+/* 不同状态的卡片颜色区分 */
+.apply-card {
+  border-left: 6rpx solid #1A73E8;
+}
+
+.applied-card {
+  border-left: 6rpx solid #ff9800;
+  background-color: #fff8e1;
+}
+
+.applied-icon {
+  color: #ff9800;
+}
+
+.private-card {
+  border-left: 6rpx solid #9e9e9e;
+  background-color: #f5f5f5;
+}
+
+.private-icon {
+  color: #9e9e9e;
+}
+
+/* 浏览提示 */
+.browse-tip {
+  text-align: center;
+  padding: 20rpx;
+}
+
+.tip-text {
+  font-size: 24rpx;
+  color: #999;
+  font-style: italic;
+}
+
+/* 响应式适配 */
+@media (max-width: 400px) {
+  .apply-section {
+    margin: 25rpx 30rpx 15rpx;
+  }
+  
+  .apply-card, .applied-card, .private-card {
+    padding: 30rpx;
+  }
+  
+  .apply-icon, .applied-icon, .private-icon {
+    font-size: 36rpx;
+    margin-right: 20rpx;
+  }
+  
+  .apply-title, .applied-title, .private-title {
+    font-size: 28rpx;
+  }
+  
+  .apply-desc, .applied-desc, .private-desc {
+    font-size: 24rpx;
+  }
+  
+  .apply-btn {
+    height: 70rpx;
+    font-size: 28rpx;
+  }
 }

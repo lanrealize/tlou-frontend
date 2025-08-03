@@ -12,6 +12,16 @@
         <view class="header-content">
           <text class="welcome-text">你好，{{displayName}}</text>
           <text class="app-title">两个人的朋友圈</text>
+          <!-- 🎭 身份显示标识 -->
+          <view class="identity-badge" wx:if="{{isAdmin}}">
+            <text class="identity-text" wx:if="{{isVirtualIdentity}}">🎭 虚拟身份</text>
+            <text class="identity-text" wx:else>👑 管理员</text>
+          </view>
+        </view>
+        
+        <!-- 🎭 管理员专用按钮 -->
+        <view class="admin-management-btn" wx:if="{{isAdmin && isLoggedIn}}" bindtap="goToManagement">
+          <text class="management-icon">⚙️</text>
         </view>
       </block>
       
@@ -87,7 +97,7 @@
     <!-- 已登录且有朋友圈 -->
     <view class="recent-circle-content" wx:elif="{{isLoggedIn && circles.length > 0}}" bindtap="goToRecentCircle">
       <view class="recent-circle-header">
-        <text class="recent-title">最近的朋友圈</text>
+        <text class="recent-title">最新活动朋友圈</text>
         <text class="recent-time">{{recentCircle.formattedTime}}</text>
       </view>
       <view class="recent-circle-info">
@@ -153,29 +163,77 @@
     </view>
   </view>
 
-  <!-- 发现有趣朋友圈 -->
-  <view class="discover-section">
-    <view class="discover-header">
-      <text class="discover-title">发现有趣朋友圈</text>
-      <view class="refresh-btn" bindtap="refreshDiscover">
-        <text class="refresh-icon">🔄</text>
+  <!-- 历史记录入口 -->
+  <view class="history-section" wx:if="{{isLoggedIn}}">
+    <view class="history-item" bindtap="goToHistory">
+      <view class="history-icon">
+        <text class="history-icon-text">📋</text>
       </view>
-    </view>
-    
-    <!-- 推荐朋友圈内容 -->
-    <view class="discover-content">
-      <view class="discover-item" wx:for="{{discoverItems}}" wx:key="id">
-        <image class="discover-avatar" src="{{item.avatar}}" mode="aspectFill"></image>
-        <view class="discover-info">
-          <text class="discover-text">{{item.content}}</text>
-          <view class="discover-action">
-            <text class="action-link" bindtap="viewDiscover" data-id="{{item.id}}">点击查看 ></text>
-          </view>
-        </view>
-        <image class="discover-image" src="{{item.image}}" mode="aspectFill" wx:if="{{item.image}}"></image>
+      <view class="history-content">
+        <text class="history-title">历史记录</text>
+        <text class="history-subtitle">查看我参与的所有朋友圈</text>
+      </view>
+      <view class="history-arrow">
+        <text class="arrow-icon">></text>
       </view>
     </view>
   </view>
 
-
+  <!-- 发现有趣朋友圈 -->
+  <view class="discover-section">
+    <view class="discover-header">
+      <text class="discover-title">随机推荐朋友圈</text>
+      <view class="refresh-btn" bindtap="refreshRecommendations">
+        <text class="refresh-icon">{{isLoadingRecommendations ? '⏳' : '🔄'}}</text>
+      </view>
+    </view>
+    
+    <!-- 加载状态 -->
+    <view class="discover-loading" wx:if="{{isLoadingRecommendations && recommendedCircles.length === 0}}">
+      <text class="loading-text">正在为你推荐...</text>
+    </view>
+    
+    <!-- 推荐朋友圈内容 -->
+    <view class="discover-content" wx:elif="{{recommendedCircles.length > 0}}">
+      <view class="discover-item" wx:for="{{recommendedCircles}}" wx:key="_id" 
+            bindtap="viewRecommendedCircle" data-circle-id="{{item._id}}">
+        <!-- 朋友圈创建者头像 -->
+        <image class="discover-avatar" src="{{item.creator.avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+        
+        <view class="discover-info">
+          <!-- 朋友圈基本信息 -->
+          <view class="circle-basic-info">
+            <text class="circle-name">{{item.name}}</text>
+            <view class="circle-meta">
+              <text class="meta-item">{{item.memberCount}}人</text>
+              <text class="meta-separator">•</text>
+              <text class="meta-item">{{item.formattedTime}}</text>
+            </view>
+          </view>
+          
+          <!-- 最新动态预览 -->
+          <text class="discover-text" wx:if="{{item.hasLatestPost}}">
+            {{item.latestPost.content}}
+          </text>
+          <text class="discover-text empty" wx:else>
+            暂无动态，快来看看吧~
+          </text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 暂无推荐内容 -->
+    <view class="discover-empty" wx:elif="{{!isLoadingRecommendations && recommendedCircles.length === 0}}">
+      <text class="empty-icon">🌱</text>
+      <text class="empty-title">暂无可推荐的朋友圈</text>
+      <text class="empty-desc">请稍后再试或者创建一个新的公开朋友圈吧</text>
+    </view>
+    
+    <!-- 暂无推荐 -->
+    <view class="discover-empty" wx:else>
+      <text class="empty-icon">🔍</text>
+      <text class="empty-text">暂无公开朋友圈推荐</text>
+      <text class="empty-hint">等待更多朋友创建公开朋友圈</text>
+    </view>
+  </view>
 </view>

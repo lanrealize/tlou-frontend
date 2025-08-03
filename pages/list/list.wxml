@@ -12,9 +12,9 @@
       </view>
     </view>
     <view class="toolbar-title">
-      <text>我的朋友圈</text>
+      <text>{{pageTitle}}</text>
     </view>
-    <view class="toolbar-actions">
+    <view class="toolbar-actions" wx:if="{{!isHistoryMode}}">
       <button class="btn btn-primary btn-small" bindtap="showCreateDialog">
         <text class="icon">+</text>
         <text>创建</text>
@@ -34,7 +34,7 @@
   <!-- 朋友圈列表 -->
   <scroll-view class="circles-container" scroll-y="true" enable-back-to-top="true" wx:else>
     <view class="circles-list">
-      <view class="circle-item card" 
+      <view class="circle-item card {{isHistoryMode ? 'history-mode' : ''}}" 
             wx:for="{{circles}}" 
             wx:key="_id"
             bindtap="viewCirclePosts"
@@ -61,14 +61,23 @@
               </text>
               <text class="meta-item">
                 <text class="icon">📅</text>
-                {{item.formattedTime}}
+                {{isHistoryMode ? item.lastUpdateFormatted : item.formattedTime}}
+              </text>
+              <text class="meta-item last-activity" wx:if="{{isHistoryMode}}">
+                <text class="icon">🕐</text>
+                最后活动
               </text>
             </view>
           </view>
           
           <!-- 朋友圈操作 -->
           <view class="circle-actions">
-            <view class="action-btn" bindtap="copyCircleId" data-circle-id="{{item._id}}" catchtap="true">
+            <!-- 历史记录模式显示进入图标 -->
+            <view class="action-btn enter-btn" wx:if="{{isHistoryMode}}">
+              <text class="icon">→</text>
+            </view>
+            <!-- 普通模式显示复制按钮 -->
+            <view class="action-btn" wx:else bindtap="copyCircleId" data-circle-id="{{item._id}}" catchtap="true">
               <text class="icon">📋</text>
             </view>
           </view>
@@ -106,10 +115,10 @@
 
     <!-- 空状态 -->
     <view class="empty-state" wx:if="{{circles.length === 0 && !loading}}">
-      <view class="empty-icon">🌟</view>
-      <view class="empty-text">还没有朋友圈</view>
-      <view class="empty-desc">创建一个朋友圈，开始分享生活吧</view>
-      <view class="empty-actions">
+      <view class="empty-icon">{{isHistoryMode ? '📋' : '🌟'}}</view>
+      <view class="empty-text">{{isHistoryMode ? '暂无历史记录' : '还没有朋友圈'}}</view>
+      <view class="empty-desc">{{isHistoryMode ? '当你参与朋友圈后，记录会显示在这里' : '创建一个朋友圈，开始分享生活吧'}}</view>
+      <view class="empty-actions" wx:if="{{!isHistoryMode}}">
         <button class="btn btn-primary" bindtap="showCreateDialog">创建朋友圈</button>
         <button class="btn btn-secondary" bindtap="showJoinDialog">加入朋友圈</button>
       </view>
@@ -117,7 +126,7 @@
   </scroll-view>
 
   <!-- 创建朋友圈对话框 -->
-  <view class="modal-overlay" wx:if="{{showCreateDialog}}" bindtap="hideCreateDialog">
+  <view class="modal-overlay" wx:if="{{showCreateDialog && !isHistoryMode}}" bindtap="hideCreateDialog">
     <view class="modal-content" catchtap="true">
       <view class="modal-header">
         <text class="modal-title">创建朋友圈</text>
@@ -159,7 +168,7 @@
   </view>
 
   <!-- 加入朋友圈对话框 -->
-  <view class="modal-overlay" wx:if="{{showJoinDialog}}" bindtap="hideJoinDialog">
+  <view class="modal-overlay" wx:if="{{showJoinDialog && !isHistoryMode}}" bindtap="hideJoinDialog">
     <view class="modal-content" catchtap="true">
       <view class="modal-header">
         <text class="modal-title">加入朋友圈</text>

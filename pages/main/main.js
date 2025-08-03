@@ -10,7 +10,7 @@ Page({
   
   data: {
     circles: [],          // 朋友圈列表
-    recentCircle: null,   // 最近的朋友圈（用于首页卡片显示）
+    recentCircle: null,   // 最新活动的朋友圈（用于首页卡片显示）
     currentCircleId: '',  // 当前选中的朋友圈ID
     posts: [],            // 帖子列表
     loading: false,       // 加载状态
@@ -26,14 +26,9 @@ Page({
     lastCirclesLoadTime: 0,     // 上次加载朋友圈的时间戳
     circlesLoadThrottle: 3000,  // 节流时间（3秒）
     
-    discoverItems: [      // 发现内容
-      {
-        id: 1,
-        avatar: '/images/default_avatar.png',
-        content: '现在上车了，很久没有这样火车旅行，期待你睡。',
-        image: '/images/default_avatar.png'
-      }
-    ],
+    // 公开朋友圈推荐
+    recommendedCircles: [],         // 推荐的公开朋友圈列表
+    isLoadingRecommendations: false, // 是否正在加载推荐
     // 安全区域信息
     safeAreaInfo: {
       statusBarHeight: 44,
@@ -104,12 +99,24 @@ Page({
         isLoggedIn: 'isLoggedIn',          // 是否已登录
         hasError: 'hasError',              // 是否有错误
         displayName: 'displayName',        // 用户显示名称
-        avatarUrl: 'avatarUrl'             // 用户头像URL
+        avatarUrl: 'avatarUrl',            // 用户头像URL
+        
+        // 🎭 虚拟身份相关状态
+        isAdmin: 'isAdmin',                // 是否为管理员
+        isVirtualIdentity: 'isVirtualIdentity', // 是否为虚拟身份
+        currentIdentityType: 'currentIdentityType', // 当前身份类型
+        adminDisplayInfo: 'adminDisplayInfo'     // admin展示信息
       },
       actions: {
         // 绑定actions到页面方法
         performUserRegistration: 'performUserRegistration',
-        logout: 'logout'
+        logout: 'logout',
+        
+        // 🎭 虚拟身份管理方法
+        loadVirtualUsers: 'loadVirtualUsers',
+        switchToVirtualIdentity: 'switchToVirtualIdentity',
+        switchToRealIdentity: 'switchToRealIdentity',
+        createVirtualUser: 'createVirtualUser'
       }
     });
   },
@@ -122,10 +129,7 @@ Page({
     const currentPage = pages[pages.length - 1];
     const prevPage = pages[pages.length - 2];
     
-    console.log('📄 当前页面栈:', pages.map(p => p.route));
-    
     if (prevPage && prevPage.route === 'pages/userInfo/userInfo') {
-      console.log('🔄 从用户信息页面返回，刷新用户状态');
       // 刷新用户状态，检查是否注册成功
       const app = getApp();
       const userStore = app.getUserStore();
@@ -138,12 +142,9 @@ Page({
     const globalUserInfo = app.globalData.userInfo;
     const globalLoginStatus = app.globalData.loginStatus;
     
-    console.log('🔍 用户状态检查 - 全局状态:', globalLoginStatus, 'Store状态:', userStore.loginStatus, '本地状态:', this.data.isLoggedIn);
-    
     // 如果全局状态和store状态不一致，同步一下
     if (globalLoginStatus === 'loggedIn' && globalUserInfo && 
         (userStore.loginStatus !== 'loggedIn' || !userStore.userInfo)) {
-      console.log('🔄 检测到状态不同步，正在同步用户状态');
       const { USER_STATUS } = require('../../store/userStore');
       userStore.setStatus(USER_STATUS.LOGGEDIN, { userInfo: globalUserInfo });
     }
@@ -152,16 +153,37 @@ Page({
     const shouldLoadData = this.data.isLoggedIn || 
                           globalLoginStatus === 'loggedIn' || 
                           userStore.isLoggedIn;
-                          
-    console.log('🎯 登录状态检查结果 - 本地:', this.data.isLoggedIn, '全局:', globalLoginStatus === 'loggedIn', 'Store:', userStore.isLoggedIn, '最终结果:', shouldLoadData);
     
     if (shouldLoadData) {
-      console.log('✅ 用户已登录，开始加载朋友圈数据');
-      // 使用节流机制加载朋友圈列表，避免频繁请求
-      this.loadCirclesWithThrottle();
-    } else {
-      console.log('❌ 用户未登录，跳过数据加载');
+      // 检查是否从其他可能产生活动的页面返回，如果是则刷新获取最新排序
+      const isFromInteractionPage = prevPage && (
+        prevPage.route === 'pages/details/details' || 
+        prevPage.route === 'pages/publish/publish' ||
+        prevPage.route === 'pages/list/list'
+      );
+      
+      if (isFromInteractionPage) {
+        // 如果是从列表页返回，可能刚进行了交互操作，稍微延迟刷新
+        const isFromListPage = prevPage && prevPage.route === 'pages/list/list';
+        if (isFromListPage) {
+          setTimeout(() => {
+            // 强制重置加载状态，确保不被节流阻止
+            this.setData({ 
+              isLoadingCircles: false,
+              lastCirclesLoadTime: 0 
+            });
+            this.loadCirclesWithThrottle(true);
+          }, 500);
+        } else {
+          this.loadCirclesWithThrottle(true);
+        }
+      } else {
+        this.loadCirclesWithThrottle();
+      }
     }
+    
+    // 加载公开朋友圈推荐（无论是否登录都可以查看）
+    this.loadRecommendations();
   },
 
   // 用户登录/注册处理
@@ -277,7 +299,7 @@ Page({
     });
   },
 
-  // 进入最近的朋友圈详情页面
+  // 进入最新活动朋友圈详情页面
   goToRecentCircle() {
     this.requireUserAuth(() => {
       if (this.data.recentCircle && this.data.recentCircle._id) {
@@ -344,21 +366,14 @@ Page({
     
     // 如果正在加载中，跳过（除非强制刷新）
     if (this.data.isLoadingCircles && !forceRefresh) {
-      console.log('⏱️ 朋友圈正在加载中，跳过重复请求');
       return;
     }
     
     // 如果距离上次加载时间小于节流时间，且不是强制刷新，跳过
     if (timeSinceLastLoad < this.data.circlesLoadThrottle && !forceRefresh) {
-      console.log(`⏱️ 距离上次加载仅${timeSinceLastLoad}ms，跳过请求（节流时间：${this.data.circlesLoadThrottle}ms）`);
       return;
     }
     
-    if (forceRefresh) {
-      console.log('🚀 执行朋友圈强制刷新');
-    } else {
-      console.log('🚀 执行朋友圈加载（节流检查通过）');
-    }
     this.loadCircles();
   },
 
@@ -373,10 +388,7 @@ Page({
                       globalLoginStatus === 'loggedIn' || 
                       userStore.isLoggedIn;
     
-    console.log('🔄 开始加载朋友圈列表 - 本地状态:', this.data.isLoggedIn, '全局状态:', globalLoginStatus, 'Store状态:', userStore.isLoggedIn, '最终状态:', isLoggedIn);
-    
     if (!isLoggedIn) {
-      console.log('❌ 用户未登录，跳过加载朋友圈');
       return;
     }
 
@@ -387,22 +399,15 @@ Page({
     });
 
     try {
-      console.log('📡 调用API获取朋友圈列表...');
       const res = await api.circles.getMyParticipated();
       const circles = res.data.circles || [];
       
-      console.log('✅ 朋友圈列表获取成功，数量:', circles.length);
-      console.log('📋 朋友圈列表:', circles.map(c => ({ id: c._id, name: c.name })));
-      
-      // 设置最近的朋友圈（第一个，因为后端按时间倒序）
+      // 后端已按最新活动时间排序，第一个就是最近活动的朋友圈
       const recentCircle = circles.length > 0 ? circles[0] : null;
       if (recentCircle) {
-        // 格式化最近朋友圈的时间
+        // 格式化最新活动朋友圈的时间
         recentCircle.formattedTime = util.formatRelativeTime(recentCircle.createdAt);
         recentCircle.memberCount = recentCircle.members ? recentCircle.members.length : 0;
-        console.log('📌 设置最近朋友圈:', recentCircle.name);
-      } else {
-        console.log('❌ 没有找到朋友圈');
       }
       
       this.setData({ 
@@ -410,8 +415,6 @@ Page({
         recentCircle,
         isLoadingCircles: false
       });
-      
-      console.log('✅ 数据更新完成，circles长度:', this.data.circles.length, '最近朋友圈:', this.data.recentCircle?.name);
       
       // 如果有朋友圈且没有选中的朋友圈，默认选择第一个
       if (circles.length > 0 && !this.data.currentCircleId) {
@@ -638,6 +641,27 @@ Page({
     });
   },
 
+  // 跳转到历史记录页面（需要登录）
+  goToHistory() {
+    this.requireUserAuth(() => {
+      wx.navigateTo({
+        url: '/pages/list/list?mode=history'
+      });
+    });
+  },
+
+  // 🎭 管理员功能 - 跳转到管理页面
+  goToManagement() {
+    if (!this.data.isAdmin) {
+      wx.showToast({ title: '需要管理员权限', icon: 'error' });
+      return;
+    }
+
+    wx.navigateTo({
+      url: '/pages/management/management'
+    });
+  },
+
   // 删除帖子（需要登录）
   async deletePost(e) {
     const { postId, index } = e.currentTarget.dataset;
@@ -660,5 +684,132 @@ Page({
         util.showToast('删除失败');
       }
     });
-  }
+  },
+
+  // === 公开朋友圈推荐功能 ===
+  
+  // 加载随机公开朋友圈推荐
+  async loadRecommendations() {
+    if (this.data.isLoadingRecommendations) {
+      return;
+    }
+
+    this.setData({ isLoadingRecommendations: true });
+
+    try {
+      console.log('🎲 开始加载随机公开朋友圈推荐');
+      
+      // 调用随机API获取单个公开朋友圈
+      const res = await api.circles.getRandomPublicCircle({
+        excludeVisited: 'true'  // 排除已访问的朋友圈
+      });
+
+      if (res.success) {
+        if (res.data.circle) {
+          // 有可用的朋友圈
+          const circle = res.data.circle;
+          
+          const formattedCircle = {
+            ...circle,
+            formattedTime: util.formatRelativeTime(circle.createdAt),
+            memberCount: circle.members ? circle.members.length : 0,
+            hasLatestPost: !!(circle.latestPost && circle.latestPost.content)
+          };
+
+          this.setData({
+            recommendedCircles: [formattedCircle]
+          });
+
+          console.log('✅ 随机公开朋友圈加载完成:', {
+            circleId: circle._id,
+            circleName: circle.name,
+            randomInfo: res.data.randomInfo
+          });
+        } else {
+          // 暂无可用的朋友圈（正常情况）
+          console.log('💭 暂无可用的公开朋友圈，这是正常情况');
+          this.setData({ recommendedCircles: [] });
+        }
+      } else {
+        console.warn('⚠️ API调用失败:', res.message);
+        this.setData({ recommendedCircles: [] });
+      }
+    } catch (error) {
+      console.error('❌ 加载随机公开朋友圈失败:', error);
+      this.setData({ recommendedCircles: [] });
+    } finally {
+      this.setData({ isLoadingRecommendations: false });
+    }
+  },
+
+  // 刷新推荐朋友圈（重置访问历史）
+  async refreshRecommendations() {
+    if (this.data.isLoadingRecommendations) {
+      return;
+    }
+
+    try {
+      console.log('🔄 刷新随机推荐（重置历史）');
+      
+      // 调用随机API并重置访问历史
+      this.setData({ isLoadingRecommendations: true });
+      
+      const res = await api.circles.getRandomPublicCircle({
+        excludeVisited: 'true',
+        resetHistory: 'true'  // 重置访问历史
+      });
+
+      if (res.success) {
+        if (res.data.circle) {
+          // 有新的朋友圈推荐
+          const circle = res.data.circle;
+          
+          const formattedCircle = {
+            ...circle,
+            formattedTime: util.formatRelativeTime(circle.createdAt),
+            memberCount: circle.members ? circle.members.length : 0,
+            hasLatestPost: !!(circle.latestPost && circle.latestPost.content)
+          };
+
+          this.setData({
+            recommendedCircles: [formattedCircle]
+          });
+
+          util.showToast('推荐已刷新');
+          console.log('✅ 刷新随机推荐成功:', circle.name);
+        } else {
+          // 暂无可推荐的朋友圈
+          this.setData({ recommendedCircles: [] });
+          util.showToast('暂无可推荐的朋友圈');
+          console.log('💭 刷新后仍无可用朋友圈');
+        }
+      } else {
+        console.warn('⚠️ 刷新API调用失败:', res.message);
+        util.showToast('刷新失败');
+      }
+    } catch (error) {
+      console.error('❌ 刷新随机推荐失败:', error);
+      util.showToast('刷新失败');
+    } finally {
+      this.setData({ isLoadingRecommendations: false });
+    }
+  },
+
+  // 查看推荐的朋友圈
+  viewRecommendedCircle(e) {
+    const { circleId } = e.currentTarget.dataset;
+    
+    if (!circleId) {
+      console.error('❌ 朋友圈ID缺失');
+      return;
+    }
+
+    console.log('👀 查看推荐朋友圈:', circleId);
+    
+    // 跳转到朋友圈详情页
+    wx.navigateTo({
+      url: `/pages/details/details?circleId=${circleId}&source=recommendation`
+    });
+  },
+
 });

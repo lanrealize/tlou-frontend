@@ -12,6 +12,8 @@ Page({
     newCircleIsPublic: false, // 新朋友圈是否公开
     showJoinDialog: false,    // 显示加入朋友圈对话框
     joinCircleId: '',         // 要加入的朋友圈ID
+    isHistoryMode: false,     // 是否是历史记录模式
+    pageTitle: '我的朋友圈',   // 页面标题
     // 安全区域信息
     safeAreaInfo: {
       statusBarHeight: 44
@@ -20,6 +22,16 @@ Page({
 
   onLoad(options) {
     console.log('朋友圈管理页面加载', options);
+    
+    // 检查是否是历史记录模式
+    const isHistoryMode = options.mode === 'history';
+    const pageTitle = isHistoryMode ? '历史记录' : '我的朋友圈';
+    
+    this.setData({
+      isHistoryMode,
+      pageTitle
+    });
+    
     this.getSafeAreaInfo();
     this.loadCircles();
   },
@@ -35,9 +47,22 @@ Page({
   },
 
   onShow() {
-    console.log('朋友圈管理页面显示');
-    // 每次显示时刷新数据
-    this.loadCircles();
+    // 检查是否从详情页返回，如果是则稍微延迟刷新，确保后端活动记录已更新
+    const pages = getCurrentPages();
+    const currentPage = pages[pages.length - 1];
+    const prevPage = pages[pages.length - 2];
+    
+    const isFromDetailsPage = prevPage && prevPage.route === 'pages/details/details';
+    
+    if (isFromDetailsPage) {
+      // 给后端一点时间更新用户活动记录
+      setTimeout(() => {
+        this.loadCircles();
+      }, 300);
+    } else {
+      // 每次显示时刷新数据
+      this.loadCircles();
+    }
   },
 
   // 下拉刷新
@@ -56,7 +81,15 @@ Page({
     this.setData({ loading: true });
 
     try {
-      const res = await api.circles.getMy();
+      let res;
+      if (this.data.isHistoryMode) {
+        // 历史记录模式：获取用户参与的所有朋友圈
+        res = await api.circles.getMyParticipated();
+      } else {
+        // 普通模式：获取我的朋友圈
+        res = await api.circles.getMy();
+      }
+      
       const circles = res.data.circles || [];
 
       // 格式化数据
@@ -68,7 +101,16 @@ Page({
         if (circle.latestPost) {
           circle.latestPost.formattedTime = util.formatRelativeTime(circle.latestPost.createdAt);
         }
+        
+        // 为历史记录模式格式化最后更新时间显示
+        if (this.data.isHistoryMode) {
+          circle.lastUpdateFormatted = util.formatRelativeTime(
+            circle.latestPost ? circle.latestPost.createdAt : circle.createdAt
+          );
+        }
       });
+
+      // 历史记录模式：后端已按最新活动时间排序，无需前端重新排序
 
       this.setData({
         circles,
@@ -232,13 +274,21 @@ Page({
   // 查看朋友圈动态
   viewCirclePosts(e) {
     const { circleId } = e.currentTarget.dataset;
-    // 切换到主页面并传递朋友圈ID
-    wx.switchTab({
-      url: '/pages/main/main'
-    });
     
-    // 通过全局数据传递选中的朋友圈ID
-    getApp().globalData.selectedCircleId = circleId;
+    if (this.data.isHistoryMode) {
+      // 历史记录模式：跳转到详情页面
+      wx.navigateTo({
+        url: `/pages/details/details?circleId=${circleId}`
+      });
+    } else {
+      // 普通模式：切换到主页面并传递朋友圈ID
+      wx.switchTab({
+        url: '/pages/main/main'
+      });
+      
+      // 通过全局数据传递选中的朋友圈ID
+      getApp().globalData.selectedCircleId = circleId;
+    }
   },
 
   // 复制朋友圈ID

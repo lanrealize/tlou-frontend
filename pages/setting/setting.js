@@ -27,6 +27,11 @@ Page({
     showAddMemberDialog: false,
     newMemberInput: '',
     
+    // 申请列表管理
+    appliers: [],                    // 申请者列表
+    isLoadingAppliers: false,        // 是否正在加载申请列表
+    isProcessingApplication: false,  // 是否正在处理申请
+    
     // 页面状态
     status: STATUS_CONSTANTS.LOADING,
     
@@ -149,6 +154,9 @@ Page({
   onShow() {
     console.log('朋友圈设置页面显示');
     this.loadCircleSettings();
+    
+    // 加载申请者列表（只有朋友圈主人才需要）
+    this.loadAppliers();
   },
 
   // 切换公开状态（乐观更新模式）
@@ -316,5 +324,161 @@ Page({
         });
       }
     });
+  },
+
+  // === 申请列表管理功能 ===
+  
+  // 加载申请者列表
+  async loadAppliers() {
+    if (this.data.isLoadingAppliers) {
+      return;
+    }
+
+    this.setData({ isLoadingAppliers: true });
+
+    try {
+      console.log('🔍 开始加载申请者列表');
+      
+      const res = await api.circles.getAppliers(this.data.circleId);
+      
+      if (res.success) {
+        const appliers = res.data.appliers || [];
+        
+        this.setData({
+          appliers: appliers
+        });
+
+        console.log('✅ 申请者列表加载完成:', appliers.length);
+      } else {
+        console.warn('⚠️ 加载申请者失败:', res.message);
+      }
+    } catch (error) {
+      console.error('❌ 加载申请者列表失败:', error);
+      wx.showToast({
+        title: '加载申请列表失败',
+        icon: 'none'
+      });
+    } finally {
+      this.setData({ isLoadingAppliers: false });
+    }
+  },
+
+  // 同意申请
+  async approveApplication(e) {
+    const { userId, username } = e.currentTarget.dataset;
+    
+    if (this.data.isProcessingApplication) {
+      return;
+    }
+
+    const confirm = await util.showConfirm(
+      `确定要同意 ${username} 的申请吗？`,
+      '同意申请'
+    );
+    if (!confirm) return;
+
+    this.setData({ isProcessingApplication: true });
+
+    try {
+      console.log('✅ 开始同意申请:', userId);
+
+      wx.showLoading({ title: '处理中...' });
+      
+      const res = await api.circles.approveApplication(this.data.circleId, userId);
+      
+      wx.hideLoading();
+      
+      if (res.success) {
+        wx.showToast({
+          title: '已同意申请',
+          icon: 'success'
+        });
+
+        // 从申请列表中移除该用户
+        const updatedAppliers = this.data.appliers.filter(applier => 
+          applier._id !== userId
+        );
+        this.setData({
+          appliers: updatedAppliers
+        });
+
+        // 重新加载朋友圈设置以更新成员列表
+        this.loadCircleSettings();
+
+        console.log('✅ 申请同意成功');
+      } else {
+        throw new Error(res.message || '同意申请失败');
+      }
+
+    } catch (error) {
+      wx.hideLoading();
+      console.error('❌ 同意申请失败:', error);
+      
+      wx.showModal({
+        title: '操作失败',
+        content: error.message || '同意申请失败，请稍后重试',
+        showCancel: false
+      });
+    } finally {
+      this.setData({ isProcessingApplication: false });
+    }
+  },
+
+  // 拒绝申请
+  async rejectApplication(e) {
+    const { userId, username } = e.currentTarget.dataset;
+    
+    if (this.data.isProcessingApplication) {
+      return;
+    }
+
+    const confirm = await util.showConfirm(
+      `确定要拒绝 ${username} 的申请吗？`,
+      '拒绝申请'
+    );
+    if (!confirm) return;
+
+    this.setData({ isProcessingApplication: true });
+
+    try {
+      console.log('❌ 开始拒绝申请:', userId);
+
+      wx.showLoading({ title: '处理中...' });
+      
+      const res = await api.circles.rejectApplication(this.data.circleId, userId);
+      
+      wx.hideLoading();
+      
+      if (res.success) {
+        wx.showToast({
+          title: '已拒绝申请',
+          icon: 'success'
+        });
+
+        // 从申请列表中移除该用户
+        const updatedAppliers = this.data.appliers.filter(applier => 
+          applier._id !== userId
+        );
+        this.setData({
+          appliers: updatedAppliers
+        });
+
+        console.log('✅ 申请拒绝成功');
+      } else {
+        throw new Error(res.message || '拒绝申请失败');
+      }
+
+    } catch (error) {
+      wx.hideLoading();
+      console.error('❌ 拒绝申请失败:', error);
+      
+      wx.showModal({
+        title: '操作失败',
+        content: error.message || '拒绝申请失败，请稍后重试',
+        showCancel: false
+      });
+    } finally {
+      this.setData({ isProcessingApplication: false });
+    }
   }
 });

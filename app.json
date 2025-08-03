@@ -5,7 +5,8 @@
     "pages/details/details",
     "pages/setting/setting",
     "pages/userInfo/userInfo",
-    "pages/publish/publish"
+    "pages/publish/publish",
+    "pages/management/management"
   ],
   "window": {
     "backgroundTextStyle": "light",

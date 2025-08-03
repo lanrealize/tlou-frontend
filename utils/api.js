@@ -116,7 +116,40 @@ class API {
     addMember: (circleId, data) => this.post(`/circles/${circleId}/members`, data),
     
     // 移除成员
-    removeMember: (circleId, memberId) => this.delete(`/circles/${circleId}/members/${memberId}`)
+    removeMember: (circleId, memberId) => this.delete(`/circles/${circleId}/members/${memberId}`),
+    
+    // === 申请加入功能 ===
+    // 申请加入朋友圈
+    applyToJoin: (circleId) => this.post(`/circles/${circleId}/apply`),
+    
+    // 同意申请（朋友圈主人操作）
+    approveApplication: (circleId, userId) => this.post(`/circles/${circleId}/approve/${userId}`),
+    
+    // 拒绝申请（朋友圈主人操作）
+    rejectApplication: (circleId, userId) => this.post(`/circles/${circleId}/reject/${userId}`),
+    
+    // 获取申请者列表（朋友圈主人查看）
+    getAppliers: (circleId) => this.get(`/circles/${circleId}/appliers`),
+    
+    // === 随机公开朋友圈推荐功能 ===
+    // 获取随机公开朋友圈（返回单个朋友圈）
+    getRandomPublicCircle: (params = {}) => this.get('/circles/random', params),
+
+    // === 邀请功能 ===
+    // 邀请用户加入
+    inviteUser: (circleId, userId) => this.post(`/circles/${circleId}/invite`, { userId }),
+    
+    // 接受邀请
+    acceptInvite: (circleId) => this.post(`/circles/${circleId}/accept-invite`),
+    
+    // 拒绝邀请  
+    declineInvite: (circleId) => this.post(`/circles/${circleId}/decline-invite`),
+    
+    // 取消邀请
+    cancelInvite: (circleId, userId) => this.delete(`/circles/${circleId}/invite/${userId}`),
+    
+    // 获取邀请列表
+    getInvitees: (circleId) => this.get(`/circles/${circleId}/invitees`)
   };
 
   // 帖子相关API
@@ -150,6 +183,21 @@ class API {
     
     // 用户注册
     register: (openid, username, avatar) => this.post('/wechat/register', { openid, username, avatar })
+  };
+
+  // 🎭 管理员相关API (虚拟用户管理)
+  admin = {
+    // 创建虚拟用户
+    createVirtualUser: (data) => this.post('/admin/virtual-users', data),
+    
+    // 获取虚拟用户列表
+    getVirtualUsers: () => this.get('/admin/virtual-users'),
+    
+    // 更新虚拟用户信息
+    updateVirtualUser: (userId, data) => this.put(`/admin/virtual-users/${userId}`, data),
+    
+    // 删除虚拟用户
+    deleteVirtualUser: (userId) => this.delete(`/admin/virtual-users/${userId}`)
   };
 }
 

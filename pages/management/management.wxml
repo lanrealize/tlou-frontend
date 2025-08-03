@@ -1,0 +1,107 @@
+<!--pages/management/management.wxml-->
+<view class="container">
+  <!-- 顶部标题 -->
+  <view class="header">
+    <text class="header-title">🎭 身份管理</text>
+    <text class="header-subtitle">管理员控制面板</text>
+  </view>
+
+  <!-- 当前身份信息 -->
+  <view class="current-identity-section">
+    <view class="section-title">当前身份</view>
+    <view class="identity-card {{isVirtualIdentity ? 'virtual' : 'real'}}">
+      <image class="identity-avatar" src="{{userInfo.avatar}}" mode="aspectFill"></image>
+      <view class="identity-info">
+        <text class="identity-name">{{userInfo.username}}</text>
+        <text class="identity-type">{{isVirtualIdentity ? '🎭 虚拟身份' : '👑 管理员'}}</text>
+      </view>
+      <view class="switch-btn" wx:if="{{isVirtualIdentity}}" 
+            bindtap="switchIdentity" data-type="real">
+        <text class="switch-text">切回管理员</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 创建虚拟用户 -->
+  <view class="create-section">
+    <view class="section-title">创建虚拟用户</view>
+    <view class="create-form">
+      <!-- 用户名输入 -->
+      <view class="form-item">
+        <text class="form-label">用户名</text>
+        <input class="form-input" 
+               value="{{newVirtualUser.username}}"
+               placeholder="请输入虚拟用户名"
+               bindinput="onUsernameInput"
+               maxlength="20" />
+      </view>
+      
+      <!-- 头像选择 -->
+      <view class="form-item">
+        <text class="form-label">选择头像</text>
+        <view class="avatar-grid">
+          <view class="avatar-option {{index === selectedAvatarIndex ? 'selected' : ''}}"
+                wx:for="{{avatarOptions}}" wx:key="index"
+                bindtap="selectAvatar" data-index="{{index}}">
+            <image class="avatar-img" src="{{item}}" mode="aspectFill"></image>
+            <view class="avatar-check" wx:if="{{index === selectedAvatarIndex}}">✓</view>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 创建按钮 -->
+      <button class="create-btn theme-btn {{isCreating || !newVirtualUser.username ? 'disabled' : ''}}"
+              bindtap="createVirtualUser"
+              disabled="{{isCreating || !newVirtualUser.username}}">
+        {{isCreating ? '创建中...' : '创建虚拟用户'}}
+      </button>
+    </view>
+  </view>
+
+  <!-- 虚拟用户列表 -->
+  <view class="virtual-users-section">
+    <view class="section-title">虚拟用户列表 ({{virtualUsers.length}})</view>
+    
+    <view class="users-list" wx:if="{{virtualUsers.length > 0}}">
+      <view class="user-item" wx:for="{{virtualUsers}}" wx:key="_id">
+        <image class="user-avatar" src="{{item.avatar}}" mode="aspectFill"></image>
+        <view class="user-info">
+          <text class="user-name">{{item.username}}</text>
+          <text class="user-meta">创建于 {{item.createdAt}}</text>
+        </view>
+        <view class="user-actions">
+          <button class="action-btn switch-btn-small"
+                  bindtap="switchIdentity" 
+                  data-type="virtual" 
+                  data-user="{{item}}">
+            切换
+          </button>
+          <button class="action-btn delete-btn-small"
+                  bindtap="deleteVirtualUser"
+                  data-user="{{item}}">
+            删除
+          </button>
+        </view>
+      </view>
+    </view>
+    
+    <view class="empty-state" wx:else>
+      <text class="empty-icon">👻</text>
+      <text class="empty-text">还没有虚拟用户</text>
+      <text class="empty-hint">创建第一个虚拟用户开始体验吧！</text>
+    </view>
+  </view>
+
+  <!-- 说明信息 -->
+  <view class="info-section">
+    <view class="info-card">
+      <text class="info-title">💡 使用说明</text>
+      <view class="info-content">
+        <text class="info-item">• 创建虚拟用户后可以切换身份体验</text>
+        <text class="info-item">• 虚拟身份下可以正常发帖、评论、点赞</text>
+        <text class="info-item">• 随时可以切换回管理员身份</text>
+        <text class="info-item">• 所有虚拟用户都归属于当前管理员</text>
+      </view>
+    </view>
+  </view>
+</view>

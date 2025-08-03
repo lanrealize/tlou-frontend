@@ -111,9 +111,14 @@ const checkLoginStatus = async () => {
     // 修复：后端返回的用户信息在 data.user 中
     const serverUserInfo = userInfoRes.data.data?.user || userInfoRes.data.data;
     
-    // 调试日志：打印后端返回的完整数据
-    console.log('🔍 后端返回的完整响应:', userInfoRes.data);
-    console.log('🔍 提取的用户信息:', serverUserInfo);
+    // 临时修复：确保管理员用户有正确的isAdmin字段
+    // TODO: 删除此临时代码，后端应该正确返回isAdmin字段
+    if (serverUserInfo && !serverUserInfo.hasOwnProperty('isAdmin')) {
+      // 临时解决方案：检查用户名是否包含admin
+      const isAdminUser = serverUserInfo.username?.toLowerCase().includes('admin');
+      serverUserInfo.isAdmin = isAdminUser;
+      console.log('🔧 临时设置isAdmin字段 (请检查后端实现):', isAdminUser, '用户:', serverUserInfo.username);
+    }
     
     // 5. 判断用户是否已注册
     if (serverUserInfo && serverUserInfo.username && serverUserInfo.avatar) {

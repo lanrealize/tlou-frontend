@@ -36,6 +36,52 @@
     </view>
   </view>
 
+  <!-- 申请管理（只有主人可见） -->
+  <view class="section-card card" wx:if="{{appliers.length > 0 || isLoadingAppliers}}">
+    <view class="section-header">
+      <text class="section-title">申请管理</text>
+      <text class="section-subtitle">{{appliers.length}}个待处理申请</text>
+    </view>
+    
+    <!-- 加载状态 -->
+    <view class="loading-appliers" wx:if="{{isLoadingAppliers}}">
+      <text class="loading-text">加载申请列表中...</text>
+    </view>
+    
+    <!-- 申请者列表 -->
+    <view class="applier-list" wx:else>
+      <view class="applier-item" wx:for="{{appliers}}" wx:key="_id">
+        <image class="applier-avatar" 
+               src="{{item.avatar || '/images/default_avatar.png'}}" 
+               mode="aspectFill" />
+        <view class="applier-info">
+          <text class="applier-name">{{item.username || '未知用户'}}</text>
+          <text class="applier-time">申请时间：刚刚</text>
+        </view>
+        <view class="applier-actions">
+          <button class="action-btn approve-btn {{isProcessingApplication ? 'disabled' : ''}}" 
+                  bindtap="approveApplication" 
+                  data-user-id="{{item._id}}"
+                  data-username="{{item.username}}"
+                  disabled="{{isProcessingApplication}}">
+            同意
+          </button>
+          <button class="action-btn reject-btn {{isProcessingApplication ? 'disabled' : ''}}" 
+                  bindtap="rejectApplication" 
+                  data-user-id="{{item._id}}"
+                  data-username="{{item.username}}"
+                  disabled="{{isProcessingApplication}}">
+            拒绝
+          </button>
+        </view>
+      </view>
+      
+      <view class="empty-appliers" wx:if="{{appliers.length === 0 && !isLoadingAppliers}}">
+        <text class="empty-text">暂无申请</text>
+      </view>
+    </view>
+  </view>
+
   <!-- 公开设置 -->
   <view class="section-card card">
     <view class="setting-item">

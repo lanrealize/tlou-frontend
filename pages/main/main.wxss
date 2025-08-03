@@ -170,6 +170,75 @@
   box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.1);
 }
 
+/* 历史记录区域 */
+.history-section {
+  background-color: #ffffff;
+  margin: 0 20rpx 20rpx;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.1);
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  transition: background-color 0.2s ease;
+}
+
+.history-item:active {
+  background-color: #f8f9fa;
+  border-radius: 12rpx;
+}
+
+.history-icon {
+  width: 60rpx;
+  height: 60rpx;
+  background-color: #52c41a;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20rpx;
+}
+
+.history-icon-text {
+  color: #ffffff;
+  font-size: 28rpx;
+}
+
+.history-content {
+  flex: 1;
+}
+
+.history-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 6rpx;
+}
+
+.history-subtitle {
+  display: block;
+  font-size: 22rpx;
+  color: #999;
+  line-height: 1.3;
+}
+
+.history-arrow {
+  width: 40rpx;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.arrow-icon {
+  font-size: 24rpx;
+  color: #999;
+  font-weight: 500;
+}
+
 .create-item {
   display: flex;
   align-items: center;
@@ -212,6 +281,7 @@
   line-height: 1.3;
 }
 
+/* 刷新按钮 */
 .refresh-btn {
   width: 60rpx;
   height: 60rpx;
@@ -220,12 +290,38 @@
   justify-content: center;
   background-color: #f8f8f8;
   border-radius: 50%;
-  margin-left: 20rpx;
 }
 
 .refresh-icon {
   font-size: 28rpx;
   color: #666;
+}
+
+/* 空状态样式 */
+.discover-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 40rpx;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 60rpx;
+  margin-bottom: 24rpx;
+}
+
+.empty-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 16rpx;
+}
+
+.empty-desc {
+  font-size: 24rpx;
+  color: #999;
+  line-height: 1.4;
 }
 
 /* 发现有趣朋友圈 */
@@ -649,5 +745,67 @@
   
   .login-text {
     font-size: 18rpx;
+  }
+}
+
+/* 🎭 Admin管理功能样式 */
+
+/* 身份标识徽章 */
+.identity-badge {
+  margin-top: 8rpx;
+  display: inline-block;
+}
+
+.identity-text {
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 12rpx;
+  background: linear-gradient(135deg, #1A73E8, #4285f4);
+  color: #ffffff;
+  font-weight: 500;
+  letter-spacing: 0.5rpx;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
+  box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.25);
+}
+
+/* 管理员按钮 */
+.admin-management-btn {
+  width: 64rpx;
+  height: 64rpx;
+  background: linear-gradient(135deg, #1A73E8, #4285f4);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 20rpx;
+  box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.25);
+  transition: all 0.2s ease;
+}
+
+.admin-management-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0px 0px 6px rgba(26, 115, 232, 0.4);
+}
+
+.management-icon {
+  font-size: 28rpx;
+  color: #ffffff;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
+}
+
+/* 响应式适配 - admin功能 */
+@media (max-width: 400px) {
+  .admin-management-btn {
+    width: 56rpx;
+    height: 56rpx;
+  }
+  
+  .management-icon {
+    font-size: 24rpx;
+  }
+  
+  .identity-text {
+    font-size: 18rpx;
+    padding: 3rpx 10rpx;
   }
 }
