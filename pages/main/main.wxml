@@ -1,241 +1,140 @@
 <!--pages/main/main.wxml-->
-<view class="container">
+<view class="page-container">
   <!-- 状态栏占位 -->
   <view class="status-bar" style="height: {{safeAreaInfo.statusBarHeight}}px;"></view>
   
-  <!-- 顶部用户信息区域 -->
-  <view class="header-section">
-    <view class="user-header">
-      <!-- 已登录状态 -->
-      <block wx:if="{{loginStatus === 'loggedIn'}}">
-        <image class="user-avatar" src="{{avatarUrl}}" mode="aspectFill"></image>
-        <view class="header-content">
-          <text class="welcome-text">你好，{{displayName}}</text>
-          <text class="app-title">两个人的朋友圈</text>
-          <!-- 🎭 身份显示标识 -->
-          <view class="identity-badge" wx:if="{{isAdmin}}">
-            <text class="identity-text" wx:if="{{isVirtualIdentity}}">🎭 虚拟身份</text>
-            <text class="identity-text" wx:else>👑 管理员</text>
-          </view>
-        </view>
-        
-        <!-- 🎭 管理员专用按钮 -->
-        <view class="admin-management-btn" wx:if="{{isAdmin && isLoggedIn}}" bindtap="goToManagement">
-          <text class="management-icon">⚙️</text>
-        </view>
-        
-
-      </block>
-      
-      <!-- 未注册状态 -->
-      <block wx:elif="{{loginStatus === 'unregistered'}}">
-        <view class="login-avatar-container" bindtap="handleUserAuth">
-          <image class="user-avatar login-avatar" src="/images/default_avatar.png" mode="aspectFill"></image>
-          <view class="login-overlay">
-            <text class="login-text">点击登录</text>
-          </view>
-        </view>
-        <view class="header-content">
-          <text class="welcome-text">欢迎来到</text>
-          <text class="app-title">两个人的朋友圈</text>
-        </view>
-      </block>
-      
-      <!-- 错误状态 -->
-      <block wx:elif="{{loginStatus === 'error'}}">
-        <view class="error-avatar-container" bindtap="handleUserAuth">
-          <image class="user-avatar error-avatar" src="/images/default_avatar.png" mode="aspectFill"></image>
-          <view class="error-overlay">
-            <text class="error-text">⚠️</text>
-          </view>
-        </view>
-        <view class="header-content">
-          <text class="welcome-text error-text">登录异常</text>
-          <text class="app-title">点击处理</text>
-        </view>
-      </block>
-      
-      <!-- 加载状态 -->
-      <block wx:else>
-        <view class="loading-avatar-container">
-          <image class="user-avatar loading-avatar" src="/images/default_avatar.png" mode="aspectFill"></image>
-          <view class="loading-overlay">
-            <text class="loading-text">🔄</text>
-          </view>
-        </view>
-        <view class="header-content">
-          <text class="welcome-text">检查中...</text>
-          <text class="app-title">两个人的朋友圈</text>
-        </view>
-      </block>
-      
-
+  <!-- 头部区域 -->
+  <view class="header">
+    <!-- 用户头像 -->
+    <block wx:if="{{loginStatus === 'loggedIn'}}">
+      <image class="avatar-main" src="{{avatarUrl}}" mode="aspectFill"></image>
+    </block>
+    <block wx:elif="{{loginStatus === 'unregistered'}}">
+      <view class="avatar-main" bindtap="handleUserAuth" style="background-image: url(/images/default_avatar.png);"></view>
+    </block>
+    <block wx:elif="{{loginStatus === 'error'}}">
+      <view class="avatar-main error-avatar" bindtap="handleUserAuth" style="background-image: url(/images/default_avatar.png);"></view>
+    </block>
+    <block wx:else>
+      <view class="avatar-main loading-avatar" style="background-image: url(/images/default_avatar.png);"></view>
+    </block>
+    
+    <!-- 标题组 -->
+    <view class="title-group">
+      <view class="welcome-text">
+        <block wx:if="{{loginStatus === 'loggedIn'}}">你好，{{displayName}}</block>
+        <block wx:elif="{{loginStatus === 'unregistered'}}">欢迎来到</block>
+        <block wx:elif="{{loginStatus === 'error'}}">登录异常</block>
+        <block wx:else>检查中...</block>
+      </view>
+      <view class="title-text">两个人的朋友圈</view>
     </view>
     
-    <!-- 状态指示器 -->
-    <view class="status-indicator" wx:if="{{loginStatus !== 'loggedIn'}}">
-      <block wx:if="{{loginStatus === 'loading'}}">
-        <text class="status-text loading">🔄 正在检查登录状态...</text>
-      </block>
-      <block wx:elif="{{loginStatus === 'unregistered'}}">
-        <text class="status-text unregistered">👻 你可以浏览内容，点击感兴趣的功能登录</text>
-      </block>
-      <block wx:elif="{{loginStatus === 'error'}}">
-        <text class="status-text error">❌ {{errorMessage || '登录状态异常，点击上方头像处理'}}</text>
-      </block>
-    </view>
+    <!-- 管理员设置按钮 -->
+    <view class="admin-btn" wx:if="{{isAdmin && isLoggedIn}}" bindtap="goToManagement">管理员设置</view>
   </view>
 
-  <!-- 朋友圈状态卡片 -->
-  <view class="circle-status-card">
-    <!-- 加载状态 -->
-    <view class="loading-circle-content" wx:if="{{isLoading}}">
-      <text class="loading-title">正在检查登录状态...</text>
-      <view class="loading-description">
-        <text>请稍等，正在为您加载内容</text>
+  <!-- 朋友圈卡片 -->
+  <view class="friend-circle-card" wx:if="{{!isLoading && isLoggedIn && circles.length > 0}}" bindtap="goToRecentCircle">
+    <view class="card-bg"></view>
+    <view class="card-title">最近的朋友圈</view>
+    <view class="user-count">
+      <text>有 {{recentCircle.memberCount}} 名用户在内</text>
+      <!-- 用户头像组 -->
+      <view class="avatar-group">
+        <image class="avatar-small-1" wx:if="{{recentCircle.members[0]}}" src="{{recentCircle.members[0].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+        <image class="avatar-small-2" wx:if="{{recentCircle.members[1]}}" src="{{recentCircle.members[1].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
       </view>
     </view>
+    <view class="status-tag">
+      <text>查看详情</text>
+      <image class="status-icon" src="/assets/icons/right.svg" mode="aspectFit"></image>
+    </view>
+    <view class="update-time">最新内容更新于： {{recentCircle.formattedTime}}</view>
+  </view>
 
-    <!-- 已登录且有朋友圈 -->
-    <view class="recent-circle-content" wx:elif="{{isLoggedIn && circles.length > 0}}" bindtap="goToRecentCircle">
-      <view class="recent-circle-header">
-        <text class="recent-title">最新活动朋友圈</text>
-        <text class="recent-time">{{recentCircle.formattedTime}}</text>
-      </view>
-      <view class="recent-circle-info">
-        <text class="circle-name">{{recentCircle.name}}</text>
-        <view class="circle-meta">
-          <text class="meta-item">{{recentCircle.memberCount}}人</text>
-          <text class="meta-item">{{recentCircle.isPublic ? '公开' : '私密'}}</text>
+  <!-- 空状态朋友圈卡片 -->
+  <view class="empty-state-card" wx:elif="{{!isLoading && isLoggedIn && circles.length === 0}}">
+    <view class="empty-bg"></view>
+    <view class="empty-title">没有正在进行的朋友圈</view>
+    <view class="empty-desc">点击"创建朋友圈"按钮，邀请朋友或扫一扫开始吧</view>
+    <view class="divider"></view>
+    <view class="create-btn" bindtap="createCircleDirectly">创建朋友圈</view>
+  </view>
+
+  <!-- 未登录提示卡片 -->
+  <view class="browse-tip-card" wx:elif="{{!isLoading && !isLoggedIn}}">
+    <view class="empty-bg"></view>
+    <view class="empty-title">浏览模式</view>
+    <view class="empty-desc">你可以浏览内容，点击感兴趣的功能时会引导登录</view>
+    <view class="divider"></view>
+    <view class="create-btn" bindtap="handleUserAuth">点击登录</view>
+  </view>
+
+  <!-- 创建区域和历史记录功能 -->
+  <view class="action-row">
+    <!-- 创建新朋友圈 -->
+    <view class="create-section" bindtap="createCircleDirectly">
+      <view class="create-bg"></view>
+      <view class="create-content">
+        <view class="scan-icon">
+          <image src="/assets/icons/add.svg" mode="aspectFit"></image>
+        </view>
+        <view class="create-text-container">
+          <view class="create-title">创建新的朋友圈</view>
+          <view class="create-desc">邀请朋友"扫一扫"一起开始吧</view>
         </view>
       </view>
-      <view class="recent-circle-action">
-        <text class="action-text">点击进入 ></text>
-      </view>
     </view>
 
-    <!-- 已登录但没有朋友圈 -->
-    <view class="empty-circle-content" wx:elif="{{isLoggedIn && circles.length === 0}}">
-      <text class="empty-title">还没有朋友圈</text>
-      <view class="empty-description">
-        <text>点击"创建朋友圈"按钮，邀请朋友一起开始吧！</text>
-      </view>
-      <button class="create-circle-btn" bindtap="createCircleDirectly">
-        创建朋友圈
-      </button>
-    </view>
-
-    <!-- 未登录时的浏览提示 -->
-    <view class="browse-tip-content" wx:elif="{{!isLoggedIn && !isLoading}}">
-      <text class="tip-icon">👀</text>
-      <text class="tip-title">浏览模式</text>
-      <view class="tip-description">
-        <text>你现在可以浏览内容，当你想要创建、点赞、评论时，系统会引导你快速登录</text>
-      </view>
-      <button class="login-btn theme-btn-small" bindtap="handleUserAuth">
-        点击登录
-      </button>
-    </view>
-
-    <!-- 错误状态 -->
-    <view class="error-circle-content" wx:elif="{{hasError}}">
-      <text class="error-title">登录状态异常</text>
-      <view class="error-description">
-        <text>{{errorMessage || '请重新登录或重启应用'}}</text>
-      </view>
-      <button class="retry-btn theme-btn-small" bindtap="handleUserAuth">
-        重试
-      </button>
-    </view>
-  </view>
-
-  <!-- 创建新朋友圈区域 -->
-  <view class="create-section">
-    <view class="create-item" bindtap="createCircleDirectly">
-      <view class="create-icon">
-        <text class="plus-icon">+</text>
-      </view>
-      <view class="create-content">
-        <text class="create-title">创建新的朋友圈</text>
-        <text class="create-subtitle">邀请朋友"归一归"一起开始吧!</text>
-      </view>
-    </view>
-    <view class="refresh-btn" bindtap="refreshData">
-      <text class="refresh-icon">🔄</text>
-    </view>
-  </view>
-
-  <!-- 历史记录入口 -->
-  <view class="history-section" wx:if="{{isLoggedIn}}">
-    <view class="history-item" bindtap="goToHistory">
-      <view class="history-icon">
-        <text class="history-icon-text">📋</text>
-      </view>
-      <view class="history-content">
-        <text class="history-title">历史记录</text>
-        <text class="history-subtitle">查看我参与的所有朋友圈</text>
-      </view>
-      <view class="history-arrow">
-        <text class="arrow-icon">></text>
+    <!-- 历史记录功能 -->
+    <view class="action-panel" bindtap="goToHistory">
+      <view class="action-bg"></view>
+      <view class="action-icon-container">
+        <image class="action-icon" src="/assets/icons/history.svg" mode="aspectFit"></image>
       </view>
     </view>
   </view>
 
   <!-- 发现有趣朋友圈 -->
-  <view class="discover-section">
-    <view class="discover-header">
-      <text class="discover-title">随机推荐朋友圈</text>
-      <view class="refresh-btn" bindtap="refreshRecommendations">
-        <text class="refresh-icon">{{isLoadingRecommendations ? '⏳' : '🔄'}}</text>
-      </view>
+  <view class="post-card" wx:if="{{recommendedCircles.length > 0}}" bindtap="viewRecommendedCircle" data-circle-id="{{recommendedCircles[0]._id}}">
+    <view class="post-bg"></view>
+    <view class="discover-title">发现有趣朋友圈</view>
+    <view class="menu-icon" bindtap="refreshRecommendations" catchtap="refreshRecommendations">
+      <image src="/assets/icons/refresh.svg" mode="aspectFit"></image>
     </view>
     
-    <!-- 加载状态 -->
-    <view class="discover-loading" wx:if="{{isLoadingRecommendations && recommendedCircles.length === 0}}">
-      <text class="loading-text">正在为你推荐...</text>
+    <image class="discover-avatar" src="{{recommendedCircles[0].creator.avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+    
+    <!-- 动态内容区域 -->
+    <view class="content-container">
+      <view class="quote-mark">"</view>
+      <view class="post-content" wx:if="{{recommendedCircles[0].hasLatestPost}}">{{recommendedCircles[0].latestPost.content}}</view>
+      <view class="post-content" wx:else>Ta什么都没说</view>
     </view>
     
-    <!-- 推荐朋友圈内容 -->
-    <view class="discover-content" wx:elif="{{recommendedCircles.length > 0}}">
-      <view class="discover-item" wx:for="{{recommendedCircles}}" wx:key="_id" 
-            bindtap="viewRecommendedCircle" data-circle-id="{{item._id}}">
-        <!-- 朋友圈创建者头像 -->
-        <image class="discover-avatar" src="{{item.creator.avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
-        
-        <view class="discover-info">
-          <!-- 朋友圈基本信息 -->
-          <view class="circle-basic-info">
-            <text class="circle-name">{{item.name}}</text>
-            <view class="circle-meta">
-              <text class="meta-item">{{item.memberCount}}人</text>
-              <text class="meta-separator">•</text>
-              <text class="meta-item">{{item.formattedTime}}</text>
-            </view>
-          </view>
-          
-          <!-- 最新动态预览 -->
-          <text class="discover-text" wx:if="{{item.hasLatestPost}}">
-            {{item.latestPost.content}}
-          </text>
-          <text class="discover-text empty" wx:else>
-            暂无动态，快来看看吧~
-          </text>
-        </view>
-      </view>
+    <view class="view-btn">
+      <view class="view-more">点击查看</view>
+      <image class="view-icon" src="/assets/icons/right.svg" mode="aspectFit"></image>
     </view>
     
-    <!-- 暂无推荐内容 -->
-    <view class="discover-empty" wx:elif="{{!isLoadingRecommendations && recommendedCircles.length === 0}}">
-      <text class="empty-icon">🌱</text>
-      <text class="empty-title">暂无可推荐的朋友圈</text>
-      <text class="empty-desc">请稍后再试或者创建一个新的公开朋友圈吧</text>
+    <!-- 倾斜的图片 -->
+    <view class="rotated-img">
+      <image wx:if="{{recommendedCircles[0].latestPost && recommendedCircles[0].latestPost.images && recommendedCircles[0].latestPost.images.length > 0}}" 
+             src="{{recommendedCircles[0].latestPost.images[0]}}" 
+             mode="aspectFill" 
+             style="width: 100%; height: 100%; border-radius: 10rpx;"></image>
+      <image wx:else 
+             src="{{recommendedCircles[0].creator.avatar || '/images/default_avatar.png'}}" 
+             mode="aspectFill" 
+             style="width: 100%; height: 100%; border-radius: 10rpx;"></image>
     </view>
-    
-    <!-- 暂无推荐 -->
-    <view class="discover-empty" wx:else>
-      <text class="empty-icon">🔍</text>
-      <text class="empty-text">暂无公开朋友圈推荐</text>
-      <text class="empty-hint">等待更多朋友创建公开朋友圈</text>
-    </view>
+  </view>
+
+  <!-- 暂无推荐时的占位 -->
+  <view class="discover-empty" wx:elif="{{!isLoadingRecommendations && recommendedCircles.length === 0}}">
+    <text class="empty-icon">🌱</text>
+    <text class="empty-title">暂无可推荐的朋友圈</text>
+    <text class="empty-desc">请稍后再试或者创建一个新的公开朋友圈吧</text>
   </view>
 </view>

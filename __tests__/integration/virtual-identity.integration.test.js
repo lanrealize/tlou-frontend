@@ -41,7 +41,7 @@ describe('虚拟身份功能集成测试', () => {
     // 重置 store 状态
     userStore.loginStatus = USER_STATUS.UNREGISTERED;
     userStore.userInfo = null;
-    userStore.realUserInfo = null;
+          // 简化后：不再有realUserInfo字段
     userStore.currentIdentityType = IDENTITY_TYPE.REAL;
     userStore.virtualUsers = [];
     userStore.errorMessage = '';

@@ -17,7 +17,7 @@
       </view>
       <view class="switch-btn" wx:if="{{isVirtualIdentity}}" 
             bindtap="switchIdentity" data-type="real">
-        <image class="switch-avatar" src="{{realUserInfo.avatar || defaultAvatar}}" mode="aspectFill"></image>
+        <image class="switch-avatar" src="{{defaultAvatar}}" mode="aspectFill"></image>
         <text class="switch-text">切回管理员</text>
       </view>
     </view>

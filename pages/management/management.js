@@ -87,7 +87,7 @@ Page({
         loginStatus: 'loginStatus',
         isLoggedIn: 'isLoggedIn',
         isAdmin: 'isAdmin',
-        realUserInfo: 'realUserInfo',
+        // 简化后：不再需要realUserInfo绑定
         userInfo: 'userInfo',
         currentIdentityType: 'currentIdentityType',
         isVirtualIdentity: 'isVirtualIdentity',

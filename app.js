@@ -58,8 +58,7 @@ App({
           windowHeight: windowHeight
         };
         
-        console.log('系统信息:', res);
-        console.log('安全区域信息:', this.globalData.safeAreaInfo);
+
       }
     });
   },

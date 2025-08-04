@@ -264,54 +264,13 @@ const userStore = observable({
   
   // 虚拟身份不持久化，删除相关存储方法
   
-  // 🔧 检查和修复状态一致性
+  // 简化后：不再需要复杂的状态一致性检查
   _checkAndFixStateConsistency() {
-    const currentOpenid = wx.getStorageSync('openid');
-    const currentUserInfo = this.userInfo;
-    
-    console.log('🔍 检查状态一致性:', {
+    // 简化架构下，状态管理更清晰，不需要复杂的一致性检查
+    console.log('🔍 当前身份状态:', {
       currentIdentityType: this.currentIdentityType,
-      userInfoType: currentUserInfo?.isVirtual ? 'virtual' : 'real',
-      hasRealUserInfo: !!this.realUserInfo,
-      openidMatches: currentUserInfo?.openid === currentOpenid,
-      currentUserName: currentUserInfo?.username,
-      realUserName: this.realUserInfo?.username
+      userInfoType: this.userInfo?.isVirtual ? 'virtual' : 'real'
     });
-    
-    // 🔧 特殊情况：如果当前是虚拟身份，只有在关键状态缺失时才修复
-    if (this.currentIdentityType === IDENTITY_TYPE.VIRTUAL) {
-      // 检查虚拟身份的关键组件是否完整
-      const isVirtualStateComplete = this.realUserInfo && this.realUserOpenid && 
-                                   currentUserInfo && currentUserInfo.isVirtual;
-      
-      if (!isVirtualStateComplete) {
-        console.warn('⚠️ 检测到虚拟身份状态不完整:', {
-          hasRealUserInfo: !!this.realUserInfo,
-          hasRealOpenid: !!this.realUserOpenid,
-          userInfoIsVirtual: currentUserInfo?.isVirtual
-        });
-        
-        // 只有在完全无法恢复虚拟状态时才切换回真实身份
-        if (!this.realUserInfo && currentUserInfo && !currentUserInfo.isVirtual) {
-          console.log('🔄 无法恢复虚拟状态，切换回真实身份');
-          this.currentIdentityType = IDENTITY_TYPE.REAL;
-          this._syncVirtualIdentityToStorage();
-        }
-      }
-      return; // 虚拟身份状态下不进行其他修复
-    }
-    
-    // 🔧 真实身份状态下的一致性检查
-    if (currentUserInfo && currentUserInfo.openid && currentUserInfo.openid !== currentOpenid) {
-      console.warn('⚠️ 检测到openid不匹配，修复中...', {
-        userInfoOpenid: currentUserInfo.openid,
-        storageOpenid: currentOpenid
-      });
-      
-      // 使用userInfo中的openid作为正确的openid
-      wx.setStorageSync('openid', currentUserInfo.openid);
-      console.log('✅ 已修复openid');
-    }
   },
 
   _syncToGlobal(status, userInfo) {
@@ -343,24 +302,9 @@ const userStore = observable({
   // 🎭 虚拟身份相关的计算属性
 
   get isAdmin() {
-    // 简化版本：只检查当前用户的管理员权限
-    // 虚拟身份下，根据需要可以在后端设置虚拟用户的isAdmin字段
-    const checkUser = this.userInfo;
-    
-    // 方法1：检查用户信息中的isAdmin字段
-    const hasAdminFlag = checkUser?.isAdmin === true;
-    
-    // 方法2：基于用户_id的权限检查（根据记忆，项目使用_id进行权限检查）
-    // 如需添加管理员用户，请在此处添加用户ID：
-    const adminUserIds = [
-      // '675c21bb4e9a1234567890ab', // 示例用户ID，替换为实际管理员用户ID
-    ];
-    const isAdminById = checkUser?._id && adminUserIds.includes(checkUser._id);
-    
-    // 最终结果：优先使用isAdmin字段，如果没有则使用_id检查
-    const result = hasAdminFlag || isAdminById;
-    
-    return result;
+    // 🎯 终极简化版本：后端已确保虚拟用户的isAdmin字段正确设置
+    // 无论真实身份还是虚拟身份，都直接检查userInfo.isAdmin
+    return this.userInfo?.isAdmin === true;
   },
 
   get isVirtualIdentity() {
