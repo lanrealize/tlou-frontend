@@ -89,6 +89,16 @@
   border-radius: 20rpx;
   font-size: 24rpx;
   box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.switch-avatar {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  border: 2rpx solid rgba(255, 255, 255, 0.8);
 }
 
 .switch-text {
@@ -139,48 +149,69 @@
   background-color: #ffffff;
 }
 
-/* 头像选择 */
-.avatar-grid {
+/* 头像上传 */
+.avatar-upload {
   display: flex;
-  flex-wrap: wrap;
-  gap: 20rpx;
+  align-items: center;
+  gap: 30rpx;
   margin-top: 15rpx;
 }
 
-.avatar-option {
-  position: relative;
-  width: 80rpx;
-  height: 80rpx;
+.avatar-preview {
+  width: 100rpx;
+  height: 100rpx;
   border-radius: 50%;
   border: 3rpx solid #e0e0e0;
   overflow: hidden;
-  transition: all 0.2s ease;
+  background-color: #f5f5f5;
 }
 
-.avatar-option.selected {
-  border-color: #1A73E8;
-  transform: scale(1.1);
-}
-
-.avatar-img {
+.preview-img {
   width: 100%;
   height: 100%;
 }
 
-.avatar-check {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 24rpx;
-  height: 24rpx;
-  background-color: #1A73E8;
-  color: #ffffff;
-  border-radius: 50%;
-  font-size: 16rpx;
+.upload-btn {
+  flex: 1;
+  height: 80rpx;
+  background-color: #fafafa;
+  border: 2rpx dashed #d9d9d9;
+  border-radius: 12rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
+  gap: 15rpx;
+  font-size: 28rpx;
+  color: #666;
+  transition: all 0.2s ease;
+}
+
+.upload-btn:hover {
+  border-color: #1A73E8;
+  background-color: #f0f7ff;
+  color: #1A73E8;
+}
+
+.upload-btn.uploading {
+  background-color: #e6f7ff;
+  border-color: #1A73E8;
+  color: #1A73E8;
+}
+
+.upload-icon {
+  font-size: 32rpx;
+}
+
+.upload-text {
+  font-weight: 500;
+}
+
+.form-hint {
+  display: block;
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 15rpx;
+  line-height: 1.4;
 }
 
 /* 按钮样式 */

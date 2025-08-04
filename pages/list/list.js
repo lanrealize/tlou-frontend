@@ -47,22 +47,8 @@ Page({
   },
 
   onShow() {
-    // 检查是否从详情页返回，如果是则稍微延迟刷新，确保后端活动记录已更新
-    const pages = getCurrentPages();
-    const currentPage = pages[pages.length - 1];
-    const prevPage = pages[pages.length - 2];
-    
-    const isFromDetailsPage = prevPage && prevPage.route === 'pages/details/details';
-    
-    if (isFromDetailsPage) {
-      // 给后端一点时间更新用户活动记录
-      setTimeout(() => {
-        this.loadCircles();
-      }, 300);
-    } else {
-      // 每次显示时刷新数据
-      this.loadCircles();
-    }
+    // 简化后：每次显示时都刷新数据，API会自动使用当前身份的openid
+    this.loadCircles();
   },
 
   // 下拉刷新

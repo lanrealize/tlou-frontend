@@ -291,20 +291,17 @@ const generateDefaultCircleName = () => {
  */
 const navigateToMain = () => {
   const pages = getCurrentPages();
-  console.log('当前页面栈:', pages.map(p => p.route));
   
   if (pages.length >= 2) {
     // 检查上一个页面是否是main页面
     const prevPage = pages[pages.length - 2];
     if (prevPage && prevPage.route === 'pages/main/main') {
-      console.log('上一个页面是main，使用navigateBack');
       wx.navigateBack();
       return;
     }
   }
   
   // 否则使用reLaunch
-  console.log('使用reLaunch跳转到main页面');
   wx.reLaunch({
     url: '/pages/main/main'
   });

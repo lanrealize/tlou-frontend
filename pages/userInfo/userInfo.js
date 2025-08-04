@@ -88,34 +88,31 @@ Page({
   },
 
   /**
-   * 上传头像到七牛云
+   * 上传头像到七牛云（使用通用工具）
    */
   async uploadAvatarToQiniu(tempFilePath) {
+    const AvatarUploader = require('../../utils/avatarUploader');
+    
     try {
       util.showLoading('正在上传头像...');
       
       const openid = await auth.getOpenid();
-      const uploadResult = await qiniuUploader.uploadImage(tempFilePath, openid, {
-        pathType: 'avatar'
+      const avatarUrl = await AvatarUploader.uploadToQiniu(tempFilePath, openid);
+      
+      this.setData({ 
+        avatarUrl: avatarUrl,
+        isUploadingAvatar: false 
+      }, () => {
+        this.checkCanSubmit();
       });
       
-      if (uploadResult.success) {
-        this.setData({ 
-          avatarUrl: uploadResult.url,
-          isUploadingAvatar: false 
-        }, () => {
-          this.checkCanSubmit();
-        });
-        
-        util.hideLoading();
-        util.showToast('头像上传成功', 'success');
-      } else {
-        throw new Error(uploadResult.error || '上传失败');
-      }
+      util.hideLoading();
+      util.showToast('头像上传成功', 'success');
       
     } catch (error) {
       util.hideLoading();
-      util.showToast(error.message || '头像上传失败', 'error');
+      this.setData({ isUploadingAvatar: false });
+      AvatarUploader.showErrorMessage(error);
       throw error;
     }
   },

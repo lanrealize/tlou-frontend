@@ -12,25 +12,37 @@ Page({
       avatar: ''
     },
     isCreating: false,
-    
-    // 头像选择
-    avatarOptions: [
-      'https://thirdwx.qlogo.cn/mmopen/vi_32/POgEwh4mIHO4uBMD/132',
-      'https://thirdwx.qlogo.cn/mmopen/vi_32/POgEwh4mIHO4uBME/132',
-      'https://thirdwx.qlogo.cn/mmopen/vi_32/POgEwh4mIHO4uBMF/132',
-      'https://thirdwx.qlogo.cn/mmopen/vi_32/POgEwh4mIHO4uBMG/132',
-      'https://thirdwx.qlogo.cn/mmopen/vi_32/POgEwh4mIHO4uBMH/132',
-      'https://thirdwx.qlogo.cn/mmopen/vi_32/POgEwh4mIHO4uBMI/132'
-    ],
-    selectedAvatarIndex: 0
+    isUploadingAvatar: false, // 头像上传状态
+    defaultAvatar: '/images/default_avatar.png', // 默认头像
+    canCreateUser: false // 是否可以创建用户
   },
 
   onLoad() {
-    console.log('🎭 管理页面加载');
     this.setupStoreBindings();
     
-    // 检查管理员权限
-    if (!this.data.isAdmin) {
+    // 等待一个微任务周期让MobX绑定生效
+    setTimeout(() => {
+      this.checkPermissionAndLoad();
+    }, 100);
+  },
+
+  onShow() {
+    // 简化后：只需要刷新虚拟用户列表
+    if (this.data.isAdmin) {
+      this.loadVirtualUsers();
+    }
+  },
+
+  // 权限检查和加载逻辑
+  checkPermissionAndLoad() {
+    const app = getApp();
+    const userStore = app.getUserStore();
+    
+    // 使用UserStore的状态进行权限检查（更可靠）
+    const hasAdminPermission = userStore.isAdmin;
+    const pageIsAdmin = this.data.isAdmin;
+    
+    if (!hasAdminPermission) {
       wx.showModal({
         title: '权限不足',
         content: '需要管理员权限才能访问此页面',
@@ -42,8 +54,20 @@ Page({
       return;
     }
     
+    // 如果UserStore有权限但页面状态没同步，手动同步
+    if (hasAdminPermission && pageIsAdmin !== hasAdminPermission) {
+      this.setData({
+        isAdmin: hasAdminPermission,
+        userInfo: userStore.userInfo,
+        loginStatus: userStore.loginStatus
+      });
+    }
+    
     // 加载虚拟用户列表
     this.loadVirtualUsers();
+    
+    // 初始化按钮状态
+    this.checkCreateButtonState();
   },
 
   onUnload() {
@@ -59,6 +83,9 @@ Page({
     this.storeBindings = createStoreBindings(this, {
       store: userStore,
       fields: {
+        // 添加更多状态绑定以确保完整性
+        loginStatus: 'loginStatus',
+        isLoggedIn: 'isLoggedIn',
         isAdmin: 'isAdmin',
         realUserInfo: 'realUserInfo',
         userInfo: 'userInfo',
@@ -82,19 +109,55 @@ Page({
     this.setData({
       'newVirtualUser.username': e.detail.value
     });
+    
+    // 实时检查按钮状态
+    this.checkCreateButtonState();
   },
 
-  // 头像选择
-  selectAvatar(e) {
-    const { index } = e.currentTarget.dataset;
+  // 检查创建按钮状态
+  checkCreateButtonState() {
+    const { username } = this.data.newVirtualUser;
+    const isUsernameValid = username && username.trim().length > 0;
+    
     this.setData({
-      selectedAvatarIndex: index,
-      'newVirtualUser.avatar': this.data.avatarOptions[index]
+      canCreateUser: isUsernameValid && !this.data.isCreating
     });
   },
 
-  // 创建虚拟用户
-  async createVirtualUser() {
+  // 头像上传（使用通用工具）
+  async uploadAvatar() {
+    const AvatarUploader = require('../../utils/avatarUploader');
+    
+    try {
+      const avatarUrl = await AvatarUploader.chooseAndUpload({
+        onStart: () => {
+          this.setData({ isUploadingAvatar: true });
+        },
+        onSuccess: (url) => {
+          this.setData({
+            'newVirtualUser.avatar': url,
+            isUploadingAvatar: false
+          });
+          wx.showToast({
+            title: '头像上传成功',
+            icon: 'success',
+            duration: 2000
+          });
+        },
+        onError: (error) => {
+          console.error('头像上传失败:', error);
+          this.setData({ isUploadingAvatar: false });
+          AvatarUploader.showErrorMessage(error, true); // 使用Modal显示错误
+        }
+      });
+      
+    } catch (error) {
+      // 错误已在onError中处理
+    }
+  },
+
+  // 创建虚拟用户（页面方法）
+  async createVirtualUserHandler() {
     const { username, avatar } = this.data.newVirtualUser;
     
     if (!username.trim()) {
@@ -102,30 +165,36 @@ Page({
       return;
     }
 
-    if (!avatar) {
-      // 使用默认头像
-      const defaultAvatar = this.data.avatarOptions[this.data.selectedAvatarIndex];
-      this.setData({
-        'newVirtualUser.avatar': defaultAvatar
-      });
-    }
+    // 如果没有上传头像，使用默认头像
+    const finalAvatar = avatar || this.data.defaultAvatar;
 
     try {
-      this.setData({ isCreating: true });
+      this.setData({ 
+        isCreating: true,
+        canCreateUser: false // 创建中禁用按钮
+      });
       
-      await this.createVirtualUser(username.trim(), this.data.newVirtualUser.avatar || this.data.avatarOptions[0]);
+      // 调用Store中的createVirtualUser方法
+      await this.createVirtualUser(username.trim(), finalAvatar);
       
       // 重置表单
       this.setData({
         'newVirtualUser.username': '',
         'newVirtualUser.avatar': '',
-        selectedAvatarIndex: 0,
-        isCreating: false
+        isCreating: false,
+        canCreateUser: false
       });
+      
+      // 重新加载虚拟用户列表确保显示最新数据
+      await this.loadVirtualUsers();
       
     } catch (error) {
       console.error('创建虚拟用户失败:', error);
-      this.setData({ isCreating: false });
+      this.setData({ 
+        isCreating: false
+      });
+      // 重新检查按钮状态
+      this.checkCreateButtonState();
     }
   },
 
@@ -146,8 +215,14 @@ Page({
   },
 
   // 删除虚拟用户
-  async deleteVirtualUser(e) {
+  async deleteVirtualUserHandler(e) {
     const { user } = e.currentTarget.dataset;
+    
+    // 验证用户数据
+    if (!user || !user._id) {
+      wx.showToast({ title: '用户信息错误', icon: 'error' });
+      return;
+    }
     
     wx.showModal({
       title: '确认删除',
@@ -155,9 +230,11 @@ Page({
       success: async (res) => {
         if (res.confirm) {
           try {
+            // 调用Store中的deleteVirtualUser方法，传递用户ID字符串
             await this.deleteVirtualUser(user._id);
           } catch (error) {
             console.error('删除虚拟用户失败:', error);
+            wx.showToast({ title: '删除失败', icon: 'error' });
           }
         }
       }

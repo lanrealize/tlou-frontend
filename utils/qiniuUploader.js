@@ -37,7 +37,7 @@ class QiniuUploader {
     };
     
     this.isInitialized = true;
-    console.log('✅ 七牛云上传工具初始化成功');
+
   }
 
   /**
@@ -175,11 +175,11 @@ class QiniuUploader {
       }
 
       const pathType = options.pathType || 'avatar'; // 默认为头像类型
-      console.log('🚀 开始上传图片到七牛云:', { filePath, userId, pathType });
+  
 
       // 生成存储路径
       const key = this.generateFilePath(pathType, userId, filePath, options);
-      console.log('📁 生成存储路径:', key);
+  
 
       // 准备上传参数
       const uploadUrl = this.getUploadDomain();
@@ -188,9 +188,9 @@ class QiniuUploader {
       let uploadToken = this.config.upToken;
       try {
         uploadToken = await this.getUploadTokenFromBackend(pathType, userId);
-        console.log('🔑 使用后端Token上传');
+  
       } catch (error) {
-        console.warn('⚠️ 获取后端Token失败，使用配置文件Token:', error.message);
+  
         // 如果后端Token获取失败，使用配置文件中的Token
       }
       
@@ -199,7 +199,7 @@ class QiniuUploader {
         key: key
       };
 
-      console.log('🔧 上传配置:', { uploadUrl, key });
+  
 
       // 执行上传
       const uploadResult = await this._performUpload(filePath, uploadUrl, formData, options.onProgress);
@@ -216,11 +216,11 @@ class QiniuUploader {
         uploadTime: new Date().toISOString()
       };
 
-      console.log('✅ 图片上传成功:', result);
+
       return result;
 
     } catch (error) {
-      console.error('❌ 图片上传失败:', error);
+
       
       const errorResult = {
         success: false,
@@ -244,7 +244,7 @@ class QiniuUploader {
         name: 'file',
         formData: formData,
         success: (res) => {
-          console.log('📤 上传响应:', res);
+  
           
           if (res.statusCode !== 200) {
             reject(new Error(`上传失败，状态码: ${res.statusCode}`));
@@ -259,12 +259,12 @@ class QiniuUploader {
             }
             resolve(data);
           } catch (parseError) {
-            console.error('解析上传响应失败:', parseError);
+    
             reject(new Error('上传响应格式错误'));
           }
         },
         fail: (error) => {
-          console.error('上传请求失败:', error);
+    
           reject(new Error(error.errMsg || '网络请求失败'));
         }
       });
@@ -298,7 +298,7 @@ class QiniuUploader {
     }
 
     const pathType = options.pathType || 'moment'; // 批量上传默认为朋友圈类型
-    console.log('🚀 开始批量上传图片:', { count: filePaths.length, userId, pathType });
+
 
     const results = [];
     const errors = [];

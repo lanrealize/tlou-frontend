@@ -149,10 +149,34 @@ Page({
       userStore.setStatus(USER_STATUS.LOGGEDIN, { userInfo: globalUserInfo });
     }
     
-    // 根据登录状态加载数据 - 检查多个状态源确保准确性
-    const shouldLoadData = this.data.isLoggedIn || 
-                          globalLoginStatus === 'loggedIn' || 
-                          userStore.isLoggedIn;
+    // 简化后：无需特殊的身份切换刷新逻辑，onShow会自然刷新
+    
+    // 🔧 确保登录状态检查完成后再加载数据
+    this.waitForLoginCheckAndLoadData(prevPage);
+    
+    // 加载公开朋友圈推荐（无论是否登录都可以查看）
+    this.loadRecommendations();
+  },
+
+  // 🔧 等待登录检查完成后加载数据
+  async waitForLoginCheckAndLoadData(prevPage) {
+    const app = getApp();
+    const userStore = app.getUserStore();
+    
+    // 如果用户状态还在加载中，等待加载完成
+    if (userStore.isLoading) {
+      console.log('👀 等待用户状态检查完成...');
+      // 最多等待3秒
+      const maxWaitTime = 3000;
+      const startTime = Date.now();
+      
+      while (userStore.isLoading && (Date.now() - startTime) < maxWaitTime) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+    
+    // 检查登录状态并加载数据
+    const shouldLoadData = userStore.isLoggedIn;
     
     if (shouldLoadData) {
       // 检查是否从其他可能产生活动的页面返回，如果是则刷新获取最新排序
@@ -181,9 +205,6 @@ Page({
         this.loadCirclesWithThrottle();
       }
     }
-    
-    // 加载公开朋友圈推荐（无论是否登录都可以查看）
-    this.loadRecommendations();
   },
 
   // 用户登录/注册处理
@@ -481,8 +502,9 @@ Page({
       // 格式化时间
       newPosts.forEach(post => {
         post.formattedTime = util.formatRelativeTime(post.createdAt);
-        // 使用MobX store中的用户信息
-        post.isLiked = post.likes && post.likes.includes(this.data.userInfo?.openid);
+        // 使用用户_id检查点赞状态，与Store保持一致
+        const userId = this.data.userInfo?._id;
+        post.isLiked = post.likes && post.likes.includes(userId);
         
         // 格式化评论时间
         if (post.comments) {
@@ -522,15 +544,21 @@ Page({
         const res = await api.posts.like(postId);
         const liked = res.data.liked;
         
-        // 更新本地数据
+        // 更新本地数据 - 使用_id而不是openid保持一致性
         const posts = [...this.data.posts];
         posts[index].isLiked = liked;
         
+        // 使用用户_id进行点赞状态管理，与Store保持一致
+        const userId = this.data.userInfo?._id;
+        
         if (liked) {
           posts[index].likes = posts[index].likes || [];
-          posts[index].likes.push(this.data.userInfo?.openid);
+          // 确保不重复添加
+          if (!posts[index].likes.includes(userId)) {
+            posts[index].likes.push(userId);
+          }
         } else {
-          posts[index].likes = posts[index].likes.filter(id => id !== this.data.userInfo?.openid);
+          posts[index].likes = posts[index].likes.filter(id => id !== userId);
         }
         
         this.setData({ posts });
@@ -652,8 +680,29 @@ Page({
 
   // 🎭 管理员功能 - 跳转到管理页面
   goToManagement() {
-    if (!this.data.isAdmin) {
-      wx.showToast({ title: '需要管理员权限', icon: 'error' });
+    const app = getApp();
+    const userStore = app.getUserStore();
+
+    // 使用UserStore的状态进行权限检查（更可靠）
+    const hasAdminPermission = userStore.isAdmin;
+    const pageIsAdmin = this.data.isAdmin;
+
+    // 如果UserStore有权限但页面状态没同步，手动同步
+    if (hasAdminPermission && pageIsAdmin !== hasAdminPermission) {
+      this.setData({
+        isAdmin: hasAdminPermission,
+        userInfo: userStore.userInfo,
+        loginStatus: userStore.loginStatus
+      });
+    }
+
+    // 使用UserStore的状态进行最终权限检查
+    if (!hasAdminPermission) {
+      wx.showToast({ 
+        title: '需要管理员权限', 
+        icon: 'error',
+        duration: 2000
+      });
       return;
     }
 

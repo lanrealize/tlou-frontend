@@ -10,13 +10,14 @@
   <view class="current-identity-section">
     <view class="section-title">当前身份</view>
     <view class="identity-card {{isVirtualIdentity ? 'virtual' : 'real'}}">
-      <image class="identity-avatar" src="{{userInfo.avatar}}" mode="aspectFill"></image>
+      <image class="identity-avatar" src="{{userInfo.avatar || defaultAvatar}}" mode="aspectFill"></image>
       <view class="identity-info">
         <text class="identity-name">{{userInfo.username}}</text>
         <text class="identity-type">{{isVirtualIdentity ? '🎭 虚拟身份' : '👑 管理员'}}</text>
       </view>
       <view class="switch-btn" wx:if="{{isVirtualIdentity}}" 
             bindtap="switchIdentity" data-type="real">
+        <image class="switch-avatar" src="{{realUserInfo.avatar || defaultAvatar}}" mode="aspectFill"></image>
         <text class="switch-text">切回管理员</text>
       </view>
     </view>
@@ -36,23 +37,31 @@
                maxlength="20" />
       </view>
       
-      <!-- 头像选择 -->
+      <!-- 头像上传 -->
       <view class="form-item">
-        <text class="form-label">选择头像</text>
-        <view class="avatar-grid">
-          <view class="avatar-option {{index === selectedAvatarIndex ? 'selected' : ''}}"
-                wx:for="{{avatarOptions}}" wx:key="index"
-                bindtap="selectAvatar" data-index="{{index}}">
-            <image class="avatar-img" src="{{item}}" mode="aspectFill"></image>
-            <view class="avatar-check" wx:if="{{index === selectedAvatarIndex}}">✓</view>
+        <text class="form-label">上传头像</text>
+        <view class="avatar-upload">
+          <!-- 头像预览 -->
+          <view class="avatar-preview">
+            <image class="preview-img" 
+                   src="{{newVirtualUser.avatar || defaultAvatar}}" 
+                   mode="aspectFill"></image>
           </view>
+          <!-- 上传按钮 -->
+          <button class="upload-btn {{isUploadingAvatar ? 'uploading' : ''}}"
+                  bindtap="uploadAvatar"
+                  disabled="{{isUploadingAvatar}}">
+            <text class="upload-icon">{{isUploadingAvatar ? '⏳' : '📷'}}</text>
+            <text class="upload-text">{{isUploadingAvatar ? '上传中...' : '选择头像'}}</text>
+          </button>
         </view>
+        <text class="form-hint">支持相册选择或拍照，建议使用正方形图片</text>
       </view>
       
       <!-- 创建按钮 -->
-      <button class="create-btn theme-btn {{isCreating || !newVirtualUser.username ? 'disabled' : ''}}"
-              bindtap="createVirtualUser"
-              disabled="{{isCreating || !newVirtualUser.username}}">
+      <button class="create-btn theme-btn {{!canCreateUser ? 'disabled' : ''}}"
+              bindtap="createVirtualUserHandler"
+              disabled="{{!canCreateUser}}">
         {{isCreating ? '创建中...' : '创建虚拟用户'}}
       </button>
     </view>
@@ -77,7 +86,7 @@
             切换
           </button>
           <button class="action-btn delete-btn-small"
-                  bindtap="deleteVirtualUser"
+                  bindtap="deleteVirtualUserHandler"
                   data-user="{{item}}">
             删除
           </button>

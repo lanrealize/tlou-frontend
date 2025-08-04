@@ -17,12 +17,27 @@ class API {
     const { url, method = 'GET', data = {}, header = {} } = options;
     
     try {
-      // 获取认证头
-      const openid = await getOpenid();
-      header['x-openid'] = openid;
-      console.log('添加认证头:', openid);
+      // 🎯 从 mobx 获取当前身份的 openid
+      const app = getApp();
+      const userStore = app?.getUserStore();
+      
+      if (userStore && userStore.isLoggedIn) {
+        let openid;
+        
+        if (userStore.isVirtualIdentity) {
+          // 虚拟身份：使用虚拟用户的openid
+          openid = userStore.userInfo?.openid;
+        } else {
+          // 真实身份：从本地存储获取
+          openid = wx.getStorageSync('openid');
+        }
+        
+        if (openid) {
+          header['x-openid'] = openid;
+        }
+      }
     } catch (error) {
-      console.log('警告：获取openid失败，进行未认证请求:', error.message);
+      // 静默处理openid获取失败
     }
 
     return new Promise((resolve, reject) => {
@@ -49,7 +64,6 @@ class API {
           }
         },
         fail: (err) => {
-          console.error('API请求失败:', err);
           reject(new Error('网络连接失败，请检查网络设置'));
         }
       });

@@ -10,19 +10,15 @@ const getBaseUrl = () => {
 
 // 跳转到用户信息填写页面
 const redirectToUserInfoPage = () => {
-  console.log('🚀 跳转到用户信息填写页面');
-  
   return new Promise((resolve, reject) => {
     wx.navigateTo({
       url: '/pages/userInfo/userInfo?from=register',
       success: () => {
-        console.log('✅ 跳转成功');
         // 注意：由于是页面跳转，这里不能直接resolve
         // 实际的注册逻辑会在userInfo页面中完成
         resolve({ status: 'redirected' });
       },
       fail: (error) => {
-        console.error('❌ 跳转失败:', error);
         reject(new Error('跳转到用户信息页面失败'));
       }
     });
@@ -111,11 +107,8 @@ const checkLoginStatus = async () => {
     // 修复：后端返回的用户信息在 data.user 中
     const serverUserInfo = userInfoRes.data.data?.user || userInfoRes.data.data;
     
-
-    
     // 5. 判断用户是否已注册
     if (serverUserInfo && serverUserInfo.username && serverUserInfo.avatar) {
-      console.log('✅ 用户已注册，用户名:', serverUserInfo.username);
       // 用户已注册：更新本地缓存并返回用户信息
       wx.setStorageSync(STORAGE_KEYS.USER_INFO, serverUserInfo);
       return {
@@ -124,22 +117,12 @@ const checkLoginStatus = async () => {
       };
     }
     
-    // 调试日志：分析为什么判断失败
-    console.log('❌ 用户注册状态判断失败:');
-    console.log('  - serverUserInfo 存在:', !!serverUserInfo);
-    console.log('  - username 存在:', !!serverUserInfo?.username);
-    console.log('  - username 值:', serverUserInfo?.username);
-    console.log('  - avatar 存在:', !!serverUserInfo?.avatar);
-    console.log('  - avatar 值:', serverUserInfo?.avatar);
-    
     // 6. 用户未注册
     return {
       status: 'unregistered'
     };
     
   } catch (error) {
-    console.error('登录状态检查失败:', error);
-    
     // 返回错误状态（根据需求可选）
     return {
       status: 'error',
@@ -150,8 +133,6 @@ const checkLoginStatus = async () => {
 
 const registerUser = async () => {
   try {
-    console.log('🚀 开始用户注册流程...');
-    
     // 1. 确保有openid（预先获取）
     await getOpenid();
     
@@ -159,7 +140,6 @@ const registerUser = async () => {
     const result = await redirectToUserInfoPage();
     
     if (result.status === 'redirected') {
-      console.log('✅ 已跳转到用户信息填写页面');
       // 返回重定向状态，实际注册会在userInfo页面完成
       return { status: 'redirected' };
     }
@@ -167,7 +147,6 @@ const registerUser = async () => {
     throw new Error('跳转失败');
     
   } catch (error) {
-    console.error('用户注册流程启动失败:', error);
     return { status: 'error', reason: error.message };
   }
 };

@@ -41,7 +41,7 @@ const getUploadToken = async () => {
     try {
       userId = await auth.getOpenid();
     } catch (e) {
-      console.warn('获取用户ID失败，使用匿名用户');
+  
     }
 
     const response = await new Promise((resolve, reject) => {
@@ -61,18 +61,18 @@ const getUploadToken = async () => {
     });
 
     if (response.statusCode === 200 && response.data.success) {
-      console.log('✅ 从后端获取Token成功');
+  
       return response.data.data.uploadToken;
     } else {
       throw new Error(response.data.message || '获取上传凭证失败');
     }
     
   } catch (error) {
-    console.error('❌ 从后端获取上传Token失败:', error);
+
     
     // 开发环境回退方案（仅用于开发测试）
     if (process.env.NODE_ENV === 'development' || QINIU_CONFIG.upToken === 'NEED_TO_GET_FROM_BACKEND_API') {
-      console.warn('🔧 开发模式：尝试生成临时Token');
+  
       try {
         // 如果有临时Token生成器，使用它
         const tokenGenerator = require('./generateToken');
@@ -81,7 +81,7 @@ const getUploadToken = async () => {
           return tempToken;
         }
       } catch (e) {
-        console.warn('⚠️ 临时Token生成失败，请手动配置Token');
+  
       }
       
       // 最后回退到配置文件中的Token

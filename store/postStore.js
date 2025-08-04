@@ -24,8 +24,6 @@ const postStore = observable({
 
   // 🎯 统一状态更新接口
   setStatus(status, data = {}) {
-    console.log(`🔄 帖子状态变更: ${this.status} → ${status}`, data);
-    
     this.status = status;
     this.isLoading = false;
     
@@ -35,24 +33,20 @@ const postStore = observable({
         this.hasMore = data.hasMore !== undefined ? data.hasMore : true;
         this.page = data.page || 1;
         this.errorMessage = '';
-        console.log('✅ 帖子加载成功:', this.posts.length);
         break;
         
       case POST_STATUS.ERROR:
         this.errorMessage = data.message || '加载帖子失败';
-        console.error('❌ 帖子错误状态:', this.errorMessage);
         break;
         
       case POST_STATUS.EMPTY:
         this.posts = [];
         this.hasMore = false;
         this.errorMessage = '';
-        console.log('📭 帖子列表为空');
         break;
         
       case POST_STATUS.LOADING:
         this.isLoading = true;
-        console.log('🔄 正在加载帖子...');
         break;
     }
   },
@@ -64,7 +58,7 @@ const postStore = observable({
       this.posts = [];
       this.page = 1;
       this.hasMore = true;
-      console.log('🔄 切换朋友圈:', circleId);
+  
     }
   },
 
@@ -78,7 +72,7 @@ const postStore = observable({
     }
 
     if (this.isLoading) {
-      console.log('⚠️ 正在加载中，跳过重复请求');
+
       return;
     }
 
@@ -89,7 +83,7 @@ const postStore = observable({
 
     // 如果是加载更多但没有更多数据，直接返回
     if (loadMore && !this.hasMore) {
-      console.log('⚠️ 没有更多帖子了');
+
       return;
     }
 
@@ -127,7 +121,7 @@ const postStore = observable({
       }
 
     } catch (error) {
-      console.error('❌ 加载帖子失败:', error);
+
       this.setStatus(POST_STATUS.ERROR, { 
         message: error.message || '网络异常，请重试' 
       });
@@ -136,7 +130,7 @@ const postStore = observable({
 
   // 刷新帖子列表
   async refreshPosts(circleId) {
-    console.log('🔄 刷新帖子列表');
+
     this.page = 1;
     this.hasMore = true;
     await this.loadPosts(circleId, false);
@@ -145,7 +139,7 @@ const postStore = observable({
   // 加载更多帖子
   async loadMorePosts() {
     if (this.currentCircleId && this.hasMore && !this.isLoading) {
-      console.log('📄 加载更多帖子, 当前页:', this.page);
+  
       await this.loadPosts(this.currentCircleId, true);
     }
   },
@@ -154,22 +148,22 @@ const postStore = observable({
   async toggleLike(postId, userInfo) {
     const postIndex = this.posts.findIndex(p => p._id === postId);
     if (postIndex === -1) {
-      console.error('❌ 找不到指定帖子:', postId);
+
       return;
     }
 
     if (!userInfo || (!userInfo.openid && !userInfo._id)) {
-      console.error('❌ 用户信息不完整，无法进行点赞操作', userInfo);
+
       return;
     }
 
     try {
-      console.log('🚀 开始点赞操作:', { postId, userInfo });
+  
       
       const response = await api.posts.like(postId);
       const { liked } = response.data;
       
-      console.log('📤 点赞API响应:', response);
+
 
       // 更新本地状态
       const updatedPosts = [...this.posts];
@@ -185,16 +179,11 @@ const postStore = observable({
       const userIdentifier = userInfo._id;
       
       if (!userIdentifier) {
-        console.error('❌ 用户标识符缺失，无法进行点赞操作');
+  
         throw new Error('用户信息不完整');
       }
       
-      console.log('🔍 点赞前状态:', {
-        liked,
-        userIdentifier,
-        currentLikes: post.likes,
-        likesCount: post.likes.length
-      });
+
       
       if (liked) {
         // 添加点赞：确保不重复添加
