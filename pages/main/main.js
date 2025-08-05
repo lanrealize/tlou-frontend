@@ -3,6 +3,7 @@ const { storeBindingsBehavior } = require('mobx-miniprogram-bindings');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const api = require('../../utils/api');
 const util = require('../../utils/util');
+const navigationHelper = require('../../utils/navigationHelper');
 
 Page({
   // 使用MobX状态管理行为
@@ -53,12 +54,14 @@ Page({
 
   // 获取安全区域信息
   getSafeAreaInfo() {
-    const app = getApp();
-    if (app && app.globalData.safeAreaInfo) {
-      this.setData({
-        safeAreaInfo: app.globalData.safeAreaInfo
-      });
-    }
+    const navData = navigationHelper.getNavigationData();
+    this.setData({
+      safeAreaInfo: {
+        statusBarHeight: navData.statusBarHeight,
+        navBarHeight: navData.totalNavigationHeight,
+        safeAreaTop: navData.statusBarHeight
+      }
+    });
   },
 
   onUnload() {
@@ -755,7 +758,7 @@ Page({
 
       if (res.success) {
         if (res.data.circle) {
-          // 有可用的朋友圈
+          // 有可用的朋友圈，现在API直接返回latestPost数据
           const circle = res.data.circle;
           
           const formattedCircle = {
@@ -772,7 +775,8 @@ Page({
           console.log('✅ 随机公开朋友圈加载完成:', {
             circleId: circle._id,
             circleName: circle.name,
-            randomInfo: res.data.randomInfo
+            hasLatestPost: formattedCircle.hasLatestPost,
+            latestPostContent: circle.latestPost ? circle.latestPost.content : '无内容'
           });
         } else {
           // 暂无可用的朋友圈（正常情况）
@@ -810,7 +814,7 @@ Page({
 
       if (res.success) {
         if (res.data.circle) {
-          // 有新的朋友圈推荐
+          // 有新的朋友圈推荐，现在API直接返回latestPost数据
           const circle = res.data.circle;
           
           const formattedCircle = {
@@ -825,7 +829,11 @@ Page({
           });
 
           util.showToast('推荐已刷新');
-          console.log('✅ 刷新随机推荐成功:', circle.name);
+          console.log('✅ 刷新随机推荐成功:', {
+            circleName: circle.name,
+            hasLatestPost: formattedCircle.hasLatestPost,
+            latestPostContent: circle.latestPost ? circle.latestPost.content : '无内容'
+          });
         } else {
           // 暂无可推荐的朋友圈
           this.setData({ recommendedCircles: [] });

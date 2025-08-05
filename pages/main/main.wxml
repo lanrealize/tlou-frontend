@@ -100,7 +100,7 @@
   <view class="post-card" wx:if="{{recommendedCircles.length > 0}}" bindtap="viewRecommendedCircle" data-circle-id="{{recommendedCircles[0]._id}}">
     <view class="post-bg"></view>
     <view class="discover-title">发现有趣朋友圈</view>
-    <view class="menu-icon" bindtap="refreshRecommendations" catchtap="refreshRecommendations">
+    <view class="menu-icon" catchtap="refreshRecommendations">
       <image src="/assets/icons/refresh.svg" mode="aspectFit"></image>
     </view>
     
@@ -108,7 +108,7 @@
     
     <!-- 动态内容区域 -->
     <view class="content-container">
-      <view class="quote-mark">"</view>
+      <view class="quote-mark">“</view>
       <view class="post-content" wx:if="{{recommendedCircles[0].hasLatestPost}}">{{recommendedCircles[0].latestPost.content}}</view>
       <view class="post-content" wx:else>Ta什么都没说</view>
     </view>

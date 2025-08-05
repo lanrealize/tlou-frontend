@@ -1,6 +1,7 @@
 // pages/management/management.js
 const { storeBindingsBehavior } = require('mobx-miniprogram-bindings');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
+const navigationHelper = require('../../utils/navigationHelper');
 
 Page({
   behaviors: [storeBindingsBehavior],
@@ -19,6 +20,7 @@ Page({
 
   onLoad() {
     this.setupStoreBindings();
+    this.initNavigation();
     
     // 等待一个微任务周期让MobX绑定生效
     setTimeout(() => {
@@ -74,6 +76,24 @@ Page({
     if (this.storeBindings) {
       this.storeBindings.destroyStoreBindings();
     }
+  },
+
+  // 初始化导航栏
+  initNavigation() {
+    const navData = navigationHelper.getNavigationData();
+    this.setData({
+      statusBarHeight: navData.statusBarHeight,
+      navigationBarHeight: navData.navigationBarHeight,
+      totalNavigationHeight: navData.totalNavigationHeight,
+      // 兼容旧字段名
+      titleBarHeight: navData.navigationBarHeight,
+      navigationHeight: navData.totalNavigationHeight
+    });
+  },
+
+  // 返回按钮点击事件
+  onBackTap() {
+    wx.navigateBack();
   },
 
   setupStoreBindings() {

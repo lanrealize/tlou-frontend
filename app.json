@@ -14,7 +14,8 @@
     "navigationBarTitleText": "朋友圈",
     "navigationBarTextStyle": "black",
     "enablePullDownRefresh": true,
-    "backgroundColor": "#f5f5f5"
+    "backgroundColor": "#f5f5f5",
+    "navigationStyle": "custom"
   },
 
   "permission": {

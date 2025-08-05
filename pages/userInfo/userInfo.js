@@ -3,6 +3,7 @@ const auth = require('../../utils/auth');
 const util = require('../../utils/util');
 const qiniuUploader = require('../../utils/qiniuUploader');
 const qiniuConfig = require('../../utils/qiniuConfig');
+const navigationHelper = require('../../utils/navigationHelper');
 
 // 默认头像地址
 const defaultAvatarUrl = '/images/default_avatar.png';
@@ -34,12 +35,13 @@ Page({
 
   // 获取安全区域信息
   getSafeAreaInfo() {
-    const app = getApp();
-    if (app && app.globalData.safeAreaInfo) {
-      this.setData({
-        safeAreaInfo: app.globalData.safeAreaInfo
-      });
-    }
+    const navData = navigationHelper.getNavigationData();
+    this.setData({
+      safeAreaInfo: {
+        statusBarHeight: navData.statusBarHeight,
+        navBarHeight: navData.totalNavigationHeight
+      }
+    });
   },
 
   // 返回主页面

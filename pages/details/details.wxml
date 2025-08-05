@@ -1,5 +1,5 @@
 <!--pages/details/details.wxml-->
-<view class="container">
+<view class="page-container">
   <!-- 状态栏占位 -->
   <view class="status-bar" style="height: {{safeAreaInfo.statusBarHeight}}px;"></view>
   
@@ -10,44 +10,51 @@
 
   <!-- 朋友圈详情页面 -->
   <view class="moment-page" wx:else>
-    <!-- 顶部导航栏 -->
-    <view class="nav-header card-shadow">
-      <view class="nav-left">
-        <view class="back-btn" bindtap="navigateBack">
-          <text class="back-icon">‹</text>
-        </view>
-        <text class="nav-title">两个人的朋友圈</text>
+    <!-- 头部区域 -->
+    <view class="header">
+      <view class="back-btn" bindtap="navigateBack">
+        <text class="back-icon">‹</text>
       </view>
-      <view class="nav-right">
-        <view class="more-btn" bindtap="showMoreOptions">
-          <text class="more-icon">...</text>
+      
+      <!-- 标题组 -->
+      <view class="title-group">
+        <view class="page-subtitle">朋友圈详情</view>
+        <view class="title-text">两个人的朋友圈</view>
+      </view>
+      
+      <!-- 操作按钮组 -->
+      <view class="action-buttons">
+        <view class="action-btn" bindtap="showMoreOptions">
+          <text class="action-icon">...</text>
         </view>
-        <view class="timer-btn">
-          <text class="timer-icon">⏰</text>
+        <view class="action-btn timer-btn">
+          <text class="action-icon">⏰</text>
         </view>
       </view>
     </view>
 
-    <!-- 用户信息区域 -->
-    <view class="user-section card-shadow">
-      <view class="user-count-row">
-        <text class="user-count">{{circle.memberCount || 1}} 名用户在内</text>
-        <view class="setting-btn theme-btn-small" bindtap="openSettings">
-          <text>设置</text>
+    <!-- 朋友圈信息卡片 -->
+    <view class="friend-circle-info-card">
+      <view class="card-bg"></view>
+      <view class="card-header">
+        <view class="circle-info">
+          <view class="member-count">有 {{circle.memberCount || 1}} 名用户在内</view>
+          <view class="circle-status">朋友圈活跃中</view>
         </view>
+        <view class="setting-btn theme-color" bindtap="openSettings">设置</view>
       </view>
-      <view class="user-row">
-        <view class="user-avatar-container" wx:for="{{circle.members || []}}" wx:for-item="member" wx:key="_id" wx:if="{{index < 5}}">
-          <image class="user-avatar" src="{{member.avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+      
+      <!-- 用户头像组 -->
+      <view class="member-avatars">
+        <view class="avatar-group">
+          <image class="member-avatar" wx:for="{{circle.members || []}}" wx:for-item="member" wx:key="_id" wx:if="{{index < 5}}" src="{{member.avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+          <!-- 如果没有成员信息，显示默认头像 -->
+          <image class="member-avatar" wx:if="{{!circle.members || circle.members.length === 0}}" src="/images/default_avatar.png" mode="aspectFill"></image>
         </view>
-        <!-- 如果没有成员信息，显示默认头像 -->
-        <view class="user-avatar-container" wx:if="{{!circle.members || circle.members.length === 0}}">
-          <image class="user-avatar" src="/images/default_avatar.png" mode="aspectFill"></image>
-        </view>
-        <button class="add-user-btn" open-type="share" wx:if="{{isCircleOwner}}" hover-class="add-user-btn-hover">
+        <button class="add-member-btn" open-type="share" wx:if="{{isCircleOwner}}" hover-class="add-member-hover">
           <text class="add-icon">+</text>
         </button>
-        <view class="add-user-btn disabled" wx:else>
+        <view class="add-member-btn disabled" wx:else>
           <text class="add-icon">+</text>
         </view>
       </view>

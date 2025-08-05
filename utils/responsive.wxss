@@ -1,0 +1,43 @@
+/* 统一的响应式断点 */
+
+/* 小屏手机: 宽度 <= 600rpx */
+@media (max-width: 600rpx) {
+  .container {
+    padding: 24rpx;
+  }
+  
+  .card {
+    padding: 24rpx;
+    margin-bottom: 16rpx;
+  }
+  
+  .avatar {
+    width: 60rpx;
+    height: 60rpx;
+  }
+  
+  .user-name {
+    font-size: 28rpx;
+  }
+  
+  .content-text {
+    font-size: 28rpx;
+  }
+}
+
+/* 大屏设备: 宽度 >= 900rpx */
+@media (min-width: 900rpx) {
+  .container {
+    max-width: 800rpx;
+    margin: 0 auto;
+  }
+  
+  .card {
+    padding: 40rpx;
+  }
+  
+  .avatar {
+    width: 100rpx;
+    height: 100rpx;
+  }
+}
