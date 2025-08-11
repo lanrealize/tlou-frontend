@@ -54,12 +54,17 @@ Page({
 
   // 获取安全区域信息
   getSafeAreaInfo() {
-    const navData = navigationHelper.getNavigationData();
+    const navData = navigationHelper.getNavigationInfo();
+    const app = getApp();
     this.setData({
       safeAreaInfo: {
-        statusBarHeight: navData.statusBarHeight,
-        navBarHeight: navData.totalNavigationHeight,
-        safeAreaTop: navData.statusBarHeight
+        statusBarHeight: app.globalData.safeAreaInfo.statusBarHeight,
+        navBarHeight: app.globalData.safeAreaInfo.navBarHeight,
+        safeAreaTop: app.globalData.safeAreaInfo.statusBarHeight,
+        menuHeight: navData.menuHeight,
+        menuTop: navData.menuTop,
+        menuLeft: navData.menuLeft,
+        menuRight: navData.menuRight
       }
     });
   },

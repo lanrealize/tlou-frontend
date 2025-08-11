@@ -9,6 +9,13 @@ App({
     userStore: userStore,
     // 系统信息
     systemInfo: null,
+    // 导航栏信息
+    navigationInfo: {
+      menuHeight: 0,
+      menuTop: 0,
+      menuLeft: 0,
+      menuRight: 0
+    },
     // 安全区域信息
     safeAreaInfo: {
       statusBarHeight: 44,
@@ -21,6 +28,9 @@ App({
 
   onLaunch() {
     console.log('🚀 小程序启动');
+    
+    // 设置导航栏信息
+    this.setNavigationInfo();
     
     // 获取系统信息
     this.getSystemInfo();
@@ -39,6 +49,18 @@ App({
 
   onError(msg) {
     console.error('小程序错误:', msg);
+  },
+
+  // 设置导航栏信息
+  setNavigationInfo() {
+    const systemInfo = wx.getSystemInfoSync();
+    const screenWidth = systemInfo.windowWidth; 
+
+    const menuInfo = wx.getMenuButtonBoundingClientRect();
+    this.globalData.navigationInfo.menuHeight = menuInfo.height;
+    this.globalData.navigationInfo.menuTop = menuInfo.top;
+    this.globalData.navigationInfo.menuLeft = screenWidth - menuInfo.left;
+    this.globalData.navigationInfo.menuRight = screenWidth - menuInfo.right;
   },
 
   // 获取系统信息

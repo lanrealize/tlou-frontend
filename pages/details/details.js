@@ -3,6 +3,7 @@ const { storeBindingsBehavior } = require('mobx-miniprogram-bindings');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const api = require('../../utils/api');
 const util = require('../../utils/util');
+const navigationHelper = require('../../utils/navigationHelper');
 
 Page({
   // 使用MobX状态管理行为
@@ -36,11 +37,20 @@ Page({
     // 安全区域信息
     safeAreaInfo: {
       statusBarHeight: 44
+    },
+    
+    // 导航栏数据
+    navigationData: {
+      statusBarHeight: 44,
+      navigationBarHeight: 44,
+      totalNavigationHeight: 88,
+      capsuleVerticalCenter: 22
     }
   },
 
   onLoad(options) {
     this.getSafeAreaInfo();
+    this.getNavigationData();
     this.setupStoreBindings();
     
     const { circleId, type, inviterId } = options;
@@ -132,6 +142,27 @@ Page({
         safeAreaInfo: app.globalData.safeAreaInfo
       });
     }
+  },
+
+  // 获取导航栏数据
+  getNavigationData() {
+    const navigationData = navigationHelper.getNavigationInfo();
+    const app = getApp();
+    const statusBarHeight = app.globalData.safeAreaInfo.statusBarHeight;
+    
+    // 计算垂直居中位置
+    const capsuleCenter = navigationData.menuTop + navigationData.menuHeight / 2;
+    const verticalCenter = capsuleCenter - statusBarHeight;
+    
+    this.setData({ 
+      navigationData: {
+        ...navigationData,
+        statusBarHeight,
+        navigationBarHeight: 44,
+        totalNavigationHeight: statusBarHeight + 44,
+        capsuleVerticalCenter: verticalCenter
+      }
+    });
   },
 
   onShow() {
@@ -348,25 +379,7 @@ Page({
     }
   },
 
-  // 显示更多选项
-  showMoreOptions() {
-    wx.showActionSheet({
-      itemList: ['分享朋友圈', '邀请朋友', '朋友圈设置'],
-      success: (res) => {
-        switch (res.tapIndex) {
-          case 0:
-            this.shareToMoments();
-            break;
-          case 1:
-            this.inviteFriends();
-            break;
-          case 2:
-            this.openSettings();
-            break;
-        }
-      }
-    });
-  },
+
 
   // 打开设置
   openSettings() {
@@ -408,13 +421,7 @@ Page({
 
 
 
-  // 分享到朋友圈
-  shareToMoments() {
-    wx.showToast({
-      title: '分享功能开发中',
-      icon: 'none'
-    });
-  },
+
 
   // 微信分享处理
   onShareAppMessage() {
@@ -511,13 +518,7 @@ Page({
     }
   },
 
-  // 邀请朋友
-  inviteFriends() {
-    wx.showToast({
-      title: '邀请朋友功能开发中',
-      icon: 'none'
-    });
-  },
+
 
   // 打开相机
   openCamera() {

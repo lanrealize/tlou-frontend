@@ -80,14 +80,20 @@ Page({
 
   // 初始化导航栏
   initNavigation() {
-    const navData = navigationHelper.getNavigationData();
+    const navData = navigationHelper.getNavigationInfo();
+    const app = getApp();
     this.setData({
-      statusBarHeight: navData.statusBarHeight,
-      navigationBarHeight: navData.navigationBarHeight,
-      totalNavigationHeight: navData.totalNavigationHeight,
+      statusBarHeight: app.globalData.safeAreaInfo.statusBarHeight,
+      navigationBarHeight: 44, // 固定导航栏高度
+      totalNavigationHeight: app.globalData.safeAreaInfo.navBarHeight,
       // 兼容旧字段名
-      titleBarHeight: navData.navigationBarHeight,
-      navigationHeight: navData.totalNavigationHeight
+      titleBarHeight: 44,
+      navigationHeight: app.globalData.safeAreaInfo.navBarHeight,
+      // 新增胶囊按钮信息
+      menuHeight: navData.menuHeight,
+      menuTop: navData.menuTop,
+      menuLeft: navData.menuLeft,
+      menuRight: navData.menuRight
     });
   },
 
