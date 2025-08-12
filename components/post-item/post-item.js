@@ -32,7 +32,15 @@ Component({
     // 最多显示的评论数量
     maxCommentsShow: 3,
     // 显示的评论列表
-    displayComments: []
+    displayComments: [],
+    // 弹出菜单显示状态
+    showActionsMenu: false,
+    // 单张图片的方向和样式信息
+    singleImageInfo: {
+      isPortrait: false,
+      mode: 'aspectFit',
+      styleClass: ''
+    }
   },
 
   /**
@@ -169,6 +177,15 @@ Component({
       });
     },
 
+    // 点击评论头像
+    onTapCommentAvatar(e) {
+      const { user } = e.currentTarget.dataset;
+      this.triggerEvent('tapAvatar', {
+        user: user,
+        post: this.data.post
+      });
+    },
+
     // 长按帖子
     onLongPress() {
       if (this.data.showActions) {
@@ -177,6 +194,55 @@ Component({
           post: this.data.post
         });
       }
+    },
+
+    // 切换操作菜单显示状态
+    toggleActionsMenu() {
+      this.setData({
+        showActionsMenu: !this.data.showActionsMenu
+      });
+    },
+
+    // 隐藏操作菜单
+    hideActionsMenu() {
+      this.setData({
+        showActionsMenu: false
+      });
+    },
+
+    // 从弹出菜单点赞
+    onLikeFromPopup() {
+      this.hideActionsMenu();
+      this.onLike();
+    },
+
+    // 从弹出菜单评论
+    onCommentFromPopup() {
+      this.hideActionsMenu();
+      this.onComment();
+    },
+
+    // 从弹出菜单删除
+    onDeleteFromPopup() {
+      this.hideActionsMenu();
+      this.onDeletePost();
+    },
+
+    // 单张图片加载完成，检测图片方向
+    onSingleImageLoad(e) {
+      const { width, height } = e.detail;
+      const isPortrait = height > width;
+      
+      // 根据图片方向设置显示模式和样式
+      const singleImageInfo = {
+        isPortrait: isPortrait,
+        mode: isPortrait ? 'heightFix' : 'widthFix',
+        styleClass: isPortrait ? 'portrait' : 'landscape'
+      };
+      
+      this.setData({
+        singleImageInfo: singleImageInfo
+      });
     }
   },
 

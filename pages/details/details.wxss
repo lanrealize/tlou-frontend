@@ -89,7 +89,7 @@ view, text, image {
 }
 
 .nav-title .title-text {
-  font-size: 17px;
+  font-size: 28rpx;
   font-weight: 400;
   color: #000000;
   line-height: 1;
@@ -110,13 +110,14 @@ view, text, image {
   padding-left: 30rpx;
   padding-right: 15rpx;
   box-sizing: border-box;
+  margin-top: 10rpx;
 }
 
 /* 左侧内容区域：文字 + 头像按钮 */
 .left-content {
   display: flex;
   align-items: center;
-  gap: 20rpx;
+  gap: 25rpx;
   flex: 1;
   min-width: 0;
 }
@@ -131,7 +132,7 @@ view, text, image {
 }
 
 .member-count {
-  font-size: 24rpx;
+  font-size: 28rpx;
   font-weight: 400;
   color: #000000;
   line-height: 1.2;
@@ -145,6 +146,7 @@ view, text, image {
   white-space: normal; /* 允许换行 */
   width: fit-content;
   word-break: break-all; /* 长单词可以断行 */
+  color: #808080;
 }
 
 .avatars-section {
@@ -212,12 +214,8 @@ view, text, image {
 
 /* ===== 帖子列表区域 ===== */
 .posts-container {
-  margin-top: 20rpx;
+  margin-top: 30rpx;
   padding-bottom: 200rpx; /* 为底部按钮留出空间 */
-}
-
-.posts-list {
-  /* 由post-item组件自己处理样式 */
 }
 
 .empty-content {

@@ -1,34 +1,22 @@
 <!--components/post-item/post-item.wxml-->
-<view class="post-item card-shadow" bindlongpress="onLongPress">
-  <!-- 帖子头部：头像和用户信息 -->
-  <view class="post-header">
-    <image 
-      class="user-avatar" 
-      src="{{post.author.avatar || '/images/default_avatar.png'}}" 
-      mode="aspectFill"
-      bindtap="onTapAvatar"
-    ></image>
-    
-    <view class="user-info">
+<view class="post-item" bindlongpress="onLongPress">
+  <!-- 第一个item：用户头像 -->
+  <image 
+    class="user-avatar" 
+    src="{{post.author.avatar || '/images/default_avatar.png'}}" 
+    mode="aspectFill"
+    bindtap="onTapAvatar"
+  ></image>
+  
+  <!-- 第二个item：右侧内容区域 -->
+  <view class="post-right-content">
+    <!-- 用户信息区域 -->
+    <view class="user-info-header">
       <view class="username">{{post.author.username || post.author.name || '未知用户'}}</view>
-      <view class="post-meta">
-        <text class="post-time">{{post.formattedTime || '刚刚'}}</text>
-        <text class="post-location" wx:if="{{post.location}}">· {{post.location}}</text>
-      </view>
     </view>
-    
-    <!-- 删除按钮（仅作者可见） -->
-    <view 
-      class="delete-btn" 
-      wx:if="{{showActions && currentUser && currentUser._id && post.author && post.author._id && currentUser._id === post.author._id}}"
-      bindtap="onDeletePost"
-    >
-      <text class="delete-icon">×</text>
-    </view>
-  </view>
 
-  <!-- 帖子内容区域 -->
-  <view class="post-content">
+    <!-- 帖子内容区域 -->
+    <view class="post-content">
     <!-- 文字内容 -->
     <view class="post-text" wx:if="{{post.content}}">
       <text>{{post.content}}</text>
@@ -39,9 +27,10 @@
       <!-- 单张图片 -->
       <view class="single-image" wx:if="{{post.images.length === 1}}">
         <image 
-          class="post-image-single" 
+          class="post-image-single {{singleImageInfo.styleClass}}" 
           src="{{post.images[0]}}" 
-          mode="widthFix"
+          mode="{{singleImageInfo.mode}}"
+          bindload="onSingleImageLoad"
           bindtap="onPreviewImage"
           data-current="{{post.images[0]}}"
         ></image>
@@ -70,108 +59,133 @@
         </view>
       </view>
     </view>
-  </view>
-
-  <!-- 帖子底部：点赞和评论 -->
-  <view class="post-footer">
-    <!-- 点赞列表 -->
-    <view class="likes-section" wx:if="{{post.likes && post.likes.length > 0}}">
-      <view class="likes-container">
-        <text class="like-icon">❤️</text>
-        <view class="likes-text">
-          <text wx:if="{{post.likedUsers && post.likedUsers.length > 0}}">
-            <!-- 显示前3个用户名 -->
-            <text wx:for="{{post.likedUsers}}" wx:for-item="user" wx:key="_id" wx:for-index="idx" wx:if="{{idx < 3}}">
-              <text class="liked-username">{{user.username}}</text>
-              <text wx:if="{{idx < 2 && idx < post.likedUsers.length - 1}}">、</text>
-            </text>
-            <!-- 如果超过3人，显示等X人 -->
-            <text wx:if="{{post.likedUsers.length > 3}}"> 等{{post.likes.length}}人</text>
-            觉得很赞
-          </text>
-          <text wx:else>{{post.likes.length}}人觉得很赞</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 评论列表 -->
-    <view class="comments-section" wx:if="{{post.comments && post.comments.length > 0}}">
-      <view class="comments-container">
-        <!-- 显示部分评论 -->
-        <view 
-          class="comment-item" 
-          wx:for="{{displayComments}}" 
-          wx:for-item="comment" 
-          wx:key="_id"
-        >
-          <!-- 评论内容区域 - 可点击回复 -->
-          <view class="comment-content-wrapper" 
-                catchtap="onReplyComment"
-                data-user-id="{{comment.author ? comment.author._id : ''}}"
-                data-username="{{comment.author ? (comment.author.username || comment.author.name) : '匿名用户'}}">
-            
-            <view class="comment-content-inner">
-              <!-- 如果是回复用户的评论 -->
-              <text wx:if="{{comment.replyTo}}" class="comment-content">
-                <text class="comment-author theme-color">{{comment.author ? (comment.author.username || comment.author.name || '匿名用户') : '匿名用户'}}</text>
-                <text class="reply-indicator"> 回复 </text>
-                <text class="reply-target theme-color">{{comment.replyTo.username || comment.replyTo.name || '未知用户'}}</text>
-                <text class="reply-separator">: </text>
-                <text class="comment-text">{{comment.content || '内容为空'}}</text>
-              </text>
-              
-              <!-- 如果是直接评论帖子 -->
-              <text wx:else class="comment-content">
-                <text class="comment-author theme-color">{{comment.author ? (comment.author.username || comment.author.name || '匿名用户') : '匿名用户'}}</text>
-                <text class="comment-separator">: </text>
-                <text class="comment-text">{{comment.content || '内容为空'}}</text>
-              </text>
-            </view>
-            
-            <!-- 点击提示图标 -->
-            <view class="tap-hint">
-              <text class="tap-hint-icon">💬</text>
-            </view>
-          </view>
-          
-          <view class="comment-meta">
-            <text class="comment-time">{{comment.formattedTime || '刚刚'}}</text>
-            
-            <!-- 删除评论按钮 -->
-            <text 
-              class="delete-comment-btn" 
-              wx:if="{{showActions && comment.author && currentUser._id && currentUser._id === comment.author._id}}"
-              catchtap="onDeleteComment"
-              data-comment-id="{{comment._id}}"
-            >删除</text>
-          </view>
-        </view>
-
-        <!-- 展开/收起评论 -->
-        <view 
-          class="comments-toggle" 
-          wx:if="{{post.comments.length > maxCommentsShow}}"
-          bindtap="toggleComments"
-        >
-          <text class="toggle-text theme-color">
-            {{commentsExpanded ? '收起评论' : '查看全部' + post.comments.length + '条评论'}}
-          </text>
-        </view>
-      </view>
-    </view>
-
-
-
-    <!-- 操作按钮区域 -->
-    <view class="actions-section">
-      <view class="action-btn" bindtap="onLike">
-        <text class="action-icon {{post.isLiked ? 'liked' : ''}}">{{post.isLiked ? '❤️' : '🤍'}}</text>
-        <text class="action-text {{post.isLiked ? 'liked' : ''}}">{{post.isLiked ? '已赞' : '点赞'}} ({{post.likes.length}})</text>
+    
+      <!-- 帖子时间地点和操作按钮 -->
+    <view class="post-bottom-meta">
+      <view class="post-meta">
+        <text class="post-time">{{post.formattedTime || '刚刚'}}</text>
+        <text class="post-location" wx:if="{{post.location}}">· {{post.location}}</text>
       </view>
       
-      <view class="action-btn" bindtap="onComment">
-        <text class="action-icon">💬</text>
-        <text class="action-text">评论 ({{post.comments ? post.comments.length : 0}})</text>
+      <!-- 三点操作按钮 -->
+      <view class="actions-menu-btn" bindtap="toggleActionsMenu">
+        <image class="menu-dots-icon" src="/assets/icons/more.svg" mode="aspectFit"></image>
+      </view>
+    </view>
+
+      <!-- 帖子底部：点赞和评论 -->
+      <view class="post-footer">
+        <!-- 点赞列表 -->
+        <view class="likes-section" wx:if="{{post.likes && post.likes.length > 0}}">
+          <view class="likes-container">
+            <image class="like-icon" src="/assets/icons/like.svg" mode="aspectFit"></image>
+            <view class="likes-text">
+              <text wx:if="{{post.likedUsers && post.likedUsers.length > 0}}"><text wx:for="{{post.likedUsers}}" wx:for-item="user" wx:key="_id" wx:for-index="idx"><text class="liked-username">{{user.username}}</text><text wx:if="{{idx < post.likedUsers.length - 1}}" decode="{{true}}">&nbsp;&nbsp;</text></text><text decode="{{true}}">&nbsp;&nbsp;&nbsp;</text>觉得很赞</text>
+              <text wx:else>{{post.likes.length}}人觉得很赞</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 评论列表 -->
+        <view class="comments-section" wx:if="{{post.comments && post.comments.length > 0}}">
+          <view class="comments-container">
+            <!-- 显示部分评论 -->
+            <view 
+              class="comment-item" 
+              wx:for="{{displayComments}}" 
+              wx:for-item="comment" 
+              wx:key="_id"
+            >
+              <!-- 评论头像 -->
+              <image 
+                class="comment-avatar" 
+                src="{{comment.author.avatar || '/images/default_avatar.png'}}" 
+                mode="aspectFill"
+                bindtap="onTapCommentAvatar"
+                data-user="{{comment.author}}"
+              ></image>
+              
+              <!-- 评论内容区域 -->
+              <view class="comment-content-wrapper">
+                <!-- 用户名和时间 -->
+                <view class="comment-header">
+                  <text class="comment-author">{{comment.author ? (comment.author.username || comment.author.name || '匿名用户') : '匿名用户'}}</text>
+                  <!-- 如果是回复用户的评论，在用户名后显示回复目标 -->
+                  <text wx:if="{{comment.replyTo}}" class="reply-indicator">·</text>
+                  <text wx:if="{{comment.replyTo}}" class="reply-indicator">回复</text>
+                  <text wx:if="{{comment.replyTo}}" class="reply-target">@{{comment.replyTo.username || comment.replyTo.name || '未知用户'}}</text>
+                  <text>·</text>
+                  <text class="comment-time">{{comment.formattedTime || '刚刚'}}</text>
+                </view>
+                
+                <!-- 评论内容 -->
+                <view class="comment-content">
+                  <text class="comment-text-flow">
+                    <text 
+                      class="comment-main-text"
+                      catchtap="onReplyComment"
+                      data-user-id="{{comment.author ? comment.author._id : ''}}"
+                      data-username="{{comment.author ? (comment.author.username || comment.author.name) : '匿名用户'}}">{{comment.content || '内容为空'}}</text><text class="comment-space" decode="{{true}}"></text>
+                  </text>
+                  <view class="comment-actions-container">
+                    <text 
+                      class="reply-btn"
+                      catchtap="onReplyComment"
+                      data-user-id="{{comment.author ? comment.author._id : ''}}"
+                      data-username="{{comment.author ? (comment.author.username || comment.author.name) : '匿名用户'}}">回复</text>
+                    <image 
+                      class="delete-comment-btn" 
+                      wx:if="{{showActions && comment.author && currentUser._id && currentUser._id === comment.author._id}}"
+                      catchtap="onDeleteComment"
+                      data-comment-id="{{comment._id}}"
+                      src="/assets/icons/delete.svg"
+                      mode="aspectFit"
+                    ></image>
+                  </view>
+                </view>
+              </view>
+            </view>
+
+            <!-- 展开/收起评论 -->
+            <view 
+              class="comments-toggle" 
+              wx:if="{{post.comments.length > maxCommentsShow}}"
+              bindtap="toggleComments"
+            >
+              <view class="toggle-dash"></view>
+              <text class="toggle-text">{{commentsExpanded ? '收起评论' : '查看全部' + post.comments.length + '条评论'}}</text>
+              <image class="toggle-icon" src="{{commentsExpanded ? '/assets/icons/up.svg' : '/assets/icons/down.svg'}}" mode="aspectFit"></image>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 弹出式操作菜单 -->
+  <view class="actions-popup {{showActionsMenu ? 'show' : ''}}" wx:if="{{showActions}}">
+    <view class="popup-mask" bindtap="hideActionsMenu"></view>
+    <view class="popup-content">
+      <!-- 点赞按钮 -->
+      <view class="popup-action-btn" bindtap="onLikeFromPopup">
+        <text class="popup-action-icon {{post.isLiked ? 'liked' : ''}}">{{post.isLiked ? '❤️' : '🤍'}}</text>
+        <text class="popup-action-text">{{post.isLiked ? '取消点赞' : '点赞'}}</text>
+      </view>
+      
+      <!-- 评论按钮 -->
+      <view class="popup-action-btn" bindtap="onCommentFromPopup">
+        <text class="popup-action-icon">💬</text>
+        <text class="popup-action-text">评论</text>
+      </view>
+      
+      <!-- 删除按钮（仅作者可见） -->
+      <view 
+        class="popup-action-btn delete-action" 
+        wx:if="{{currentUser && currentUser._id && post.author && post.author._id && currentUser._id === post.author._id}}"
+        bindtap="onDeleteFromPopup"
+      >
+        <text class="popup-action-icon">🗑️</text>
+        <text class="popup-action-text">删除</text>
       </view>
     </view>
   </view>
