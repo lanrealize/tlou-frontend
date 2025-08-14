@@ -2,13 +2,14 @@
 // API接口封装
 
 const { getOpenid } = require('./auth');
+const { BACKEND_CONFIG } = require('../config/backend');
 
 class API {
   constructor() {
     // 延迟获取baseUrl，避免循环依赖
     this.getBaseUrl = () => {
       const app = getApp();
-      return app ? app.globalData.baseUrl : 'http://localhost:3000/api';
+      return app ? app.globalData.baseUrl : BACKEND_CONFIG.BASE_URL;
     };
   }
 

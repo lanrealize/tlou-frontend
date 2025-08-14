@@ -1,3 +1,5 @@
+const { BACKEND_CONFIG } = require('../config/backend');
+
 const STORAGE_KEYS = {
   OPENID: 'openid',
   USER_INFO: 'userInfo'
@@ -5,7 +7,7 @@ const STORAGE_KEYS = {
 
 const getBaseUrl = () => {
   const app = getApp();
-  return app ? app.globalData.baseUrl : 'http://localhost:3000/api';
+  return app ? app.globalData.baseUrl : BACKEND_CONFIG.BASE_URL;
 };
 
 // 跳转到用户信息填写页面

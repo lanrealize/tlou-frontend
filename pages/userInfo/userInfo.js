@@ -256,7 +256,8 @@ Page({
    */
   getBaseUrl() {
     const app = getApp();
-    return app ? app.globalData.baseUrl : 'http://localhost:3000/api';
+    const { BACKEND_CONFIG } = require('../../config/backend');
+    return app ? app.globalData.baseUrl : BACKEND_CONFIG.BASE_URL;
   },
 
   /**

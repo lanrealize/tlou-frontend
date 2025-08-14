@@ -69,7 +69,7 @@ describe('历史记录功能集成测试', () => {
     global.getApp = jest.fn(() => ({
       getUserStore: () => userStore,
       globalData: {
-        baseUrl: 'http://localhost:3000/api',
+        baseUrl: 'http://192.168.0.111:3000/api',
         selectedCircleId: null
       }
     }));

@@ -56,7 +56,7 @@ global.wx = {
 // 模拟getApp()函数
 global.getApp = jest.fn(() => ({
   globalData: {
-    baseUrl: 'http://localhost:3000/api',
+    baseUrl: 'http://192.168.0.111:3000/api',
     userStore: {},
     loginStatus: 'unregistered',
     userInfo: null,

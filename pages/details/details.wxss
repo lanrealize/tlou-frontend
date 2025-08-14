@@ -16,9 +16,9 @@ view, text, image {
 .page-container {
   position: relative;
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
   background-color: #ffffff;
-  overflow-x: hidden;
+  overflow: hidden; /* 防止页面滚动 */
 }
 
 /* 状态栏占位 - 已集成到自定义导航栏中 */
@@ -36,10 +36,17 @@ view, text, image {
 /* 朋友圈页面主容器 */
 .moment-page {
   background-color: #ffffff;
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   padding-top: 20px; /* 默认导航栏高度，会被动态设置覆盖 */
+  overflow: hidden; /* 防止内容溢出 */
+}
+
+/* scroll-view样式 */
+.moment-scroll-view {
+  width: 100%;
+  flex: 1;
 }
 
 /* 自定义导航栏 */
@@ -204,7 +211,7 @@ view, text, image {
 .setting-btn {
   font-size: 24rpx;
   font-weight: 500;
-  padding: 10rpx 40rpx;
+  padding: 10rpx 30rpx;
   color: #ffffff;
   background-color: #1A73E8;
   border-radius: 50rpx;
@@ -214,7 +221,7 @@ view, text, image {
 
 /* ===== 帖子列表区域 ===== */
 .posts-container {
-  margin-top: 30rpx;
+  margin-top: 50rpx;
   padding-bottom: 200rpx; /* 为底部按钮留出空间 */
 }
 

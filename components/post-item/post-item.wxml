@@ -1,5 +1,5 @@
 <!--components/post-item/post-item.wxml-->
-<view class="post-item" bindlongpress="onLongPress">
+<view class="post-item">
   <!-- 第一个item：用户头像 -->
   <image 
     class="user-avatar" 
@@ -25,7 +25,8 @@
     <!-- 图片内容 -->
     <view class="post-images" wx:if="{{post.images && post.images.length > 0}}">
       <!-- 单张图片 -->
-      <view class="single-image" wx:if="{{post.images.length === 1}}">
+      <view class="single-image" wx:if="{{post.images.length === 1}}" 
+            style="width: {{singleImageInfo.displayWidth}}rpx; height: {{singleImageInfo.displayHeight}}rpx;">
         <image 
           class="post-image-single {{singleImageInfo.styleClass}}" 
           src="{{post.images[0]}}" 
@@ -112,7 +113,7 @@
                   <text class="comment-author">{{comment.author ? (comment.author.username || comment.author.name || '匿名用户') : '匿名用户'}}</text>
                   <!-- 如果是回复用户的评论，在用户名后显示回复目标 -->
                   <text wx:if="{{comment.replyTo}}" class="reply-indicator">·</text>
-                  <text wx:if="{{comment.replyTo}}" class="reply-indicator">回复</text>
+                  <!-- <text wx:if="{{comment.replyTo}}" class="reply-indicator">回复</text> -->
                   <text wx:if="{{comment.replyTo}}" class="reply-target">@{{comment.replyTo.username || comment.replyTo.name || '未知用户'}}</text>
                   <text>·</text>
                   <text class="comment-time">{{comment.formattedTime || '刚刚'}}</text>

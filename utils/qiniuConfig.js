@@ -46,7 +46,7 @@ const getUploadToken = async () => {
 
     const response = await new Promise((resolve, reject) => {
       wx.request({
-        url: 'http://localhost:3000/api/qiniu/upload-token', // 后端七牛云接口
+        url: `${getApp().globalData.baseUrl}/qiniu/upload-token`, // 后端七牛云接口
         method: 'GET',
         data: {
           pathType: 'avatar', // 默认为头像类型

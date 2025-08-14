@@ -39,7 +39,10 @@ Component({
     singleImageInfo: {
       isPortrait: false,
       mode: 'aspectFit',
-      styleClass: ''
+      styleClass: '',
+      // 精确的显示尺寸，用于占位
+      displayWidth: 0,
+      displayHeight: 0
     }
   },
 
@@ -49,6 +52,15 @@ Component({
   observers: {
     'post.comments, commentsExpanded': function(comments, expanded) {
       this.updateDisplayComments();
+    },
+    'post.imageMeta': function(imageMeta) {
+      this.setSingleImageStyleFromMeta();
+    },
+    // 监听post对象变化，确保初次数据加载时就设置样式
+    'post': function(post) {
+      if (post) {
+        this.setSingleImageStyleFromMeta();
+      }
     }
   },
 
@@ -56,6 +68,70 @@ Component({
    * 组件的方法列表
    */
   methods: {
+    // 根据服务端图片尺寸信息设置单图样式
+    setSingleImageStyleFromMeta() {
+      const { post } = this.data;
+      
+      // 检查基础条件：必须是单张图片
+      if (!post || !post.images || post.images.length !== 1) return;
+      
+      // 检查是否有后端图片元数据
+      if (!post.imageMeta || !post.imageMeta[0] || 
+          typeof post.imageMeta[0].width !== 'number' || 
+          typeof post.imageMeta[0].height !== 'number') {
+        // 如果没有有效的后端数据，设置默认样式和占位尺寸
+        if (!this.data.singleImageInfo.styleClass) {
+          this.setData({
+            singleImageInfo: {
+              isPortrait: false,
+              mode: 'aspectFit',
+              styleClass: 'landscape',
+              displayWidth: 500,
+              displayHeight: 300  // 默认占位高度
+            }
+          });
+        }
+        return;
+      }
+      
+      const meta = post.imageMeta[0];
+      const { width: originalWidth, height: originalHeight } = meta;
+      const isPortrait = originalHeight > originalWidth;
+      
+      let displayWidth, displayHeight;
+      
+      if (isPortrait) {
+        // 纵向图片：固定高度460rpx，宽度按比例缩放
+        displayHeight = 460;
+        displayWidth = Math.round(460 * (originalWidth / originalHeight));
+        // 限制最大宽度500rpx
+        if (displayWidth > 500) {
+          displayWidth = 500;
+          displayHeight = Math.round(500 * (originalHeight / originalWidth));
+        }
+      } else {
+        // 横向图片：固定宽度500rpx，高度按比例缩放
+        displayWidth = 500;
+        displayHeight = Math.round(500 * (originalHeight / originalWidth));
+        // 限制最大高度460rpx
+        if (displayHeight > 460) {
+          displayHeight = 460;
+          displayWidth = Math.round(460 * (originalWidth / originalHeight));
+        }
+      }
+      
+      // 基于真实的图片尺寸设置样式和精确占位
+      this.setData({
+        singleImageInfo: {
+          isPortrait: isPortrait,
+          mode: isPortrait ? 'heightFix' : 'widthFix',
+          styleClass: isPortrait ? 'portrait' : 'landscape',
+          displayWidth: displayWidth,
+          displayHeight: displayHeight
+        }
+      });
+    },
+
     // 更新显示的评论列表
     updateDisplayComments() {
       const { post, commentsExpanded, maxCommentsShow } = this.data;
@@ -80,8 +156,6 @@ Component({
       this.setData({
         displayComments: displayComments
       });
-      
-
     },
 
     // 点赞/取消点赞
@@ -186,16 +260,6 @@ Component({
       });
     },
 
-    // 长按帖子
-    onLongPress() {
-      if (this.data.showActions) {
-        this.triggerEvent('longPress', {
-          postId: this.data.post._id,
-          post: this.data.post
-        });
-      }
-    },
-
     // 切换操作菜单显示状态
     toggleActionsMenu() {
       this.setData({
@@ -228,20 +292,60 @@ Component({
       this.onDeletePost();
     },
 
-    // 单张图片加载完成，检测图片方向
+    // 单张图片加载完成，检测图片方向（回退方案）
     onSingleImageLoad(e) {
-      const { width, height } = e.detail;
-      const isPortrait = height > width;
+      const { post, singleImageInfo } = this.data;
       
-      // 根据图片方向设置显示模式和样式
-      const singleImageInfo = {
+      // 检查是否已经有基于后端数据设置的样式
+      if (post && post.imageMeta && post.imageMeta[0] && 
+          typeof post.imageMeta[0].width === 'number' && 
+          typeof post.imageMeta[0].height === 'number') {
+        // 有后端数据，无需使用图片加载的回退方案
+        return;
+      }
+      
+      // 如果已有样式且不是默认样式，也无需重新设置
+      if (singleImageInfo && singleImageInfo.displayWidth && 
+          singleImageInfo.displayHeight && singleImageInfo.displayHeight !== 300) {
+        return;
+      }
+      
+      const { width: originalWidth, height: originalHeight } = e.detail;
+      const isPortrait = originalHeight > originalWidth;
+      
+      let displayWidth, displayHeight;
+      
+      if (isPortrait) {
+        // 纵向图片：固定高度460rpx，宽度按比例缩放
+        displayHeight = 460;
+        displayWidth = Math.round(460 * (originalWidth / originalHeight));
+        // 限制最大宽度500rpx
+        if (displayWidth > 500) {
+          displayWidth = 500;
+          displayHeight = Math.round(500 * (originalHeight / originalWidth));
+        }
+      } else {
+        // 横向图片：固定宽度500rpx，高度按比例缩放
+        displayWidth = 500;
+        displayHeight = Math.round(500 * (originalHeight / originalWidth));
+        // 限制最大高度460rpx
+        if (displayHeight > 460) {
+          displayHeight = 460;
+          displayWidth = Math.round(460 * (originalWidth / originalHeight));
+        }
+      }
+      
+      // 根据图片实际加载尺寸设置样式和精确尺寸（仅作为回退方案）
+      const newSingleImageInfo = {
         isPortrait: isPortrait,
         mode: isPortrait ? 'heightFix' : 'widthFix',
-        styleClass: isPortrait ? 'portrait' : 'landscape'
+        styleClass: isPortrait ? 'portrait' : 'landscape',
+        displayWidth: displayWidth,
+        displayHeight: displayHeight
       };
       
       this.setData({
-        singleImageInfo: singleImageInfo
+        singleImageInfo: newSingleImageInfo
       });
     }
   },
@@ -251,21 +355,20 @@ Component({
    */
   lifetimes: {
     attached() {
-      // 组件挂载时初始化评论显示
+      // 组件挂载时立即尝试设置图片样式（基于现有数据）
+      this.setSingleImageStyleFromMeta();
+      // 初始化评论显示
       this.updateDisplayComments();
+    },
+    
+    ready() {
+      // 组件布局完成后，再次确保图片样式正确
+      this.setSingleImageStyleFromMeta();
     },
     
     detached() {
       // 组件卸载时的逻辑
     }
-  },
-
-  /**
-   * 数据更新时的处理
-   */
-  ready() {
-    // 组件布局完成后初始化评论显示
-    this.updateDisplayComments();
   },
 
   /**

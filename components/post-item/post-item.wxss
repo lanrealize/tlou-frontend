@@ -170,28 +170,38 @@
   max-width: 100%;
 }
 
-/* 单张图片 */
+/* 单张图片容器 */
 .single-image {
   border-radius: 6rpx;
   overflow: hidden;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 精确的尺寸由内联样式动态设置，提供占位背景 */
+  background-color: #f8f8f8;
+  position: relative;
 }
 
 .post-image-single {
   border-radius: 10rpx;
   display: block;
+  /* 图片在容器内居中显示 */
+  max-width: 100%;
+  max-height: 100%;
 }
 
 /* 纵向图片样式 - heightFix模式，高度固定460rpx */
 .post-image-single.portrait {
   height: 460rpx;
   max-width: 500rpx;
+  width: auto;
 }
 
-/* 横向图片样式 - widthFix模式，宽度固定560rpx */
+/* 横向图片样式 - widthFix模式，宽度固定500rpx */
 .post-image-single.landscape {
-  width: 560rpx;
+  width: 500rpx;
   max-height: 460rpx;
+  height: auto;
 }
 
 /* 多张图片网格 */
@@ -378,12 +388,6 @@
   color: #333333;
 }
 
-.comment-main-text {
-  color: #000000;
-}
-
-
-
 .reply-indicator {
   color: #808080;
   font-size: 26rpx;
@@ -460,13 +464,4 @@
   width: 26rpx;
   height: 26rpx;
   flex-shrink: 0;
-}
-
-
-
-/* 动画效果 */
-@keyframes heartbeat {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
 }

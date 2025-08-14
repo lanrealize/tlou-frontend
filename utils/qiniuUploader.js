@@ -125,7 +125,7 @@ class QiniuUploader {
   async getUploadTokenFromBackend(pathType, userId) {
     return new Promise((resolve, reject) => {
       wx.request({
-        url: 'http://localhost:3000/api/qiniu/upload-token',
+        url: `${getApp().globalData.baseUrl}/qiniu/upload-token`,
         method: 'GET',
         data: {
           pathType: pathType,

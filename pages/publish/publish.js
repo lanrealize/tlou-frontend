@@ -312,6 +312,19 @@ Page({
 
 
 
+      // 获取本地图片尺寸信息
+      const getImageInfo = (path) => new Promise((resolve) => {
+        wx.getImageInfo({
+          src: path,
+          success: (res) => resolve({ width: res.width, height: res.height }),
+          fail: () => resolve(null)
+        });
+      });
+
+      const imageInfos = await Promise.all(
+        this.data.tempImages.map(p => getImageInfo(p))
+      );
+
       // 批量上传图片
       const uploadResult = await qiniuUploader.uploadImages(this.data.tempImages, userId, {
         pathType: 'post', // 设置为帖子类型
@@ -324,13 +337,14 @@ Page({
         console.error('部分图片上传失败:', uploadResult.errors);
         // 如果有部分成功，使用成功的结果
         if (uploadResult.results.length > 0) {
-          const successImages = uploadResult.results.map(result => ({
-            url: result.url,
-            key: result.key,
-            size: result.size || 0,
-            hash: result.hash || '',
-            uploadTime: result.uploadTime
-          }));
+          const successImages = uploadResult.results.map((result, idx) => {
+            const info = imageInfos[idx];
+            return {
+              url: result.url,
+              width: info?.width || null,
+              height: info?.height || null
+            };
+          });
           console.log('⚠️ 部分图片上传成功:', successImages);
           return successImages;
         } else {
@@ -338,14 +352,15 @@ Page({
         }
       }
 
-      // 提取所有成功上传的图片信息（包含URL和key）
-      const uploadedImages = uploadResult.results.map(result => ({
-        url: result.url,
-        key: result.key,
-        size: result.size || 0,
-        hash: result.hash || '',
-        uploadTime: result.uploadTime
-      }));
+      // 提取图片信息（URL + 尺寸）
+      const uploadedImages = uploadResult.results.map((result, idx) => {
+        const info = imageInfos[idx];
+        return {
+          url: result.url,
+          width: info?.width || null,
+          height: info?.height || null
+        };
+      });
       
       console.log('📸 上传完成，图片信息:', uploadedImages);
       return uploadedImages;

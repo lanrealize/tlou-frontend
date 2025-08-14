@@ -38,6 +38,7 @@ Page({
     safeAreaInfo: {
       statusBarHeight: 44
     },
+    safeAreaBottom: 160,  // 底部安全区域 + 发布按钮区域
     
     // 导航栏数据
     navigationData: {
@@ -138,8 +139,19 @@ Page({
   getSafeAreaInfo() {
     const app = getApp();
     if (app && app.globalData.safeAreaInfo) {
+      // 计算底部安全区域
+      const systemInfo = wx.getSystemInfoSync();
+      const safeAreaBottom = systemInfo.safeArea.bottom;
+      const screenHeight = systemInfo.screenHeight;
+      const bottomSafeArea = screenHeight - safeAreaBottom;
+      
+      // 计算实际需要的底部空间：发布按钮(120rpx) + 底部安全区域 + 额外边距
+      const publishButtonHeight = 120; // rpx转px大约是60px
+      const calculatedBottom = bottomSafeArea + publishButtonHeight + 20;
+      
       this.setData({
-        safeAreaInfo: app.globalData.safeAreaInfo
+        safeAreaInfo: app.globalData.safeAreaInfo,
+        safeAreaBottom: calculatedBottom
       });
     }
   },
@@ -173,7 +185,7 @@ Page({
     }
   },
 
-  // 下拉刷新
+  // 下拉刷新（由于使用scroll-view，这个方法保留但不再使用）
   onPullDownRefresh() {
     Promise.all([
       this.loadCircleDetail(),
@@ -183,7 +195,7 @@ Page({
     });
   },
 
-  // 上拉加载更多
+  // 上拉加载更多（现在通过scroll-view的bindscrolltolower触发）
   onReachBottom() {
     this.loadMorePosts();
   },
@@ -653,34 +665,7 @@ Page({
     util.showToast('功能开发中');
   },
 
-  // 长按帖子
-  onPostLongPress(e) {
-    const { postId, post } = e.detail;
 
-    // 检查是否是帖子作者
-    const isAuthor = this.data.userInfo?._id === post.author._id;
-    const actions = [];
-
-    if (isAuthor) {
-      actions.push('删除动态');
-    }
-    actions.push('举报', '取消');
-
-    wx.showActionSheet({
-      itemList: actions,
-      success: (res) => {
-        const action = actions[res.tapIndex];
-        switch (action) {
-          case '删除动态':
-            this.onPostDelete({ detail: { postId, post } });
-            break;
-          case '举报':
-            util.showToast('举报功能开发中');
-            break;
-        }
-      }
-    });
-  },
 
   // 导航到发布页面
   navigateToPublish() {

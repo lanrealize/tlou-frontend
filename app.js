@@ -1,10 +1,11 @@
 // app.js
 const { userStore } = require('./store/userStore');
+const { BACKEND_CONFIG } = require('./config/backend');
 
 App({
   globalData: {
     // 后端API基础地址
-    baseUrl: 'http://localhost:3000/api',
+    baseUrl: BACKEND_CONFIG.BASE_URL,
     // MobX用户状态管理
     userStore: userStore,
     // 系统信息

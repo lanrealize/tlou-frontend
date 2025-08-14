@@ -422,17 +422,26 @@ const postStore = observable({
     // 确保images数组存在并标准化格式
     post.images = post.images || [];
     
-    // 兼容新旧图片数据格式：确保images数组包含URL用于显示
-    post.images = post.images.map(img => {
+    // 处理图片数据：提取URL数组和尺寸信息
+    const imageUrls = [];
+    const imageMeta = [];
+    
+    post.images.forEach(img => {
       if (typeof img === 'string') {
-        // 旧格式：直接是URL字符串
-        return img;
+        imageUrls.push(img);
+        imageMeta.push(null);
       } else if (typeof img === 'object' && img.url) {
-        // 新格式：包含完整信息的对象，提取URL用于显示
-        return img.url;
+        imageUrls.push(img.url);
+        if (img.width && img.height) {
+          imageMeta.push({ width: img.width, height: img.height });
+        } else {
+          imageMeta.push(null);
+        }
       }
-      return img; // 兜底处理
     });
+    
+    post.images = imageUrls;
+    post.imageMeta = imageMeta;
     
     // 正确设置点赞状态
     post.isLiked = this._checkIfUserLiked(post.likes);

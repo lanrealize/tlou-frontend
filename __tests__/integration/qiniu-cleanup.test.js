@@ -58,7 +58,7 @@ describe('七牛云图片清理功能测试', () => {
         isLoggedIn: true
       }),
       globalData: {
-        baseUrl: 'http://localhost:3000/api'
+        baseUrl: 'http://192.168.0.111:3000/api'
       }
     }));
   });

@@ -24,7 +24,7 @@ describe('API接口封装', () => {
     // 模拟getApp返回baseUrl和userStore
     global.getApp = jest.fn(() => ({
       globalData: {
-        baseUrl: 'http://localhost:3000/api'
+        baseUrl: 'http://192.168.0.111:3000/api'
       },
       getUserStore: jest.fn(() => mockUserStore)
     }));
@@ -45,7 +45,7 @@ describe('API接口封装', () => {
       const result = await api.get('/test', { param: 'value' });
 
       expect(wx.request).toHaveBeenCalledWith({
-        url: 'http://localhost:3000/api/test?param=value',
+        url: 'http://192.168.0.111:3000/api/test?param=value',
         method: 'GET',
         data: {},
         header: {
@@ -77,7 +77,7 @@ describe('API接口封装', () => {
       const result = await api.post('/create', postData);
 
       expect(wx.request).toHaveBeenCalledWith({
-        url: 'http://localhost:3000/api/create',
+        url: 'http://192.168.0.111:3000/api/create',
         method: 'POST',
         data: postData,
         header: {
@@ -141,7 +141,7 @@ describe('API接口封装', () => {
       const result = await api.get('/test');
 
       expect(wx.request).toHaveBeenCalledWith({
-        url: 'http://localhost:3000/api/test',
+        url: 'http://192.168.0.111:3000/api/test',
         method: 'GET',
         data: {},
         header: {
@@ -177,7 +177,7 @@ describe('API接口封装', () => {
 
       expect(wx.request).toHaveBeenCalledWith(
         expect.objectContaining({
-          url: 'http://localhost:3000/api/circles/my',
+          url: 'http://192.168.0.111:3000/api/circles/my',
           method: 'GET'
         })
       );
@@ -201,7 +201,7 @@ describe('API接口封装', () => {
 
       expect(wx.request).toHaveBeenCalledWith(
         expect.objectContaining({
-          url: 'http://localhost:3000/api/circles',
+          url: 'http://192.168.0.111:3000/api/circles',
           method: 'POST',
           data: circleData
         })
@@ -222,7 +222,7 @@ describe('API接口封装', () => {
 
       expect(wx.request).toHaveBeenCalledWith(
         expect.objectContaining({
-          url: 'http://localhost:3000/api/circles/circle123/join',
+          url: 'http://192.168.0.111:3000/api/circles/circle123/join',
           method: 'POST'
         })
       );
@@ -245,7 +245,7 @@ describe('API接口封装', () => {
 
       expect(wx.request).toHaveBeenCalledWith(
         expect.objectContaining({
-          url: 'http://localhost:3000/api/posts?circleId=circle123&page=1&limit=10',
+          url: 'http://192.168.0.111:3000/api/posts?circleId=circle123&page=1&limit=10',
           method: 'GET'
         })
       );
@@ -269,7 +269,7 @@ describe('API接口封装', () => {
 
       expect(wx.request).toHaveBeenCalledWith(
         expect.objectContaining({
-          url: 'http://localhost:3000/api/posts',
+          url: 'http://192.168.0.111:3000/api/posts',
           method: 'POST',
           data: postData
         })
@@ -293,7 +293,7 @@ describe('API接口封装', () => {
 
       expect(wx.request).toHaveBeenCalledWith(
         expect.objectContaining({
-          url: 'http://localhost:3000/api/posts/post123/like',
+          url: 'http://192.168.0.111:3000/api/posts/post123/like',
           method: 'POST'
         })
       );
@@ -317,7 +317,7 @@ describe('API接口封装', () => {
 
       expect(wx.request).toHaveBeenCalledWith(
         expect.objectContaining({
-          url: 'http://localhost:3000/api/posts/post123/comments',
+          url: 'http://192.168.0.111:3000/api/posts/post123/comments',
           method: 'POST',
           data: commentData
         })
@@ -343,7 +343,7 @@ describe('API接口封装', () => {
 
       expect(wx.request).toHaveBeenCalledWith(
         expect.objectContaining({
-          url: 'http://localhost:3000/api/wechat/get-openid',
+          url: 'http://192.168.0.111:3000/api/wechat/get-openid',
           method: 'POST',
           data: { code: 'wx-code-123' }
         })
@@ -367,7 +367,7 @@ describe('API接口封装', () => {
 
       expect(wx.request).toHaveBeenCalledWith(
         expect.objectContaining({
-          url: 'http://localhost:3000/api/wechat/register',
+          url: 'http://192.168.0.111:3000/api/wechat/register',
           method: 'POST',
           data: {
             openid: 'openid123',

@@ -38,7 +38,7 @@ describe('端到端用户场景测试', () => {
     global.getApp = jest.fn(() => ({
       getUserStore: () => userStore,
       globalData: {
-        baseUrl: 'http://localhost:3000/api'
+        baseUrl: 'http://192.168.0.111:3000/api'
       }
     }));
   });
