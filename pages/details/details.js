@@ -34,6 +34,10 @@ Page({
     showApplyButton: false, // 是否显示申请按钮
     showPublishButton: false, // 是否显示发布按钮
     
+    // 数据缓存相关
+    lastDataLoadTime: 0,  // 上次数据加载时间
+    needsDataRefresh: true, // 是否需要刷新数据
+    
     // 安全区域信息
     safeAreaInfo: {
       statusBarHeight: 44
@@ -178,11 +182,44 @@ Page({
   },
 
   onShow() {
-    // 页面显示时刷新数据
+    // 智能刷新：只在需要时刷新数据
     if (this.data.circleId) {
+      this.smartRefreshData();
+    }
+  },
+  
+  // 智能刷新数据
+  smartRefreshData() {
+    const now = Date.now();
+    const { lastDataLoadTime, needsDataRefresh } = this.data;
+    const DATA_CACHE_DURATION = 30000; // 30秒缓存时间
+    
+    // 检查是否需要刷新数据
+    const shouldRefresh = needsDataRefresh || 
+                         !lastDataLoadTime || 
+                         (now - lastDataLoadTime) > DATA_CACHE_DURATION ||
+                         !this.data.circle; // 如果没有基础数据，必须加载
+    
+    if (shouldRefresh) {
+      console.log('🔄 智能刷新：需要更新数据');
       this.loadCircleDetail();
       this.refreshPosts(this.data.circleId);
+      
+      // 更新缓存标记
+      this.setData({
+        lastDataLoadTime: now,
+        needsDataRefresh: false
+      });
+    } else {
+      console.log('✨ 智能刷新：使用缓存数据');
     }
+  },
+  
+  // 标记数据需要刷新（供其他页面调用）
+  markDataNeedsRefresh() {
+    this.setData({
+      needsDataRefresh: true
+    });
   },
 
   // 下拉刷新（由于使用scroll-view，这个方法保留但不再使用）
@@ -403,6 +440,9 @@ Page({
       });
       return;
     }
+    
+    // 标记准备进入设置页面
+    console.log('📝 即将进入设置页面');
     
     // 导航到朋友圈设置页面，传递朋友圈ID
     wx.navigateTo({

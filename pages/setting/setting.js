@@ -35,6 +35,10 @@ Page({
     // 页面状态
     status: STATUS_CONSTANTS.LOADING,
     
+    // 数据缓存相关
+    lastSettingsLoadTime: 0,         // 上次设置数据加载时间
+    hasInitialLoad: false,           // 是否已完成初次加载
+    
     // 安全区域信息
     safeAreaInfo: {
       statusBarHeight: 44
@@ -136,7 +140,8 @@ Page({
       this.setData({
         circle,
         circleMembers: members,
-        'settingData.isPublic': circle.isPublic || false
+        'settingData.isPublic': circle.isPublic || false,
+        lastSettingsLoadTime: Date.now()  // 更新加载时间戳
       });
       
       this.setStatus(STATUS_CONSTANTS.SUCCESS);
@@ -153,10 +158,25 @@ Page({
 
   onShow() {
     console.log('朋友圈设置页面显示');
-    this.loadCircleSettings();
     
-    // 加载申请者列表（只有朋友圈主人才需要）
-    this.loadAppliers();
+    // 智能加载：首次显示或数据过期时才重新加载
+    if (!this.data.hasInitialLoad) {
+      console.log('🔄 Settings首次显示，加载数据');
+      this.loadCircleSettings();
+      this.loadAppliers();
+      this.setData({ hasInitialLoad: true });
+    } else {
+      const now = Date.now();
+      const SETTINGS_CACHE_DURATION = 60000; // 1分钟缓存时间
+      
+      if (now - this.data.lastSettingsLoadTime > SETTINGS_CACHE_DURATION) {
+        console.log('🔄 Settings数据过期，重新加载');
+        this.loadCircleSettings();
+        this.loadAppliers();
+      } else {
+        console.log('✨ Settings使用缓存数据');
+      }
+    }
   },
 
   // 切换公开状态（乐观更新模式）
@@ -188,6 +208,9 @@ Page({
       
       // 成功后给轻量提示
       console.log('✅ 公开状态设置已同步:', newValue ? '公开' : '私密');
+      
+      // 通知details页面数据已更新
+      this.notifyDetailsDataChanged();
       
     } catch (error) {
       console.error('❌ 更新公开状态失败:', error);
@@ -255,6 +278,9 @@ Page({
       this.hideAddMemberDialog();
       this.loadCircleSettings(); // 重新加载成员列表
       
+      // 通知details页面成员列表已更新
+      this.notifyDetailsDataChanged();
+      
     } catch (error) {
       console.error('添加成员失败:', error);
       wx.showToast({
@@ -299,6 +325,9 @@ Page({
         circleMembers: updatedMembers
       });
       
+      // 通知details页面成员列表已更新
+      this.notifyDetailsDataChanged();
+      
       this.setStatus(STATUS_CONSTANTS.SUCCESS);
       
     } catch (error) {
@@ -316,14 +345,58 @@ Page({
 
   // 返回上一页
   navigateBack() {
-    wx.navigateBack({
-      fail: () => {
-        // 如果无法返回，则跳转到朋友圈详情页
-        wx.redirectTo({
-          url: `/pages/details/details?circleId=${this.data.circleId}`
-        });
+    const pages = getCurrentPages();
+    console.log('🔄 Settings页面返回 - 当前页面栈:', pages.map(p => p.route));
+    
+    if (pages.length >= 2) {
+      const prevPage = pages[pages.length - 2];
+      console.log('✅ 上一个页面:', prevPage.route);
+      
+      // 如果上一个页面是details，通知它可能需要刷新数据
+      if (prevPage.route === 'pages/details/details' && 
+          typeof prevPage.markDataNeedsRefresh === 'function') {
+        console.log('📢 通知details页面数据可能已更新');
+        prevPage.markDataNeedsRefresh();
       }
-    });
+      
+      // 正常返回
+      wx.navigateBack({
+        fail: (err) => {
+          console.error('❌ navigateBack失败:', err);
+          // 即使失败也不使用redirectTo，而是用navigateTo
+          wx.navigateTo({
+            url: `/pages/details/details?circleId=${this.data.circleId}`,
+            fail: () => {
+              // 最后的后备方案
+              wx.reLaunch({
+                url: '/pages/main/main'
+              });
+            }
+          });
+        }
+      });
+    } else {
+      // 没有上一个页面，直接跳转到details
+      wx.navigateTo({
+        url: `/pages/details/details?circleId=${this.data.circleId}`,
+        fail: () => {
+          wx.reLaunch({
+            url: '/pages/main/main'
+          });
+        }
+      });
+    }
+  },
+
+  // 通知details页面数据已更改
+  notifyDetailsDataChanged() {
+    const pages = getCurrentPages();
+    const detailsPage = pages.find(page => page.route === 'pages/details/details');
+    
+    if (detailsPage && typeof detailsPage.markDataNeedsRefresh === 'function') {
+      console.log('📢 通知details页面数据已更改');
+      detailsPage.markDataNeedsRefresh();
+    }
   },
 
   // === 申请列表管理功能 ===
@@ -404,6 +477,9 @@ Page({
 
         // 重新加载朋友圈设置以更新成员列表
         this.loadCircleSettings();
+        
+        // 通知details页面成员列表已更新
+        this.notifyDetailsDataChanged();
 
         console.log('✅ 申请同意成功');
       } else {
