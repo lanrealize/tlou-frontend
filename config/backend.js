@@ -3,7 +3,8 @@
 
 const BACKEND_CONFIG = {
   // 后端服务器IP地址和端口
-  HOST: '192.168.0.110',
+  // HOST: '192.168.0.112',
+  HOST: 'localhost',
   PORT: '3000',
   
   // API基础路径

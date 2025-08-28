@@ -39,6 +39,13 @@ Page({
     lastSettingsLoadTime: 0,         // 上次设置数据加载时间
     hasInitialLoad: false,           // 是否已完成初次加载
     
+    // 🎯 方案二：精确的数据变更追踪
+    dataChanges: {
+      circleSettings: false,         // 朋友圈设置是否有变更
+      memberList: false,             // 成员列表是否有变更
+      applications: false            // 申请处理是否有变更
+    },
+    
     // 安全区域信息
     safeAreaInfo: {
       statusBarHeight: 44
@@ -50,6 +57,30 @@ Page({
     this.setData({
       status: statusConstant,
       ...extraData
+    });
+  },
+
+  // 🎯 方案二：记录数据变更
+  markDataChanged(changeType, hasChanged = true) {
+    if (changeType === 'circleSettings' || changeType === 'memberList' || changeType === 'applications') {
+      this.setData({
+        [`dataChanges.${changeType}`]: hasChanged
+      });
+    }
+  },
+
+  // 🎯 方案二：检查是否有任何数据变更
+  hasAnyDataChanges() {
+    const { dataChanges } = this.data;
+    return dataChanges.circleSettings || dataChanges.memberList || dataChanges.applications;
+  },
+
+  // 🎯 方案二：重置所有变更标记
+  resetDataChanges() {
+    this.setData({
+      'dataChanges.circleSettings': false,
+      'dataChanges.memberList': false,
+      'dataChanges.applications': false
     });
   },
 
@@ -75,7 +106,6 @@ Page({
   },
 
   onLoad(options) {
-    console.log('朋友圈设置页面加载', options);
     this.getSafeAreaInfo();
     
     const { circleId } = options;
@@ -124,14 +154,11 @@ Page({
       let members = [];
       if (circle.members && Array.isArray(circle.members)) {
         members = circle.members;
-        console.log('使用朋友圈详情中的成员信息:', members);
       } else {
         try {
           const membersRes = await api.circles.getMembers(circleId);
           members = membersRes.data || [];
-          console.log('单独获取的成员信息:', members);
         } catch (memberError) {
-          console.warn('获取成员信息失败，使用空数组:', memberError);
           members = [];
         }
       }
@@ -157,11 +184,8 @@ Page({
   },
 
   onShow() {
-    console.log('朋友圈设置页面显示');
-    
     // 智能加载：首次显示或数据过期时才重新加载
     if (!this.data.hasInitialLoad) {
-      console.log('🔄 Settings首次显示，加载数据');
       this.loadCircleSettings();
       this.loadAppliers();
       this.setData({ hasInitialLoad: true });
@@ -170,11 +194,8 @@ Page({
       const SETTINGS_CACHE_DURATION = 60000; // 1分钟缓存时间
       
       if (now - this.data.lastSettingsLoadTime > SETTINGS_CACHE_DURATION) {
-        console.log('🔄 Settings数据过期，重新加载');
         this.loadCircleSettings();
         this.loadAppliers();
-      } else {
-        console.log('✨ Settings使用缓存数据');
       }
     }
   },
@@ -207,14 +228,11 @@ Page({
       });
       
       // 成功后给轻量提示
-      console.log('✅ 公开状态设置已同步:', newValue ? '公开' : '私密');
       
-      // 通知details页面数据已更新
-      this.notifyDetailsDataChanged();
+      // 🎯 方案二：记录设置变更
+      this.markDataChanged('circleSettings');
       
     } catch (error) {
-      console.error('❌ 更新公开状态失败:', error);
-      
       // 失败时回滚并给出明确提示
       this.setData({
         'settingData.isPublic': oldValue
@@ -278,11 +296,10 @@ Page({
       this.hideAddMemberDialog();
       this.loadCircleSettings(); // 重新加载成员列表
       
-      // 通知details页面成员列表已更新
-      this.notifyDetailsDataChanged();
+      // 🎯 方案二：记录成员列表变更
+      this.markDataChanged('memberList');
       
     } catch (error) {
-      console.error('添加成员失败:', error);
       wx.showToast({
         title: error.message || '添加失败',
         icon: 'none'
@@ -325,13 +342,12 @@ Page({
         circleMembers: updatedMembers
       });
       
-      // 通知details页面成员列表已更新
-      this.notifyDetailsDataChanged();
+      // 🎯 方案二：记录成员列表变更
+      this.markDataChanged('memberList');
       
       this.setStatus(STATUS_CONSTANTS.SUCCESS);
       
     } catch (error) {
-      console.error('移除成员失败:', error);
       wx.showToast({
         title: error.message || '移除失败',
         icon: 'none'
@@ -343,31 +359,32 @@ Page({
 
 
 
-  // 返回上一页
+  // 🎯 方案二：智能返回 - 只在有真实变更时通知刷新
   navigateBack() {
     const pages = getCurrentPages();
-    console.log('🔄 Settings页面返回 - 当前页面栈:', pages.map(p => p.route));
     
+    // 检查是否有数据变更
+    const hasChanges = this.hasAnyDataChanges();
+
     if (pages.length >= 2) {
       const prevPage = pages[pages.length - 2];
-      console.log('✅ 上一个页面:', prevPage.route);
       
-      // 如果上一个页面是details，通知它可能需要刷新数据
+      // 🎯 关键改进：只有真的有变更时才通知details页面
       if (prevPage.route === 'pages/details/details' && 
-          typeof prevPage.markDataNeedsRefresh === 'function') {
-        console.log('📢 通知details页面数据可能已更新');
+          typeof prevPage.markDataNeedsRefresh === 'function' && 
+          hasChanges) {
         prevPage.markDataNeedsRefresh();
       }
+      
+      // 重置变更标记
+      this.resetDataChanges();
       
       // 正常返回
       wx.navigateBack({
         fail: (err) => {
-          console.error('❌ navigateBack失败:', err);
-          // 即使失败也不使用redirectTo，而是用navigateTo
           wx.navigateTo({
             url: `/pages/details/details?circleId=${this.data.circleId}`,
             fail: () => {
-              // 最后的后备方案
               wx.reLaunch({
                 url: '/pages/main/main'
               });
@@ -376,7 +393,8 @@ Page({
         }
       });
     } else {
-      // 没有上一个页面，直接跳转到details
+      // 没有上一个页面，重置变更标记后跳转
+      this.resetDataChanges();
       wx.navigateTo({
         url: `/pages/details/details?circleId=${this.data.circleId}`,
         fail: () => {
@@ -388,14 +406,18 @@ Page({
     }
   },
 
-  // 通知details页面数据已更改
-  notifyDetailsDataChanged() {
+  // 🎯 方案二：智能通知 - 基于具体变更类型精确通知
+  notifyDetailsDataChanged(changeTypes = []) {
     const pages = getCurrentPages();
     const detailsPage = pages.find(page => page.route === 'pages/details/details');
     
     if (detailsPage && typeof detailsPage.markDataNeedsRefresh === 'function') {
-      console.log('📢 通知details页面数据已更改');
-      detailsPage.markDataNeedsRefresh();
+      // 如果没有指定变更类型，检查是否有任何变更
+      const hasChanges = changeTypes.length > 0 || this.hasAnyDataChanges();
+      
+      if (hasChanges) {
+        detailsPage.markDataNeedsRefresh();
+      }
     }
   },
 
@@ -410,8 +432,6 @@ Page({
     this.setData({ isLoadingAppliers: true });
 
     try {
-      console.log('🔍 开始加载申请者列表');
-      
       const res = await api.circles.getAppliers(this.data.circleId);
       
       if (res.success) {
@@ -420,13 +440,8 @@ Page({
         this.setData({
           appliers: appliers
         });
-
-        console.log('✅ 申请者列表加载完成:', appliers.length);
-      } else {
-        console.warn('⚠️ 加载申请者失败:', res.message);
       }
     } catch (error) {
-      console.error('❌ 加载申请者列表失败:', error);
       wx.showToast({
         title: '加载申请列表失败',
         icon: 'none'
@@ -453,8 +468,6 @@ Page({
     this.setData({ isProcessingApplication: true });
 
     try {
-      console.log('✅ 开始同意申请:', userId);
-
       wx.showLoading({ title: '处理中...' });
       
       const res = await api.circles.approveApplication(this.data.circleId, userId);
@@ -478,17 +491,15 @@ Page({
         // 重新加载朋友圈设置以更新成员列表
         this.loadCircleSettings();
         
-        // 通知details页面成员列表已更新
-        this.notifyDetailsDataChanged();
-
-        console.log('✅ 申请同意成功');
+        // 🎯 方案二：记录成员和申请变更
+        this.markDataChanged('memberList');
+        this.markDataChanged('applications');
       } else {
         throw new Error(res.message || '同意申请失败');
       }
 
     } catch (error) {
       wx.hideLoading();
-      console.error('❌ 同意申请失败:', error);
       
       wx.showModal({
         title: '操作失败',
@@ -517,8 +528,6 @@ Page({
     this.setData({ isProcessingApplication: true });
 
     try {
-      console.log('❌ 开始拒绝申请:', userId);
-
       wx.showLoading({ title: '处理中...' });
       
       const res = await api.circles.rejectApplication(this.data.circleId, userId);
@@ -539,14 +548,14 @@ Page({
           appliers: updatedAppliers
         });
 
-        console.log('✅ 申请拒绝成功');
+        // 🎯 方案二：记录申请处理变更
+        this.markDataChanged('applications');
       } else {
         throw new Error(res.message || '拒绝申请失败');
       }
 
     } catch (error) {
       wx.hideLoading();
-      console.error('❌ 拒绝申请失败:', error);
       
       wx.showModal({
         title: '操作失败',

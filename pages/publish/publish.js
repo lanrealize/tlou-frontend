@@ -23,7 +23,6 @@ Page({
   },
 
   onLoad(options) {
-    console.log('🚀 发布页面加载', options);
     
     this.getSafeAreaInfo();
     this.setupStoreBindings();
@@ -49,15 +48,11 @@ Page({
         isLoggedIn: this.data.isLoggedIn || app.globalData.loginStatus === 'loggedIn' || userStore.isLoggedIn
       });
       
-      console.log('⏰ 延迟同步用户信息:', {
-        userInfo: this.data.userInfo,
-        isLoggedIn: this.data.isLoggedIn
-      });
+
     }, 100);
   },
 
   onShow() {
-    console.log('👁️ 发布页面显示');
     
     // 页面显示时检查用户状态
     const app = getApp();
@@ -69,10 +64,7 @@ Page({
       isLoggedIn: this.data.isLoggedIn || app.globalData.loginStatus === 'loggedIn' || userStore.isLoggedIn
     });
     
-    console.log('🔄 页面显示时用户状态更新:', {
-      userInfo: this.data.userInfo,
-      isLoggedIn: this.data.isLoggedIn
-    });
+
   },
 
   onUnload() {
@@ -121,7 +113,7 @@ Page({
 
       this.setData({ circle });
     } catch (error) {
-      console.error('加载朋友圈信息失败:', error);
+
       util.showToast('朋友圈信息加载失败');
       setTimeout(() => {
         wx.navigateBack();
@@ -153,10 +145,8 @@ Page({
         this.setData({
           tempImages: [...this.data.tempImages, ...tempFiles]
         });
-        console.log('选择了图片:', tempFiles);
       },
       fail: (err) => {
-        console.error('选择图片失败:', err);
         util.showToast('选择图片失败');
       }
     });
@@ -198,7 +188,7 @@ Page({
       // 初始化七牛云上传工具
       try {
         if (!qiniuUploader.isInitialized) {
-          console.log('🔧 正在初始化七牛云上传工具...');
+
           
           // 获取配置
           const config = qiniuConfig.getQiniuConfig();
@@ -402,7 +392,7 @@ Page({
 
   // 发布动态
   async publishPost() {
-    console.log('🚀 开始发布帖子');
+
     
     // 验证输入
     if (!this.data.content.trim() && this.data.tempImages.length === 0) {
@@ -470,12 +460,15 @@ Page({
         images: uploadedImages  // 现在包含完整的图片信息 {url, key, size, hash, uploadTime}
       };
 
-      console.log('发布帖子数据:', postData);
+
       
       const response = await api.posts.create(postData);
       
       wx.hideLoading();
       util.showToast('发布成功');
+
+      // 🎯 方案二：通知details页面帖子列表已更新
+      this.notifyDetailsPostChanged();
 
       // 发布成功后返回上一页
       setTimeout(() => {
@@ -487,6 +480,34 @@ Page({
       this.setData({ isPublishing: false });
       console.error('发布失败:', error);
       util.showToast('发布失败，请重试');
+    }
+  },
+
+  // 🎯 方案二：通知details页面帖子数据已变更
+  notifyDetailsPostChanged() {
+    const pages = getCurrentPages();
+    
+    // 查找details页面实例
+    const detailsPage = pages.find(page => 
+      page.route.includes('details') && 
+      page.data && page.data.circleId === this.data.circleId
+    );
+    
+    if (detailsPage && typeof detailsPage.markDataNeedsRefresh === 'function') {
+      console.log('📢 通知details页面帖子列表已更新');
+      detailsPage.markDataNeedsRefresh();
+    } else {
+      console.log('⚠️ 未找到对应的details页面实例');
+    }
+    
+    // 同时更新MobX Store状态（如果使用）
+    try {
+      const { postStore } = require('../../store/postStore');
+      if (postStore && typeof postStore.markDataChanged === 'function') {
+        postStore.markDataChanged('post_created', this.data.circleId);
+      }
+    } catch (error) {
+      console.log('ℹ️ PostStore未启用markDataChanged方法');
     }
   },
 

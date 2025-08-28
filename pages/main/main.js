@@ -39,7 +39,6 @@ Page({
   },
 
   onLoad(options) {
-    console.log('🚀 主页面加载', options);
     
     // 获取安全区域信息
     this.getSafeAreaInfo();
@@ -70,16 +69,13 @@ Page({
   },
 
   onUnload() {
-    console.log('🧹 主页面卸载，清理资源');
     
     // 清理MobX绑定，防止内存泄漏
     if (this.storeBindings) {
       try {
         this.storeBindings.destroyStoreBindings();
         this.storeBindings = null;
-        console.log('✅ MobX绑定已清理');
       } catch (error) {
-        console.warn('⚠️ 清理MobX绑定失败:', error);
       }
     }
 
@@ -130,7 +126,6 @@ Page({
   },
 
   onShow() {
-    console.log('👁️ 主页面显示');
     
     // 检查是否从userInfo页面返回，如果是则刷新用户状态
     const pages = getCurrentPages();
@@ -173,7 +168,6 @@ Page({
     
     // 如果用户状态还在加载中，等待加载完成
     if (userStore.isLoading) {
-      console.log('👀 等待用户状态检查完成...');
       // 最多等待3秒
       const maxWaitTime = 3000;
       const startTime = Date.now();
@@ -217,7 +211,7 @@ Page({
 
   // 用户登录/注册处理
   async handleUserAuth() {
-    console.log('🎯 用户触发认证流程');
+
     
     // 根据当前状态执行不同的操作
     if (this.data.loginStatus === 'unregistered' && !this.data.isLoading) {
@@ -298,7 +292,7 @@ Page({
         };
 
         const result = await api.circles.create(data);
-        console.log('创建朋友圈响应:', result);
+
         
         // 尝试获取新创建的朋友圈ID，支持多种可能的响应格式
         const newCircleId = result.data?.circle?._id || result.data?._id || result.circle?._id;
@@ -322,7 +316,7 @@ Page({
 
       } catch (error) {
         wx.hideLoading();
-        console.error('创建朋友圈失败:', error);
+
         wx.showToast({ title: '创建失败', icon: 'error' });
       }
     });
@@ -342,6 +336,23 @@ Page({
   },
 
   // ===== 数据加载相关 =====
+
+  // 🔧 格式化朋友圈的图片数据，将对象格式转换为URL字符串
+  formatCircleImages(circle) {
+    if (circle.latestPost && circle.latestPost.images && Array.isArray(circle.latestPost.images)) {
+      circle.latestPost.images = circle.latestPost.images.map(img => {
+        if (typeof img === 'string') {
+          return img; // 已经是URL字符串
+        } else if (typeof img === 'object' && img.url) {
+          return img.url; // 提取URL字符串
+        } else {
+          console.warn('⚠️ 无效的图片数据格式:', img);
+          return null;
+        }
+      }).filter(url => url !== null); // 过滤掉无效的URL
+    }
+    return circle;
+  },
 
   // 刷新数据
   refreshData() {
@@ -764,7 +775,7 @@ Page({
       if (res.success) {
         if (res.data.circle) {
           // 有可用的朋友圈，现在API直接返回latestPost数据
-          const circle = res.data.circle;
+          const circle = this.formatCircleImages(res.data.circle);
           
           const formattedCircle = {
             ...circle,
@@ -820,7 +831,7 @@ Page({
       if (res.success) {
         if (res.data.circle) {
           // 有新的朋友圈推荐，现在API直接返回latestPost数据
-          const circle = res.data.circle;
+          const circle = this.formatCircleImages(res.data.circle);
           
           const formattedCircle = {
             ...circle,

@@ -77,8 +77,7 @@ Page({
       
       // 方案一：被邀请访客完全禁止分享
       wx.hideShareMenu();
-      
-      console.log('🔗 邀请模式进入，邀请人ID:', inviterId);
+
     } else {
       // 正常模式
       this.setData({ 
@@ -182,36 +181,159 @@ Page({
   },
 
   onShow() {
-    // 智能刷新：只在需要时刷新数据
+    // 智能刷新：基于场景和数据状态精确判断
     if (this.data.circleId) {
-      this.smartRefreshData();
+      this.intelligentRefreshData();
     }
   },
   
-  // 智能刷新数据
-  smartRefreshData() {
+  // 🎯 方案二：智能刷新数据 - 基于场景和数据状态精确判断
+  intelligentRefreshData() {
     const now = Date.now();
     const { lastDataLoadTime, needsDataRefresh } = this.data;
-    const DATA_CACHE_DURATION = 30000; // 30秒缓存时间
     
-    // 检查是否需要刷新数据
-    const shouldRefresh = needsDataRefresh || 
-                         !lastDataLoadTime || 
-                         (now - lastDataLoadTime) > DATA_CACHE_DURATION ||
-                         !this.data.circle; // 如果没有基础数据，必须加载
-    
-    if (shouldRefresh) {
-      console.log('🔄 智能刷新：需要更新数据');
-      this.loadCircleDetail();
-      this.refreshPosts(this.data.circleId);
+    // 分析刷新场景
+    const refreshContext = this.analyzeRefreshContext();
+    // 根据场景决定刷新策略
+    if (refreshContext.shouldRefresh) {
+      
+      // 根据刷新类型执行相应的数据加载
+      this.executeRefreshByType(refreshContext.refreshType);
       
       // 更新缓存标记
       this.setData({
         lastDataLoadTime: now,
         needsDataRefresh: false
       });
+    }
+  },
+
+  // 🎯 方案二：分析刷新场景
+  analyzeRefreshContext() {
+    const now = Date.now();
+    const { lastDataLoadTime, needsDataRefresh, circle } = this.data;
+    const pages = getCurrentPages();
+    const currentPage = pages[pages.length - 1];
+    const prevPage = pages.length > 1 ? pages[pages.length - 2] : null;
+    
+    // 1. 强制刷新标记（来自其他页面的数据变更通知）
+    if (needsDataRefresh) {
+      return {
+        shouldRefresh: true,
+        refreshType: 'complete',
+        reason: '检测到数据变更标记，执行完整刷新'
+      };
+    }
+    
+    // 2. 首次加载或数据缺失
+    if (!lastDataLoadTime || !circle) {
+      return {
+        shouldRefresh: true,
+        refreshType: 'complete',
+        reason: '首次加载或数据缺失'
+      };
+    }
+    
+    // 3. 来源页面分析
+    if (prevPage) {
+      // 从发布页面返回（用户刚发布了内容）
+      if (prevPage.route.includes('publish')) {
+        return {
+          shouldRefresh: true,
+          refreshType: 'posts-only',
+          reason: '从发布页面返回，刷新帖子列表'
+        };
+      }
+      
+      // 从设置页面返回（已通过变更追踪处理，这里不应该触发）
+      if (prevPage.route.includes('setting')) {
+        return {
+          shouldRefresh: false,
+          skipReason: '从设置页面返回，已通过变更追踪处理'
+        };
+      }
+      
+      // 从用户信息页面返回（可能影响头像等）
+      if (prevPage.route.includes('userInfo')) {
+        return {
+          shouldRefresh: true,
+          refreshType: 'circle-only',
+          reason: '从用户信息页面返回，刷新基础信息'
+        };
+      }
+    }
+    
+    // 4. 时间维度判断 - 动态缓存时间
+    const cacheTime = this.getAdaptiveCacheTime();
+    const isDataExpired = (now - lastDataLoadTime) > cacheTime;
+    
+    if (isDataExpired) {
+      return {
+        shouldRefresh: true,
+        refreshType: 'background',
+        reason: `数据缓存过期（${Math.floor((now - lastDataLoadTime) / 1000)}秒前更新）`
+      };
+    }
+    
+    // 5. 默认情况：使用缓存
+    return {
+      shouldRefresh: false,
+      skipReason: `使用缓存数据（${Math.floor((now - lastDataLoadTime) / 1000)}秒前更新）`
+    };
+  },
+
+  // 🎯 方案二：自适应缓存时间
+  getAdaptiveCacheTime() {
+    const currentHour = new Date().getHours();
+    
+    // 活跃时段（9-22点）使用较短的缓存时间
+    if (currentHour >= 9 && currentHour <= 22) {
+      return 2 * 60 * 1000; // 2分钟
     } else {
-      console.log('✨ 智能刷新：使用缓存数据');
+      return 10 * 60 * 1000; // 10分钟
+    }
+  },
+
+  // 🎯 方案二：根据类型执行刷新
+  executeRefreshByType(refreshType) {
+    switch (refreshType) {
+      case 'complete':
+        // 完整刷新：朋友圈信息 + 帖子列表
+        this.loadCircleDetail();
+        this.refreshPosts(this.data.circleId);
+        break;
+        
+      case 'posts-only':
+        // 仅刷新帖子列表
+        this.refreshPosts(this.data.circleId);
+        break;
+        
+      case 'circle-only':
+        // 仅刷新朋友圈基础信息
+        this.loadCircleDetail();
+        break;
+        
+      case 'background':
+        // 后台刷新：静默更新，不显示loading
+        this.loadDataInBackground();
+        break;
+        
+      default:
+        this.loadCircleDetail();
+        this.refreshPosts(this.data.circleId);
+    }
+  },
+
+  // 🎯 方案二：后台静默刷新
+  async loadDataInBackground() {
+    try {
+      // 并行加载，不显示loading状态
+      await Promise.all([
+        this.loadCircleDetail(),
+        this.refreshPosts(this.data.circleId)
+      ]);
+    } catch (error) {
+      // 静默失败，不影响用户体验
     }
   },
   
@@ -249,7 +371,7 @@ Page({
         const circlesRes = await api.circles.getMy();
         targetCircle = circlesRes.data.circles.find(c => c._id === this.data.circleId);
       } catch (error) {
-        console.log('用户未登录或不是此朋友圈成员，尝试直接获取朋友圈详情');
+        // 用户未登录或不是此朋友圈成员，尝试直接获取朋友圈详情
       }
       
       // 如果没有找到，尝试直接获取朋友圈详情（可能是公开朋友圈）
@@ -291,7 +413,6 @@ Page({
       }
 
     } catch (error) {
-      console.error('加载朋友圈详情失败:', error);
       util.showToast('加载失败');
       
       // 如果加载失败，返回上一页
@@ -342,7 +463,7 @@ Page({
 
     // 状态优先级判断（解决冲突）
     if (isMember) {
-      console.log('👤 用户状态: 成员');
+
       return {
         status: 'member',
         isOwner,
@@ -356,7 +477,7 @@ Page({
     }
     
     if (isInviteMode && isInvited) {
-      console.log('💌 用户状态: 被邀请');
+
       return {
         status: 'invited',
         isOwner: false,
@@ -370,7 +491,7 @@ Page({
     }
     
     if (hasApplied) {
-      console.log('📝 用户状态: 已申请');
+
       return {
         status: 'applied',
         isOwner: false,
@@ -384,7 +505,7 @@ Page({
     }
     
     if (circle.isPublic && !isInviteMode) {
-      console.log('🌍 用户状态: 可申请');
+
       return {
         status: 'can_apply',
         isOwner: false,
@@ -397,7 +518,7 @@ Page({
       };
     }
     
-    console.log('🚫 用户状态: 无访问权限');
+
     return {
       status: 'no_access',
       isOwner: false,
@@ -413,15 +534,15 @@ Page({
   // 智能返回：有上一个页面就返回，没有就跳转到主页面
   navigateBack() {
     const pages = getCurrentPages();
-    console.log('🔄 智能返回 - 当前页面栈:', pages.map(p => p.route));
+
     
     if (pages.length >= 2) {
       // 有上一个页面，直接返回
-      console.log('✅ 检测到上一个页面，使用navigateBack');
+
       wx.navigateBack();
     } else {
       // 没有上一个页面，重启到主页面
-      console.log('❌ 没有上一个页面，使用reLaunch跳转到主页面');
+
       wx.reLaunch({
         url: '/pages/main/main'
       });
@@ -442,13 +563,13 @@ Page({
     }
     
     // 标记准备进入设置页面
-    console.log('📝 即将进入设置页面');
+
     
     // 导航到朋友圈设置页面，传递朋友圈ID
     wx.navigateTo({
       url: `/pages/setting/setting?circleId=${circleId}`,
       fail: (err) => {
-        console.error('导航到设置页面失败:', err);
+
         wx.showToast({
           title: '打开设置失败',
           icon: 'none'
@@ -586,9 +707,12 @@ Page({
         });
         // 这里可以添加图片上传和发布逻辑
       },
-      fail: (err) => {
-        console.error('选择媒体失败:', err);
-      }
+              fail: (err) => {
+          wx.showToast({
+            title: '选择媒体失败',
+            icon: 'none'
+          });
+        }
     });
   },
 
@@ -607,7 +731,6 @@ Page({
       const result = await this.toggleLike(postId, this.data.userInfo);
       util.showToast(result.liked ? '点赞成功' : '取消点赞');
     } catch (error) {
-      console.error('点赞操作失败:', error);
       util.showToast('操作失败');
     }
   },
@@ -773,7 +896,6 @@ Page({
       });
 
     } catch (error) {
-      console.error('发表评论失败:', error);
       util.showToast('评论失败');
     }
   },
@@ -892,7 +1014,7 @@ Page({
     this.setData({ isApplying: true });
 
     try {
-      console.log('📝 开始申请加入朋友圈:', circleId);
+  
 
       wx.showLoading({ title: '申请中...' });
       
@@ -913,14 +1035,14 @@ Page({
           showApplyButton: false
         });
 
-        console.log('✅ 申请提交成功');
+
       } else {
         throw new Error(res.message || '申请失败');
       }
 
     } catch (error) {
       wx.hideLoading();
-      console.error('❌ 申请加入失败:', error);
+
       
       wx.showModal({
         title: '申请失败',

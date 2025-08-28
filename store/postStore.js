@@ -214,16 +214,10 @@ const postStore = observable({
       
       this.posts = updatedPosts;
       
-      console.log('✅ 点赞操作完成:', {
-        action: liked ? '点赞' : '取消点赞',
-        isLiked: post.isLiked,
-        likesCount: post.likes.length,
-        likes: post.likes
-      });
+
       
       return { success: true, liked };
     } catch (error) {
-      console.error('❌ 点赞操作失败:', error);
       throw error;
     }
   },
@@ -233,7 +227,7 @@ const postStore = observable({
     // 防重复提交检查
     const commentKey = `${postId}_${Date.now()}`;
     if (this._pendingComments && this._pendingComments.has(commentKey)) {
-      console.warn('⚠️ 评论正在提交中，请勿重复操作');
+
       return;
     }
 
@@ -245,21 +239,21 @@ const postStore = observable({
     this._pendingComments.add(commentKey);
 
     try {
-      console.log('🚀 开始添加评论:', { postId, commentData });
+
       
       const response = await api.posts.addComment(postId, commentData);
-      console.log('📤 API响应:', response);
+
       
       // 本地更新：构建新评论并添加到对应帖子中
       const postIndex = this.posts.findIndex(p => p._id === postId);
-      console.log('🔍 查找帖子索引:', { postIndex, postId, postsCount: this.posts.length });
+
       
       if (postIndex !== -1) {
         try {
           // 获取当前用户信息
           const app = getApp();
           const currentUser = app.getUserStore?.()?.userInfo;
-          console.log('👤 当前用户信息:', currentUser);
+
           
           if (currentUser) {
             // 获取回复目标用户信息
@@ -302,7 +296,7 @@ const postStore = observable({
               formattedTime: util.formatRelativeTime(new Date())
             };
             
-            console.log('📝 构建的新评论:', newComment);
+
             
             // 更新本地帖子数据
             const updatedPosts = [...this.posts];
@@ -311,20 +305,16 @@ const postStore = observable({
             post.comments.push(newComment);
             
             this.posts = updatedPosts;
-            console.log('✅ 评论添加成功，本地数据已更新. 当前评论数:', post.comments.length);
           } else {
-            console.warn('⚠️ 无法获取用户信息，回退到重新加载');
             throw new Error('用户信息不完整');
           }
         } catch (localUpdateError) {
-          console.warn('⚠️ 本地更新失败，回退到重新加载所有帖子:', localUpdateError);
           // 如果本地更新失败，回退到重新加载
           if (this.currentCircleId) {
             await this.refreshPosts(this.currentCircleId);
           }
         }
       } else {
-        console.warn('⚠️ 未找到对应帖子，回退到重新加载');
         if (this.currentCircleId) {
           await this.refreshPosts(this.currentCircleId);
         }
@@ -332,7 +322,6 @@ const postStore = observable({
       
       return response;
     } catch (error) {
-      console.error('❌ 添加评论失败:', error);
       throw error;
     } finally {
       // 清理防重复提交标记
@@ -358,7 +347,7 @@ const postStore = observable({
         }
         
         this.posts = updatedPosts;
-        console.log('✅ 评论删除成功，本地数据已更新');
+
       }
       
     } catch (error) {

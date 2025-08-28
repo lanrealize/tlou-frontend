@@ -72,22 +72,16 @@ const getUploadToken = async () => {
     
     // 开发环境回退方案（仅用于开发测试）
     if (process.env.NODE_ENV === 'development' || QINIU_CONFIG.upToken === 'NEED_TO_GET_FROM_BACKEND_API') {
-  
-      try {
-        // 如果有临时Token生成器，使用它
-        const tokenGenerator = require('./generateToken');
-        const tempToken = tokenGenerator.getQuickTestToken();
-        if (tempToken && tempToken !== 'simplified_signature_') {
-          return tempToken;
-        }
-      } catch (e) {
-  
-      }
+
       
-      // 最后回退到配置文件中的Token
+      // 直接尝试使用配置文件中的Token
       if (QINIU_CONFIG.upToken !== 'NEED_TO_GET_FROM_BACKEND_API') {
+
         return QINIU_CONFIG.upToken;
       }
+      
+      // 如果没有配置Token，提供开发环境提示
+
     }
     
     throw new Error('获取上传凭证失败，请检查网络连接或联系技术支持');

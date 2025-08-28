@@ -132,7 +132,7 @@ const userStore = observable({
       const updatedUserInfo = { ...this.userInfo, ...newUserInfo };
       this.setStatus(USER_STATUS.LOGGEDIN, { userInfo: updatedUserInfo });
     } else {
-      console.warn('⚠️ 只有已登录状态才能更新用户信息');
+
     }
   },
 
@@ -162,7 +162,7 @@ const userStore = observable({
   // 切换到虚拟身份 - 简化版本
   switchToVirtualIdentity(virtualUser) {
     if (!this.isAdmin) {
-      console.warn('⚠️ 非管理员用户无法切换虚拟身份');
+
       return;
     }
 
