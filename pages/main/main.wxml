@@ -37,7 +37,7 @@
   <!-- 朋友圈卡片 -->
   <view class="friend-circle-card" wx:if="{{!isLoading && isLoggedIn && circles.length > 0}}" bindtap="goToRecentCircle">
     <view class="card-bg"></view>
-    <view class="card-title">最近的朋友圈</view>
+    <view class="card-title card-main-title">最近的朋友圈</view>
     <view class="user-count">
       <text>有 {{recentCircle.memberCount}} 名用户在内</text>
       <!-- 用户头像组 -->
@@ -56,8 +56,8 @@
   <!-- 空状态朋友圈卡片 -->
   <view class="empty-state-card" wx:elif="{{!isLoading && isLoggedIn && circles.length === 0}}">
     <view class="empty-bg"></view>
-    <view class="empty-title">没有正在进行的朋友圈</view>
-    <view class="empty-desc">点击"创建朋友圈"按钮，邀请朋友或扫一扫开始吧</view>
+    <view class="empty-title card-main-title">没有正在进行的朋友圈</view>
+    <view class="empty-desc card-sub-title">点击"创建朋友圈"按钮，邀请朋友或扫一扫开始吧</view>
     <view class="divider"></view>
     <view class="create-btn" bindtap="createCircleDirectly">创建朋友圈</view>
   </view>
@@ -65,8 +65,8 @@
   <!-- 未登录提示卡片 -->
   <view class="browse-tip-card" wx:elif="{{!isLoading && !isLoggedIn}}">
     <view class="empty-bg"></view>
-    <view class="empty-title">浏览模式</view>
-    <view class="empty-desc">你可以浏览内容，点击感兴趣的功能时会引导登录</view>
+    <view class="empty-title card-main-title">浏览模式</view>
+    <view class="empty-desc card-sub-title">你可以浏览内容，点击感兴趣的功能时会引导登录</view>
     <view class="divider"></view>
     <view class="create-btn" bindtap="handleUserAuth">点击登录</view>
   </view>
@@ -81,8 +81,8 @@
           <image src="/assets/icons/add.svg" mode="aspectFit"></image>
         </view>
         <view class="create-text-container">
-          <view class="create-title">创建新的朋友圈</view>
-          <view class="create-desc">邀请朋友"扫一扫"一起开始吧</view>
+          <view class="create-title card-main-title">创建新的朋友圈</view>
+          <view class="create-desc card-sub-title">邀请朋友"扫一扫"一起开始吧</view>
         </view>
       </view>
     </view>
@@ -99,7 +99,7 @@
   <!-- 发现有趣朋友圈 -->
   <view class="post-card" wx:if="{{recommendedCircles.length > 0}}" bindtap="viewRecommendedCircle" data-circle-id="{{recommendedCircles[0]._id}}">
     <view class="post-bg"></view>
-    <view class="discover-title">发现有趣朋友圈</view>
+    <view class="discover-title card-main-title">发现有趣朋友圈</view>
     <view class="menu-icon" catchtap="refreshRecommendations">
       <image src="/assets/icons/refresh.svg" mode="aspectFit"></image>
     </view>
@@ -132,9 +132,12 @@
   </view>
 
   <!-- 暂无推荐时的占位 -->
-  <view class="discover-empty" wx:elif="{{!isLoadingRecommendations && recommendedCircles.length === 0}}">
-    <text class="empty-icon">🌱</text>
-    <text class="empty-title">暂无可推荐的朋友圈</text>
-    <text class="empty-desc">请稍后再试或者创建一个新的公开朋友圈吧</text>
+  <view class="discover-empty" wx:elif="{{!isLoadingRecommendations && recommendedCircles.length === 0}}" bindtap="refreshRecommendations">
+    <text class="card-main-title">暂无可推荐的朋友圈</text>
+    <text class="card-sub-title">请稍后再试或者创建一个新的公开朋友圈吧</text>
+    <view class="refresh-hint">
+      <image src="/assets/icons/refresh.svg" mode="aspectFit"></image>
+      <text>点击刷新</text>
+    </view>
   </view>
 </view>

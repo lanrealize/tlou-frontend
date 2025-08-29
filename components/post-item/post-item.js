@@ -43,7 +43,9 @@ Component({
       // 精确的显示尺寸，用于占位
       displayWidth: 0,
       displayHeight: 0
-    }
+    },
+    // 图片加载状态管理
+    imageLoadStates: {}  // 记录每张图片的加载状态
   },
 
   /**
@@ -60,6 +62,7 @@ Component({
     'post': function(post) {
       if (post) {
         this.setSingleImageStyleFromMeta();
+        this.initImageLoadStates();
       }
     }
   },
@@ -296,6 +299,9 @@ Component({
     onSingleImageLoad(e) {
       const { post, singleImageInfo } = this.data;
       
+      // 无论如何都要处理图片加载完成事件
+      this.onImageLoaded(this.data.post.images[0]);
+      
       // 检查是否已经有基于后端数据设置的样式
       if (post && post.imageMeta && post.imageMeta[0] && 
           typeof post.imageMeta[0].width === 'number' && 
@@ -347,6 +353,69 @@ Component({
       this.setData({
         singleImageInfo: newSingleImageInfo
       });
+    },
+    
+    // 处理图片加载完成
+    onImageLoaded(imageSrc) {
+      const { imageLoadStates } = this.data;
+      const newLoadStates = { ...imageLoadStates };
+      newLoadStates[imageSrc] = 'loaded';
+      
+      this.setData({
+        imageLoadStates: newLoadStates
+      });
+      
+      // 添加轻微延迟，让骨架屏动画更自然
+      setTimeout(() => {
+        const updatedStates = { ...this.data.imageLoadStates };
+        updatedStates[imageSrc] = 'show';
+        this.setData({
+          imageLoadStates: updatedStates
+        });
+      }, 150);
+    },
+    
+    // 处理图片加载失败
+    onImageError(e) {
+      const imageSrc = e.currentTarget.dataset.src;
+      const { imageLoadStates } = this.data;
+      const newLoadStates = { ...imageLoadStates };
+      newLoadStates[imageSrc] = 'error';
+      
+      this.setData({
+        imageLoadStates: newLoadStates
+      });
+    },
+    
+
+    
+    // 多张图片加载完成处理
+    onGridImageLoad(e) {
+      const imageSrc = e.currentTarget.dataset.src;
+      this.onImageLoaded(imageSrc);
+    },
+    
+    // 初始化图片加载状态
+    initImageLoadStates() {
+      const { post, imageLoadStates } = this.data;
+      if (!post || !post.images || !Array.isArray(post.images)) return;
+      
+      const newImageLoadStates = { ...imageLoadStates };
+      let hasChanges = false;
+      
+      post.images.forEach(imageSrc => {
+        // 只为没有状态的图片设置初始loading状态
+        if (!newImageLoadStates[imageSrc]) {
+          newImageLoadStates[imageSrc] = 'loading';
+          hasChanges = true;
+        }
+      });
+      
+      if (hasChanges) {
+        this.setData({
+          imageLoadStates: newImageLoadStates
+        });
+      }
     }
   },
 
@@ -359,11 +428,15 @@ Component({
       this.setSingleImageStyleFromMeta();
       // 初始化评论显示
       this.updateDisplayComments();
+      // 初始化图片加载状态
+      this.initImageLoadStates();
     },
     
     ready() {
       // 组件布局完成后，再次确保图片样式正确
       this.setSingleImageStyleFromMeta();
+      // 确保图片加载状态初始化
+      this.initImageLoadStates();
     },
     
     detached() {

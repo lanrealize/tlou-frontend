@@ -244,6 +244,77 @@
   border-radius: 6rpx;
 }
 
+/* ===== 图片骨架屏样式 ===== */
+
+/* 骨架屏基础样式 */
+.image-skeleton {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  border-radius: inherit;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+.image-skeleton.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* 骨架屏动画效果 */
+.skeleton-shimmer {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.6) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* 单张图片骨架屏 */
+.single-skeleton {
+  border-radius: 6rpx;
+}
+
+/* 网格图片骨架屏 */
+.grid-skeleton {
+  border-radius: 6rpx;
+}
+
+/* 图片加载状态样式 */
+.post-image-single.loading,
+.post-image-grid.loading {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.post-image-single.loaded,
+.post-image-grid.loaded {
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+
 /* 帖子时间地点和操作按钮区域 */
 .post-bottom-meta {
   margin-top: 25rpx;

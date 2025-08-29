@@ -146,6 +146,36 @@
         </view>
       </view>
 
+      <!-- 添加新分享部分 - 替代原发布按钮 -->
+      <view class="new-share-section" wx:if="{{!isInviteMode || !showJoinButton}}">
+        <view class="share-container" bindtap="navigateToPublish">
+          <!-- 左侧cards图片 -->
+          <image class="cards-image" src="/assets/pics/cards.png" mode="aspectFit"></image>
+          
+          <!-- 中间分享内容 -->
+          <view class="share-content">
+            <!-- 第一行：添加 + newShare图片 -->
+            <view class="share-first-line">
+              <text class="share-title">添加</text>
+              <image class="new-share-image" src="/assets/pics/newShare.png" mode="aspectFit"></image>
+            </view>
+            
+            <!-- 第二行：提示文字 -->
+            <view class="share-second-line">
+              <text class="share-desc">点击右侧相机按钮添加新分享</text>
+            </view>
+          </view>
+          
+          <!-- 分隔线 -->
+          <view class="share-divider"></view>
+          
+          <!-- 右侧相机图标（黑色） -->
+          <view class="camera-btn">
+            <image class="camera-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
+          </view>
+        </view>
+      </view>
+
       <!-- 邀请提示和接受按钮 -->
       <view class="invite-banner" wx:if="{{isInviteMode && showJoinButton}}">
         <view class="invite-info">
@@ -163,12 +193,7 @@
       </view>
     </scroll-view>
 
-    <!-- 发布按钮 -->
-    <view class="publish-button-container" wx:if="{{!isInviteMode || !showJoinButton}}">
-      <button class="main-publish-btn theme-btn" bindtap="navigateToPublish">
-        发布新动态
-      </button>
-    </view>
+    <!-- 原发布按钮已被新分享组件替代 -->
 
     <!-- 评论输入框 -->
     <view class="comment-input-modal" wx:if="{{showCommentInput}}">

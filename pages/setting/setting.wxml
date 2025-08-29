@@ -12,12 +12,20 @@
     <view class="header-action"></view>
   </view>
   
-  <!-- 朋友圈成员管理 -->
-  <view class="section-card card">
-    <view class="section-header">
-      <text class="section-title">朋友圈成员管理</text>
-      <button class="add-btn theme-btn-small" bindtap="addMember">添加</button>
-    </view>
+  <!-- 页面加载状态 -->
+  <view class="loading-container" wx:if="{{status === 'loading'}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 页面内容 -->
+  <view class="content-container" wx:if="{{status === 'success'}}">
+    <!-- 朋友圈成员管理 -->
+    <view class="section-card card">
+      <view class="section-header">
+        <text class="section-title">朋友圈成员管理</text>
+        <button class="add-btn theme-btn-small" bindtap="addMember" wx:if="{{isCircleOwner}}">添加</button>
+      </view>
     
     <view class="member-list">
       <view class="member-item" wx:for="{{circleMembers}}" wx:key="_id">
@@ -25,7 +33,7 @@
                src="{{item.avatar || item.avatarUrl || '/images/default_avatar.png'}}" 
                mode="aspectFill" />
         <text class="member-name">{{item.username || item.nickName || item.displayName || '未知用户'}}</text>
-        <view class="member-action" bindtap="removeMember" data-member-id="{{item._id || item.id}}">
+        <view class="member-action" bindtap="removeMember" data-member-id="{{item._id || item.id}}" wx:if="{{isCircleOwner}}">
           <text class="remove-icon">🗑</text>
         </view>
       </view>
@@ -37,7 +45,7 @@
   </view>
 
   <!-- 申请管理（只有主人可见） -->
-  <view class="section-card card" wx:if="{{appliers.length > 0 || isLoadingAppliers}}">
+  <view class="section-card card" wx:if="{{isCircleOwner && (appliers.length > 0 || isLoadingAppliers)}}">
     <view class="section-header">
       <text class="section-title">申请管理</text>
       <text class="section-subtitle">{{appliers.length}}个待处理申请</text>
@@ -82,16 +90,24 @@
     </view>
   </view>
 
-  <!-- 公开设置 -->
-  <view class="section-card card">
+  <!-- 公开设置（只有创建者可见） -->
+  <view class="section-card card" wx:if="{{isCircleOwner}}">
     <view class="setting-item">
       <view class="setting-content">
         <text class="setting-title">设为公开朋友圈</text>
-        <text class="setting-desc">幻法后朋友圈会被其他用户看到</text>
+        <text class="setting-desc">开启后朋友圈会被其他用户看到</text>
       </view>
       <switch class="setting-switch" 
              checked="{{settingData.isPublic}}" 
              bindchange="togglePublicStatus" />
+    </view>
+  </view>
+  
+  <!-- 非创建者提示信息 -->
+  <view class="section-card card" wx:if="{{!isCircleOwner}}">
+    <view class="no-permission-tip">
+      <text class="tip-title">只能查看基本信息</text>
+      <text class="tip-desc">只有朋友圈创建者才能修改设置和管理成员</text>
     </view>
   </view>
   
@@ -123,4 +139,14 @@
       </view>
     </view>
   </view>
+
+  <!-- 关闭内容容器 -->
+  </view>
+
+  <!-- 错误状态 -->
+  <view class="error-container" wx:if="{{status === 'error'}}">
+    <text class="error-text">加载失败，请稍后重试</text>
+    <button class="retry-btn theme-btn" bindtap="loadCircleSettings">重试</button>
+  </view>
+
 </view>

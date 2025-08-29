@@ -30,6 +30,7 @@ Page({
     // 公开朋友圈推荐
     recommendedCircles: [],         // 推荐的公开朋友圈列表
     isLoadingRecommendations: false, // 是否正在加载推荐
+    recommendationsLoaded: false,   // 是否已经加载过推荐内容（用于控制只在首次自动加载）
     // 安全区域信息
     safeAreaInfo: {
       statusBarHeight: 44,
@@ -157,8 +158,11 @@ Page({
     // 🔧 确保登录状态检查完成后再加载数据
     this.waitForLoginCheckAndLoadData(prevPage);
     
-    // 加载公开朋友圈推荐（无论是否登录都可以查看）
-    this.loadRecommendations();
+    // 加载公开朋友圈推荐（需要登录才能查看）
+    // 只在首次自动加载，之后需要用户手动点击刷新按钮
+    if (!this.data.recommendationsLoaded && this.data.isLoggedIn) {
+      this.loadRecommendations();
+    }
   },
 
   // 🔧 等待登录检查完成后加载数据
@@ -206,6 +210,11 @@ Page({
       } else {
         this.loadCirclesWithThrottle();
       }
+      
+      // 登录后加载推荐内容
+      if (!this.data.recommendationsLoaded) {
+        this.loadRecommendations();
+      }
     }
   },
 
@@ -221,6 +230,10 @@ Page({
       // 注册成功后加载数据
       if (this.data.isLoggedIn) {
         this.loadCirclesWithThrottle(true); // 强制刷新
+        // 登录成功后加载推荐内容
+        if (!this.data.recommendationsLoaded) {
+          this.loadRecommendations();
+        }
       }
     } else if (this.data.hasError) {
       // 错误状态，提示用户重新启动
@@ -261,6 +274,10 @@ Page({
               // 注册完成后执行原操作
               if (this.data.isLoggedIn) {
                 callback && callback();
+                // 登录成功后加载推荐内容
+                if (!this.data.recommendationsLoaded) {
+                  this.loadRecommendations();
+                }
               }
             });
           }
@@ -374,29 +391,6 @@ Page({
       console.log('查看发现内容:', id);
       wx.showToast({ title: '功能开发中', icon: 'none' });
     });
-  },
-
-  // 下拉刷新
-  onPullDownRefresh() {
-    if (this.data.isLoggedIn) {
-      this.setData({ refreshing: true });
-      this.loadCirclesWithThrottle(true); // 强制刷新
-      // 设置延时停止刷新，因为loadCirclesWithThrottle没有返回Promise
-      setTimeout(() => {
-        wx.stopPullDownRefresh();
-        this.setData({ refreshing: false });
-      }, 1000);
-    } else {
-      wx.stopPullDownRefresh();
-      wx.showToast({ title: '请先登录', icon: 'none' });
-    }
-  },
-
-  // 上拉加载更多
-  onReachBottom() {
-    if (this.data.hasMore && !this.data.loading && this.data.currentCircleId && this.data.isLoggedIn) {
-      this.loadPosts(this.data.currentCircleId, true);
-    }
   },
 
   // 带节流的加载朋友圈列表
@@ -762,6 +756,17 @@ Page({
       return;
     }
 
+    // 检查登录状态，API需要认证
+    if (!this.data.isLoggedIn) {
+      console.log('⚠️ 用户未登录，跳过推荐加载');
+      this.setData({ 
+        recommendedCircles: [],
+        recommendationsLoaded: true,
+        isLoadingRecommendations: false
+      });
+      return;
+    }
+
     this.setData({ isLoadingRecommendations: true });
 
     try {
@@ -785,7 +790,8 @@ Page({
           };
 
           this.setData({
-            recommendedCircles: [formattedCircle]
+            recommendedCircles: [formattedCircle],
+            recommendationsLoaded: true  // 标记已经加载过推荐内容
           });
 
           console.log('✅ 随机公开朋友圈加载完成:', {
@@ -795,17 +801,35 @@ Page({
             latestPostContent: circle.latestPost ? circle.latestPost.content : '无内容'
           });
         } else {
-          // 暂无可用的朋友圈（正常情况）
-          console.log('💭 暂无可用的公开朋友圈，这是正常情况');
-          this.setData({ recommendedCircles: [] });
+          // 暂无可用的朋友圈（正常情况），但添加自动重试机制
+          console.log('💭 暂无可用的公开朋友圈，将设置自动重试');
+          this.setData({ 
+            recommendedCircles: [],
+            recommendationsLoaded: true  // 即使没有推荐也标记为已加载
+          });
+          
+          // 在空状态下增加自动重试机制
+          setTimeout(() => {
+            // 只有在仍然是空状态且用户未离开页面时才自动重试
+            if (this.data.recommendedCircles.length === 0 && !this.data.isLoadingRecommendations && this.data.isLoggedIn) {
+              console.log('🔄 自动重试加载推荐（首次加载）');
+              this.loadRecommendations();
+            }
+          }, 15000); // 15秒后自动重试（比手动刷新间隔更长）
         }
       } else {
         console.warn('⚠️ API调用失败:', res.message);
-        this.setData({ recommendedCircles: [] });
+        this.setData({ 
+          recommendedCircles: [],
+          recommendationsLoaded: true  // API调用失败也标记为已加载
+        });
       }
     } catch (error) {
       console.error('❌ 加载随机公开朋友圈失败:', error);
-      this.setData({ recommendedCircles: [] });
+      this.setData({ 
+        recommendedCircles: [],
+        recommendationsLoaded: true  // 出现异常也标记为已加载
+      });
     } finally {
       this.setData({ isLoadingRecommendations: false });
     }
@@ -814,6 +838,12 @@ Page({
   // 刷新推荐朋友圈（重置访问历史）
   async refreshRecommendations() {
     if (this.data.isLoadingRecommendations) {
+      return;
+    }
+
+    // 检查登录状态，API需要认证
+    if (!this.data.isLoggedIn) {
+      wx.showToast({ title: '请先登录', icon: 'none' });
       return;
     }
 
@@ -841,7 +871,8 @@ Page({
           };
 
           this.setData({
-            recommendedCircles: [formattedCircle]
+            recommendedCircles: [formattedCircle],
+            recommendationsLoaded: true  // 手动刷新后也标记为已加载
           });
 
           util.showToast('推荐已刷新');
@@ -851,17 +882,38 @@ Page({
             latestPostContent: circle.latestPost ? circle.latestPost.content : '无内容'
           });
         } else {
-          // 暂无可推荐的朋友圈
-          this.setData({ recommendedCircles: [] });
+          // 暂无可推荐的朋友圈，增加重试机制
+          this.setData({ 
+            recommendedCircles: [],
+            recommendationsLoaded: true  // 即使没有推荐也标记为已加载
+          });
+          
+          // 在空状态下增加自动重试机制
+          console.log('💭 暂无可推荐朋友圈，将在10秒后自动重试');
+          setTimeout(() => {
+            // 只有在仍然是空状态且用户未离开页面时才自动重试
+            if (this.data.recommendedCircles.length === 0 && !this.data.isLoadingRecommendations) {
+              console.log('🔄 自动重试加载推荐');
+              this.loadRecommendations();
+            }
+          }, 10000); // 10秒后自动重试
+          
           util.showToast('暂无可推荐的朋友圈');
-          console.log('💭 刷新后仍无可用朋友圈');
         }
       } else {
         console.warn('⚠️ 刷新API调用失败:', res.message);
+        this.setData({ 
+          recommendedCircles: [],
+          recommendationsLoaded: true  // API调用失败也标记为已加载
+        });
         util.showToast('刷新失败');
       }
     } catch (error) {
       console.error('❌ 刷新随机推荐失败:', error);
+      this.setData({ 
+        recommendedCircles: [],
+        recommendationsLoaded: true  // 出现异常也标记为已加载
+      });
       util.showToast('刷新失败');
     } finally {
       this.setData({ isLoadingRecommendations: false });

@@ -54,36 +54,43 @@ App({
 
   // 设置导航栏信息
   setNavigationInfo() {
-    const systemInfo = wx.getSystemInfoSync();
-    const screenWidth = systemInfo.windowWidth; 
-
-    const menuInfo = wx.getMenuButtonBoundingClientRect();
-    this.globalData.navigationInfo.menuHeight = menuInfo.height;
-    this.globalData.navigationInfo.menuTop = menuInfo.top;
-    this.globalData.navigationInfo.menuLeft = screenWidth - menuInfo.left;
-    this.globalData.navigationInfo.menuRight = screenWidth - menuInfo.right;
+    const navigationHelper = require('./utils/navigationHelper');
+    const navigationInfo = navigationHelper.getNavigationInfo();
+    
+    this.globalData.navigationInfo.menuHeight = navigationInfo.menuHeight;
+    this.globalData.navigationInfo.menuTop = navigationInfo.menuTop;
+    this.globalData.navigationInfo.menuLeft = navigationInfo.menuLeft;
+    this.globalData.navigationInfo.menuRight = navigationInfo.menuRight;
   },
 
   // 获取系统信息
   getSystemInfo() {
-    wx.getSystemInfo({
-      success: (res) => {
-        this.globalData.systemInfo = res;
-        
-        // 计算安全区域信息（用于自定义导航栏）
-        const { statusBarHeight, safeArea, windowHeight } = res;
-        
-        this.globalData.safeAreaInfo = {
-          statusBarHeight: statusBarHeight || 44, // 状态栏高度
-          navBarHeight: (statusBarHeight || 44) + 44, // 导航栏总高度（状态栏+导航栏）
-          safeAreaTop: safeArea?.top || statusBarHeight || 44,
-          safeAreaBottom: safeArea?.bottom || windowHeight,
-          windowHeight: windowHeight
-        };
-        
-
-      }
-    });
+    try {
+      const navigationHelper = require('./utils/navigationHelper');
+      const systemInfo = navigationHelper.getFullSystemInfo();
+      
+      this.globalData.systemInfo = systemInfo.windowInfo; // 保持原有数据结构兼容性
+      this.globalData.safeAreaInfo = {
+        statusBarHeight: systemInfo.statusBarHeight,
+        navBarHeight: systemInfo.navBarHeight,
+        safeAreaTop: systemInfo.safeAreaTop,
+        safeAreaBottom: systemInfo.safeAreaBottom,
+        windowHeight: systemInfo.windowHeight
+      };
+      
+      console.log('系统信息获取成功:', systemInfo.windowInfo);
+      console.log('安全区域信息:', this.globalData.safeAreaInfo);
+    } catch (err) {
+      console.error('获取系统信息失败:', err);
+      // 设置默认值
+      this.globalData.safeAreaInfo = {
+        statusBarHeight: 44,
+        navBarHeight: 88,
+        safeAreaTop: 44,
+        safeAreaBottom: 812,
+        windowHeight: 812
+      };
+    }
   },
 
   // 初始化用户状态（使用MobX状态管理）

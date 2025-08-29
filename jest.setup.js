@@ -1,6 +1,18 @@
 // jest.setup.js
 // 微信小程序测试环境初始化
 
+// 处理SharedArrayBuffer警告（仅在测试环境中）
+if (typeof globalThis !== 'undefined' && globalThis.SharedArrayBuffer) {
+  // SharedArrayBuffer警告不影响小程序运行，静默处理
+  const originalWarn = console.warn;
+  console.warn = (...args) => {
+    if (args[0] && args[0].includes && args[0].includes('SharedArrayBuffer')) {
+      return; // 忽略SharedArrayBuffer相关警告
+    }
+    originalWarn.apply(console, args);
+  };
+}
+
 // 模拟微信小程序全局对象
 global.__wxConfig = {
   envVersion: 'develop',
@@ -43,8 +55,37 @@ global.wx = {
   chooseMedia: jest.fn(),
   previewImage: jest.fn(),
   
-  // 系统信息
+  // 系统信息 - 使用新的API
+  getWindowInfo: jest.fn(() => ({
+    windowWidth: 375,
+    windowHeight: 667,
+    screenWidth: 375,
+    screenHeight: 667,
+    statusBarHeight: 44,
+    safeArea: {
+      top: 44,
+      bottom: 623,
+      left: 0,
+      right: 375,
+      width: 375,
+      height: 579
+    }
+  })),
+  getSystemSetting: jest.fn(),
+  getAppAuthorizeSetting: jest.fn(),
+  getDeviceInfo: jest.fn(),
+  getAppBaseInfo: jest.fn(),
+  
+  // 保留旧API的模拟以兼容性
   getSystemInfo: jest.fn(),
+  getMenuButtonBoundingClientRect: jest.fn(() => ({
+    width: 87,
+    height: 32,
+    top: 48,
+    right: 365,
+    bottom: 80,
+    left: 278
+  })),
   
   // 其他常用API
   setClipboardData: jest.fn(),

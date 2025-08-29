@@ -16,6 +16,8 @@ Page({
     // 朋友圈基本信息
     circleId: '',
     circle: null,
+    currentUser: null,           // 当前用户信息
+    isCircleOwner: false,        // 当前用户是否为朋友圈创建者
     
     // 设置数据
     settingData: {
@@ -107,6 +109,7 @@ Page({
 
   onLoad(options) {
     this.getSafeAreaInfo();
+    this.getCurrentUser(); // 获取当前用户信息
     
     const { circleId } = options;
     if (!circleId) {
@@ -134,7 +137,44 @@ Page({
     }
   },
 
-  // 加载朋友圈设置
+  // 获取当前用户信息
+  getCurrentUser() {
+    try {
+      const app = getApp();
+      const userStore = app?.getUserStore();
+      
+      if (userStore && userStore.isLoggedIn && userStore.userInfo) {
+        this.setData({
+          currentUser: userStore.userInfo
+        });
+      }
+    } catch (error) {
+      console.error('获取用户信息失败:', error);
+    }
+  },
+
+  // 检查当前用户是否为朋友圈创建者
+  checkIsCircleOwner(circle) {
+    const { currentUser } = this.data;
+    
+    if (!currentUser || !circle || !circle.creator) {
+      return false;
+    }
+    
+    // 支持creator为对象或字符串ID
+    const creatorId = typeof circle.creator === 'object' ? circle.creator._id : circle.creator;
+    const isOwner = currentUser._id === creatorId;
+    
+    console.log('权限检查:', {
+      currentUserId: currentUser._id,
+      creatorId: creatorId,
+      isOwner: isOwner
+    });
+    
+    return isOwner;
+  },
+
+  // 🚀 优化版：并行加载朋友圈设置
   async loadCircleSettings() {
     const { circleId } = this.data;
     if (!circleId) return;
@@ -142,7 +182,7 @@ Page({
     this.setStatus(STATUS_CONSTANTS.LOADING);
 
     try {
-      // 获取朋友圈详情 (与details页面保持一致的实现方式)
+      // 获取朋友圈详情
       const circlesRes = await api.circles.getMy();
       const circle = circlesRes.data.circles.find(c => c._id === circleId);
       
@@ -150,28 +190,38 @@ Page({
         throw new Error('朋友圈不存在或已被删除');
       }
 
-      // 优先使用朋友圈详情中的成员信息，如果没有则单独获取
-      let members = [];
-      if (circle.members && Array.isArray(circle.members)) {
-        members = circle.members;
-      } else {
-        try {
-          const membersRes = await api.circles.getMembers(circleId);
-          members = membersRes.data || [];
-        } catch (memberError) {
-          members = [];
-        }
-      }
-
-      // 设置数据
+      // 检查当前用户权限
+      const isOwner = this.checkIsCircleOwner(circle);
+      
+      // 🎯 立即显示基本信息，提升用户体验
       this.setData({
         circle,
-        circleMembers: members,
+        isCircleOwner: isOwner,
         'settingData.isPublic': circle.isPublic || false,
-        lastSettingsLoadTime: Date.now()  // 更新加载时间戳
+        lastSettingsLoadTime: Date.now()
       });
       
       this.setStatus(STATUS_CONSTANTS.SUCCESS);
+
+      // 🚀 并行加载成员信息和申请者列表
+      const loadPromises = [];
+      
+      // 1. 加载成员信息（如果朋友圈详情中没有）
+      if (circle.members && Array.isArray(circle.members)) {
+        this.setData({ circleMembers: circle.members });
+      } else {
+        loadPromises.push(this.loadMembersAsync());
+      }
+      
+      // 2. 如果是创建者，并行加载申请者列表
+      if (isOwner) {
+        loadPromises.push(this.loadAppliersAsync());
+      }
+      
+      // 🔄 等待所有并行任务完成（不阻塞基本页面显示）
+      if (loadPromises.length > 0) {
+        await Promise.allSettled(loadPromises);
+      }
 
     } catch (error) {
       console.error('加载朋友圈设置失败:', error);
@@ -183,19 +233,51 @@ Page({
     }
   },
 
+  // 🚀 异步加载成员信息
+  async loadMembersAsync() {
+    try {
+      const membersRes = await api.circles.getMembers(this.data.circleId);
+      this.setData({
+        circleMembers: membersRes.data || []
+      });
+    } catch (error) {
+      console.error('加载成员信息失败:', error);
+      this.setData({ circleMembers: [] });
+    }
+  },
+
+  // 🚀 异步加载申请者列表
+  async loadAppliersAsync() {
+    if (this.data.isLoadingAppliers) return;
+
+    this.setData({ isLoadingAppliers: true });
+
+    try {
+      const res = await api.circles.getAppliers(this.data.circleId);
+      
+      if (res.success) {
+        const appliers = res.data.appliers || [];
+        this.setData({ appliers: appliers });
+      }
+    } catch (error) {
+      console.error('加载申请列表失败:', error);
+      // 静默失败，不影响主要功能
+    } finally {
+      this.setData({ isLoadingAppliers: false });
+    }
+  },
+
   onShow() {
     // 智能加载：首次显示或数据过期时才重新加载
     if (!this.data.hasInitialLoad) {
-      this.loadCircleSettings();
-      this.loadAppliers();
+      this.loadCircleSettings(); // loadCircleSettings 内部会根据权限决定是否加载申请者列表
       this.setData({ hasInitialLoad: true });
     } else {
       const now = Date.now();
       const SETTINGS_CACHE_DURATION = 60000; // 1分钟缓存时间
       
       if (now - this.data.lastSettingsLoadTime > SETTINGS_CACHE_DURATION) {
-        this.loadCircleSettings();
-        this.loadAppliers();
+        this.loadCircleSettings(); // loadCircleSettings 内部会根据权限决定是否加载申请者列表
       }
     }
   },
@@ -423,32 +505,10 @@ Page({
 
   // === 申请列表管理功能 ===
   
-  // 加载申请者列表
+  // 🔄 兼容方法：加载申请者列表（现在调用异步版本）
   async loadAppliers() {
-    if (this.data.isLoadingAppliers) {
-      return;
-    }
-
-    this.setData({ isLoadingAppliers: true });
-
-    try {
-      const res = await api.circles.getAppliers(this.data.circleId);
-      
-      if (res.success) {
-        const appliers = res.data.appliers || [];
-        
-        this.setData({
-          appliers: appliers
-        });
-      }
-    } catch (error) {
-      wx.showToast({
-        title: '加载申请列表失败',
-        icon: 'none'
-      });
-    } finally {
-      this.setData({ isLoadingAppliers: false });
-    }
+    // 复用优化后的异步加载方法
+    return this.loadAppliersAsync();
   },
 
   // 同意申请

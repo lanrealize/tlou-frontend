@@ -27,13 +27,20 @@
       <!-- 单张图片 -->
       <view class="single-image" wx:if="{{post.images.length === 1}}" 
             style="width: {{singleImageInfo.displayWidth}}rpx; height: {{singleImageInfo.displayHeight}}rpx;">
+        <!-- 骨架屏占位 -->
+        <view class="image-skeleton single-skeleton {{imageLoadStates[post.images[0]] === 'show' ? '' : 'show'}}">
+          <view class="skeleton-shimmer"></view>
+        </view>
+        
         <image 
-          class="post-image-single {{singleImageInfo.styleClass}}" 
+          class="post-image-single {{singleImageInfo.styleClass}} {{imageLoadStates[post.images[0]] === 'show' ? 'loaded' : 'loading'}}" 
           src="{{post.images[0]}}" 
           mode="{{singleImageInfo.mode}}"
           bindload="onSingleImageLoad"
+          binderror="onImageError"
           bindtap="onPreviewImage"
           data-current="{{post.images[0]}}"
+          data-src="{{post.images[0]}}"
         ></image>
       </view>
 
@@ -45,12 +52,20 @@
           wx:key="*this"
           wx:if="{{index < 9}}"
         >
+          <!-- 网格图片骨架屏 -->
+          <view class="image-skeleton grid-skeleton {{imageLoadStates[item] === 'show' ? '' : 'show'}}">
+            <view class="skeleton-shimmer"></view>
+          </view>
+          
           <image 
-            class="post-image-grid" 
+            class="post-image-grid {{imageLoadStates[item] === 'show' ? 'loaded' : 'loading'}}" 
             src="{{item}}" 
             mode="aspectFill"
+            bindload="onGridImageLoad"
+            binderror="onImageError"
             bindtap="onPreviewImage"
             data-current="{{item}}"
+            data-src="{{item}}"
           ></image>
         </view>
         

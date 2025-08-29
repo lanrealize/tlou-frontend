@@ -143,10 +143,8 @@ Page({
     const app = getApp();
     if (app && app.globalData.safeAreaInfo) {
       // 计算底部安全区域
-      const systemInfo = wx.getSystemInfoSync();
-      const safeAreaBottom = systemInfo.safeArea.bottom;
-      const screenHeight = systemInfo.screenHeight;
-      const bottomSafeArea = screenHeight - safeAreaBottom;
+      const safeAreaInfo = navigationHelper.getSafeAreaInfo();
+      const bottomSafeArea = safeAreaInfo.bottomSafeArea;
       
       // 计算实际需要的底部空间：发布按钮(120rpx) + 底部安全区域 + 额外边距
       const publishButtonHeight = 120; // rpx转px大约是60px
