@@ -1,25 +1,9 @@
 <!--pages/management/management.wxml-->
 <!-- 自定义导航栏 -->
-<view class="custom-navigation" style="height: {{totalNavigationHeight}}px;">
-  <!-- 状态栏占位 -->
-  <view class="status-bar" style="height: {{statusBarHeight}}px;"></view>
-  
-  <!-- 导航栏内容 -->
-  <view class="navigation-bar" style="height: {{navigationBarHeight}}px;">
-    <view class="nav-left">
-      <view class="back-button" bindtap="onBackTap">
-        <text class="back-icon">‹</text>
-      </view>
-    </view>
-    <view class="nav-center">
-      <text class="nav-title">身份管理</text>
-    </view>
-    <view class="nav-right"></view>
-  </view>
-</view>
+<custom-navigation title="身份管理"></custom-navigation>
 
 <!-- 页面内容 -->
-<view class="container" style="padding-top: {{totalNavigationHeight}}px;">
+<view class="container" style="padding-top: {{safeAreaInfo.totalNavigationHeight || 88}}px;">
   <!-- 顶部标题 -->
   <view class="header">
     <text class="header-title">🎭 身份管理</text>

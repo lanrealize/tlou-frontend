@@ -34,16 +34,54 @@
     <view class="admin-btn" wx:if="{{isAdmin && isLoggedIn}}" bindtap="goToManagement">管理员设置</view>
   </view>
 
+  <!-- 🆕 朋友圈预加载状态 - 最高优先级显示 -->
+  <view class="circle-preloading-overlay" wx:if="{{isPreloadingCircle}}">
+    <view class="preloading-bg"></view>
+    <view class="preloading-content">
+      <view class="preloading-spinner">
+        <view class="spinner-circle"></view>
+      </view>
+      <view class="preloading-title">正在加载朋友圈</view>
+      <view class="preloading-subtitle">马上就好...</view>
+    </view>
+  </view>
+
+  <!-- 登录状态检查中 -->
+  <view class="login-checking-card" wx:if="{{isLoading || loginStatus !== 'loggedIn' && loginStatus !== 'unregistered'}}">
+    <view class="loading-bg"></view>
+    <view class="loading-content">
+      <view class="loading-spinner"></view>
+      <view class="loading-text">正在检查登录状态...</view>
+    </view>
+  </view>
+
+  <!-- 朋友圈数据加载中状态 -->
+  <view class="friend-circle-loading" wx:elif="{{loginStatus === 'loggedIn' && isLoadingCircles}}">
+    <view class="loading-bg"></view>
+    <view class="loading-content">
+      <view class="loading-spinner"></view>
+      <view class="loading-text">正在加载朋友圈...</view>
+    </view>
+  </view>
+
   <!-- 朋友圈卡片 -->
-  <view class="friend-circle-card" wx:if="{{!isLoading && isLoggedIn && circles.length > 0}}" bindtap="goToRecentCircle">
+  <view class="friend-circle-card" wx:elif="{{loginStatus === 'loggedIn' && !isLoadingCircles && circles.length > 0}}" bindtap="goToRecentCircle">
     <view class="card-bg"></view>
     <view class="card-title card-main-title">最近的朋友圈</view>
     <view class="user-count">
       <text>有 {{recentCircle.memberCount}} 名用户在内</text>
       <!-- 用户头像组 -->
       <view class="avatar-group">
-        <image class="avatar-small-1" wx:if="{{recentCircle.members[0]}}" src="{{recentCircle.members[0].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
-        <image class="avatar-small-2" wx:if="{{recentCircle.members[1]}}" src="{{recentCircle.members[1].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+        <image class="avatar-small-1" wx:if="{{recentCircle.members && recentCircle.members.length > 0}}" src="{{recentCircle.members[0].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+        <image class="avatar-small-2" wx:if="{{recentCircle.members && recentCircle.members.length > 1}}" src="{{recentCircle.members[1].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+        <image class="avatar-small-3" wx:if="{{recentCircle.members && recentCircle.members.length > 2}}" src="{{recentCircle.members[2].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+        <image class="avatar-small-4" wx:if="{{recentCircle.members && recentCircle.members.length > 3}}" src="{{recentCircle.members[3].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+        <image class="avatar-small-5" wx:if="{{recentCircle.members && recentCircle.members.length > 4}}" src="{{recentCircle.members[4].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+        <view class="avatar-more" wx:if="{{recentCircle.members && recentCircle.members.length > 5}}">
+          <image class="avatar-more-bg" src="{{recentCircle.members[5].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+          <view class="avatar-more-mask"></view>
+          <text class="avatar-more-text">+{{recentCircle.members.length - 5}}</text>
+        </view>
       </view>
     </view>
     <view class="status-tag">
@@ -54,7 +92,7 @@
   </view>
 
   <!-- 空状态朋友圈卡片 -->
-  <view class="empty-state-card" wx:elif="{{!isLoading && isLoggedIn && circles.length === 0}}">
+  <view class="empty-state-card" wx:elif="{{loginStatus === 'loggedIn' && !isLoadingCircles && circles.length === 0}}">
     <view class="empty-bg"></view>
     <view class="empty-title card-main-title">没有正在进行的朋友圈</view>
     <view class="empty-desc card-sub-title">点击"创建朋友圈"按钮，邀请朋友或扫一扫开始吧</view>
@@ -63,7 +101,7 @@
   </view>
 
   <!-- 未登录提示卡片 -->
-  <view class="browse-tip-card" wx:elif="{{!isLoading && !isLoggedIn}}">
+  <view class="browse-tip-card" wx:elif="{{loginStatus === 'unregistered'}}">
     <view class="empty-bg"></view>
     <view class="empty-title card-main-title">浏览模式</view>
     <view class="empty-desc card-sub-title">你可以浏览内容，点击感兴趣的功能时会引导登录</view>
@@ -96,43 +134,33 @@
     </view>
   </view>
 
-  <!-- 发现有趣朋友圈 -->
-  <view class="post-card" wx:if="{{recommendedCircles.length > 0}}" bindtap="viewRecommendedCircle" data-circle-id="{{recommendedCircles[0]._id}}">
-    <view class="post-bg"></view>
-    <view class="discover-title card-main-title">发现有趣朋友圈</view>
-    <view class="menu-icon" catchtap="refreshRecommendations">
-      <image src="/assets/icons/refresh.svg" mode="aspectFit"></image>
-    </view>
-    
-    <image class="discover-avatar" src="{{recommendedCircles[0].creator.avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
-    
-    <!-- 动态内容区域 -->
-    <view class="content-container">
-      <view class="quote-mark">“</view>
-      <view class="post-content" wx:if="{{recommendedCircles[0].hasLatestPost}}">{{recommendedCircles[0].latestPost.content}}</view>
-      <view class="post-content" wx:else>Ta什么都没说</view>
-    </view>
-    
-    <view class="view-btn">
-      <view class="view-more">点击查看</view>
-      <image class="view-icon" src="/assets/icons/right.svg" mode="aspectFit"></image>
-    </view>
-    
-    <!-- 倾斜的图片 -->
-    <view class="rotated-img">
-      <image wx:if="{{recommendedCircles[0].latestPost && recommendedCircles[0].latestPost.images && recommendedCircles[0].latestPost.images.length > 0}}" 
-             src="{{recommendedCircles[0].latestPost.images[0]}}" 
-             mode="aspectFill" 
-             style="width: 100%; height: 100%; border-radius: 10rpx;"></image>
-      <image wx:else 
-             src="{{recommendedCircles[0].creator.avatar || '/images/default_avatar.png'}}" 
-             mode="aspectFill" 
-             style="width: 100%; height: 100%; border-radius: 10rpx;"></image>
+  <!-- 发现有趣朋友圈 - 加载状态 -->
+  <view class="discover-loading" wx:if="{{isLoadingRecommendations}}">
+    <view class="loading-bg"></view>
+    <view class="loading-title card-main-title">发现有趣朋友圈</view>
+    <view class="loading-content">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">正在为你寻找有趣的朋友圈...</text>
     </view>
   </view>
 
-  <!-- 暂无推荐时的占位 -->
-  <view class="discover-empty" wx:elif="{{!isLoadingRecommendations && recommendedCircles.length === 0}}" bindtap="refreshRecommendations">
+  <!-- 发现有趣朋友圈 - 有推荐内容 -->
+  <discover-circle-card 
+    wx:elif="{{recommendedCircles.length > 0}}"
+    mode="discover"
+    title="发现有趣朋友圈"
+    circle-data="{{recommendedCircles[0]}}"
+    circle-id="{{recommendedCircles[0]._id}}"
+    creator-avatar="{{recommendedCircles[0].creator.avatar || '/images/default_avatar.png'}}"
+    content="{{recommendedCircles[0].latestPost.content}}"
+    has-content="{{recommendedCircles[0].hasLatestPost}}"
+    post-image="{{recommendedCircles[0].postImageUrl || ''}}"
+    bind:cardTap="viewRecommendedCircle"
+    bind:refresh="refreshRecommendations">
+  </discover-circle-card>
+
+  <!-- 暂无推荐时的占位 - 只在明确无推荐且已登录时显示 -->
+  <view class="discover-empty" wx:elif="{{recommendationsLoaded && recommendedCircles.length === 0 && isLoggedIn}}" bindtap="refreshRecommendations">
     <text class="card-main-title">暂无可推荐的朋友圈</text>
     <text class="card-sub-title">请稍后再试或者创建一个新的公开朋友圈吧</text>
     <view class="refresh-hint">
@@ -140,4 +168,5 @@
       <text>点击刷新</text>
     </view>
   </view>
+
 </view>

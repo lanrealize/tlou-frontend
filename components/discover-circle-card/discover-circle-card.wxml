@@ -1,0 +1,86 @@
+<!-- discover-circle-card 组件模板 -->
+<view class="card-wrapper">
+  <view class="post-card {{mode === 'discover' ? 'discover-fade-in' : 'history-mode'}}" bindtap="onCardTap">
+    <view class="post-bg"></view>
+    
+    <!-- 卡片标题 -->
+    <view class="discover-title card-main-title">{{title}}</view>
+    
+    <!-- 右上角区域 - discover模式显示刷新按钮 -->
+    <view class="menu-icon" wx:if="{{mode === 'discover'}}" catchtap="onRefreshTap">
+      <image class="menu-image" src="/assets/icons/refresh.svg" mode="aspectFit"></image>
+    </view>
+    
+    <!-- history模式的右上角区域 -->
+    <view class="top-right-area" wx:elif="{{mode === 'history'}}">
+      <!-- 最近更新时间 -->
+      <view class="update-time-inline" wx:if="{{lastUpdateTime}}">
+        最近更新于：{{lastUpdateTime}}
+      </view>
+      
+      <!-- 分隔线和三点菜单 - 仅在有权限时显示 -->
+      <view class="menu-section" wx:if="{{hasDeletePermission}}">
+        <view class="separator-line"></view>
+        <view class="more-menu" catchtap="onMoreMenuTap">
+          <image class="more-image" src="/assets/icons/more.svg" mode="aspectFit"></image>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 创建者头像 -->
+    <image class="discover-avatar" src="{{creatorAvatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+    
+    <!-- 动态内容区域 -->
+    <view class="content-container">
+      <view class="quote-mark">"</view>
+      <view class="post-content" wx:if="{{hasContent}}">{{content}}</view>
+      <view class="post-content" wx:else>Ta什么都没说</view>
+    </view>
+    
+    <!-- discover模式显示点击查看，history模式显示成员信息 -->
+    <view class="view-btn" wx:if="{{mode === 'discover'}}">
+      <view class="view-more">点击查看</view>
+      <image class="view-icon" src="/assets/icons/right.svg" mode="aspectFit"></image>
+    </view>
+    
+    <!-- 成员信息 - 仅在history模式显示，替换点击查看的位置 -->
+    <view class="members-info-bottom" wx:elif="{{mode === 'history' && members && members.length > 0}}">
+      <view class="members-text">成员</view>
+      <view class="members-list-horizontal">
+        <image class="member-avatar-small" 
+               wx:for="{{members}}" 
+               wx:key="_id" 
+               src="{{item.avatar || '/images/default_avatar.png'}}" 
+               mode="aspectFill"
+               wx:if="{{index < 5}}"></image>
+        <view class="more-members-small" wx:if="{{memberCount > 5}}">+{{memberCount - 5}}</view>
+      </view>
+    </view>
+    
+    <!-- 倾斜的图片 -->
+    <view class="rotated-img">
+      <!-- 只有当确实有帖子图片时才显示 -->
+      <image wx:if="{{postImage && postImage !== ''}}" 
+             src="{{postImage}}" 
+             mode="aspectFill" 
+             style="width: 100%; height: 100%; border-radius: 10rpx;"></image>
+      <!-- 如果有内容但没有图片，显示创建者头像 -->
+      <image wx:elif="{{hasContent && !postImage}}" 
+             src="{{creatorAvatar || '/images/default_avatar.png'}}" 
+             mode="aspectFill" 
+             style="width: 100%; height: 100%; border-radius: 10rpx;"></image>
+      <!-- 完全空的朋友圈保持空白，不显示任何内容 -->
+    </view>
+    
+    <!-- 下拉菜单 - 仅在history模式且有权限时显示 -->
+    <view class="dropdown-menu {{mode === 'history' && hasDeletePermission && showDropdown ? 'show' : 'hide'}}">
+      <view class="dropdown-item" catchtap="onDeleteTap">
+        <image class="dropdown-icon" src="/assets/icons/delete.svg" mode="aspectFit"></image>
+        <text class="dropdown-text">删除朋友圈</text>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 遮罩层 - 点击其他地方隐藏下拉菜单 -->
+  <view class="dropdown-mask {{showDropdown ? 'show' : 'hide'}}" catchtap="onMaskTap"></view>
+</view>

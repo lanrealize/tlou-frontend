@@ -55,12 +55,30 @@ Component({
     'post.comments, commentsExpanded': function(comments, expanded) {
       this.updateDisplayComments();
     },
-    'post.imageMeta': function(imageMeta) {
-      this.setSingleImageStyleFromMeta();
-    },
-    // 监听post对象变化，确保初次数据加载时就设置样式
+    // 监听post对象变化，立即设置样式和初始化状态
     'post': function(post) {
-      if (post) {
+      if (post && post.images && post.images.length > 0) {
+        // 立即根据后端数据设置尺寸，确保骨架屏一开始就是正确尺寸
+        this.setSingleImageStyleFromMeta();
+        this.initImageLoadStates();
+      }
+    }
+  },
+
+  /**
+   * 组件生命周期
+   */
+  lifetimes: {
+    // 组件实例刚创建好时
+    created() {
+      // 组件实例刚创建好，还不能调用 setData
+    },
+    
+    // 组件完全初始化完毕后
+    ready() {
+      // 🔧 组件准备完毕，立即根据数据设置图片尺寸
+      const { post } = this.data;
+      if (post && post.images && post.images.length > 0) {
         this.setSingleImageStyleFromMeta();
         this.initImageLoadStates();
       }
@@ -78,27 +96,42 @@ Component({
       // 检查基础条件：必须是单张图片
       if (!post || !post.images || post.images.length !== 1) return;
       
-      // 检查是否有后端图片元数据
-      if (!post.imageMeta || !post.imageMeta[0] || 
-          typeof post.imageMeta[0].width !== 'number' || 
-          typeof post.imageMeta[0].height !== 'number') {
-        // 如果没有有效的后端数据，设置默认样式和占位尺寸
-        if (!this.data.singleImageInfo.styleClass) {
-          this.setData({
-            singleImageInfo: {
-              isPortrait: false,
-              mode: 'aspectFit',
-              styleClass: 'landscape',
-              displayWidth: 500,
-              displayHeight: 300  // 默认占位高度
-            }
-          });
-        }
+      // 🔧 优先使用后端图片元数据计算准确尺寸
+      const firstImage = post.images[0];
+      
+      // 检查图片对象本身是否包含尺寸信息
+      if (typeof firstImage === 'object' && firstImage.width && firstImage.height) {
+        this.calculateAndSetImageSize(firstImage.width, firstImage.height);
         return;
       }
       
-      const meta = post.imageMeta[0];
-      const { width: originalWidth, height: originalHeight } = meta;
+      // 检查imageMeta数组
+      if (post.imageMeta && post.imageMeta[0] && 
+          typeof post.imageMeta[0].width === 'number' && 
+          typeof post.imageMeta[0].height === 'number') {
+        
+        // ✅ 有准确的后端数据，立即计算正确的显示尺寸
+        const meta = post.imageMeta[0];
+        this.calculateAndSetImageSize(meta.width, meta.height);
+        return;
+      }
+      
+      // ⚠️ 后端数据缺失的降级方案（仅作为备用）
+      if (!this.data.singleImageInfo.styleClass) {
+        this.setData({
+          singleImageInfo: {
+            isPortrait: false,
+            mode: 'widthFix',
+            styleClass: 'landscape',
+            displayWidth: 500,
+            displayHeight: 375  // 4:3 比例作为最后的默认值
+          }
+        });
+      }
+    },
+
+    // 🆕 根据原始尺寸计算并设置显示尺寸（统一的计算逻辑）
+    calculateAndSetImageSize(originalWidth, originalHeight) {
       const isPortrait = originalHeight > originalWidth;
       
       let displayWidth, displayHeight;
@@ -123,7 +156,7 @@ Component({
         }
       }
       
-      // 基于真实的图片尺寸设置样式和精确占位
+      // 设置准确的样式和尺寸
       this.setData({
         singleImageInfo: {
           isPortrait: isPortrait,
@@ -179,7 +212,7 @@ Component({
 
     // 回复评论（点击评论内容触发）
     onReplyComment(e) {
-      const { userId, username } = e.currentTarget.dataset;
+      const { userId, username, commentId } = e.currentTarget.dataset;
       
       // 检查必要数据
       if (!userId || !username) {
@@ -193,14 +226,18 @@ Component({
       this.triggerEvent('replyComment', {
         postId: this.data.post._id,
         post: this.data.post,
-        replyToUser: { id: userId, username }
+        replyToUser: { id: userId, username },
+        commentId: commentId  // 传递评论ID用于滚动定位
       });
     },
 
     // 预览图片
     onPreviewImage(e) {
       const { current } = e.currentTarget.dataset;
-      const urls = this.data.post.images || [];
+      const images = this.data.post.images || [];
+      
+      // 处理图片数组，提取URL
+      const urls = images.map(img => typeof img === 'object' ? img.url : img);
       
       this.triggerEvent('previewImage', {
         current,
@@ -295,64 +332,31 @@ Component({
       this.onDeletePost();
     },
 
-    // 单张图片加载完成，检测图片方向（回退方案）
+    // 单张图片加载完成，检测图片方向（降级方案）
     onSingleImageLoad(e) {
       const { post, singleImageInfo } = this.data;
       
       // 无论如何都要处理图片加载完成事件
-      this.onImageLoaded(this.data.post.images[0]);
+      const firstImage = this.data.post.images[0];
+      const imageUrl = typeof firstImage === 'object' ? firstImage.url : firstImage;
+      this.onImageLoaded(imageUrl);
       
-      // 检查是否已经有基于后端数据设置的样式
+      // 🔧 如果已经有后端数据，无需使用降级方案
       if (post && post.imageMeta && post.imageMeta[0] && 
           typeof post.imageMeta[0].width === 'number' && 
           typeof post.imageMeta[0].height === 'number') {
-        // 有后端数据，无需使用图片加载的回退方案
         return;
       }
       
-      // 如果已有样式且不是默认样式，也无需重新设置
+      // 如果已有非默认样式，也无需重新设置
       if (singleImageInfo && singleImageInfo.displayWidth && 
-          singleImageInfo.displayHeight && singleImageInfo.displayHeight !== 300) {
+          singleImageInfo.displayHeight && singleImageInfo.displayHeight !== 375) {
         return;
       }
       
+      // 🔧 降级方案：从图片加载事件获取尺寸，使用统一计算逻辑
       const { width: originalWidth, height: originalHeight } = e.detail;
-      const isPortrait = originalHeight > originalWidth;
-      
-      let displayWidth, displayHeight;
-      
-      if (isPortrait) {
-        // 纵向图片：固定高度460rpx，宽度按比例缩放
-        displayHeight = 460;
-        displayWidth = Math.round(460 * (originalWidth / originalHeight));
-        // 限制最大宽度500rpx
-        if (displayWidth > 500) {
-          displayWidth = 500;
-          displayHeight = Math.round(500 * (originalHeight / originalWidth));
-        }
-      } else {
-        // 横向图片：固定宽度500rpx，高度按比例缩放
-        displayWidth = 500;
-        displayHeight = Math.round(500 * (originalHeight / originalWidth));
-        // 限制最大高度460rpx
-        if (displayHeight > 460) {
-          displayHeight = 460;
-          displayWidth = Math.round(460 * (originalWidth / originalHeight));
-        }
-      }
-      
-      // 根据图片实际加载尺寸设置样式和精确尺寸（仅作为回退方案）
-      const newSingleImageInfo = {
-        isPortrait: isPortrait,
-        mode: isPortrait ? 'heightFix' : 'widthFix',
-        styleClass: isPortrait ? 'portrait' : 'landscape',
-        displayWidth: displayWidth,
-        displayHeight: displayHeight
-      };
-      
-      this.setData({
-        singleImageInfo: newSingleImageInfo
-      });
+      this.calculateAndSetImageSize(originalWidth, originalHeight);
     },
     
     // 处理图片加载完成
@@ -403,7 +407,10 @@ Component({
       const newImageLoadStates = { ...imageLoadStates };
       let hasChanges = false;
       
-      post.images.forEach(imageSrc => {
+      post.images.forEach(imgItem => {
+        // 处理图片数据，支持对象和字符串格式
+        const imageSrc = typeof imgItem === 'object' ? imgItem.url : imgItem;
+        
         // 只为没有状态的图片设置初始loading状态
         if (!newImageLoadStates[imageSrc]) {
           newImageLoadStates[imageSrc] = 'loading';

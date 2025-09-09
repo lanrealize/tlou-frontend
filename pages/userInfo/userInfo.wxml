@@ -1,15 +1,10 @@
 <!--pages/userInfo/userInfo.wxml-->
 <view class="container">
-  <!-- 状态栏占位 -->
-  <view class="status-bar" style="height: {{safeAreaInfo.statusBarHeight}}px;"></view>
+  <!-- 自定义导航栏 -->
+  <custom-navigation title="完善个人信息" bindback="navigateToMain" custom-back="{{true}}" bindnavigationReady="onNavigationReady"></custom-navigation>
   
-  <!-- 返回按钮 -->
-  <view class="header-bar">
-    <view class="back-btn" bindtap="navigateToMain">
-      <text class="back-icon">←</text>
-      <text>返回主页</text>
-    </view>
-  </view>
+  <!-- 内容区域 -->
+  <view class="page-content" style="padding-top: {{navigationData.totalNavigationHeight || 88}}px;">
   
   <view class="header">
     <text class="title">完善个人信息</text>
@@ -79,4 +74,6 @@
     <text class="tip-text">• 您的头像和昵称将用于在小程序中展示</text>
     <text class="tip-text">• 请确保信息真实有效，符合社区规范</text>
   </view>
+  
+  </view> <!-- 内容区域结束 -->
 </view>

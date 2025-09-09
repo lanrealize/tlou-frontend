@@ -27,10 +27,27 @@ Page({
     lastCirclesLoadTime: 0,     // 上次加载朋友圈的时间戳
     circlesLoadThrottle: 3000,  // 节流时间（3秒）
     
+    // 缓存机制
+    cachedRecentCircle: null,   // 缓存的最新朋友圈数据
+    lastRecentCircleHash: '',   // 上次朋友圈数据的哈希值
+    recentCircleCacheConfig: {  // 缓存配置
+      enabled: true,            // 是否启用缓存
+      compareFields: ['_id', 'memberCount', 'formattedTime', 'createdAt', 'members'], // 对比字段
+      cacheTimeout: 300000      // 缓存超时时间（毫秒），5分钟后强制更新
+    },
+    lastRecentCircleCacheTime: 0,  // 最后一次缓存时间
+    hasInitialLoad: false,      // 是否已完成初始加载
+    
     // 公开朋友圈推荐
     recommendedCircles: [],         // 推荐的公开朋友圈列表
     isLoadingRecommendations: false, // 是否正在加载推荐
     recommendationsLoaded: false,   // 是否已经加载过推荐内容（用于控制只在首次自动加载）
+    
+    // 朋友圈详情预加载相关
+    isPreloadingCircle: false,      // 是否正在预加载朋友圈详情
+    preloadingCircleId: '',         // 正在预加载的朋友圈ID
+    preloadedCircleData: null,      // 预加载的朋友圈数据
+    
     // 安全区域信息
     safeAreaInfo: {
       statusBarHeight: 44,
@@ -127,7 +144,6 @@ Page({
   },
 
   onShow() {
-    
     // 检查是否从userInfo页面返回，如果是则刷新用户状态
     const pages = getCurrentPages();
     const currentPage = pages[pages.length - 1];
@@ -151,18 +167,109 @@ Page({
         (userStore.loginStatus !== 'loggedIn' || !userStore.userInfo)) {
       const { USER_STATUS } = require('../../store/userStore');
       userStore.setStatus(USER_STATUS.LOGGEDIN, { userInfo: globalUserInfo });
+      
+      // 🔧 立即设置朋友圈加载状态，避免状态空窗期
+      this.setData({ isLoadingCircles: true });
     }
-    
-    // 简化后：无需特殊的身份切换刷新逻辑，onShow会自然刷新
     
     // 🔧 确保登录状态检查完成后再加载数据
     this.waitForLoginCheckAndLoadData(prevPage);
     
-    // 加载公开朋友圈推荐（需要登录才能查看）
-    // 只在首次自动加载，之后需要用户手动点击刷新按钮
-    if (!this.data.recommendationsLoaded && this.data.isLoggedIn) {
-      this.loadRecommendations();
+    // 使用setTimeout延迟检查，确保MobX状态已同步到页面
+    setTimeout(() => {
+      // 加载公开朋友圈推荐（需要登录才能查看）
+      // 只在首次自动加载，之后需要用户手动点击刷新按钮
+      if (!this.data.recommendationsLoaded && this.data.isLoggedIn) {
+        this.loadRecommendations();
+      }
+    }, 500); // 延迟500毫秒确保状态同步
+  },
+
+  // 缓存工具方法
+  
+  // 生成朋友圈数据的简化哈希值（用于快速比较）
+  generateRecentCircleHash(circleData) {
+    if (!circleData) return '';
+    
+    const keyFields = [
+      circleData._id,
+      circleData.memberCount,
+      circleData.formattedTime,
+      circleData.createdAt,
+      // 成员变化检测
+      (circleData.members || []).map(m => m._id).sort().join(',')
+    ];
+    
+    return keyFields.join('|');
+  },
+  
+  // 比较两个朋友圈数据是否有实质性变化
+  isRecentCircleChanged(newCircle, cachedCircle) {
+    if (!newCircle && !cachedCircle) return false;
+    if (!newCircle || !cachedCircle) return true;
+    
+    // 生成哈希值进行快速比较
+    const newHash = this.generateRecentCircleHash(newCircle);
+    const cachedHash = this.generateRecentCircleHash(cachedCircle);
+    
+    return newHash !== cachedHash;
+  },
+  
+  // 更新最新朋友圈缓存
+  updateRecentCircleCache(newCircle, forceUpdate = false) {
+    const config = this.data.recentCircleCacheConfig;
+    const now = Date.now();
+    
+    if (!newCircle) {
+      this.setData({
+        recentCircle: null,
+        cachedRecentCircle: null,
+        lastRecentCircleHash: '',
+        lastRecentCircleCacheTime: 0
+      });
+      return true; // 表示更新了（清空）
     }
+    
+    // 检查是否禁用缓存或强制更新
+    if (!config.enabled || forceUpdate) {
+      this.setData({
+        recentCircle: newCircle,
+        cachedRecentCircle: JSON.parse(JSON.stringify(newCircle)),
+        lastRecentCircleHash: this.generateRecentCircleHash(newCircle),
+        lastRecentCircleCacheTime: now
+      });
+      return true;
+    }
+    
+    // 检查缓存是否超时
+    const cacheExpired = (now - this.data.lastRecentCircleCacheTime) > config.cacheTimeout;
+    
+    const newHash = this.generateRecentCircleHash(newCircle);
+    const oldHash = this.data.lastRecentCircleHash;
+    
+    // 如果数据有变化或缓存已超时，才更新界面
+    if (newHash !== oldHash || cacheExpired) {
+      this.setData({
+        recentCircle: newCircle,
+        cachedRecentCircle: JSON.parse(JSON.stringify(newCircle)), // 深拷贝
+        lastRecentCircleHash: newHash,
+        lastRecentCircleCacheTime: now
+      });
+      
+      return true; // 表示确实更新了
+    }
+    
+    return false; // 表示没有更新
+  },
+  
+  // 重置朋友圈缓存（用于强制刷新）
+  resetRecentCircleCache() {
+    this.setData({
+      cachedRecentCircle: null,
+      lastRecentCircleHash: '',
+      lastRecentCircleCacheTime: 0,
+      hasInitialLoad: false  // 重置初始加载标记，确保下次会显示loading
+    });
   },
 
   // 🔧 等待登录检查完成后加载数据
@@ -185,15 +292,17 @@ Page({
     const shouldLoadData = userStore.isLoggedIn;
     
     if (shouldLoadData) {
-      // 检查是否从其他可能产生活动的页面返回，如果是则刷新获取最新排序
-      const isFromInteractionPage = prevPage && (
-        prevPage.route === 'pages/details/details' || 
+      // 区分真正的数据修改操作和纯查看操作
+      const isFromDataModifyPage = prevPage && (
         prevPage.route === 'pages/publish/publish' ||
         prevPage.route === 'pages/list/list'
       );
       
-      if (isFromInteractionPage) {
-        // 如果是从列表页返回，可能刚进行了交互操作，稍微延迟刷新
+      // 从details页面返回时，只是查看操作，使用正常缓存机制
+      const isFromDetailsPage = prevPage && prevPage.route === 'pages/details/details';
+      
+      if (isFromDataModifyPage) {
+        // 如果是从可能修改数据的页面返回，强制刷新获取最新数据
         const isFromListPage = prevPage && prevPage.route === 'pages/list/list';
         if (isFromListPage) {
           setTimeout(() => {
@@ -207,14 +316,35 @@ Page({
         } else {
           this.loadCirclesWithThrottle(true);
         }
+      } else if (isFromDetailsPage) {
+        // 🔧 从详情页返回时的智能处理
+        // 检查是否有有效的缓存数据且未超时
+        const config = this.data.recentCircleCacheConfig;
+        const cacheValid = this.data.cachedRecentCircle !== null;
+        const cacheNotExpired = (Date.now() - this.data.lastRecentCircleCacheTime) <= config.cacheTimeout;
+        const hasValidCache = cacheValid && cacheNotExpired;
+        
+        if (hasValidCache && this.data.hasInitialLoad) {
+          // 有有效缓存且已完成初始加载，直接使用缓存，不发送请求
+          console.log('🔧 从详情页返回，使用有效缓存，跳过请求');
+          // 仅更新加载时间以符合节流逻辑，但不实际加载
+          this.setData({
+            lastCirclesLoadTime: Date.now()
+          });
+        } else {
+          // 缓存无效或已过期，正常加载但不强制刷新
+          console.log('🔧 从详情页返回，缓存无效，正常加载');
+          this.loadCirclesWithThrottle(); // 不强制刷新，让缓存机制决定
+        }
       } else {
+        // 其他情况，正常加载
         this.loadCirclesWithThrottle();
       }
       
-      // 登录后加载推荐内容
-      if (!this.data.recommendationsLoaded) {
-        this.loadRecommendations();
-      }
+      // 登录后加载推荐内容（此处注释掉，由onShow中的延迟检查统一处理）
+      // if (!this.data.recommendationsLoaded) {
+      //   this.loadRecommendations();
+      // }
     }
   },
 
@@ -230,10 +360,10 @@ Page({
       // 注册成功后加载数据
       if (this.data.isLoggedIn) {
         this.loadCirclesWithThrottle(true); // 强制刷新
-        // 登录成功后加载推荐内容
-        if (!this.data.recommendationsLoaded) {
-          this.loadRecommendations();
-        }
+                        // 登录成功后加载推荐内容（此处注释掉，由onShow中的延迟检查统一处理）
+                // if (!this.data.recommendationsLoaded) {
+                //   this.loadRecommendations();
+                // }
       }
     } else if (this.data.hasError) {
       // 错误状态，提示用户重新启动
@@ -274,10 +404,10 @@ Page({
               // 注册完成后执行原操作
               if (this.data.isLoggedIn) {
                 callback && callback();
-                // 登录成功后加载推荐内容
-                if (!this.data.recommendationsLoaded) {
-                  this.loadRecommendations();
-                }
+                // 登录成功后加载推荐内容（此处注释掉，由onShow中的延迟检查统一处理）
+                // if (!this.data.recommendationsLoaded) {
+                //   this.loadRecommendations();
+                // }
               }
             });
           }
@@ -343,9 +473,7 @@ Page({
   goToRecentCircle() {
     this.requireUserAuth(() => {
       if (this.data.recentCircle && this.data.recentCircle._id) {
-        wx.navigateTo({
-          url: `/pages/details/details?circleId=${this.data.recentCircle._id}`
-        });
+        this.preloadAndNavigateToCircleWithTimer(this.data.recentCircle._id);
       } else {
         util.showToast('朋友圈信息获取失败');
       }
@@ -354,26 +482,11 @@ Page({
 
   // ===== 数据加载相关 =====
 
-  // 🔧 格式化朋友圈的图片数据，将对象格式转换为URL字符串
-  formatCircleImages(circle) {
-    if (circle.latestPost && circle.latestPost.images && Array.isArray(circle.latestPost.images)) {
-      circle.latestPost.images = circle.latestPost.images.map(img => {
-        if (typeof img === 'string') {
-          return img; // 已经是URL字符串
-        } else if (typeof img === 'object' && img.url) {
-          return img.url; // 提取URL字符串
-        } else {
-          console.warn('⚠️ 无效的图片数据格式:', img);
-          return null;
-        }
-      }).filter(url => url !== null); // 过滤掉无效的URL
-    }
-    return circle;
-  },
-
   // 刷新数据
   refreshData() {
     this.requireUserAuth(() => {
+      // 重置缓存，确保强制更新
+      this.resetRecentCircleCache();
       this.loadCirclesWithThrottle(true); // 强制刷新
     });
   },
@@ -388,7 +501,6 @@ Page({
     const { id } = e.currentTarget.dataset;
     
     this.requireUserAuth(() => {
-      console.log('查看发现内容:', id);
       wx.showToast({ title: '功能开发中', icon: 'none' });
     });
   },
@@ -408,11 +520,12 @@ Page({
       return;
     }
     
-    this.loadCircles();
+    // 传递强制更新参数给loadCircles
+    this.loadCircles(0, forceRefresh);
   },
 
   // 加载朋友圈列表
-  async loadCircles(retryCount = 0) {
+  async loadCircles(retryCount = 0, forceUpdate = false) {
     // 检查多个状态源确保准确性
     const app = getApp();
     const userStore = app.getUserStore();
@@ -426,29 +539,58 @@ Page({
       return;
     }
 
-    // 设置加载状态
-    this.setData({
-      isLoadingCircles: true,
-      lastCirclesLoadTime: Date.now()
-    });
+    // 🔧 优化loading显示逻辑：只有在真正需要时才显示loading
+    const config = this.data.recentCircleCacheConfig;
+    const cacheExpired = (Date.now() - this.data.lastRecentCircleCacheTime) > config.cacheTimeout;
+    
+    // 智能判断是否需要显示loading动画
+    const shouldShowLoading = forceUpdate || // 强制刷新时显示
+                              !config.enabled || // 缓存禁用时显示  
+                              !this.data.hasInitialLoad || // 首次加载时显示
+                              (cacheExpired && this.data.cachedRecentCircle === null); // 缓存过期且无缓存数据时显示
+    
+    if (shouldShowLoading) {
+      this.setData({
+        isLoadingCircles: true,
+        lastCirclesLoadTime: Date.now()
+      });
+    } else {
+      // 更新加载时间，但不显示loading
+      this.setData({
+        lastCirclesLoadTime: Date.now()
+      });
+    }
 
     try {
       const res = await api.circles.getMyParticipated();
       const circles = res.data.circles || [];
       
       // 后端已按最新活动时间排序，第一个就是最近活动的朋友圈
-      const recentCircle = circles.length > 0 ? circles[0] : null;
-      if (recentCircle) {
+      const newRecentCircle = circles.length > 0 ? circles[0] : null;
+      if (newRecentCircle) {
         // 格式化最新活动朋友圈的时间
-        recentCircle.formattedTime = util.formatRelativeTime(recentCircle.createdAt);
-        recentCircle.memberCount = recentCircle.members ? recentCircle.members.length : 0;
+        newRecentCircle.formattedTime = util.formatRelativeTime(newRecentCircle.createdAt);
+        newRecentCircle.memberCount = newRecentCircle.members ? newRecentCircle.members.length : 0;
       }
       
-      this.setData({ 
-        circles,
-        recentCircle,
-        isLoadingCircles: false
-      });
+      // 使用缓存机制，只有数据真正变化时才更新界面
+      const wasUpdated = this.updateRecentCircleCache(newRecentCircle, forceUpdate);
+      
+      // 根据是否显示了loading来决定如何更新状态
+      if (shouldShowLoading) {
+        // 如果显示了loading，正常更新所有状态
+        this.setData({ 
+          circles,
+          isLoadingCircles: false,
+          hasInitialLoad: true  // 标记已完成初始加载
+        });
+      } else {
+        // 如果没有显示loading，只更新circles，不触及loading状态
+        this.setData({ 
+          circles,
+          hasInitialLoad: true  // 确保标记已完成初始加载
+        });
+      }
       
       // 如果有朋友圈且没有选中的朋友圈，默认选择第一个
       if (circles.length > 0 && !this.data.currentCircleId) {
@@ -467,7 +609,7 @@ Page({
           console.log(`🔄 将在${retryDelay}ms后进行第${retryCount + 1}次重试`);
           
           setTimeout(() => {
-            this.loadCircles(retryCount + 1);
+            this.loadCircles(retryCount + 1, forceUpdate);
           }, retryDelay);
           
           // 显示用户友好的提示
@@ -482,10 +624,12 @@ Page({
         util.showToast('加载朋友圈失败');
       }
       
-      // 重置加载状态
-      this.setData({
-        isLoadingCircles: false
-      });
+      // 重置加载状态（只在显示了loading时才重置）
+      if (shouldShowLoading) {
+        this.setData({
+          isLoadingCircles: false
+        });
+      }
     }
   },
 
@@ -758,7 +902,6 @@ Page({
 
     // 检查登录状态，API需要认证
     if (!this.data.isLoggedIn) {
-      console.log('⚠️ 用户未登录，跳过推荐加载');
       this.setData({ 
         recommendedCircles: [],
         recommendationsLoaded: true,
@@ -770,39 +913,41 @@ Page({
     this.setData({ isLoadingRecommendations: true });
 
     try {
-      console.log('🎲 开始加载随机公开朋友圈推荐');
-      
       // 调用随机API获取单个公开朋友圈
       const res = await api.circles.getRandomPublicCircle({
         excludeVisited: 'true'  // 排除已访问的朋友圈
       });
 
-      if (res.success) {
-        if (res.data.circle) {
+      if (res && res.success) {
+        if (res.data && res.data.circle) {
           // 有可用的朋友圈，现在API直接返回latestPost数据
-          const circle = this.formatCircleImages(res.data.circle);
+          const circle = res.data.circle;
+          
+          // 🔧 处理图片URL - 支持对象和字符串两种格式
+          let postImageUrl = '';
+          if (circle.latestPost && circle.latestPost.images && circle.latestPost.images.length > 0) {
+            const firstImage = circle.latestPost.images[0];
+            if (typeof firstImage === 'string') {
+              postImageUrl = firstImage;
+            } else if (typeof firstImage === 'object' && firstImage.url) {
+              postImageUrl = firstImage.url;
+            }
+          }
           
           const formattedCircle = {
             ...circle,
             formattedTime: util.formatRelativeTime(circle.createdAt),
             memberCount: circle.members ? circle.members.length : 0,
-            hasLatestPost: !!(circle.latestPost && circle.latestPost.content)
+            hasLatestPost: !!(circle.latestPost && circle.latestPost.content),
+            postImageUrl: postImageUrl
           };
 
           this.setData({
             recommendedCircles: [formattedCircle],
             recommendationsLoaded: true  // 标记已经加载过推荐内容
           });
-
-          console.log('✅ 随机公开朋友圈加载完成:', {
-            circleId: circle._id,
-            circleName: circle.name,
-            hasLatestPost: formattedCircle.hasLatestPost,
-            latestPostContent: circle.latestPost ? circle.latestPost.content : '无内容'
-          });
         } else {
           // 暂无可用的朋友圈（正常情况），但添加自动重试机制
-          console.log('💭 暂无可用的公开朋友圈，将设置自动重试');
           this.setData({ 
             recommendedCircles: [],
             recommendationsLoaded: true  // 即使没有推荐也标记为已加载
@@ -812,20 +957,17 @@ Page({
           setTimeout(() => {
             // 只有在仍然是空状态且用户未离开页面时才自动重试
             if (this.data.recommendedCircles.length === 0 && !this.data.isLoadingRecommendations && this.data.isLoggedIn) {
-              console.log('🔄 自动重试加载推荐（首次加载）');
               this.loadRecommendations();
             }
           }, 15000); // 15秒后自动重试（比手动刷新间隔更长）
         }
       } else {
-        console.warn('⚠️ API调用失败:', res.message);
         this.setData({ 
           recommendedCircles: [],
           recommendationsLoaded: true  // API调用失败也标记为已加载
         });
       }
     } catch (error) {
-      console.error('❌ 加载随机公开朋友圈失败:', error);
       this.setData({ 
         recommendedCircles: [],
         recommendationsLoaded: true  // 出现异常也标记为已加载
@@ -848,8 +990,6 @@ Page({
     }
 
     try {
-      console.log('🔄 刷新随机推荐（重置历史）');
-      
       // 调用随机API并重置访问历史
       this.setData({ isLoadingRecommendations: true });
       
@@ -861,25 +1001,30 @@ Page({
       if (res.success) {
         if (res.data.circle) {
           // 有新的朋友圈推荐，现在API直接返回latestPost数据
-          const circle = this.formatCircleImages(res.data.circle);
+          const circle = res.data.circle;
+          
+          // 🔧 处理图片URL - 支持对象和字符串两种格式
+          let postImageUrl = '';
+          if (circle.latestPost && circle.latestPost.images && circle.latestPost.images.length > 0) {
+            const firstImage = circle.latestPost.images[0];
+            if (typeof firstImage === 'string') {
+              postImageUrl = firstImage;
+            } else if (typeof firstImage === 'object' && firstImage.url) {
+              postImageUrl = firstImage.url;
+            }
+          }
           
           const formattedCircle = {
             ...circle,
             formattedTime: util.formatRelativeTime(circle.createdAt),
             memberCount: circle.members ? circle.members.length : 0,
-            hasLatestPost: !!(circle.latestPost && circle.latestPost.content)
+            hasLatestPost: !!(circle.latestPost && circle.latestPost.content),
+            postImageUrl: postImageUrl
           };
 
           this.setData({
             recommendedCircles: [formattedCircle],
             recommendationsLoaded: true  // 手动刷新后也标记为已加载
-          });
-
-          util.showToast('推荐已刷新');
-          console.log('✅ 刷新随机推荐成功:', {
-            circleName: circle.name,
-            hasLatestPost: formattedCircle.hasLatestPost,
-            latestPostContent: circle.latestPost ? circle.latestPost.content : '无内容'
           });
         } else {
           // 暂无可推荐的朋友圈，增加重试机制
@@ -889,11 +1034,9 @@ Page({
           });
           
           // 在空状态下增加自动重试机制
-          console.log('💭 暂无可推荐朋友圈，将在10秒后自动重试');
           setTimeout(() => {
             // 只有在仍然是空状态且用户未离开页面时才自动重试
             if (this.data.recommendedCircles.length === 0 && !this.data.isLoadingRecommendations) {
-              console.log('🔄 自动重试加载推荐');
               this.loadRecommendations();
             }
           }, 10000); // 10秒后自动重试
@@ -901,7 +1044,6 @@ Page({
           util.showToast('暂无可推荐的朋友圈');
         }
       } else {
-        console.warn('⚠️ 刷新API调用失败:', res.message);
         this.setData({ 
           recommendedCircles: [],
           recommendationsLoaded: true  // API调用失败也标记为已加载
@@ -909,7 +1051,6 @@ Page({
         util.showToast('刷新失败');
       }
     } catch (error) {
-      console.error('❌ 刷新随机推荐失败:', error);
       this.setData({ 
         recommendedCircles: [],
         recommendationsLoaded: true  // 出现异常也标记为已加载
@@ -922,19 +1063,179 @@ Page({
 
   // 查看推荐的朋友圈
   viewRecommendedCircle(e) {
-    const { circleId } = e.currentTarget.dataset;
+    // 兼容新组件事件和原来的点击事件
+    let circleId;
+    if (e.detail && e.detail.circleId) {
+      // 来自新组件的事件
+      circleId = e.detail.circleId;
+    } else if (e.currentTarget && e.currentTarget.dataset) {
+      // 原来的点击事件
+      circleId = e.currentTarget.dataset.circleId;
+    }
     
     if (!circleId) {
-      console.error('❌ 朋友圈ID缺失');
       return;
     }
-
-    console.log('👀 查看推荐朋友圈:', circleId);
     
-    // 跳转到朋友圈详情页
-    wx.navigateTo({
-      url: `/pages/details/details?circleId=${circleId}&source=recommendation`
+    // 使用预加载逻辑
+    this.preloadAndNavigateToCircleWithTimer(circleId);
+  },
+
+  // 预加载朋友圈数据并跳转（带1秒延迟判断）
+  async preloadAndNavigateToCircleWithTimer(circleId) {
+    const startTime = Date.now();
+    let showLoadingTimer = null;
+    let isLoadingShown = false;
+
+    try {
+      // 设置1秒后显示loading的定时器
+      showLoadingTimer = setTimeout(() => {
+        if (!isLoadingShown) {
+          this.setData({
+            isPreloadingCircle: true,
+            preloadingCircleId: circleId
+          });
+          isLoadingShown = true;
+        }
+      }, 1000);
+
+      // 预加载朋友圈详情数据（使用与details页面相同的逻辑）
+      let targetCircle = null;
+      
+      // 首先尝试从用户参与的朋友圈中查找
+      try {
+        const circlesRes = await api.circles.getMy();
+        targetCircle = circlesRes.data.circles.find(c => c._id === circleId);
+      } catch (error) {
+        // 用户未登录或不是此朋友圈成员，尝试直接获取朋友圈详情
+      }
+      
+      // 如果没有找到，尝试直接获取朋友圈详情（可能是公开朋友圈）
+      if (!targetCircle) {
+        const detailRes = await api.circles.getDetail(circleId);
+        targetCircle = detailRes.data.circle;
+      }
+      
+      if (!targetCircle) {
+        throw new Error('朋友圈不存在或无权访问');
+      }
+
+      // 格式化数据
+      targetCircle.formattedTime = util.formatRelativeTime(targetCircle.createdAt);
+      targetCircle.memberCount = targetCircle.members ? targetCircle.members.length : 0;
+
+      // 🔧 同时预加载帖子数据，避免details页面空白
+      let preloadedPosts = [];
+      try {
+        // 检查用户权限（复制details页面的权限检查逻辑）
+        const currentUser = this.data.currentUser || {};
+        const canViewPosts = this.checkCanViewPosts(targetCircle, currentUser);
+        
+        if (canViewPosts) {
+          // 直接调用 API 获取帖子，避免状态污染
+          const postsRes = await api.posts.getList(circleId, { 
+            page: 1, 
+            limit: 20 
+          });
+          
+          preloadedPosts = postsRes.data.posts || [];
+        }
+      } catch (error) {
+        // 预加载帖子失败不影响整体流程
+      }
+
+      // 🔧 关键修改：直接在跳转前设置postStore数据，而不是存到globalData
+      const { postStore, POST_STATUS } = require('../../store/postStore');
+      
+      // 设置朋友圈数据到全局（基本信息还是需要的）
+      const app = getApp();
+      app.globalData.preloadedCircleData = {
+        circleId: circleId,
+        circleData: targetCircle,
+        timestamp: Date.now()
+      };
+
+      // 立即设置帖子数据到postStore，确保页面切换时数据已就绪
+      if (preloadedPosts.length >= 0) {
+        postStore.setStatus(POST_STATUS.LOADED, {
+          posts: preloadedPosts,
+          hasMore: preloadedPosts.length >= 20,
+          page: 1
+        });
+        postStore.currentCircleId = circleId;
+      }
+
+      // 清除定时器
+      if (showLoadingTimer) {
+        clearTimeout(showLoadingTimer);
+        showLoadingTimer = null;
+      }
+
+      // 确保数据完全设置后再跳转
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // 预加载完成，跳转到详情页
+      wx.navigateTo({
+        url: `/pages/details/details?circleId=${circleId}&preloaded=true`
+      });
+
+    } catch (error) {
+      // 清除定时器
+      if (showLoadingTimer) {
+        clearTimeout(showLoadingTimer);
+        showLoadingTimer = null;
+      }
+
+      util.showToast('加载朋友圈失败');
+      
+      // 预加载失败，仍然跳转到详情页
+      wx.navigateTo({
+        url: `/pages/details/details?circleId=${circleId}&preloadFailed=true`
+      });
+    } finally {
+      // 清理预加载状态
+      if (isLoadingShown) {
+        this.setData({
+          isPreloadingCircle: false,
+          preloadingCircleId: ''
+        });
+      }
+    }
+  },
+
+  // 🔧 检查用户是否有权限查看朋友圈的帖子（复制自details页面的逻辑）
+  checkCanViewPosts(circle, currentUser) {
+    if (!circle) return false;
+    
+    // 公开朋友圈任何人都能看
+    if (circle.isPublic) return true;
+    
+    // 如果用户未登录，只能看公开朋友圈
+    if (!currentUser || !currentUser._id) return false;
+    
+    const userId = currentUser._id;
+    
+    // 🔧 修复：首先检查用户是否是创建者
+    const creatorId = typeof circle.creator === 'object' ? circle.creator._id : circle.creator;
+    const isOwner = creatorId === userId;
+    
+    // 检查用户是否是成员（通过数组）
+    const isMemberByArray = circle.members && circle.members.some(member => {
+      const memberId = typeof member === 'object' ? member._id : member;
+      return memberId === userId;
     });
+    
+    // 🔧 关键修复：创建者自动是成员
+    const isMember = isOwner || isMemberByArray;
+    
+    // 检查用户是否被邀请
+    const isInvited = circle.invitees && circle.invitees.some(invitee => {
+      const inviteeId = typeof invitee === 'object' ? invitee._id : invitee;
+      return inviteeId === userId;
+    });
+    
+    // 私密朋友圈只有成员和被邀请者可看
+    return isMember || isInvited;
   },
 
 });

@@ -1,5 +1,5 @@
 <!--components/post-item/post-item.wxml-->
-<view class="post-item">
+<view class="post-item" id="post-{{post._id}}">
   <!-- 第一个item：用户头像 -->
   <image 
     class="user-avatar" 
@@ -28,19 +28,20 @@
       <view class="single-image" wx:if="{{post.images.length === 1}}" 
             style="width: {{singleImageInfo.displayWidth}}rpx; height: {{singleImageInfo.displayHeight}}rpx;">
         <!-- 骨架屏占位 -->
-        <view class="image-skeleton single-skeleton {{imageLoadStates[post.images[0]] === 'show' ? '' : 'show'}}">
+        <view class="image-skeleton single-skeleton {{imageLoadStates[post.images[0].url || post.images[0]] === 'show' ? '' : 'show'}}">
           <view class="skeleton-shimmer"></view>
         </view>
         
         <image 
-          class="post-image-single {{singleImageInfo.styleClass}} {{imageLoadStates[post.images[0]] === 'show' ? 'loaded' : 'loading'}}" 
-          src="{{post.images[0]}}" 
+          class="post-image-single {{singleImageInfo.styleClass}} {{imageLoadStates[post.images[0].url || post.images[0]] === 'show' ? 'loaded' : 'loading'}}" 
+          src="{{post.images[0].url || post.images[0]}}" 
           mode="{{singleImageInfo.mode}}"
           bindload="onSingleImageLoad"
           binderror="onImageError"
           bindtap="onPreviewImage"
-          data-current="{{post.images[0]}}"
-          data-src="{{post.images[0]}}"
+          data-current="{{post.images[0].url || post.images[0]}}"
+          data-src="{{post.images[0].url || post.images[0]}}"
+          wx:if="{{post.images[0]}}"
         ></image>
       </view>
 
@@ -53,19 +54,20 @@
           wx:if="{{index < 9}}"
         >
           <!-- 网格图片骨架屏 -->
-          <view class="image-skeleton grid-skeleton {{imageLoadStates[item] === 'show' ? '' : 'show'}}">
+          <view class="image-skeleton grid-skeleton {{imageLoadStates[item.url || item] === 'show' ? '' : 'show'}}">
             <view class="skeleton-shimmer"></view>
           </view>
           
           <image 
-            class="post-image-grid {{imageLoadStates[item] === 'show' ? 'loaded' : 'loading'}}" 
-            src="{{item}}" 
+            class="post-image-grid {{imageLoadStates[item.url || item] === 'show' ? 'loaded' : 'loading'}}" 
+            src="{{item.url || item}}" 
             mode="aspectFill"
             bindload="onGridImageLoad"
             binderror="onImageError"
             bindtap="onPreviewImage"
-            data-current="{{item}}"
-            data-src="{{item}}"
+            data-current="{{item.url || item}}"
+            data-src="{{item.url || item}}"
+            wx:if="{{item}}"
           ></image>
         </view>
         
@@ -83,9 +85,36 @@
         <text class="post-location" wx:if="{{post.location}}">· {{post.location}}</text>
       </view>
       
-      <!-- 三点操作按钮 -->
-      <view class="actions-menu-btn" bindtap="toggleActionsMenu">
-        <image class="menu-dots-icon" src="/assets/icons/more.svg" mode="aspectFit"></image>
+      <!-- 三点操作按钮容器 -->
+      <view class="actions-menu-container">
+        <view class="actions-menu-btn" bindtap="toggleActionsMenu">
+          <image class="menu-dots-icon" src="/assets/icons/more.svg" mode="aspectFit"></image>
+        </view>
+        
+        <!-- 下拉式操作菜单 -->
+        <view class="dropdown-menu {{showActions && showActionsMenu ? 'show' : 'hide'}}">
+          <!-- 点赞按钮 -->
+          <view class="dropdown-item" catchtap="onLikeFromPopup">
+            <image class="dropdown-icon" src="/assets/icons/like.svg" mode="aspectFit"></image>
+            <text class="dropdown-text">{{post.isLiked ? '取消点赞' : '点赞'}}</text>
+          </view>
+          
+          <!-- 评论按钮 -->
+          <view class="dropdown-item" catchtap="onCommentFromPopup">
+            <image class="dropdown-icon comment-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
+            <text class="dropdown-text">评论</text>
+          </view>
+          
+          <!-- 删除按钮（仅作者可见） -->
+          <view 
+            class="dropdown-item delete-item" 
+            wx:if="{{currentUser && currentUser._id && post.author && post.author._id && currentUser._id === post.author._id}}"
+            catchtap="onDeleteFromPopup"
+          >
+            <image class="dropdown-icon" src="/assets/icons/delete.svg" mode="aspectFit"></image>
+            <text class="dropdown-text">删除</text>
+          </view>
+        </view>
       </view>
     </view>
 
@@ -108,6 +137,7 @@
             <!-- 显示部分评论 -->
             <view 
               class="comment-item" 
+              id="comment-{{comment._id}}"
               wx:for="{{displayComments}}" 
               wx:for-item="comment" 
               wx:key="_id"
@@ -128,7 +158,7 @@
                   <text class="comment-author">{{comment.author ? (comment.author.username || comment.author.name || '匿名用户') : '匿名用户'}}</text>
                   <!-- 如果是回复用户的评论，在用户名后显示回复目标 -->
                   <text wx:if="{{comment.replyTo}}" class="reply-indicator">·</text>
-                  <!-- <text wx:if="{{comment.replyTo}}" class="reply-indicator">回复</text> -->
+                  <text wx:if="{{comment.replyTo}}" class="reply-indicator">回复</text>
                   <text wx:if="{{comment.replyTo}}" class="reply-target">@{{comment.replyTo.username || comment.replyTo.name || '未知用户'}}</text>
                   <text>·</text>
                   <text class="comment-time">{{comment.formattedTime || '刚刚'}}</text>
@@ -141,14 +171,16 @@
                       class="comment-main-text"
                       catchtap="onReplyComment"
                       data-user-id="{{comment.author ? comment.author._id : ''}}"
-                      data-username="{{comment.author ? (comment.author.username || comment.author.name) : '匿名用户'}}">{{comment.content || '内容为空'}}</text><text class="comment-space" decode="{{true}}"></text>
+                      data-username="{{comment.author ? (comment.author.username || comment.author.name) : '匿名用户'}}"
+                      data-comment-id="{{comment._id}}">{{comment.content || '内容为空'}}</text><text class="comment-space" decode="{{true}}"></text>
                   </text>
                   <view class="comment-actions-container">
                     <text 
                       class="reply-btn"
                       catchtap="onReplyComment"
                       data-user-id="{{comment.author ? comment.author._id : ''}}"
-                      data-username="{{comment.author ? (comment.author.username || comment.author.name) : '匿名用户'}}">回复</text>
+                      data-username="{{comment.author ? (comment.author.username || comment.author.name) : '匿名用户'}}"
+                      data-comment-id="{{comment._id}}">回复</text>
                     <image 
                       class="delete-comment-btn" 
                       wx:if="{{showActions && comment.author && currentUser._id && currentUser._id === comment.author._id}}"
@@ -178,31 +210,6 @@
     </view>
   </view>
 
-  <!-- 弹出式操作菜单 -->
-  <view class="actions-popup {{showActionsMenu ? 'show' : ''}}" wx:if="{{showActions}}">
-    <view class="popup-mask" bindtap="hideActionsMenu"></view>
-    <view class="popup-content">
-      <!-- 点赞按钮 -->
-      <view class="popup-action-btn" bindtap="onLikeFromPopup">
-        <text class="popup-action-icon {{post.isLiked ? 'liked' : ''}}">{{post.isLiked ? '❤️' : '🤍'}}</text>
-        <text class="popup-action-text">{{post.isLiked ? '取消点赞' : '点赞'}}</text>
-      </view>
-      
-      <!-- 评论按钮 -->
-      <view class="popup-action-btn" bindtap="onCommentFromPopup">
-        <text class="popup-action-icon">💬</text>
-        <text class="popup-action-text">评论</text>
-      </view>
-      
-      <!-- 删除按钮（仅作者可见） -->
-      <view 
-        class="popup-action-btn delete-action" 
-        wx:if="{{currentUser && currentUser._id && post.author && post.author._id && currentUser._id === post.author._id}}"
-        bindtap="onDeleteFromPopup"
-      >
-        <text class="popup-action-icon">🗑️</text>
-        <text class="popup-action-text">删除</text>
-      </view>
-    </view>
-  </view>
+  <!-- 遮罩层 - 点击其他地方隐藏下拉菜单 -->
+  <view class="dropdown-mask {{showActionsMenu ? 'show' : 'hide'}}" catchtap="hideActionsMenu"></view>
 </view>

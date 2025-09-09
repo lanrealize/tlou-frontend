@@ -1,13 +1,10 @@
 // jest.config.js
 module.exports = {
-  // 测试环境配置为jsdom，模拟浏览器DOM环境
-  testEnvironment: 'jsdom',
+  // 使用Node环境进行测试
+  testEnvironment: 'node',
   
-  // Jest在Node.js环境中进行测试，需要jsdom来模拟dom环境
+  // Jest测试设置文件
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  
-  // 配置快照序列化器，用于更好的快照测试体验
-  snapshotSerializers: ['miniprogram-simulate/jest-snapshot-plugin'],
   
   // 测试文件匹配模式
   testMatch: [
@@ -71,6 +68,6 @@ module.exports = {
   
   // 忽略转换的模块
   transformIgnorePatterns: [
-    'node_modules/(?!(miniprogram-simulate|mobx-miniprogram)/)'
+    'node_modules/(?!(mobx-miniprogram)/)'
   ]
 };

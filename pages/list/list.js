@@ -14,9 +14,10 @@ Page({
     joinCircleId: '',         // 要加入的朋友圈ID
     isHistoryMode: false,     // 是否是历史记录模式
     pageTitle: '我的朋友圈',   // 页面标题
-    // 安全区域信息
-    safeAreaInfo: {
-      statusBarHeight: 44
+    currentUser: null,        // 当前用户信息
+    // 导航栏信息
+    navigationData: {
+      totalNavigationHeight: 88
     }
   },
 
@@ -32,22 +33,52 @@ Page({
       pageTitle
     });
     
-    this.getSafeAreaInfo();
+    this.getCurrentUser();
     this.loadCircles();
   },
 
-  // 获取安全区域信息
-  getSafeAreaInfo() {
-    const app = getApp();
-    if (app && app.globalData.safeAreaInfo) {
-      this.setData({
-        safeAreaInfo: app.globalData.safeAreaInfo
-      });
+  // 获取当前用户信息
+  getCurrentUser() {
+    try {
+      const app = getApp();
+      const userStore = app?.getUserStore();
+      
+      if (userStore && userStore.isLoggedIn && userStore.userInfo) {
+        this.setData({
+          currentUser: userStore.userInfo
+        });
+      }
+    } catch (error) {
+      console.error('获取用户信息失败:', error);
     }
   },
 
+  // 检查当前用户是否为朋友圈创建者
+  checkIsCircleOwner(circle) {
+    const { currentUser } = this.data;
+    
+    if (!currentUser || !circle || !circle.creator) {
+      return false;
+    }
+    
+    // 支持creator为对象或字符串ID
+    const creatorId = typeof circle.creator === 'object' ? circle.creator._id : circle.creator;
+    const isOwner = currentUser._id === creatorId;
+    
+    return isOwner;
+  },
+
+  // 处理导航栏准备完成事件
+  onNavigationReady(event) {
+    const { navigationData } = event.detail;
+    this.setData({
+      navigationData: navigationData
+    });
+  },
+
   onShow() {
-    // 简化后：每次显示时都刷新数据，API会自动使用当前身份的openid
+    // 每次显示时都获取最新的用户信息和数据
+    this.getCurrentUser();
     this.loadCircles();
   },
 
@@ -83,6 +114,17 @@ Page({
         circle.formattedTime = util.formatRelativeTime(circle.createdAt);
         circle.memberCount = circle.members ? circle.members.length : 0;
         
+        // 🔧 处理图片URL - 支持对象和字符串两种格式
+        circle.postImageUrl = '';
+        if (circle.latestPost && circle.latestPost.images && circle.latestPost.images.length > 0) {
+          const firstImage = circle.latestPost.images[0];
+          if (typeof firstImage === 'string') {
+            circle.postImageUrl = firstImage;
+          } else if (typeof firstImage === 'object' && firstImage.url) {
+            circle.postImageUrl = firstImage.url;
+          }
+        }
+        
         // 处理最新帖子信息
         if (circle.latestPost) {
           circle.latestPost.formattedTime = util.formatRelativeTime(circle.latestPost.createdAt);
@@ -94,9 +136,17 @@ Page({
             circle.latestPost ? circle.latestPost.createdAt : circle.createdAt
           );
         }
+
+        // 添加删除权限判断
+        circle.hasDeletePermission = this.checkIsCircleOwner(circle);
       });
 
-      // 历史记录模式：后端已按最新活动时间排序，无需前端重新排序
+      // 按更新时间排序（最新的在前面）
+      circles.sort((a, b) => {
+        const aTime = a.latestPost ? new Date(a.latestPost.createdAt) : new Date(a.createdAt);
+        const bTime = b.latestPost ? new Date(b.latestPost.createdAt) : new Date(b.createdAt);
+        return bTime - aTime; // 降序排序，最新的在前面
+      });
 
       this.setData({
         circles,
@@ -259,21 +309,62 @@ Page({
 
   // 查看朋友圈动态
   viewCirclePosts(e) {
-    const { circleId } = e.currentTarget.dataset;
+    // 兼容新组件事件和原来的点击事件
+    let circleId;
+    if (e.detail && e.detail.circleId) {
+      // 来自新组件的事件
+      circleId = e.detail.circleId;
+    } else if (e.currentTarget && e.currentTarget.dataset) {
+      // 原来的点击事件
+      circleId = e.currentTarget.dataset.circleId;
+    }
     
-    if (this.data.isHistoryMode) {
-      // 历史记录模式：跳转到详情页面
-      wx.navigateTo({
-        url: `/pages/details/details?circleId=${circleId}`
-      });
-    } else {
-      // 普通模式：切换到主页面并传递朋友圈ID
-      wx.switchTab({
-        url: '/pages/main/main'
-      });
+    if (!circleId) {
+      return;
+    }
+    
+    wx.navigateTo({
+      url: `/pages/details/details?circleId=${circleId}&source=list`
+    });
+  },
+
+  // 删除朋友圈
+  onCircleDelete(e) {
+    const { circleId, circleData } = e.detail;
+    const circleName = circleData.name || '朋友圈';
+    
+    wx.showModal({
+      title: '确认删除',
+      content: `确定要删除"${circleName}"吗？删除后无法恢复。`,
+      confirmText: '删除',
+      confirmColor: '#ff4757',
+      success: (res) => {
+        if (res.confirm) {
+          this.deleteCircle(circleId);
+        }
+      }
+    });
+  },
+
+  // 执行删除朋友圈操作
+  async deleteCircle(circleId) {
+    try {
+      util.showLoading('删除中...');
       
-      // 通过全局数据传递选中的朋友圈ID
-      getApp().globalData.selectedCircleId = circleId;
+      // 这里调用删除API，需要根据你的API接口调整
+      await api.circles.delete(circleId);
+      
+      util.hideLoading();
+      util.showToast('删除成功');
+      
+      // 刷新列表
+      this.loadCircles();
+      
+    } catch (error) {
+      util.hideLoading();
+      console.error('删除朋友圈失败:', error);
+      const message = error.message || '删除失败';
+      util.showToast(message);
     }
   },
 

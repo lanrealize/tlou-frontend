@@ -50,7 +50,36 @@ Page({
     
     // 安全区域信息
     safeAreaInfo: {
-      statusBarHeight: 44
+      statusBarHeight: 44,
+      totalNavigationHeight: 88
+    }
+  },
+
+  // 获取安全区域信息
+  getSafeAreaInfo() {
+    try {
+      const systemInfo = wx.getSystemInfoSync();
+      const statusBarHeight = systemInfo.statusBarHeight || 44;
+      const navigationBarHeight = 44;
+      const totalNavigationHeight = statusBarHeight + navigationBarHeight;
+      
+      this.setData({
+        safeAreaInfo: {
+          statusBarHeight,
+          navigationBarHeight,
+          totalNavigationHeight
+        }
+      });
+    } catch (error) {
+      console.error('获取安全区域信息失败:', error);
+      // 使用默认值
+      this.setData({
+        safeAreaInfo: {
+          statusBarHeight: 44,
+          navigationBarHeight: 44,
+          totalNavigationHeight: 88
+        }
+      });
     }
   },
 
@@ -624,6 +653,90 @@ Page({
       });
     } finally {
       this.setData({ isProcessingApplication: false });
+    }
+  },
+
+  // 退出朋友圈
+  async leaveCircle() {
+    const { circle } = this.data;
+    
+    if (!circle) {
+      wx.showToast({
+        title: '朋友圈信息错误',
+        icon: 'none'
+      });
+      return;
+    }
+
+    const confirm = await util.showConfirm(
+      `确定要退出朋友圈"${circle.name || '未命名朋友圈'}"吗？\n\n退出后将无法查看此朋友圈的内容，如需重新加入需要申请或邀请。`,
+      '退出朋友圈'
+    );
+    if (!confirm) return;
+
+    try {
+      wx.showLoading({ title: '退出中...' });
+      
+      // 获取当前用户的openid
+      const app = getApp();
+      const userStore = app?.getUserStore();
+      let openid;
+      
+      if (userStore && userStore.isLoggedIn) {
+        if (userStore.isVirtualIdentity) {
+          // 虚拟身份：使用虚拟用户的openid
+          openid = userStore.userInfo?.openid;
+        } else {
+          // 真实身份：从本地存储获取
+          openid = wx.getStorageSync('openid');
+        }
+      }
+      
+      if (!openid) {
+        throw new Error('用户身份验证失败');
+      }
+      
+      const res = await api.circles.leave(this.data.circleId, openid);
+      
+      wx.hideLoading();
+      
+      if (res.success) {
+        wx.showToast({
+          title: '已退出朋友圈',
+          icon: 'success',
+          duration: 2000
+        });
+
+        // 延迟跳转到主页，让用户看到成功提示
+        setTimeout(() => {
+          wx.reLaunch({
+            url: '/pages/main/main',
+            fail: () => {
+              // 如果reLaunch失败，尝试navigateBack到上一页
+              wx.navigateBack({
+                fail: () => {
+                  // 最后的保底方案
+                  wx.switchTab({
+                    url: '/pages/main/main'
+                  });
+                }
+              });
+            }
+          });
+        }, 1500);
+
+      } else {
+        throw new Error(res.message || '退出朋友圈失败');
+      }
+
+    } catch (error) {
+      wx.hideLoading();
+      
+      wx.showModal({
+        title: '退出失败',
+        content: error.message || '退出朋友圈失败，请稍后重试',
+        showCancel: false
+      });
     }
   }
 });

@@ -3,5 +3,8 @@
   "navigationStyle": "custom",
   "enablePullDownRefresh": false,
   "disableScroll": true,
-  "backgroundColor": "#f5f5f5"
+  "backgroundColor": "#f5f5f5",
+  "usingComponents": {
+    "discover-circle-card": "../../components/discover-circle-card/discover-circle-card"
+  }
 }

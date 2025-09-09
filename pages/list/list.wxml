@@ -1,29 +1,21 @@
 <!--pages/list/list.wxml-->
 <view class="container">
-  <!-- 状态栏占位 -->
-  <view class="status-bar" style="height: {{safeAreaInfo.statusBarHeight}}px;"></view>
+  <!-- 自定义导航栏 -->
+  <custom-navigation title="{{pageTitle}}" bindback="navigateToMain" custom-back="{{true}}" bindnavigationReady="onNavigationReady"></custom-navigation>
   
-  <!-- 顶部工具栏 -->
-  <view class="toolbar">
-    <view class="toolbar-left">
-      <view class="back-btn" bindtap="navigateToMain">
-        <text class="back-icon">←</text>
-        <text>返回主页</text>
-      </view>
-    </view>
-    <view class="toolbar-title">
-      <text>{{pageTitle}}</text>
-    </view>
-    <view class="toolbar-actions" wx:if="{{!isHistoryMode}}">
-      <button class="btn btn-primary btn-small" bindtap="showCreateDialog">
-        <text class="icon">+</text>
-        <text>创建</text>
-      </button>
-      <button class="btn btn-secondary btn-small" bindtap="showJoinDialog">
-        <text class="icon">👥</text>
-        <text>加入</text>
-      </button>
-    </view>
+  <!-- 内容区域 -->
+  <view class="page-content" style="padding-top: {{navigationData.totalNavigationHeight || 88}}px;">
+  
+  <!-- 顶部操作栏 (仅在非历史模式显示) -->
+  <view class="toolbar-actions" wx:if="{{!isHistoryMode}}">
+    <button class="btn btn-primary btn-small" bindtap="showCreateDialog">
+      <text class="icon">+</text>
+      <text>创建</text>
+    </button>
+    <button class="btn btn-secondary btn-small" bindtap="showJoinDialog">
+      <text class="icon">👥</text>
+      <text>加入</text>
+    </button>
   </view>
 
   <!-- 加载状态 -->
@@ -34,83 +26,28 @@
   <!-- 朋友圈列表 -->
   <scroll-view class="circles-container" scroll-y="true" enable-back-to-top="true" wx:else>
     <view class="circles-list">
-      <view class="circle-item card {{isHistoryMode ? 'history-mode' : ''}}" 
-            wx:for="{{circles}}" 
-            wx:key="_id"
-            bindtap="viewCirclePosts"
-            bindlongpress="onCircleLongPress"
-            data-circle-id="{{item._id}}"
-            data-circle-name="{{item.name}}"
-            data-is-creator="{{item.creator._id === app.globalData.openid}}">
-        
-        <!-- 朋友圈头部信息 -->
-        <view class="circle-header">
-          <view class="circle-info">
-            <view class="circle-name-container">
-              <text class="circle-name">{{item.name}}</text>
-              <view class="circle-tags">
-                <text class="tag tag-success" wx:if="{{item.creator._id === app.globalData.openid}}">创建者</text>
-                <text class="tag tag-primary" wx:if="{{item.isPublic}}">公开</text>
-                <text class="tag" wx:else>私密</text>
-              </view>
-            </view>
-            <view class="circle-meta">
-              <text class="meta-item">
-                <text class="icon">👥</text>
-                {{item.memberCount}} 人
-              </text>
-              <text class="meta-item">
-                <text class="icon">📅</text>
-                {{isHistoryMode ? item.lastUpdateFormatted : item.formattedTime}}
-              </text>
-              <text class="meta-item last-activity" wx:if="{{isHistoryMode}}">
-                <text class="icon">🕐</text>
-                最后活动
-              </text>
-            </view>
-          </view>
-          
-          <!-- 朋友圈操作 -->
-          <view class="circle-actions">
-            <!-- 历史记录模式显示进入图标 -->
-            <view class="action-btn enter-btn" wx:if="{{isHistoryMode}}">
-              <text class="icon">→</text>
-            </view>
-            <!-- 普通模式显示复制按钮 -->
-            <view class="action-btn" wx:else bindtap="copyCircleId" data-circle-id="{{item._id}}" catchtap="true">
-              <text class="icon">📋</text>
-            </view>
-          </view>
-        </view>
-
-        <!-- 创建者信息 -->
-        <view class="creator-info">
-          <image class="avatar avatar-small" src="{{item.creator.avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
-          <text class="creator-name">创建者: {{item.creator.username}}</text>
-        </view>
-
-        <!-- 最新动态 -->
-        <view class="latest-post" wx:if="{{item.latestPost}}">
-          <view class="latest-post-header">
-            <text class="latest-post-title">最新动态</text>
-            <text class="latest-post-time">{{item.latestPost.formattedTime}}</text>
-          </view>
-          <view class="latest-post-content">
-            <text class="latest-post-text">{{item.latestPost.content || '图片动态'}}</text>
-          </view>
-        </view>
-
-        <!-- 无动态状态 -->
-        <view class="no-post" wx:else>
-          <text class="no-post-text">还没有动态</text>
-        </view>
-
-        <!-- 朋友圈ID -->
-        <view class="circle-id">
-          <text class="id-label">ID: </text>
-          <text class="id-value">{{item._id}}</text>
-        </view>
-      </view>
+      <discover-circle-card
+        wx:for="{{circles}}" 
+        wx:key="_id"
+        mode="history"
+        title="{{item.name}}"
+        circle-data="{{item}}"
+        circle-id="{{item._id}}"
+        creator-avatar="{{item.creator.avatar || '/images/default_avatar.png'}}"
+        content="{{item.latestPost ? (item.latestPost.content || '图片动态') : '还没有动态'}}"
+        has-content="{{!!item.latestPost}}"
+        post-image="{{item.postImageUrl || ''}}"
+        last-update-time="{{isHistoryMode ? item.lastUpdateFormatted : item.formattedTime}}"
+        members="{{item.members || []}}"
+        member-count="{{item.memberCount || 0}}"
+        has-delete-permission="{{item.hasDeletePermission}}"
+        bind:cardTap="viewCirclePosts"
+        bind:delete="onCircleDelete"
+        bindlongpress="onCircleLongPress"
+        data-circle-id="{{item._id}}"
+        data-circle-name="{{item.name}}"
+        data-is-creator="{{item.creator._id === app.globalData.openid}}">
+      </discover-circle-card>
     </view>
 
     <!-- 空状态 -->
@@ -199,4 +136,6 @@
       </view>
     </view>
   </view>
+  
+  </view> <!-- 内容区域结束 -->
 </view>

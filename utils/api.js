@@ -15,7 +15,7 @@ class API {
 
   // 通用请求方法
   async request(options) {
-    const { url, method = 'GET', data = {}, header = {} } = options;
+    const { url, method = 'GET', data = {}, header = {}, timeout = 10000 } = options;
     
     try {
       // 🎯 从 mobx 获取当前身份的 openid
@@ -51,6 +51,7 @@ class API {
           'Content-Type': 'application/json',
           ...header
         },
+        timeout,
         success: (res) => {
           // 接受所有2xx状态码（200-299）作为成功
           if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -61,7 +62,13 @@ class API {
               reject(new Error(res.data.message || '请求失败'));
             }
           } else {
-            reject(new Error(`HTTP ${res.statusCode}: ${res.data.message || '网络错误'}`));
+            // 创建包含完整响应信息的错误对象
+            const error = new Error(`HTTP ${res.statusCode}: ${res.data.message || '网络错误'}`);
+            error.response = {
+              status: res.statusCode,
+              data: res.data
+            };
+            reject(error);
           }
         },
         fail: (err) => {
@@ -125,7 +132,7 @@ class API {
     join: (circleId) => this.post(`/circles/${circleId}/join`),
     
     // 退出朋友圈
-    leave: (circleId) => this.delete(`/circles/${circleId}/leave`),
+    leave: (circleId, openid) => this.delete(`/circles/${circleId}/leave`, { openid }),
     
     // 添加成员
     addMember: (circleId, data) => this.post(`/circles/${circleId}/members`, data),
@@ -147,8 +154,12 @@ class API {
     getAppliers: (circleId) => this.get(`/circles/${circleId}/appliers`),
     
     // === 随机公开朋友圈推荐功能 ===
-    // 获取随机公开朋友圈（返回单个朋友圈）
-    getRandomPublicCircle: (params = {}) => this.get('/circles/random', params),
+    // 获取随机公开朋友圈（返回单个朋友圈）- 5秒超时
+    getRandomPublicCircle: (params = {}) => {
+      const query = Object.keys(params).map(key => `${key}=${encodeURIComponent(params[key])}`).join('&');
+      const fullUrl = query ? `/circles/random?${query}` : '/circles/random';
+      return this.request({ url: fullUrl, method: 'GET', timeout: 5000 });
+    },
 
     // === 邀请功能 ===
     // 邀请用户加入

@@ -16,16 +16,23 @@ Page({
     tempImages: [],         // 临时图片路径（用于预览）
     isPublishing: false,    // 发布状态
     maxImages: 9,           // 最大图片数量
-    // 安全区域信息
-    safeAreaInfo: {
-      statusBarHeight: 44
-    }
+    // 图片违规检查相关状态
+    violationDetails: null, // 违规图片详情
+    showViolationAlert: false, // 是否显示违规提示
+    violationTimeout: null, // 违规超时时间戳
+    // 导航栏信息
+    navigationData: {
+      totalNavigationHeight: 88
+    },
+    // 倒计时显示
+    remainingTimeText: ''
   },
 
   onLoad(options) {
     
-    this.getSafeAreaInfo();
+
     this.setupStoreBindings();
+    this.getNavigationData(); // 获取导航栏数据
     
     const { circleId } = options;
     
@@ -72,6 +79,17 @@ Page({
     if (this.storeBindings) {
       this.storeBindings.destroyStoreBindings();
     }
+    
+    // 清理违规状态相关的定时器
+    if (this.violationTimer) {
+      clearTimeout(this.violationTimer);
+    }
+    if (this.violationFinalTimer) {
+      clearTimeout(this.violationFinalTimer);
+    }
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+    }
   },
 
   // 设置MobX Store绑定
@@ -91,12 +109,41 @@ Page({
 
   },
 
-  // 获取安全区域信息
-  getSafeAreaInfo() {
-    const app = getApp();
-    if (app && app.globalData.safeAreaInfo) {
+  // 返回按钮处理
+  goBack() {
+    wx.navigateBack();
+  },
+
+  // 获取导航栏数据
+  getNavigationData() {
+    try {
+      // 获取系统信息
+      const systemInfo = wx.getSystemInfoSync();
+      const statusBarHeight = systemInfo.statusBarHeight || 44;
+      const navigationBarHeight = 44;
+      
+      const navData = {
+        statusBarHeight,
+        navigationBarHeight,
+        totalNavigationHeight: statusBarHeight + navigationBarHeight,
+        windowWidth: systemInfo.windowWidth
+      };
+      
       this.setData({
-        safeAreaInfo: app.globalData.safeAreaInfo
+        navigationData: navData
+      });
+    } catch (error) {
+      console.error('获取导航栏数据失败:', error);
+      // 使用默认值
+      const navData = {
+        statusBarHeight: 44,
+        navigationBarHeight: 44,
+        totalNavigationHeight: 88,
+        windowWidth: 375
+      };
+      
+      this.setData({
+        navigationData: navData
       });
     }
   },
@@ -147,7 +194,7 @@ Page({
         });
       },
       fail: (err) => {
-        util.showToast('选择图片失败');
+        // util.showToast('选择图片失败');
       }
     });
   },
@@ -479,7 +526,23 @@ Page({
       wx.hideLoading();
       this.setData({ isPublishing: false });
       console.error('发布失败:', error);
-      util.showToast('发布失败，请重试');
+      
+      // 🔍 添加详细调试信息
+      console.log('错误详情分析:');
+      console.log('- error.response:', error.response);
+      console.log('- error.response?.status:', error.response?.status);
+      console.log('- error.response?.data:', error.response?.data);
+      console.log('- violationDetails存在:', !!error.response?.data?.violationDetails);
+      
+      // 处理图片违规检查错误
+      if (error.response?.status === 422 && error.response?.data?.violationDetails) {
+        console.log('✅ 检测到图片违规错误，启动违规处理流程');
+        this.handleImageViolation(error.response.data);
+      } else {
+        console.log('❌ 非违规错误或缺少violation数据，显示通用错误提示');
+        // 处理其他错误
+        util.showToast(error.message || '发布失败，请重试');
+      }
     }
   },
 
@@ -543,5 +606,214 @@ Page({
         }
       }
     });
+  },
+
+  // 处理图片违规检查错误
+  handleImageViolation(responseData) {
+    console.log('图片违规检查失败:', responseData);
+    
+    const { violationDetails } = responseData;
+    if (!violationDetails) return;
+
+    // 设置违规超时时间（当前时间 + 超时分钟数）
+    const timeoutMinutes = violationDetails.timeoutMinutes || 10;
+    const violationTimeout = Date.now() + (timeoutMinutes * 60 * 1000);
+
+    // 为每张图片添加违规状态标记
+    const tempImagesWithStatus = this.data.tempImages.map((imagePath, index) => {
+      const violatedImage = violationDetails.violatedImages.find(vi => vi.index === index + 1);
+      return {
+        path: imagePath,
+        originalIndex: index,
+        isViolated: !!violatedImage,
+        violationReason: violatedImage?.reason || '',
+        violationCode: violatedImage?.code || null
+      };
+    });
+
+    this.setData({
+      violationDetails,
+      showViolationAlert: true,
+      violationTimeout,
+      tempImagesWithStatus
+    });
+
+    // 显示违规提示
+    const violatedCount = violationDetails.violatedImages.length;
+    const totalCount = violationDetails.totalImages;
+    
+    wx.showModal({
+      title: '图片内容不符合规范',
+      content: `很抱歉，检测到${violatedCount}张图片不符合平台内容规范。\n\n您可以：\n1. 手动删除红框标记的图片\n2. 点击"自动移除"按钮清理违规图片\n\n请注意：${timeoutMinutes}分钟后所有图片将被自动清理。`,
+      showCancel: false,
+      confirmText: '我知道了',
+      success: () => {
+        // 启动超时提醒
+        this.startViolationTimeoutAlert(timeoutMinutes);
+      }
+    });
+  },
+
+  // 启动违规超时提醒
+  startViolationTimeoutAlert(timeoutMinutes) {
+    // 先清除之前的定时器
+    if (this.violationTimer) {
+      clearTimeout(this.violationTimer);
+    }
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+    }
+
+    // 启动倒计时更新
+    this.startCountdown();
+
+    // 设置超时提醒（提前1分钟提醒）
+    const alertTime = Math.max((timeoutMinutes - 1) * 60 * 1000, 30 * 1000); // 至少30秒后提醒
+    
+    this.violationTimer = setTimeout(() => {
+      if (this.data.showViolationAlert) {
+        wx.showToast({
+          title: `图片将在1分钟后过期`,
+          icon: 'none',
+          duration: 3000
+        });
+      }
+    }, alertTime);
+
+    // 设置最终超时处理
+    this.violationFinalTimer = setTimeout(() => {
+      if (this.data.showViolationAlert) {
+        this.handleViolationTimeout();
+      }
+    }, timeoutMinutes * 60 * 1000);
+  },
+
+  // 启动倒计时
+  startCountdown() {
+    this.updateRemainingTime();
+    
+    this.countdownTimer = setInterval(() => {
+      if (this.data.showViolationAlert && this.data.violationTimeout) {
+        this.updateRemainingTime();
+      } else {
+        clearInterval(this.countdownTimer);
+      }
+    }, 1000); // 每秒更新一次
+  },
+
+  // 更新剩余时间显示
+  updateRemainingTime() {
+    if (!this.data.violationTimeout) return;
+    
+    const now = Date.now();
+    const remaining = Math.max(0, this.data.violationTimeout - now);
+    
+    if (remaining <= 0) {
+      this.setData({ remainingTimeText: '已过期' });
+      this.handleViolationTimeout();
+      return;
+    }
+    
+    const minutes = Math.floor(remaining / (60 * 1000));
+    const seconds = Math.floor((remaining % (60 * 1000)) / 1000);
+    
+    this.setData({ 
+      remainingTimeText: `${minutes}分${seconds}秒` 
+    });
+  },
+
+  // 处理违规超时
+  handleViolationTimeout() {
+    wx.showModal({
+      title: '图片已过期',
+      content: '由于超过了处理时限，所有图片已被自动清理。\n\n您可以重新选择图片并发布帖子。',
+      showCancel: false,
+      confirmText: '重新开始',
+      success: () => {
+        this.setData({
+          violationDetails: null,
+          showViolationAlert: false,
+          violationTimeout: null,
+          tempImages: [],
+          tempImagesWithStatus: [],
+          remainingTimeText: ''
+        });
+      }
+    });
+  },
+
+  // 删除违规图片
+  deleteViolatedImage(e) {
+    const { index } = e.currentTarget.dataset;
+    const tempImagesWithStatus = this.data.tempImagesWithStatus;
+    const tempImages = this.data.tempImages;
+    
+    // 删除指定索引的图片
+    tempImagesWithStatus.splice(index, 1);
+    tempImages.splice(index, 1);
+    
+    // 重新计算索引
+    const updatedImagesWithStatus = tempImagesWithStatus.map((img, newIndex) => ({
+      ...img,
+      originalIndex: newIndex
+    }));
+
+    this.setData({
+      tempImages,
+      tempImagesWithStatus: updatedImagesWithStatus
+    });
+
+    // 如果没有违规图片了，隐藏违规提示
+    const hasViolatedImages = updatedImagesWithStatus.some(img => img.isViolated);
+    if (!hasViolatedImages) {
+      this.clearViolationState();
+    }
+  },
+
+  // 清除违规状态
+  clearViolationState() {
+    // 清除所有定时器
+    if (this.violationTimer) {
+      clearTimeout(this.violationTimer);
+      this.violationTimer = null;
+    }
+    if (this.violationFinalTimer) {
+      clearTimeout(this.violationFinalTimer);
+      this.violationFinalTimer = null;
+    }
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = null;
+    }
+
+    this.setData({
+      violationDetails: null,
+      showViolationAlert: false,
+      violationTimeout: null,
+      tempImagesWithStatus: [],
+      remainingTimeText: ''
+    });
+
+    wx.showToast({
+      title: '违规图片已清理',
+      icon: 'success',
+      duration: 2000
+    });
+  },
+
+  // 重新发布（移除违规图片后）
+  republishWithoutViolatedImages() {
+    const nonViolatedImages = this.data.tempImagesWithStatus
+      .filter(img => !img.isViolated)
+      .map(img => img.path);
+    
+    this.setData({
+      tempImages: nonViolatedImages
+    });
+    
+    this.clearViolationState();
+    
+    // 重新调用发布
+    this.publishPost();
   }
 });

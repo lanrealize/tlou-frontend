@@ -38,6 +38,11 @@ Page({
     lastDataLoadTime: 0,  // 上次数据加载时间
     needsDataRefresh: true, // 是否需要刷新数据
     
+    // 🔧 帖子数据（确保字段存在，用于同步设置）
+    posts: [],            // 帖子列表
+    loading: false,       // 加载状态
+    hasMore: true,        // 是否还有更多数据
+    
     // 安全区域信息
     safeAreaInfo: {
       statusBarHeight: 44
@@ -55,10 +60,9 @@ Page({
 
   onLoad(options) {
     this.getSafeAreaInfo();
-    this.getNavigationData();
     this.setupStoreBindings();
     
-    const { circleId, type, inviterId } = options;
+    const { circleId, type, inviterId, preloaded, preloadFailed, source } = options;
     
     if (!circleId) {
       util.showToast('朋友圈ID不能为空');
@@ -87,7 +91,14 @@ Page({
       });
     }
     
-    this.loadCircleDetail();
+    // 检查是否有预加载数据
+    if (preloaded === 'true') {
+      this.loadWithPreloadedData(circleId);
+    } else if (preloadFailed === 'true') {
+      this.loadCircleDetail();
+    } else {
+      this.loadCircleDetail();
+    }
   },
 
   onUnload() {
@@ -99,6 +110,8 @@ Page({
       this.postStoreBindings.destroyStoreBindings();
     }
   },
+
+
 
   // 设置MobX Store绑定
   setupStoreBindings() {
@@ -157,24 +170,11 @@ Page({
     }
   },
 
-  // 获取导航栏数据
-  getNavigationData() {
-    const navigationData = navigationHelper.getNavigationInfo();
-    const app = getApp();
-    const statusBarHeight = app.globalData.safeAreaInfo.statusBarHeight;
-    
-    // 计算垂直居中位置
-    const capsuleCenter = navigationData.menuTop + navigationData.menuHeight / 2;
-    const verticalCenter = capsuleCenter - statusBarHeight;
-    
-    this.setData({ 
-      navigationData: {
-        ...navigationData,
-        statusBarHeight,
-        navigationBarHeight: 44,
-        totalNavigationHeight: statusBarHeight + 44,
-        capsuleVerticalCenter: verticalCenter
-      }
+  // 处理导航栏准备完成事件
+  onNavigationReady(event) {
+    const { navigationData } = event.detail;
+    this.setData({
+      navigationData: navigationData
     });
   },
 
@@ -357,7 +357,56 @@ Page({
     this.loadMorePosts();
   },
 
+  // 使用预加载数据加载朋友圈详情
+  async loadWithPreloadedData(circleId) {
+    try {
+      const app = getApp();
+      const preloadedData = app.globalData.preloadedCircleData;
+      
+      // 验证预加载数据的有效性
+      if (!preloadedData || 
+          preloadedData.circleId !== circleId ||
+          !preloadedData.circleData ||
+          (Date.now() - preloadedData.timestamp) > 10000) {
+        this.loadCircleDetail();
+        return;
+      }
 
+      const targetCircle = preloadedData.circleData;
+      
+      // 检查用户状态
+      const userStatus = this.checkUserStatus(targetCircle);
+
+      this.setData({
+        circle: targetCircle,
+        isCircleOwner: userStatus.isOwner,
+        isMember: userStatus.isMember,
+        isInvited: userStatus.isInvited,
+        hasApplied: userStatus.hasApplied,
+        showApplyButton: userStatus.showApplyButton,
+        showJoinButton: userStatus.showJoinButton,
+        showPublishButton: userStatus.showPublishButton
+      });
+
+      // 直接通过setData同步设置帖子数据，确保页面切换时立即有数据
+      const { postStore } = require('../../store/postStore');
+      
+      if (postStore.currentCircleId === circleId && postStore.posts && postStore.posts.length >= 0) {
+        this.setData({
+          posts: postStore.posts,
+          hasMore: postStore.hasMore,
+          loading: false
+        });
+      }
+
+      // 清理全局预加载数据
+      app.globalData.preloadedCircleData = null;
+
+    } catch (error) {
+      // 回退到常规加载
+      this.loadCircleDetail();
+    }
+  },
 
   // 加载朋友圈详情
   async loadCircleDetail() {
@@ -440,14 +489,19 @@ Page({
 
     const userId = currentUser._id;
     
-    // 检查用户的各种状态
-    const isMember = circle.members && circle.members.some(member => {
+    // 🔧 修复：首先检查用户是否是创建者
+    const creatorId = typeof circle.creator === 'object' ? circle.creator._id : circle.creator;
+    const isOwner = creatorId === userId;
+    
+    // 🔧 修复：检查用户的各种状态 - 创建者自动是成员
+    const isMemberByArray = circle.members && circle.members.some(member => {
       const memberId = typeof member === 'object' ? member._id : member;
       return memberId === userId;
     });
+    
+    // 🔧 关键修复：创建者自动是成员，即使不在members数组中
+    const isMember = isOwner || isMemberByArray;
 
-    const creatorId = typeof circle.creator === 'object' ? circle.creator._id : circle.creator;
-    const isOwner = creatorId === userId;
 
     const isInvited = circle.invitees && circle.invitees.some(invitee => {
       const inviteeId = typeof invitee === 'object' ? invitee._id : invitee;
@@ -742,19 +796,14 @@ Page({
       return;
     }
 
+    // 显示评论输入框
     this.setData({
       showCommentInput: true,
       selectedPostId: postId,
       replyToUser: null,
-      commentText: ''
+      commentText: '',
+      focusInput: true
     });
-
-    // 延迟一小段时间确保DOM更新后再聚焦
-    setTimeout(() => {
-      this.setData({
-        focusInput: true
-      });
-    }, 100);
   },
 
   // 回复评论
@@ -766,19 +815,14 @@ Page({
       return;
     }
 
+    // 显示评论输入框
     this.setData({
       showCommentInput: true,
       selectedPostId: postId,
       replyToUser,
-      commentText: ''
+      commentText: '',
+      focusInput: true
     });
-
-    // 延迟一小段时间确保DOM更新后再聚焦
-    setTimeout(() => {
-      this.setData({
-        focusInput: true
-      });
-    }, 100);
   },
 
   // 删除帖子
@@ -840,6 +884,8 @@ Page({
     });
   },
 
+
+
   // 回复评论
   replyComment(e) {
     const { userId, username, postId } = e.currentTarget.dataset;
@@ -847,7 +893,8 @@ Page({
       showCommentInput: true,
       selectedPostId: postId,
       replyToUser: { id: userId, username },
-      commentText: ''
+      commentText: '',
+      focusInput: true  // 恢复同时弹出评论框和键盘
     });
   },
 

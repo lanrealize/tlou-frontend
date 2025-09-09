@@ -1,0 +1,31 @@
+<!--components/custom-navigation/custom-navigation.wxml-->
+<!-- 自定义导航栏 -->
+<view class="custom-navigation" style="height: {{navigationData.totalNavigationHeight + (showActionBar ? 60 : 0)}}px;">
+  <!-- 第一行：主导航栏 -->
+  <view class="navigation-content" style="height: {{navigationData.navigationBarHeight}}px; margin-top: {{navigationData.statusBarHeight}}px;">
+    <!-- 左侧返回按钮 -->
+    <view class="nav-back-btn" wx:if="{{showBack}}" bindtap="onBackTap">
+      <image class="back-icon" src="/assets/icons/back.svg" mode="aspectFit"></image>
+    </view>
+    
+    <!-- 中间标题 -->
+    <view class="nav-title">
+      <text class="title-text">{{title}}</text>
+    </view>
+    
+    <!-- 右侧区域 -->
+    <view class="nav-right">
+      <slot name="rightActions"></slot>
+    </view>
+  </view>
+  
+  <!-- 第二行：操作栏 (可选) -->
+  <view class="action-bar" wx:if="{{showActionBar}}">
+    <view class="action-left">
+      <slot name="leftActions"></slot>
+    </view>
+    <view class="action-right">
+      <slot name="rightActionsBar"></slot>
+    </view>
+  </view>
+</view>

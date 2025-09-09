@@ -1,0 +1,98 @@
+/* components/custom-navigation/custom-navigation.wxss */
+
+/* 自定义导航栏 */
+.custom-navigation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: #ffffff;
+}
+
+.navigation-content {
+  position: relative;
+  width: 100%;
+  height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.nav-back-btn {
+  position: absolute;
+  left: 16px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.back-icon {
+  width: 28px;
+  height: 28px;
+  opacity: 0.8;
+}
+
+.nav-title {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-title .title-text {
+  font-size: 32rpx;
+  font-weight: 400;
+  color: #000000;
+  line-height: 1;
+}
+
+.nav-right {
+  position: absolute;
+  right: 16px;
+  height: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  /* 限制最大宽度，避开胶囊按钮 */
+  max-width: calc(100vw - 16px - 96px - 32px); /* 屏幕宽度减去左边距减去胶囊宽度减去安全间距 */
+  overflow: hidden;
+}
+
+/* 操作栏样式 */
+.action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 32rpx;
+  background-color: #fafbfc;
+  border-top: 1rpx solid #e8eaed;
+  height: 120rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.action-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-height: 60rpx;
+}
+
+.action-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 60rpx;
+  /* 避开胶囊按钮区域 */
+  margin-right: 8px; /* 额外间距避免被遮挡 */
+  max-width: calc(100vw - 32px - 96px - 16px); /* 限制宽度避开胶囊 */
+}

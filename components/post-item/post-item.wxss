@@ -46,16 +46,23 @@
   color: #808080;
 }
 
+/* 三点操作按钮容器 */
+.actions-menu-container {
+  position: relative;
+}
+
 /* 三点操作按钮 */
 .actions-menu-btn {
-  width: 80rpx;
-  height: 40rpx;
+  width: 90rpx;
+  height: 45rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: #F0F5FF;
   border-radius: 5rpx;
   transition: all 0.2s ease;
+  position: relative;
+  z-index: 5;
 }
 
 .actions-menu-btn:active {
@@ -64,90 +71,97 @@
 }
 
 .menu-dots-icon {
-  width: 32rpx;
-  height: 32rpx;
+  width: 42rpx;
+  height: 42rpx;
 }
 
-/* 弹出式操作菜单 */
-.actions-popup {
+/* 下拉式操作菜单 */
+.dropdown-mask {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  z-index: 9;
+  background-color: transparent;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
-.actions-popup.show {
+.dropdown-mask.show {
   opacity: 1;
   visibility: visible;
 }
 
-.popup-mask {
+.dropdown-mask.hide {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.dropdown-menu {
   position: absolute;
+  right: 110%;
   top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-}
-
-.popup-content {
   background-color: #ffffff;
-  border-radius: 20rpx;
-  padding: 20rpx;
-  margin: 0 40rpx;
-  min-width: 300rpx;
-  box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.2);
-  transform: scale(0.8);
-  transition: transform 0.3s ease;
+  border-radius: 12rpx;
+  box-shadow: 0rpx 4rpx 12rpx rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  min-width: 200rpx;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.8) translateY(-10rpx);
+  transform-origin: top right;
+  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-.actions-popup.show .popup-content {
-  transform: scale(1);
+.dropdown-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1) translateY(0);
 }
 
-.popup-action-btn {
+.dropdown-menu.hide {
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.8) translateY(-10rpx);
+}
+
+.dropdown-item {
   display: flex;
   align-items: center;
-  padding: 24rpx 20rpx;
-  border-radius: 12rpx;
-  margin-bottom: 8rpx;
+  padding: 24rpx 32rpx;
+  gap: 16rpx;
+  background-color: #ffffff;
   transition: background-color 0.2s ease;
 }
 
-.popup-action-btn:last-child {
-  margin-bottom: 0;
+.dropdown-item:active {
+  background-color: #f5f5f5;
 }
 
-.popup-action-btn:active {
-  background-color: #f0f0f0;
-}
-
-.popup-action-btn.delete-action:active {
+.dropdown-item.delete-item:active {
   background-color: #ffebee;
 }
 
-.popup-action-icon {
-  font-size: 36rpx;
-  margin-right: 20rpx;
-  width: 40rpx;
-  text-align: center;
+.dropdown-icon {
+  width: 32rpx;
+  height: 32rpx;
+  flex-shrink: 0;
 }
 
-.popup-action-text {
-  font-size: 32rpx;
+.dropdown-icon.comment-icon {
+  filter: brightness(0) saturate(100%) invert(21%) sepia(86%) saturate(1780%) hue-rotate(206deg) brightness(99%) contrast(92%);
+}
+
+.dropdown-text {
+  font-size: 28rpx;
   color: #333333;
-  flex: 1;
+  white-space: nowrap;
 }
 
-.popup-action-btn.delete-action .popup-action-text {
+.dropdown-item.delete-item .dropdown-text {
   color: #f44336;
 }
 
@@ -209,6 +223,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6rpx;
+  margin-bottom: 10rpx;
 }
 
 .grid-item {
@@ -306,13 +321,13 @@
 .post-image-single.loading,
 .post-image-grid.loading {
   opacity: 0;
-  transition: opacity 0.4s ease;
+  transition: opacity 0.3s ease;
 }
 
 .post-image-single.loaded,
 .post-image-grid.loaded {
   opacity: 1;
-  transition: opacity 0.4s ease;
+  transition: opacity 0.3s ease;
 }
 
 /* 帖子时间地点和操作按钮区域 */

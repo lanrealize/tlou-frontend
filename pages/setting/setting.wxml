@@ -1,16 +1,10 @@
 <!--pages/setting/setting.wxml-->
 <view class="container">
-  <!-- 状态栏占位 -->
-  <view class="status-bar" style="height: {{safeAreaInfo.statusBarHeight}}px;"></view>
+  <!-- 自定义导航栏 -->
+  <custom-navigation title="朋友圈设置"></custom-navigation>
   
-  <!-- 页面头部 -->
-  <view class="header">
-    <view class="back-btn" bindtap="navigateBack">
-      <text class="back-icon">←</text>
-    </view>
-    <text class="page-title">朋友圈设置</text>
-    <view class="header-action"></view>
-  </view>
+  <!-- 内容区域 -->
+  <view class="page-content">
   
   <!-- 页面加载状态 -->
   <view class="loading-container" wx:if="{{status === 'loading'}}">
@@ -21,10 +15,13 @@
   <!-- 页面内容 -->
   <view class="content-container" wx:if="{{status === 'success'}}">
     <!-- 朋友圈成员管理 -->
-    <view class="section-card card">
+    <view class="section-card card card-spacing">
       <view class="section-header">
-        <text class="section-title">朋友圈成员管理</text>
-        <button class="add-btn theme-btn-small" bindtap="addMember" wx:if="{{isCircleOwner}}">添加</button>
+        <view class="section-title-group">
+          <text class="section-title">朋友圈成员管理</text>
+          <text class="section-subtitle">管理朋友圈的所有成员信息</text>
+        </view>
+        <text class="add-btn-text" bindtap="addMember" wx:if="{{isCircleOwner}}">添加</text>
       </view>
     
     <view class="member-list">
@@ -33,9 +30,12 @@
                src="{{item.avatar || item.avatarUrl || '/images/default_avatar.png'}}" 
                mode="aspectFill" />
         <text class="member-name">{{item.username || item.nickName || item.displayName || '未知用户'}}</text>
-        <view class="member-action" bindtap="removeMember" data-member-id="{{item._id || item.id}}" wx:if="{{isCircleOwner}}">
-          <text class="remove-icon">🗑</text>
-        </view>
+        <image class="member-delete-btn" 
+               wx:if="{{isCircleOwner}}"
+               bindtap="removeMember" 
+               data-member-id="{{item._id || item.id}}"
+               src="/assets/icons/delete.svg"
+               mode="aspectFit"></image>
       </view>
       
       <view class="empty-member" wx:if="{{circleMembers.length === 0}}">
@@ -45,10 +45,10 @@
   </view>
 
   <!-- 申请管理（只有主人可见） -->
-  <view class="section-card card" wx:if="{{isCircleOwner && (appliers.length > 0 || isLoadingAppliers)}}">
+  <view class="section-card card card-spacing" wx:if="{{isCircleOwner && (appliers.length > 0 || isLoadingAppliers)}}">
     <view class="section-header">
       <text class="section-title">申请管理</text>
-      <text class="section-subtitle">{{appliers.length}}个待处理申请</text>
+      <text class="section-subtitle badge">{{appliers.length}}个待处理申请</text>
     </view>
     
     <!-- 加载状态 -->
@@ -91,7 +91,7 @@
   </view>
 
   <!-- 公开设置（只有创建者可见） -->
-  <view class="section-card card" wx:if="{{isCircleOwner}}">
+  <view class="section-card card card-spacing" wx:if="{{isCircleOwner}}">
     <view class="setting-item">
       <view class="setting-content">
         <text class="setting-title">设为公开朋友圈</text>
@@ -99,15 +99,24 @@
       </view>
       <switch class="setting-switch" 
              checked="{{settingData.isPublic}}" 
-             bindchange="togglePublicStatus" />
+             bindchange="togglePublicStatus"
+             color="#1A73E8" />
     </view>
   </view>
   
-  <!-- 非创建者提示信息 -->
-  <view class="section-card card" wx:if="{{!isCircleOwner}}">
-    <view class="no-permission-tip">
-      <text class="tip-title">只能查看基本信息</text>
-      <text class="tip-desc">只有朋友圈创建者才能修改设置和管理成员</text>
+  <!-- 非创建者操作区域 -->
+  <view class="section-card card card-spacing" wx:if="{{!isCircleOwner}}">
+    <!-- 退出朋友圈按钮 -->
+    <view class="leave-circle-section">
+      <view class="leave-circle-item">
+        <view class="leave-info">
+          <text class="leave-title">退出朋友圈</text>
+          <text class="leave-desc">退出后将无法再次查看此朋友圈内容</text>
+        </view>
+        <button class="leave-btn" bindtap="leaveCircle" hover-class="button-hover">
+          退出
+        </button>
+      </view>
     </view>
   </view>
   
@@ -148,5 +157,6 @@
     <text class="error-text">加载失败，请稍后重试</text>
     <button class="retry-btn theme-btn" bindtap="loadCircleSettings">重试</button>
   </view>
-
+  
+  </view> <!-- 内容区域结束 -->
 </view>

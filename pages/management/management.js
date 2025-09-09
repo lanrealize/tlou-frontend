@@ -15,7 +15,12 @@ Page({
     isCreating: false,
     isUploadingAvatar: false, // 头像上传状态
     defaultAvatar: '/images/default_avatar.png', // 默认头像
-    canCreateUser: false // 是否可以创建用户
+    canCreateUser: false, // 是否可以创建用户
+    // 安全区域信息
+    safeAreaInfo: {
+      statusBarHeight: 44,
+      totalNavigationHeight: 88
+    }
   },
 
   onLoad() {
@@ -80,21 +85,45 @@ Page({
 
   // 初始化导航栏
   initNavigation() {
-    const navData = navigationHelper.getNavigationInfo();
     const app = getApp();
-    this.setData({
-      statusBarHeight: app.globalData.safeAreaInfo.statusBarHeight,
-      navigationBarHeight: 44, // 固定导航栏高度
-      totalNavigationHeight: app.globalData.safeAreaInfo.navBarHeight,
-      // 兼容旧字段名
-      titleBarHeight: 44,
-      navigationHeight: app.globalData.safeAreaInfo.navBarHeight,
-      // 新增胶囊按钮信息
-      menuHeight: navData.menuHeight,
-      menuTop: navData.menuTop,
-      menuLeft: navData.menuLeft,
-      menuRight: navData.menuRight
-    });
+    if (app && app.globalData.safeAreaInfo) {
+      // 添加导航栏高度计算
+      const statusBarHeight = app.globalData.safeAreaInfo.statusBarHeight || 44;
+      const navigationBarHeight = 44;
+      const totalNavigationHeight = statusBarHeight + navigationBarHeight;
+      
+      this.setData({
+        safeAreaInfo: {
+          ...app.globalData.safeAreaInfo,
+          totalNavigationHeight
+        },
+        // 保持向后兼容的字段
+        statusBarHeight,
+        navigationBarHeight,
+        totalNavigationHeight,
+        titleBarHeight: 44,
+        navigationHeight: totalNavigationHeight
+      });
+    } else {
+      // 兜底方案
+      const systemInfo = wx.getSystemInfoSync();
+      const statusBarHeight = systemInfo.statusBarHeight || 44;
+      const navigationBarHeight = 44;
+      const totalNavigationHeight = statusBarHeight + navigationBarHeight;
+      
+      this.setData({
+        safeAreaInfo: {
+          statusBarHeight,
+          navigationBarHeight,
+          totalNavigationHeight
+        },
+        statusBarHeight,
+        navigationBarHeight,
+        totalNavigationHeight,
+        titleBarHeight: 44,
+        navigationHeight: totalNavigationHeight
+      });
+    }
   },
 
   // 返回按钮点击事件

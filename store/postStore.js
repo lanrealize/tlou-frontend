@@ -408,29 +408,8 @@ const postStore = observable({
     // 确保likedUsers数组存在
     post.likedUsers = post.likedUsers || [];
     
-    // 确保images数组存在并标准化格式
+    // 确保images数组存在 - 保持原始数据格式，让组件层面处理兼容性
     post.images = post.images || [];
-    
-    // 处理图片数据：提取URL数组和尺寸信息
-    const imageUrls = [];
-    const imageMeta = [];
-    
-    post.images.forEach(img => {
-      if (typeof img === 'string') {
-        imageUrls.push(img);
-        imageMeta.push(null);
-      } else if (typeof img === 'object' && img.url) {
-        imageUrls.push(img.url);
-        if (img.width && img.height) {
-          imageMeta.push({ width: img.width, height: img.height });
-        } else {
-          imageMeta.push(null);
-        }
-      }
-    });
-    
-    post.images = imageUrls;
-    post.imageMeta = imageMeta;
     
     // 正确设置点赞状态
     post.isLiked = this._checkIfUserLiked(post.likes);

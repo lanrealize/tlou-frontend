@@ -7,5 +7,7 @@
   "backgroundTextStyle": "light",
   "enablePullDownRefresh": false,
   "disableScroll": true,
-  "usingComponents": {}
+  "usingComponents": {
+    "custom-navigation": "/components/custom-navigation/custom-navigation"
+  }
 }

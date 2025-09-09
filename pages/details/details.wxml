@@ -1,24 +1,12 @@
 <!--pages/details/details.wxml-->
 <view class="page-container">
   <!-- 自定义导航栏 -->
-  <view class="custom-navigation" style="height: {{navigationData.totalNavigationHeight}}px; padding-top: {{navigationData.statusBarHeight}}px;">
-    <view class="navigation-content" style="height: {{navigationData.navigationBarHeight}}px;">
-      <view class="nav-back-btn" bindtap="navigateBack">
-        <image class="back-icon" src="/assets/icons/back.svg" mode="aspectFit"></image>
-      </view>
-      <view class="nav-title">
-        <text class="title-text">两个人的朋友圈</text>
-      </view>
-    </view>
-  </view>
+  <custom-navigation title="两个人的朋友圈" bindnavigationReady="onNavigationReady"></custom-navigation>
 
-  <!-- 加载状态 -->
-  <view class="loading" wx:if="{{loading}}" style="padding-top: {{navigationData.totalNavigationHeight}}px;">
-    <text>加载中...</text>
-  </view>
+  <!-- 🔧 移除了整体的"加载中..."显示，改为在main page预加载 -->
 
   <!-- 朋友圈详情页面 -->
-  <view class="moment-page" wx:else style="padding-top: {{navigationData.totalNavigationHeight}}px;">
+  <view class="moment-page" style="padding-top: {{navigationData.totalNavigationHeight}}px;">
     
     <!-- 可滚动内容区域 -->
     <scroll-view 
@@ -43,18 +31,26 @@
           
           <!-- 中间头像和添加按钮 -->
           <view class="avatars-section">
-            <!-- 用户头像组 -->
+            <!-- 用户头像组（包含头像和添加按钮） -->
             <view class="avatar-group">
+              <!-- 显示实际成员头像（最多显示2个） -->
               <image class="member-avatar" wx:for="{{circle.members || []}}" wx:for-item="member" wx:key="_id" wx:if="{{index < 2}}" src="{{member.avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
-              <!-- 如果没有成员信息，显示默认头像 -->
+              
+              <!-- 如果没有任何成员，显示一个默认头像作为占位 -->
               <image class="member-avatar" wx:if="{{!circle.members || circle.members.length === 0}}" src="/images/default_avatar.png" mode="aspectFill"></image>
-              <image class="member-avatar" wx:if="{{(!circle.members || circle.members.length === 0) || (circle.members && circle.members.length === 1)}}" src="/images/default_avatar.png" mode="aspectFill"></image>
+              
+              <!-- 如果成员超过2个，显示剩余成员数量 -->
+              <view class="member-count-badge" wx:if="{{circle.members && circle.members.length > 2}}">
+                <image class="member-count-bg" src="{{circle.members[2].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+                <view class="member-count-overlay"></view>
+                <text class="count-text">{{circle.members.length - 2}}+</text>
+              </view>
+              
+              <!-- 添加按钮 -->
+              <button class="add-member-btn" open-type="share" wx:if="{{isCircleOwner}}" hover-class="add-member-hover">
+                <image class="add-icon" src="/assets/icons/add.svg" mode="aspectFit"></image>
+              </button>
             </view>
-            
-            <!-- 添加按钮 -->
-            <button class="add-member-btn" open-type="share" wx:if="{{isCircleOwner}}" hover-class="add-member-hover">
-              <image class="add-icon" src="/assets/icons/add.svg" mode="aspectFit"></image>
-            </button>
           </view>
         </view>
         
@@ -176,6 +172,7 @@
         </view>
       </view>
 
+
       <!-- 邀请提示和接受按钮 -->
       <view class="invite-banner" wx:if="{{isInviteMode && showJoinButton}}">
         <view class="invite-info">
@@ -198,27 +195,27 @@
     <!-- 评论输入框 -->
     <view class="comment-input-modal" wx:if="{{showCommentInput}}">
       <view class="comment-input-overlay" bindtap="cancelComment"></view>
-      <view class="comment-input-container card-shadow">
+      <view class="tlou-comment-input-no-anim">
         <view class="comment-input-header">
           <text class="comment-title">{{replyToUser ? '回复 ' + replyToUser.username : '发表评论'}}</text>
           <text class="cancel-btn" bindtap="cancelComment">取消</text>
         </view>
         <view class="comment-input-content">
-          <textarea
-            class="comment-textarea"
-            placeholder="{{replyToUser ? '@' + replyToUser.username + ' ' : '说点什么...'}}"
-            value="{{commentText}}"
-            bindinput="onCommentInput"
-            auto-focus="{{focusInput}}"
-            adjust-position="{{true}}"
-            hold-keyboard="{{true}}"
-            show-confirm-bar="{{false}}"
-            auto-height
-            maxlength="500"
-            cursor-spacing="20"
-          ></textarea>
-          <view class="comment-input-footer">
-            <text class="char-count">{{commentText.length}}/500</text>
+          <view class="input-row">
+            <textarea
+              class="comment-textarea"
+              placeholder="{{replyToUser ? '@' + replyToUser.username + ' ' : '说点什么...'}}"
+              value="{{commentText}}"
+              bindinput="onCommentInput"
+              focus="{{focusInput}}"
+              adjust-position="{{true}}"
+              hold-keyboard="{{true}}"
+              show-confirm-bar="{{false}}"
+              maxlength="500"
+              cursor-spacing="25"
+              disable-default-padding="{{true}}"
+              auto-height="{{false}}"
+            ></textarea>
             <button class="send-btn theme-btn-small" bindtap="sendComment">发送</button>
           </view>
         </view>

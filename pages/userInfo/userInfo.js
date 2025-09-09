@@ -18,10 +18,9 @@ Page({
     isSubmitting: false,
     canSubmit: false,
     isUploadingAvatar: false,
-    // 安全区域信息
-    safeAreaInfo: {
-      statusBarHeight: 44,
-      navBarHeight: 88
+    // 导航栏信息
+    navigationData: {
+      totalNavigationHeight: 88
     }
   },
 
@@ -29,23 +28,14 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad(options) {
-    this.getSafeAreaInfo();
     this.initQiniuConfig();
   },
 
-  // 获取安全区域信息
-  getSafeAreaInfo() {
-    const navData = navigationHelper.getNavigationInfo();
-    const app = getApp();
+  // 处理导航栏准备完成事件
+  onNavigationReady(event) {
+    const { navigationData } = event.detail;
     this.setData({
-      safeAreaInfo: {
-        statusBarHeight: app.globalData.safeAreaInfo.statusBarHeight,
-        navBarHeight: app.globalData.safeAreaInfo.navBarHeight,
-        menuHeight: navData.menuHeight,
-        menuTop: navData.menuTop,
-        menuLeft: navData.menuLeft,
-        menuRight: navData.menuRight
-      }
+      navigationData: navigationData
     });
   },
 

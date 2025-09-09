@@ -2,17 +2,19 @@
 // 后端服务器配置
 
 const BACKEND_CONFIG = {
-  // 后端服务器IP地址和端口
-  HOST: '172.20.10.2',
+  // 后端服务器域名
+  HOST: 'www.wltech-service.site',
+  // 之前的本地配置（备份）
+  // HOST: '172.20.10.2',
   // HOST: 'localhost',
-  PORT: '3000',
+  // PORT: '3000',
   
   // API基础路径
-  API_PATH: '/api',
+  API_PATH: '/api/tlou',
   
   // 完整的API基础URL
   get BASE_URL() {
-    return `http://${this.HOST}:${this.PORT}${this.API_PATH}`;
+    return `https://${this.HOST}${this.API_PATH}`;
   }
 };
 
