@@ -253,67 +253,60 @@ view, text, image {
 
 
 
-/* 时间轴项目 - 4区域Grid布局 */
+/* 时间轴项目 - 左右布局 */
 .timeline-item {
   display: grid;
-  grid-template-columns: 10% 90%; /* 左列10%放时间轴，右列90%放内容 */
-  grid-template-rows: auto 1fr;   /* 上行自适应时间文字高度，下行占剩余空间 */
-  gap: 18rpx 20rpx;               /* 行间距进一步调小为15rpx，列间距20rpx */
+  grid-template-columns: 10% 90%; /* 左列10%放时间点，右列90%放内容 */
+  grid-template-rows: minmax(auto, 1fr); /* 行高度自适应内容，但至少占用可用空间 */
+  gap: 20rpx;                     /* 列间距20rpx */
   margin-bottom: 50rpx;
-  align-items: start;             /* 改为start，让每个元素自己控制对齐 */
+  align-items: stretch;           /* 拉伸对齐，确保左右列高度一致 */
   overflow: visible;              /* 允许三点按钮溢出 */
 }
 
 /* 确保帖子卡片和时间线容器高度同步 */
 .post-card {
-  align-self: start; /* 从顶部开始对齐 */
-}
-
-.timeline-space-container {
-  align-self: stretch; /* 拉伸以匹配同行元素的高度 */
-  min-height: auto; /* 移除固定最小高度，让它自适应 */
+  align-self: stretch; /* 拉伸以匹配grid行高度 */
+  min-height: 100%; /* 确保占满grid行高度 */
 }
 
 /* 时间点容器 - 确保宽度一致且内部居中 */
 .time-dot-container {
   width: 100%;
-  height: 40rpx; /* 与时间标签对齐的高度 */
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  position: relative;
+  padding-top: 10rpx; /* 与内容顶部对齐 */
+  min-height: 100%; /* 确保能够占满grid行高度 */
 }
 
-/* 时间线空间容器 - 与post-card高度同步 */
+/* 时间线空间容器 - 从时间点向下延伸 */
 .timeline-space-container {
   width: 100%;
+  flex: 1;
   display: flex;
-  align-items: flex-start; /* 线条从顶部开始 */
+  align-items: flex-start;
   justify-content: center;
   padding-top: 15rpx; /* 从时间点下方开始画线 */
   position: relative;
-  overflow: visible; /* 允许线条延伸到容器外 */
 }
 
-/* 时间线线条 - 延伸到time-dot中心实现真正连接 */
+/* 时间线线条 - 从时间点向下延伸到下一个项目 */
 .timeline-line {
   width: 3rpx;
   background: #1A73E8;
   border-radius: 2rpx;
   position: absolute;
-  top: -20rpx; /* 向上延伸到time-dot中心位置: -(gap行间距15rpx + time-dot容器高度一半20rpx - padding15rpx) */
-  bottom: -60rpx; /* 延伸到容器外，连接下一个项目 */
+  top: 0; /* 从时间线容器顶部开始 */
+  bottom: -70rpx; /* 延伸到下一个项目，负值让它超出容器 */
   left: 50%;
   transform: translateX(-50%); /* 确保居中 */
 }
 
-/* 第一个项目的时间线连接到自己的时间点 */
-.timeline-item:first-child .timeline-space-container .timeline-line {
-  top: -20rpx; /* 第一个项目向上延伸到自己的时间点中心，与其他项目保持一致 */
-}
-
 /* 最后一个项目的时间线不需要延伸 */
 .timeline-no-more .timeline-space-container .timeline-line {
-  bottom: 0; /* 结束项目线条不延伸到容器外 */
+  height: 100%; /* 结束项目线条不延伸到容器外，只占满自己的容器 */
 }
 
 /* 时间圆点 - 实心设计，更好看的样式 */
@@ -372,21 +365,47 @@ view, text, image {
   width: 100%;
 }
 
-/* 时间标签头部 - 包含时间、头像、昵称、三点按钮 */
+/* 新的左右布局容器 */
+.post-main-layout {
+  display: flex;
+  gap: 20rpx;
+  align-items: flex-start;
+  margin-bottom: 20rpx;
+}
+
+/* 左侧大头像 */
+.user-avatar-large {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 10rpx;
+  flex-shrink: 0;
+}
+
+/* 右侧内容区域 */
+.right-content {
+  flex: 1;
+  min-width: 0;
+  margin-left: 10rpx;
+}
+
+/* 文字内容样式 - 右侧内容的第二行 */
+.post-text-content {
+  font-size: 28rpx;
+  line-height: 1.6;
+  color: #333333;
+  word-wrap: break-word;
+}
+
+/* 时间标签头部 - 作为右侧内容的第一行 */
 .post-time-header {
   background: transparent;
-  padding: 0rpx 40rpx 0rpx 0rpx; /* 右侧留出更多空间给80rpx的三点按钮 */
-  border-radius: 0;
-  border-bottom: none;
+  padding: 0;
   display: flex;
-  align-items: center; /* 所有元素垂直居中对齐 */
+  align-items: center;
   gap: 16rpx;
-  justify-self: start;
-  align-self: center; /* 与时间点垂直居中对齐 */
-  height: 40rpx; /* 固定高度与时间点容器一致 */
+  margin-bottom: 6rpx;
   position: relative;
-  width: 100%;
-  box-sizing: border-box;
+  height: 34rpx; /* 固定高度与username-inline文字高度一致 (28rpx * 1.2) */
   overflow: visible; /* 允许三点按钮溢出 */
 }
 
@@ -405,13 +424,7 @@ view, text, image {
   z-index: 1;
 }
 
-/* 用户头像（小圆形） */
-.user-avatar-small {
-  width: 42rpx;
-  height: 42rpx;
-  border-radius: 21rpx;
-  flex-shrink: 0;
-}
+/* 移除了小头像样式，现在使用大头像 */
 
 /* 用户昵称 */
 .username-inline {
@@ -419,7 +432,6 @@ view, text, image {
   color: #333333;
   font-weight: 500;
   flex-shrink: 0;
-  padding-left: 15rpx;
 }
 
 /* 分隔符 */
@@ -437,16 +449,11 @@ view, text, image {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: all 0.2s ease;
   position: relative;
   z-index: 5;
   flex-shrink: 0;
   margin-left: auto; /* 自动推到右侧 */
-}
-
-.actions-menu-btn:active {
-  background-color: rgba(0, 0, 0, 0.1);
-  transform: scale(0.9);
+  margin-right: 20rpx;
 }
 
 .menu-dots-icon {
@@ -970,4 +977,99 @@ view, text, image {
   width: 164rpx;
   height: 45rpx;
   filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);
+}
+
+/* 下拉式操作菜单 */
+.dropdown-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9;
+  background-color: transparent;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+}
+
+.dropdown-mask.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.dropdown-mask.hide {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.dropdown-menu {
+  position: absolute;
+  right: 100%; /* 定位到按钮左侧 */
+  top: 20rpx; /* 与图标上边缘对齐 (按钮80rpx - 图标40rpx) / 2 = 20rpx */
+  margin-right: 10rpx; /* 与按钮保持一定距离 */
+  background-color: #ffffff;
+  border-radius: 12rpx;
+  box-shadow: 0rpx 4rpx 12rpx rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  min-width: 200rpx;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.8) translateX(10rpx); /* 从右向左的动画效果 */
+  transform-origin: top right; /* 从右上角开始缩放 */
+  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.dropdown-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1) translateX(0); /* 显示时回到正常位置 */
+}
+
+.dropdown-menu.hide {
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.8) translateX(10rpx); /* 隐藏时向右移动并缩放 */
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 16rpx; /* 调整左右padding，为居中文字让出空间 */
+  background-color: #ffffff;
+  transition: background-color 0.2s ease;
+  position: relative;
+}
+
+.dropdown-item:active {
+  background-color: #f5f5f5;
+}
+
+.dropdown-item.delete-item:active {
+  background-color: #ffebee;
+}
+
+.dropdown-item.delete-item .dropdown-text {
+  color: #f44336;
+}
+
+.dropdown-icon {
+  width: 32rpx;
+  height: 32rpx;
+  flex-shrink: 0;
+  margin-left: 16rpx; /* 图标左边距 */
+}
+
+.dropdown-icon.comment-icon {
+  filter: brightness(0) saturate(100%) invert(21%) sepia(86%) saturate(1780%) hue-rotate(206deg) brightness(99%) contrast(92%); /* 蓝色滤镜 */
+}
+
+.dropdown-text {
+  font-size: 28rpx;
+  color: #333333;
+  white-space: nowrap;
+  flex: 1; /* 占据剩余空间 */
+  text-align: center; /* 文字居中 */
+  margin-right: auto; /* 右边距，保持与左侧图标+间距的平衡 (32rpx图标 + 16rpx间距) */
 }

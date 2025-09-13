@@ -792,12 +792,21 @@ Page({
 
   // 点赞/取消点赞
   async onPostLike(e) {
-    const { postId } = e.detail;
+    // 从 dataset 或 detail 中获取 postId
+    const postId = e.currentTarget?.dataset?.post?._id || e.detail?.postId;
+
+    if (!postId) {
+      console.error('无法获取帖子ID');
+      return;
+    }
 
     if (!this.data.isLoggedIn) {
       util.showToast('请先登录');
       return;
     }
+
+    // 隐藏菜单
+    this.hideActionsMenu();
 
     try {
       const result = await this.toggleLike(postId, this.data.userInfo);
@@ -809,12 +818,21 @@ Page({
 
   // 评论
   onPostComment(e) {
-    const { postId } = e.detail;
+    // 从 dataset 或 detail 中获取 postId
+    const postId = e.currentTarget?.dataset?.post?._id || e.detail?.postId;
+
+    if (!postId) {
+      console.error('无法获取帖子ID');
+      return;
+    }
 
     if (!this.data.isLoggedIn) {
       util.showToast('请先登录');
       return;
     }
+
+    // 隐藏菜单
+    this.hideActionsMenu();
 
     // 显示评论输入框
     this.setData({
@@ -847,7 +865,16 @@ Page({
 
   // 删除帖子
   async onPostDelete(e) {
-    const { postId } = e.detail;
+    // 从 dataset 或 detail 中获取 postId
+    const postId = e.currentTarget?.dataset?.post?._id || e.detail?.postId;
+
+    if (!postId) {
+      console.error('无法获取帖子ID');
+      return;
+    }
+
+    // 隐藏菜单
+    this.hideActionsMenu();
 
     const confirm = await util.showConfirm('确定要删除这条动态吗？');
     if (!confirm) return;

@@ -122,64 +122,98 @@
             wx:key="_id"
             wx:for-index="index"
           >
-            <!-- 左上：时间点容器 -->
+            <!-- 左：时间点容器和时间线 -->
             <view class="time-dot-container">
               <view class="time-dot"></view>
-            </view>
-            
-            <!-- 右上：头像 + 昵称 + · + 时间标签 + 三点按钮 -->
-            <view class="post-time-header">
-              <!-- 用户头像（小圆形） -->
-              <image 
-                class="user-avatar-small" 
-                src="{{item.author.avatar || '/images/default_avatar.png'}}" 
-                mode="aspectFill"
-                bindtap="onTapAvatar"
-                data-user="{{item.author}}"
-                data-post="{{item}}"
-              ></image>
-              
-              <!-- 用户昵称 -->
-              <text class="username-inline" 
-                    bindtap="onTapAvatar"
-                    data-user="{{item.author}}"
-                    data-post="{{item}}">{{item.author.username || item.author.name || '未知用户'}}</text>
-              
-              <!-- 分隔符 -->
-              <text class="separator">·</text>
-              
-              <!-- 时间标签 -->
-              <text class="post-time">{{item.formattedTime || '刚刚'}}</text>
-              
-              <!-- 三点操作按钮 -->
-              <view class="actions-menu-btn" 
-                    bindtap="toggleActionsMenu"
-                    data-post-id="{{item._id}}">
-                <image class="menu-dots-icon" src="/assets/icons/more.svg" mode="aspectFit"></image>
+              <!-- 时间线空间容器 -->
+              <view class="timeline-space-container">
+                <view class="timeline-line"></view>
               </view>
             </view>
             
-            <!-- 左下：时间线空间容器 -->
-            <view class="timeline-space-container">
-              <view class="timeline-line"></view>
-            </view>
-            
-            <!-- 右下：帖子内容卡片 -->
+            <!-- 右：帖子内容卡片 -->
             <view class="post-card">
-              <post-item
-                post="{{item}}"
-                current-user="{{currentUser}}"
-                show-actions="{{true}}"
-                show-actions-menu="{{activeMenuPostId === item._id}}"
-                bind:like="onPostLike"
-                bind:comment="onPostComment"
-                bind:replyComment="onPostReplyComment"
-                bind:deletePost="onPostDelete"
-                bind:deleteComment="onCommentDelete"
-                bind:previewImage="onPreviewImage"
-                bind:tapAvatar="onTapAvatar"
-                bind:hideActionsMenu="hideActionsMenu"
-              ></post-item>
+              <!-- 左右布局：左侧头像，右侧两行内容 -->
+              <view class="post-main-layout">
+                <!-- 左侧：用户头像（跨两行） -->
+                <image 
+                  class="user-avatar-large" 
+                  src="{{item.author.avatar || '/images/default_avatar.png'}}" 
+                  mode="aspectFill"
+                  bindtap="onTapAvatar"
+                  data-user="{{item.author}}"
+                  data-post="{{item}}"
+                ></image>
+                
+                <!-- 右侧两行内容 -->
+                <view class="right-content">
+                  <!-- 第一行：昵称 + · + 时间标签 + 三点按钮 -->
+                  <view class="post-time-header">
+                    <!-- 用户昵称 -->
+                    <text class="username-inline" 
+                          bindtap="onTapAvatar"
+                          data-user="{{item.author}}"
+                          data-post="{{item}}">{{item.author.username || item.author.name || '未知用户'}}</text>
+                    
+                    <!-- 分隔符 -->
+                    <text class="separator">·</text>
+                    
+                    <!-- 时间标签 -->
+                    <text class="post-time">{{item.formattedTime || '刚刚'}}</text>
+                    
+                    <!-- 三点操作按钮 -->
+                    <view class="actions-menu-btn" 
+                          bindtap="toggleActionsMenu"
+                          data-post-id="{{item._id}}">
+                      <image class="menu-dots-icon" src="/assets/icons/more.svg" mode="aspectFit"></image>
+                      
+                      <!-- 下拉式操作菜单 -->
+                      <view class="dropdown-menu {{activeMenuPostId === item._id ? 'show' : 'hide'}}">
+                        <view class="dropdown-item" 
+                              catchtap="onPostLike" 
+                              data-post="{{item}}">
+                          <image class="dropdown-icon" src="/assets/icons/like.svg" mode="aspectFit"></image>
+                          <text class="dropdown-text">{{item.isLiked ? '取消点赞' : '点赞'}}</text>
+                        </view>
+                        <view class="dropdown-item" 
+                              catchtap="onPostComment" 
+                              data-post="{{item}}">
+                          <image class="dropdown-icon comment-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
+                          <text class="dropdown-text">评论</text>
+                        </view>
+                        <view class="dropdown-item delete-item" 
+                              wx:if="{{item.author._id === currentUser._id}}" 
+                              catchtap="onPostDelete" 
+                              data-post="{{item}}">
+                          <image class="dropdown-icon" src="/assets/icons/delete.svg" mode="aspectFit"></image>
+                          <text class="dropdown-text">删除</text>
+                        </view>
+                      </view>
+                      
+                      <!-- 遮罩层 - 点击其他地方隐藏下拉菜单 -->
+                      <view class="dropdown-mask {{activeMenuPostId === item._id ? 'show' : 'hide'}}" catchtap="hideActionsMenu"></view>
+                    </view>
+                  </view>
+                  
+                  <!-- 第二行：分享的文字内容 -->
+                  <view class="post-text-content" wx:if="{{item.content}}">
+                    <text>{{item.content}}</text>
+                  </view>
+                </view>
+              </view>
+              
+            <!-- post-item 只处理图片和评论 -->
+            <post-item
+              post="{{item}}"
+              current-user="{{currentUser}}"
+              bind:like="onPostLike"
+              bind:comment="onPostComment"
+              bind:replyComment="onPostReplyComment"
+              bind:deletePost="onPostDelete"
+              bind:deleteComment="onCommentDelete"
+              bind:previewImage="onPreviewImage"
+              bind:tapAvatar="onTapAvatar"
+            ></post-item>
             </view>
           </view>
 

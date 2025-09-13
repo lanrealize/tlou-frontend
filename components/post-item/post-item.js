@@ -13,16 +13,6 @@ Component({
     currentUser: {
       type: Object,
       value: {}
-    },
-    // 是否显示操作按钮（删除等）
-    showActions: {
-      type: Boolean,
-      value: true
-    },
-    // 是否显示操作菜单（由外部控制）
-    showActionsMenu: {
-      type: Boolean,
-      value: false
     }
   },
 
@@ -302,31 +292,6 @@ Component({
         user: user,
         post: this.data.post
       });
-    },
-
-    // 操作菜单现在由外部控制，移除了相关方法
-
-    // 从弹出菜单点赞
-    onLikeFromPopup() {
-      this.triggerEvent('hideActionsMenu');
-      this.onLike();
-    },
-
-    // 从弹出菜单评论
-    onCommentFromPopup() {
-      this.triggerEvent('hideActionsMenu');
-      this.onComment();
-    },
-
-    // 从弹出菜单删除
-    onDeleteFromPopup() {
-      this.triggerEvent('hideActionsMenu');
-      this.onDeletePost();
-    },
-
-    // 隐藏操作菜单（点击遮罩层时调用）
-    hideActionsMenu() {
-      this.triggerEvent('hideActionsMenu');
     },
 
     // 单张图片加载完成，检测图片方向（降级方案）

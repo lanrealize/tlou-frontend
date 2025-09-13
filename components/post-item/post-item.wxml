@@ -1,11 +1,6 @@
 <!--components/post-item/post-item.wxml-->
 <view class="post-item" id="post-{{post._id}}">
-  <!-- 第一行：分享的文字内容 -->
-  <view class="post-text" wx:if="{{post.content}}">
-    <text>{{post.content}}</text>
-  </view>
-
-  <!-- 第二行：图片内容 -->
+  <!-- 图片内容 -->
   <view class="post-images" wx:if="{{post.images && post.images.length > 0}}">
     <!-- 单张图片 -->
     <view class="single-image" wx:if="{{post.images.length === 1}}" 
@@ -156,34 +151,4 @@
     </view>
   </view>
 
-  <!-- 操作菜单容器（隐藏的，由details页面的按钮触发） -->
-  <view class="actions-menu-container">
-    <!-- 下拉式操作菜单 -->
-    <view class="dropdown-menu {{showActions && showActionsMenu ? 'show' : 'hide'}}">
-      <!-- 点赞按钮 -->
-      <view class="dropdown-item" catchtap="onLikeFromPopup">
-        <image class="dropdown-icon" src="/assets/icons/like.svg" mode="aspectFit"></image>
-        <text class="dropdown-text">{{post.isLiked ? '取消点赞' : '点赞'}}</text>
-      </view>
-      
-      <!-- 评论按钮 -->
-      <view class="dropdown-item" catchtap="onCommentFromPopup">
-        <image class="dropdown-icon comment-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
-        <text class="dropdown-text">评论</text>
-      </view>
-      
-      <!-- 删除按钮（仅作者可见） -->
-      <view 
-        class="dropdown-item delete-item" 
-        wx:if="{{currentUser && currentUser._id && post.author && post.author._id && currentUser._id === post.author._id}}"
-        catchtap="onDeleteFromPopup"
-      >
-        <image class="dropdown-icon" src="/assets/icons/delete.svg" mode="aspectFit"></image>
-        <text class="dropdown-text">删除</text>
-      </view>
-    </view>
-  </view>
-
-  <!-- 遮罩层 - 点击其他地方隐藏下拉菜单 -->
-  <view class="dropdown-mask {{showActionsMenu ? 'show' : 'hide'}}" catchtap="hideActionsMenu"></view>
 </view>
