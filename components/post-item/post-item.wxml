@@ -1,208 +1,185 @@
 <!--components/post-item/post-item.wxml-->
 <view class="post-item" id="post-{{post._id}}">
-  <!-- 第一个item：用户头像 -->
-  <image 
-    class="user-avatar" 
-    src="{{post.author.avatar || '/images/default_avatar.png'}}" 
-    mode="aspectFill"
-    bindtap="onTapAvatar"
-  ></image>
-  
-  <!-- 第二个item：右侧内容区域 -->
-  <view class="post-right-content">
-    <!-- 用户信息区域 -->
-    <view class="user-info-header">
-      <view class="username">{{post.author.username || post.author.name || '未知用户'}}</view>
-      
-      <!-- 三点操作按钮容器 -->
-      <view class="actions-menu-container">
-        <view class="actions-menu-btn" bindtap="toggleActionsMenu">
-          <image class="menu-dots-icon" src="/assets/icons/more.svg" mode="aspectFit"></image>
-        </view>
-        
-        <!-- 下拉式操作菜单 -->
-        <view class="dropdown-menu {{showActions && showActionsMenu ? 'show' : 'hide'}}">
-          <!-- 点赞按钮 -->
-          <view class="dropdown-item" catchtap="onLikeFromPopup">
-            <image class="dropdown-icon" src="/assets/icons/like.svg" mode="aspectFit"></image>
-            <text class="dropdown-text">{{post.isLiked ? '取消点赞' : '点赞'}}</text>
-          </view>
-          
-          <!-- 评论按钮 -->
-          <view class="dropdown-item" catchtap="onCommentFromPopup">
-            <image class="dropdown-icon comment-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
-            <text class="dropdown-text">评论</text>
-          </view>
-          
-          <!-- 删除按钮（仅作者可见） -->
-          <view 
-            class="dropdown-item delete-item" 
-            wx:if="{{currentUser && currentUser._id && post.author && post.author._id && currentUser._id === post.author._id}}"
-            catchtap="onDeleteFromPopup"
-          >
-            <image class="dropdown-icon" src="/assets/icons/delete.svg" mode="aspectFit"></image>
-            <text class="dropdown-text">删除</text>
-          </view>
-        </view>
+  <!-- 第一行：分享的文字内容 -->
+  <view class="post-text" wx:if="{{post.content}}">
+    <text>{{post.content}}</text>
+  </view>
+
+  <!-- 第二行：图片内容 -->
+  <view class="post-images" wx:if="{{post.images && post.images.length > 0}}">
+    <!-- 单张图片 -->
+    <view class="single-image" wx:if="{{post.images.length === 1}}" 
+          style="width: {{singleImageInfo.displayWidth}}rpx; height: {{singleImageInfo.displayHeight}}rpx;">
+      <!-- 骨架屏占位 -->
+      <view class="image-skeleton single-skeleton {{imageLoadStates[post.images[0].url || post.images[0]] === 'show' ? '' : 'show'}}">
+        <view class="skeleton-shimmer"></view>
       </view>
+      
+      <image 
+        class="post-image-single {{singleImageInfo.styleClass}} {{imageLoadStates[post.images[0].url || post.images[0]] === 'show' ? 'loaded' : 'loading'}}" 
+        src="{{post.images[0].url || post.images[0]}}" 
+        mode="{{singleImageInfo.mode}}"
+        bindload="onSingleImageLoad"
+        binderror="onImageError"
+        bindtap="onPreviewImage"
+        data-current="{{post.images[0].url || post.images[0]}}"
+        data-src="{{post.images[0].url || post.images[0]}}"
+        wx:if="{{post.images[0]}}"
+      ></image>
     </view>
 
-    <!-- 帖子内容区域 -->
-    <view class="post-content">
-    <!-- 文字内容 -->
-    <view class="post-text" wx:if="{{post.content}}">
-      <text>{{post.content}}</text>
-    </view>
-
-    <!-- 图片内容 -->
-    <view class="post-images" wx:if="{{post.images && post.images.length > 0}}">
-      <!-- 单张图片 -->
-      <view class="single-image" wx:if="{{post.images.length === 1}}" 
-            style="width: {{singleImageInfo.displayWidth}}rpx; height: {{singleImageInfo.displayHeight}}rpx;">
-        <!-- 骨架屏占位 -->
-        <view class="image-skeleton single-skeleton {{imageLoadStates[post.images[0].url || post.images[0]] === 'show' ? '' : 'show'}}">
+    <!-- 多张图片网格 -->
+    <view class="images-grid" wx:else>
+      <view 
+        class="grid-item {{post.images.length === 2 ? 'two-cols' : post.images.length === 4 ? 'two-cols' : 'three-cols'}}"
+        wx:for="{{post.images}}" 
+        wx:key="*this"
+        wx:if="{{index < 9}}"
+      >
+        <!-- 网格图片骨架屏 -->
+        <view class="image-skeleton grid-skeleton {{imageLoadStates[item.url || item] === 'show' ? '' : 'show'}}">
           <view class="skeleton-shimmer"></view>
         </view>
         
         <image 
-          class="post-image-single {{singleImageInfo.styleClass}} {{imageLoadStates[post.images[0].url || post.images[0]] === 'show' ? 'loaded' : 'loading'}}" 
-          src="{{post.images[0].url || post.images[0]}}" 
-          mode="{{singleImageInfo.mode}}"
-          bindload="onSingleImageLoad"
+          class="post-image-grid {{imageLoadStates[item.url || item] === 'show' ? 'loaded' : 'loading'}}" 
+          src="{{item.url || item}}" 
+          mode="aspectFill"
+          bindload="onGridImageLoad"
           binderror="onImageError"
           bindtap="onPreviewImage"
-          data-current="{{post.images[0].url || post.images[0]}}"
-          data-src="{{post.images[0].url || post.images[0]}}"
-          wx:if="{{post.images[0]}}"
+          data-current="{{item.url || item}}"
+          data-src="{{item.url || item}}"
+          wx:if="{{item}}"
         ></image>
       </view>
+      
+      <!-- 更多图片提示 -->
+      <view class="more-images-tip" wx:if="{{post.images.length > 9}}">
+        <text>+{{post.images.length - 9}}</text>
+      </view>
+    </view>
+  </view>
 
-      <!-- 多张图片网格 -->
-      <view class="images-grid" wx:else>
-        <view 
-          class="grid-item {{post.images.length === 2 ? 'two-cols' : post.images.length === 4 ? 'two-cols' : 'three-cols'}}"
-          wx:for="{{post.images}}" 
-          wx:key="*this"
-          wx:if="{{index < 9}}"
-        >
-          <!-- 网格图片骨架屏 -->
-          <view class="image-skeleton grid-skeleton {{imageLoadStates[item.url || item] === 'show' ? '' : 'show'}}">
-            <view class="skeleton-shimmer"></view>
-          </view>
-          
-          <image 
-            class="post-image-grid {{imageLoadStates[item.url || item] === 'show' ? 'loaded' : 'loading'}}" 
-            src="{{item.url || item}}" 
-            mode="aspectFill"
-            bindload="onGridImageLoad"
-            binderror="onImageError"
-            bindtap="onPreviewImage"
-            data-current="{{item.url || item}}"
-            data-src="{{item.url || item}}"
-            wx:if="{{item}}"
-          ></image>
-        </view>
-        
-        <!-- 更多图片提示 -->
-        <view class="more-images-tip" wx:if="{{post.images.length > 9}}">
-          <text>+{{post.images.length - 9}}</text>
+  <!-- 位置信息显示 -->
+  <view class="post-location-meta" wx:if="{{post.location}}">
+    <text class="post-location">{{post.location}}</text>
+  </view>
+
+  <!-- 帖子底部：点赞和评论 -->
+  <view class="post-footer">
+    <!-- 点赞列表 -->
+    <view class="likes-section" wx:if="{{post.likes && post.likes.length > 0}}">
+      <view class="likes-container">
+        <image class="like-icon" src="/assets/icons/like.svg" mode="aspectFit"></image>
+        <view class="likes-text">
+          <text wx:if="{{post.likedUsers && post.likedUsers.length > 0}}"><text wx:for="{{post.likedUsers}}" wx:for-item="user" wx:key="_id" wx:for-index="idx"><text class="liked-username">{{user.username}}</text><text wx:if="{{idx < post.likedUsers.length - 1}}" decode="{{true}}">&nbsp;&nbsp;</text></text><text decode="{{true}}">&nbsp;&nbsp;&nbsp;</text>觉得很赞</text>
+          <text wx:else>{{post.likes.length}}人觉得很赞</text>
         </view>
       </view>
     </view>
-    
-      <!-- 位置信息显示 -->
-    <view class="post-location-meta" wx:if="{{post.location}}">
-      <text class="post-location">{{post.location}}</text>
-    </view>
 
-      <!-- 帖子底部：点赞和评论 -->
-      <view class="post-footer">
-        <!-- 点赞列表 -->
-        <view class="likes-section" wx:if="{{post.likes && post.likes.length > 0}}">
-          <view class="likes-container">
-            <image class="like-icon" src="/assets/icons/like.svg" mode="aspectFit"></image>
-            <view class="likes-text">
-              <text wx:if="{{post.likedUsers && post.likedUsers.length > 0}}"><text wx:for="{{post.likedUsers}}" wx:for-item="user" wx:key="_id" wx:for-index="idx"><text class="liked-username">{{user.username}}</text><text wx:if="{{idx < post.likedUsers.length - 1}}" decode="{{true}}">&nbsp;&nbsp;</text></text><text decode="{{true}}">&nbsp;&nbsp;&nbsp;</text>觉得很赞</text>
-              <text wx:else>{{post.likes.length}}人觉得很赞</text>
+    <!-- 评论列表 -->
+    <view class="comments-section" wx:if="{{post.comments && post.comments.length > 0}}">
+      <view class="comments-container">
+        <!-- 显示部分评论 -->
+        <view 
+          class="comment-item" 
+          id="comment-{{comment._id}}"
+          wx:for="{{displayComments}}" 
+          wx:for-item="comment" 
+          wx:key="_id"
+        >
+          <!-- 评论头像 -->
+          <image 
+            class="comment-avatar" 
+            src="{{comment.author.avatar || '/images/default_avatar.png'}}" 
+            mode="aspectFill"
+            bindtap="onTapCommentAvatar"
+            data-user="{{comment.author}}"
+          ></image>
+          
+          <!-- 评论内容区域 -->
+          <view class="comment-content-wrapper">
+            <!-- 用户名和时间 -->
+            <view class="comment-header">
+              <text class="comment-author">{{comment.author ? (comment.author.username || comment.author.name || '匿名用户') : '匿名用户'}}</text>
+              <!-- 如果是回复用户的评论，在用户名后显示回复目标 -->
+              <text wx:if="{{comment.replyTo}}" class="reply-indicator">·</text>
+              <text wx:if="{{comment.replyTo}}" class="reply-indicator">回复</text>
+              <text wx:if="{{comment.replyTo}}" class="reply-target">@{{comment.replyTo.username || comment.replyTo.name || '未知用户'}}</text>
+              <text>·</text>
+              <text class="comment-time">{{comment.formattedTime || '刚刚'}}</text>
             </view>
-          </view>
-        </view>
-
-        <!-- 评论列表 -->
-        <view class="comments-section" wx:if="{{post.comments && post.comments.length > 0}}">
-          <view class="comments-container">
-            <!-- 显示部分评论 -->
-            <view 
-              class="comment-item" 
-              id="comment-{{comment._id}}"
-              wx:for="{{displayComments}}" 
-              wx:for-item="comment" 
-              wx:key="_id"
-            >
-              <!-- 评论头像 -->
-              <image 
-                class="comment-avatar" 
-                src="{{comment.author.avatar || '/images/default_avatar.png'}}" 
-                mode="aspectFill"
-                bindtap="onTapCommentAvatar"
-                data-user="{{comment.author}}"
-              ></image>
-              
-              <!-- 评论内容区域 -->
-              <view class="comment-content-wrapper">
-                <!-- 用户名和时间 -->
-                <view class="comment-header">
-                  <text class="comment-author">{{comment.author ? (comment.author.username || comment.author.name || '匿名用户') : '匿名用户'}}</text>
-                  <!-- 如果是回复用户的评论，在用户名后显示回复目标 -->
-                  <text wx:if="{{comment.replyTo}}" class="reply-indicator">·</text>
-                  <text wx:if="{{comment.replyTo}}" class="reply-indicator">回复</text>
-                  <text wx:if="{{comment.replyTo}}" class="reply-target">@{{comment.replyTo.username || comment.replyTo.name || '未知用户'}}</text>
-                  <text>·</text>
-                  <text class="comment-time">{{comment.formattedTime || '刚刚'}}</text>
-                </view>
-                
-                <!-- 评论内容 -->
-                <view class="comment-content">
-                  <text class="comment-text-flow">
-                    <text 
-                      class="comment-main-text"
-                      catchtap="onReplyComment"
-                      data-user-id="{{comment.author ? comment.author._id : ''}}"
-                      data-username="{{comment.author ? (comment.author.username || comment.author.name) : '匿名用户'}}"
-                      data-comment-id="{{comment._id}}">{{comment.content || '内容为空'}}</text><text class="comment-space" decode="{{true}}"></text>
-                  </text>
-                  <view class="comment-actions-container">
-                    <text 
-                      class="reply-btn"
-                      catchtap="onReplyComment"
-                      data-user-id="{{comment.author ? comment.author._id : ''}}"
-                      data-username="{{comment.author ? (comment.author.username || comment.author.name) : '匿名用户'}}"
-                      data-comment-id="{{comment._id}}">回复</text>
-                    <image 
-                      class="delete-comment-btn" 
-                      wx:if="{{showActions && comment.author && currentUser._id && currentUser._id === comment.author._id}}"
-                      catchtap="onDeleteComment"
-                      data-comment-id="{{comment._id}}"
-                      src="/assets/icons/delete.svg"
-                      mode="aspectFit"
-                    ></image>
-                  </view>
-                </view>
+            
+            <!-- 评论内容 -->
+            <view class="comment-content">
+              <text class="comment-text-flow">
+                <text 
+                  class="comment-main-text"
+                  catchtap="onReplyComment"
+                  data-user-id="{{comment.author ? comment.author._id : ''}}"
+                  data-username="{{comment.author ? (comment.author.username || comment.author.name) : '匿名用户'}}"
+                  data-comment-id="{{comment._id}}">{{comment.content || '内容为空'}}</text><text class="comment-space" decode="{{true}}"></text>
+              </text>
+              <view class="comment-actions-container">
+                <text 
+                  class="reply-btn"
+                  catchtap="onReplyComment"
+                  data-user-id="{{comment.author ? comment.author._id : ''}}"
+                  data-username="{{comment.author ? (comment.author.username || comment.author.name) : '匿名用户'}}"
+                  data-comment-id="{{comment._id}}">回复</text>
+                <image 
+                  class="delete-comment-btn" 
+                  wx:if="{{showActions && comment.author && currentUser._id && currentUser._id === comment.author._id}}"
+                  catchtap="onDeleteComment"
+                  data-comment-id="{{comment._id}}"
+                  src="/assets/icons/delete.svg"
+                  mode="aspectFit"
+                ></image>
               </view>
             </view>
-
-            <!-- 展开/收起评论 -->
-            <view 
-              class="comments-toggle" 
-              wx:if="{{post.comments.length > maxCommentsShow}}"
-              bindtap="toggleComments"
-            >
-              <view class="toggle-dash"></view>
-              <text class="toggle-text">{{commentsExpanded ? '收起更多评论' : '查看全部' + post.comments.length + '条评论'}}</text>
-              <image class="toggle-icon" src="{{commentsExpanded ? '/assets/icons/up.svg' : '/assets/icons/down.svg'}}" mode="aspectFit"></image>
-            </view>
           </view>
         </view>
+
+        <!-- 展开/收起评论 -->
+        <view 
+          class="comments-toggle" 
+          wx:if="{{post.comments.length > maxCommentsShow}}"
+          bindtap="toggleComments"
+        >
+          <view class="toggle-dash"></view>
+          <text class="toggle-text">{{commentsExpanded ? '收起更多评论' : '查看全部' + post.comments.length + '条评论'}}</text>
+          <image class="toggle-icon" src="{{commentsExpanded ? '/assets/icons/up.svg' : '/assets/icons/down.svg'}}" mode="aspectFit"></image>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作菜单容器（隐藏的，由details页面的按钮触发） -->
+  <view class="actions-menu-container">
+    <!-- 下拉式操作菜单 -->
+    <view class="dropdown-menu {{showActions && showActionsMenu ? 'show' : 'hide'}}">
+      <!-- 点赞按钮 -->
+      <view class="dropdown-item" catchtap="onLikeFromPopup">
+        <image class="dropdown-icon" src="/assets/icons/like.svg" mode="aspectFit"></image>
+        <text class="dropdown-text">{{post.isLiked ? '取消点赞' : '点赞'}}</text>
+      </view>
+      
+      <!-- 评论按钮 -->
+      <view class="dropdown-item" catchtap="onCommentFromPopup">
+        <image class="dropdown-icon comment-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
+        <text class="dropdown-text">评论</text>
+      </view>
+      
+      <!-- 删除按钮（仅作者可见） -->
+      <view 
+        class="dropdown-item delete-item" 
+        wx:if="{{currentUser && currentUser._id && post.author && post.author._id && currentUser._id === post.author._id}}"
+        catchtap="onDeleteFromPopup"
+      >
+        <image class="dropdown-icon" src="/assets/icons/delete.svg" mode="aspectFit"></image>
+        <text class="dropdown-text">删除</text>
       </view>
     </view>
   </view>

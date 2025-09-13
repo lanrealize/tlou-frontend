@@ -127,9 +127,36 @@
               <view class="time-dot"></view>
             </view>
             
-            <!-- 右上：时间标签 -->
+            <!-- 右上：头像 + 昵称 + · + 时间标签 + 三点按钮 -->
             <view class="post-time-header">
+              <!-- 用户头像（小圆形） -->
+              <image 
+                class="user-avatar-small" 
+                src="{{item.author.avatar || '/images/default_avatar.png'}}" 
+                mode="aspectFill"
+                bindtap="onTapAvatar"
+                data-user="{{item.author}}"
+                data-post="{{item}}"
+              ></image>
+              
+              <!-- 用户昵称 -->
+              <text class="username-inline" 
+                    bindtap="onTapAvatar"
+                    data-user="{{item.author}}"
+                    data-post="{{item}}">{{item.author.username || item.author.name || '未知用户'}}</text>
+              
+              <!-- 分隔符 -->
+              <text class="separator">·</text>
+              
+              <!-- 时间标签 -->
               <text class="post-time">{{item.formattedTime || '刚刚'}}</text>
+              
+              <!-- 三点操作按钮 -->
+              <view class="actions-menu-btn" 
+                    bindtap="toggleActionsMenu"
+                    data-post-id="{{item._id}}">
+                <image class="menu-dots-icon" src="/assets/icons/more.svg" mode="aspectFit"></image>
+              </view>
             </view>
             
             <!-- 左下：时间线空间容器 -->
@@ -143,6 +170,7 @@
                 post="{{item}}"
                 current-user="{{currentUser}}"
                 show-actions="{{true}}"
+                show-actions-menu="{{activeMenuPostId === item._id}}"
                 bind:like="onPostLike"
                 bind:comment="onPostComment"
                 bind:replyComment="onPostReplyComment"
@@ -150,6 +178,7 @@
                 bind:deleteComment="onCommentDelete"
                 bind:previewImage="onPreviewImage"
                 bind:tapAvatar="onTapAvatar"
+                bind:hideActionsMenu="hideActionsMenu"
               ></post-item>
             </view>
           </view>

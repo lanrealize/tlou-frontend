@@ -1,47 +1,16 @@
 /* components/post-item/post-item.wxss */
 
 .post-item {
-  background-color: transparent; /* 移除背景，由外层卡片提供 */
-  margin: 0; /* 移除外边距，由时间轴布局控制 */
+  background-color: transparent; /* 完全去除卡片风格 */
+  margin: 0;
+  padding: 0;
   display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 20rpx;
+  flex-direction: column; /* 改为垂直布局 */
+  width: 100%;
+  position: relative; /* 为操作菜单定位提供参考 */
 }
 
-.user-avatar {
-  width: 76rpx;
-  height: 76rpx;
-  border-radius: 10rpx;
-  flex-shrink: 0;
-  margin-right: 15rpx;
-}
-
-/* 右侧内容区域 */
-.post-right-content {
-  flex: 1;
-  min-width: 0; /* 防止flex子元素溢出 */
-  display: flex;
-  flex-direction: column;
-}
-
-.user-info-header {
-  position: relative; /* 为actions-menu-container的绝对定位提供定位上下文 */
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8rpx;
-  /* 容器高度严格跟随username内容，不被按钮影响 */
-  height: auto; 
-  overflow: visible; /* 允许actions-menu-container溢出 */
-}
-
-.username {
-  font-size: 28rpx;
-  color: #000000;
-  line-height: 1.2; /* 紧凑行高 = 字体大小 = 28rpx */
-  flex: 1;
-  /* username决定容器的实际高度 */
-}
+/* 移除了不再使用的第一行样式 */
 
 .post-meta {
   display: flex;
@@ -53,42 +22,12 @@
   color: #808080;
 }
 
-/* 三点操作按钮容器 */
+/* 操作菜单容器 - 由details页面的按钮触发 */
 .actions-menu-container {
   position: absolute;
+  top: 0;
   right: 0;
-  top: 50%; /* 相对于父容器垂直居中 */
-  transform: translateY(-50%); /* 精确垂直居中 */
-  /* 
-   * 优雅的溢出设计：
-   * - 父容器高度严格跟随username (≈28rpx)
-   * - 此容器通过绝对定位在父容器中垂直居中
-   * - 60rpx按钮自然从28rpx容器中溢出
-   * - 完全自适应，无硬编码
-   */
-}
-
-/* 三点操作按钮 */
-.actions-menu-btn {
-  width: 60rpx;
-  height: 60rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-  position: relative;
-  z-index: 5;
-}
-
-.actions-menu-btn:active {
-  background-color: rgba(0, 0, 0, 0.1);
-  transform: scale(0.9);
-}
-
-.menu-dots-icon {
-  width: 36rpx;
-  height: 36rpx;
+  z-index: 10;
 }
 
 /* 下拉式操作菜单 */
@@ -182,23 +121,24 @@
   color: #f44336;
 }
 
-/* 帖子内容区域 */
-.post-content {
-  text-align: left;
-}
-
+/* 第二行：分享的文字内容 */
 .post-text {
   font-size: 28rpx;
   line-height: 1.6;
-  color: #8b8888;
-  margin-bottom: 25rpx;
+  color: #333333;
+  margin-bottom: 20rpx;
   word-wrap: break-word;
+  text-align: left;
+  /* 与时间左对齐 */
+  padding-left: 0;
 }
 
-/* 图片区域 */
+/* 第三行：图片区域 */
 .post-images {
-  margin-bottom: 10rpx;
+  margin-bottom: 15rpx;
   max-width: 100%;
+  /* 与时间左对齐 */
+  padding-left: 0;
 }
 
 /* 单张图片容器 */

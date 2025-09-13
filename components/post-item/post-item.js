@@ -18,6 +18,11 @@ Component({
     showActions: {
       type: Boolean,
       value: true
+    },
+    // 是否显示操作菜单（由外部控制）
+    showActionsMenu: {
+      type: Boolean,
+      value: false
     }
   },
 
@@ -33,8 +38,7 @@ Component({
     maxCommentsShow: 3,
     // 显示的评论列表
     displayComments: [],
-    // 弹出菜单显示状态
-    showActionsMenu: false,
+    // 移除了内部菜单状态，现在由外部控制
     // 单张图片的方向和样式信息
     singleImageInfo: {
       isPortrait: false,
@@ -300,36 +304,29 @@ Component({
       });
     },
 
-    // 切换操作菜单显示状态
-    toggleActionsMenu() {
-      this.setData({
-        showActionsMenu: !this.data.showActionsMenu
-      });
-    },
-
-    // 隐藏操作菜单
-    hideActionsMenu() {
-      this.setData({
-        showActionsMenu: false
-      });
-    },
+    // 操作菜单现在由外部控制，移除了相关方法
 
     // 从弹出菜单点赞
     onLikeFromPopup() {
-      this.hideActionsMenu();
+      this.triggerEvent('hideActionsMenu');
       this.onLike();
     },
 
     // 从弹出菜单评论
     onCommentFromPopup() {
-      this.hideActionsMenu();
+      this.triggerEvent('hideActionsMenu');
       this.onComment();
     },
 
     // 从弹出菜单删除
     onDeleteFromPopup() {
-      this.hideActionsMenu();
+      this.triggerEvent('hideActionsMenu');
       this.onDeletePost();
+    },
+
+    // 隐藏操作菜单（点击遮罩层时调用）
+    hideActionsMenu() {
+      this.triggerEvent('hideActionsMenu');
     },
 
     // 单张图片加载完成，检测图片方向（降级方案）

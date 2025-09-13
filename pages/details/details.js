@@ -18,6 +18,7 @@ Page({
     selectedPostId: '',   // 当前选中的帖子ID（用于评论）
     showCommentInput: false, // 是否显示评论输入框
     focusInput: false,    // 是否聚焦输入框
+    activeMenuPostId: '', // 当前显示操作菜单的帖子ID
     
     // 邀请相关状态
     isInviteMode: false,  // 是否为邀请模式
@@ -769,6 +770,25 @@ Page({
   },
 
   // ===== 帖子组件事件处理 =====
+
+  // 切换操作菜单显示状态
+  toggleActionsMenu(e) {
+    const { postId } = e.currentTarget.dataset;
+    
+    // 如果当前已经显示这个帖子的菜单，则隐藏；否则显示这个帖子的菜单
+    const newActiveMenuPostId = this.data.activeMenuPostId === postId ? '' : postId;
+    
+    this.setData({
+      activeMenuPostId: newActiveMenuPostId
+    });
+  },
+
+  // 隐藏操作菜单
+  hideActionsMenu() {
+    this.setData({
+      activeMenuPostId: ''
+    });
+  },
 
   // 点赞/取消点赞
   async onPostLike(e) {
