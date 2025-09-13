@@ -1,8 +1,8 @@
 /* components/post-item/post-item.wxss */
 
 .post-item {
-  background-color: #ffffff;
-  margin: 20rpx 20rpx 25rpx 25rpx;
+  background-color: transparent; /* 移除背景，由外层卡片提供 */
+  margin: 0; /* 移除外边距，由时间轴布局控制 */
   display: flex;
   flex-direction: row;
   align-items: flex-start;
@@ -25,20 +25,27 @@
   flex-direction: column;
 }
 
-.username {
-  font-size: 32rpx;
-  color: #000000;
+.user-info-header {
+  position: relative; /* 为actions-menu-container的绝对定位提供定位上下文 */
+  display: flex;
+  justify-content: space-between;
   margin-bottom: 8rpx;
+  /* 容器高度严格跟随username内容，不被按钮影响 */
+  height: auto; 
+  overflow: visible; /* 允许actions-menu-container溢出 */
+}
+
+.username {
+  font-size: 28rpx;
+  color: #000000;
+  line-height: 1.2; /* 紧凑行高 = 字体大小 = 28rpx */
+  flex: 1;
+  /* username决定容器的实际高度 */
 }
 
 .post-meta {
   display: flex;
   align-items: center;
-}
-
-.post-time {
-  font-size: 28rpx;
-  color: #808080;
 }
 
 .post-location {
@@ -48,31 +55,40 @@
 
 /* 三点操作按钮容器 */
 .actions-menu-container {
-  position: relative;
+  position: absolute;
+  right: 0;
+  top: 50%; /* 相对于父容器垂直居中 */
+  transform: translateY(-50%); /* 精确垂直居中 */
+  /* 
+   * 优雅的溢出设计：
+   * - 父容器高度严格跟随username (≈28rpx)
+   * - 此容器通过绝对定位在父容器中垂直居中
+   * - 60rpx按钮自然从28rpx容器中溢出
+   * - 完全自适应，无硬编码
+   */
 }
 
 /* 三点操作按钮 */
 .actions-menu-btn {
-  width: 90rpx;
-  height: 45rpx;
+  width: 60rpx;
+  height: 60rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #F0F5FF;
-  border-radius: 5rpx;
+  border-radius: 50%;
   transition: all 0.2s ease;
   position: relative;
   z-index: 5;
 }
 
 .actions-menu-btn:active {
-  background-color: #f0f0f0;
-  transform: scale(0.95);
+  background-color: rgba(0, 0, 0, 0.1);
+  transform: scale(0.9);
 }
 
 .menu-dots-icon {
-  width: 42rpx;
-  height: 42rpx;
+  width: 36rpx;
+  height: 36rpx;
 }
 
 /* 下拉式操作菜单 */
@@ -101,8 +117,9 @@
 
 .dropdown-menu {
   position: absolute;
-  right: 110%;
-  top: 0;
+  right: 0;
+  top: 100%;
+  margin-top: 10rpx;
   background-color: #ffffff;
   border-radius: 12rpx;
   box-shadow: 0rpx 4rpx 12rpx rgba(0, 0, 0, 0.15);
@@ -173,7 +190,7 @@
 .post-text {
   font-size: 28rpx;
   line-height: 1.6;
-  color: #000000;
+  color: #8b8888;
   margin-bottom: 25rpx;
   word-wrap: break-word;
 }
@@ -330,13 +347,9 @@
   transition: opacity 0.3s ease;
 }
 
-/* 帖子时间地点和操作按钮区域 */
-.post-bottom-meta {
-  margin-top: 25rpx;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 10rpx;
+/* 位置信息显示区域 */
+.post-location-meta {
+  margin-top: 15rpx;
 }
 
 /* 帖子底部 */

@@ -13,6 +13,38 @@
     <!-- 用户信息区域 -->
     <view class="user-info-header">
       <view class="username">{{post.author.username || post.author.name || '未知用户'}}</view>
+      
+      <!-- 三点操作按钮容器 -->
+      <view class="actions-menu-container">
+        <view class="actions-menu-btn" bindtap="toggleActionsMenu">
+          <image class="menu-dots-icon" src="/assets/icons/more.svg" mode="aspectFit"></image>
+        </view>
+        
+        <!-- 下拉式操作菜单 -->
+        <view class="dropdown-menu {{showActions && showActionsMenu ? 'show' : 'hide'}}">
+          <!-- 点赞按钮 -->
+          <view class="dropdown-item" catchtap="onLikeFromPopup">
+            <image class="dropdown-icon" src="/assets/icons/like.svg" mode="aspectFit"></image>
+            <text class="dropdown-text">{{post.isLiked ? '取消点赞' : '点赞'}}</text>
+          </view>
+          
+          <!-- 评论按钮 -->
+          <view class="dropdown-item" catchtap="onCommentFromPopup">
+            <image class="dropdown-icon comment-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
+            <text class="dropdown-text">评论</text>
+          </view>
+          
+          <!-- 删除按钮（仅作者可见） -->
+          <view 
+            class="dropdown-item delete-item" 
+            wx:if="{{currentUser && currentUser._id && post.author && post.author._id && currentUser._id === post.author._id}}"
+            catchtap="onDeleteFromPopup"
+          >
+            <image class="dropdown-icon" src="/assets/icons/delete.svg" mode="aspectFit"></image>
+            <text class="dropdown-text">删除</text>
+          </view>
+        </view>
+      </view>
     </view>
 
     <!-- 帖子内容区域 -->
@@ -78,44 +110,9 @@
       </view>
     </view>
     
-      <!-- 帖子时间地点和操作按钮 -->
-    <view class="post-bottom-meta">
-      <view class="post-meta">
-        <text class="post-time">{{post.formattedTime || '刚刚'}}</text>
-        <text class="post-location" wx:if="{{post.location}}">· {{post.location}}</text>
-      </view>
-      
-      <!-- 三点操作按钮容器 -->
-      <view class="actions-menu-container">
-        <view class="actions-menu-btn" bindtap="toggleActionsMenu">
-          <image class="menu-dots-icon" src="/assets/icons/more.svg" mode="aspectFit"></image>
-        </view>
-        
-        <!-- 下拉式操作菜单 -->
-        <view class="dropdown-menu {{showActions && showActionsMenu ? 'show' : 'hide'}}">
-          <!-- 点赞按钮 -->
-          <view class="dropdown-item" catchtap="onLikeFromPopup">
-            <image class="dropdown-icon" src="/assets/icons/like.svg" mode="aspectFit"></image>
-            <text class="dropdown-text">{{post.isLiked ? '取消点赞' : '点赞'}}</text>
-          </view>
-          
-          <!-- 评论按钮 -->
-          <view class="dropdown-item" catchtap="onCommentFromPopup">
-            <image class="dropdown-icon comment-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
-            <text class="dropdown-text">评论</text>
-          </view>
-          
-          <!-- 删除按钮（仅作者可见） -->
-          <view 
-            class="dropdown-item delete-item" 
-            wx:if="{{currentUser && currentUser._id && post.author && post.author._id && currentUser._id === post.author._id}}"
-            catchtap="onDeleteFromPopup"
-          >
-            <image class="dropdown-icon" src="/assets/icons/delete.svg" mode="aspectFit"></image>
-            <text class="dropdown-text">删除</text>
-          </view>
-        </view>
-      </view>
+      <!-- 位置信息显示 -->
+    <view class="post-location-meta" wx:if="{{post.location}}">
+      <text class="post-location">{{post.location}}</text>
     </view>
 
       <!-- 帖子底部：点赞和评论 -->
@@ -201,7 +198,7 @@
               bindtap="toggleComments"
             >
               <view class="toggle-dash"></view>
-              <text class="toggle-text">{{commentsExpanded ? '收起评论' : '查看全部' + post.comments.length + '条评论'}}</text>
+              <text class="toggle-text">{{commentsExpanded ? '收起更多评论' : '查看全部' + post.comments.length + '条评论'}}</text>
               <image class="toggle-icon" src="{{commentsExpanded ? '/assets/icons/up.svg' : '/assets/icons/down.svg'}}" mode="aspectFit"></image>
             </view>
           </view>

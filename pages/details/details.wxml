@@ -104,40 +104,78 @@
         </view>
       </view>
 
-      <!-- 帖子列表区域 -->
-      <view class="posts-container">
+      <!-- 时间轴帖子列表区域 -->
+      <view class="timeline-container">
         <!-- 空状态 -->
         <view class="empty-content" wx:if="{{posts.length === 0 && !loading}}">
-          <view class="empty-title">朋友圈内容为空</view>
-          <view class="empty-subtitle">还没有人发布动态，快来发布第一条吧！</view>
+          <view class="empty-icon">📝</view>
+          <view class="empty-title">这里还没有任何动态</view>
+          <view class="empty-subtitle">快来发布第一条动态，开始记录美好时光吧！</view>
         </view>
 
-        <!-- 帖子列表 -->
-        <view class="posts-list" wx:else>
-          <post-item
-            wx:for="{{posts}}"
+        <!-- 时间轴帖子列表 - Grid布局 -->
+        <view class="timeline-posts" wx:else>
+          <!-- 帖子列表 -->
+          <view 
+            class="timeline-item" 
+            wx:for="{{posts}}" 
             wx:key="_id"
-            post="{{item}}"
-            current-user="{{currentUser}}"
-            show-actions="{{true}}"
-            bind:like="onPostLike"
-            bind:comment="onPostComment"
-            bind:replyComment="onPostReplyComment"
-            bind:deletePost="onPostDelete"
-            bind:deleteComment="onCommentDelete"
-            bind:previewImage="onPreviewImage"
-            bind:tapAvatar="onTapAvatar"
-
-          ></post-item>
-
-          <!-- 加载更多提示 -->
-          <view class="load-more" wx:if="{{hasMore && posts.length > 0}}">
-            <text class="load-more-text">上拉加载更多</text>
+            wx:for-index="index"
+          >
+            <!-- 左上：时间点容器 -->
+            <view class="time-dot-container">
+              <view class="time-dot"></view>
+            </view>
+            
+            <!-- 右上：时间标签 -->
+            <view class="post-time-header">
+              <text class="post-time">{{item.formattedTime || '刚刚'}}</text>
+            </view>
+            
+            <!-- 左下：时间线空间容器 -->
+            <view class="timeline-space-container">
+              <view class="timeline-line"></view>
+            </view>
+            
+            <!-- 右下：帖子内容卡片 -->
+            <view class="post-card">
+              <post-item
+                post="{{item}}"
+                current-user="{{currentUser}}"
+                show-actions="{{true}}"
+                bind:like="onPostLike"
+                bind:comment="onPostComment"
+                bind:replyComment="onPostReplyComment"
+                bind:deletePost="onPostDelete"
+                bind:deleteComment="onCommentDelete"
+                bind:previewImage="onPreviewImage"
+                bind:tapAvatar="onTapAvatar"
+              ></post-item>
+            </view>
           </view>
 
-          <!-- 没有更多数据提示 -->
-          <view class="no-more" wx:if="{{!hasMore && posts.length > 0}}">
-            <text class="no-more-text">没有更多动态了</text>
+          <!-- 加载更多提示 - 4区域Grid布局 -->
+          <view class="timeline-item timeline-load-more" wx:if="{{hasMore && posts.length > 0}}">
+            <view class="time-dot-container">
+              <view class="load-more-dot loading-dot"></view>
+            </view>
+            <text class="load-more-text">上拉加载更多</text>
+            <view class="timeline-space-container">
+              <view class="timeline-line"></view>
+            </view>
+            <view></view>
+          </view>
+
+          <!-- 没有更多数据提示 - 4区域Grid布局 -->
+          <view class="timeline-item timeline-no-more" wx:if="{{!hasMore && posts.length > 0}}">
+            <view class="time-dot-container">
+              <view class="no-more-dot"></view>
+            </view>
+            <text class="no-more-text">— 所有回忆都在这里了 —</text>
+            <view class="timeline-space-container">
+              <!-- 结束状态不需要线条 -->
+            </view>
+            <view></view>
           </view>
         </view>
       </view>
