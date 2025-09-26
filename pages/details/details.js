@@ -38,6 +38,9 @@ Page({
     lastDataLoadTime: 0,  // 上次数据加载时间
     needsDataRefresh: true, // 是否需要刷新数据
     
+    // 滑动卡片相关
+    removedPosts: [], // 已移除的帖子索引
+    
     // 🔧 帖子数据（确保字段存在，用于同步设置）
     posts: [],            // 帖子列表
     loading: false,       // 加载状态
@@ -55,7 +58,37 @@ Page({
       navigationBarHeight: 44,
       totalNavigationHeight: 88,
       capsuleVerticalCenter: 22
-    }
+    },
+    
+    // 创意卡片系统数据
+    currentCardIndex: 0,        // 当前显示的卡片索引
+    cardTransforms: {},         // 卡片变换样式
+    cardAnimating: false,       // 卡片动画状态
+    
+    // 触摸相关数据
+    touchStartX: 0,             // 触摸开始X坐标
+    touchStartY: 0,             // 触摸开始Y坐标
+    touchCurrentX: 0,           // 当前触摸X坐标
+    touchCurrentY: 0,           // 当前触摸Y坐标
+    isDragging: false,          // 是否正在拖拽
+    
+    // 详情弹窗数据
+    showCardDetail: false,      // 是否显示卡片详情
+    currentDetailPost: null,    // 当前详情帖子
+    
+    // 渐变背景数组
+    gradientBackgrounds: [
+      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+      'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+      'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+      'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+      'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+      'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+      'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+      'linear-gradient(135deg, #fecfef 0%, #fecfef 100%)',
+      'linear-gradient(135deg, #96fbc4 0%, #f9f586 100%)'
+    ]
   },
 
   onLoad(options) {
@@ -457,6 +490,11 @@ Page({
       
       if (canViewPosts) {
         await this.loadPosts(this.data.circleId);
+        
+        // 初始化卡片系统（在帖子加载完成后）
+        setTimeout(() => {
+          this.initCardSystem();
+        }, 100);
       }
 
     } catch (error) {
@@ -1097,5 +1135,480 @@ Page({
     } finally {
       this.setData({ isApplying: false });
     }
+  },
+
+  // ===== 滑动卡片功能 =====
+  
+  /**
+   * 初始化卡片系统
+   */
+  initCardSystem() {
+    console.log('初始化滑动卡片系统');
+    
+    // 为每个帖子分配渐变背景
+    const posts = this.data.posts.map((post, index) => ({
+      ...post,
+      gradientBg: this.data.gradientBackgrounds[index % this.data.gradientBackgrounds.length]
+    }));
+    
+    this.setData({
+      posts,
+      currentCardIndex: 0,
+      removedPosts: []
+    });
+  },
+
+  /**
+   * 处理帖子滑动事件
+   */
+  onPostSwipe(e) {
+    const { direction, swipedPostIndex, currentCursor, swipedPost } = e.detail;
+    
+    console.log('帖子滑动:', {
+      direction,
+      swipedPostIndex,
+      currentCursor,
+      postId: swipedPost?._id
+    });
+    
+    // 更新当前卡片索引
+    this.setData({
+      currentCardIndex: currentCursor
+    });
+    
+    // 显示滑动反馈
+    wx.showToast({
+      title: `向${direction === 'left' ? '左' : '右'}滑动`,
+      icon: 'none',
+      duration: 1000
+    });
+    
+    // 可以在这里添加更多的滑动后处理逻辑
+    // 比如记录用户行为、推荐算法等
+  },
+
+  /**
+   * 处理帖子详情事件 - 来自滑动卡片组件
+   */
+  onPostDetail(e) {
+    const { post } = e.detail;
+    console.log('查看帖子详情:', post._id);
+    
+    this.setData({
+      showCardDetail: true,
+      currentDetailPost: post
+    });
+  },
+
+  /**
+   * 卡片触摸开始
+   */
+  onCardTouchStart(e) {
+    if (this.data.cardAnimating) return;
+    
+    const touch = e.touches[0];
+    this.setData({
+      touchStartX: touch.clientX,
+      touchStartY: touch.clientY,
+      touchCurrentX: touch.clientX,
+      touchCurrentY: touch.clientY,
+      isDragging: false
+    });
+  },
+
+  /**
+   * 卡片触摸移动 - 性能优化版本
+   */
+  onCardTouchMove(e) {
+    if (this.data.cardAnimating) return;
+    
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - this.data.touchStartX;
+    const deltaY = touch.clientY - this.data.touchStartY;
+    
+    // 如果移动距离超过阈值，开始拖拽
+    if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
+      // 节流处理 - 减少setData调用频率
+      const now = Date.now();
+      if (!this.lastTouchMoveTime || now - this.lastTouchMoveTime > 16) { // 约60fps
+        this.setData({
+          isDragging: true,
+          touchCurrentX: touch.clientX,
+          touchCurrentY: touch.clientY
+        });
+        
+        // 使用requestAnimationFrame优化动画
+        this.updateCardTransformThrottled(deltaX, deltaY);
+        this.lastTouchMoveTime = now;
+      } else {
+        // 即使不更新数据，也要更新当前触摸位置用于计算
+        this.touchCurrentX = touch.clientX;
+        this.touchCurrentY = touch.clientY;
+      }
+    }
+  },
+
+  /**
+   * 卡片触摸结束 - 性能优化版本
+   */
+  onCardTouchEnd(e) {
+    // 清理定时器
+    if (this.transformUpdateTimer) {
+      clearTimeout(this.transformUpdateTimer);
+      this.transformUpdateTimer = null;
+    }
+    
+    if (this.data.cardAnimating || !this.data.isDragging) {
+      this.setData({ isDragging: false });
+      return;
+    }
+    
+    // 使用缓存的触摸位置或当前数据
+    const deltaX = (this.touchCurrentX || this.data.touchCurrentX) - this.data.touchStartX;
+    const deltaY = (this.touchCurrentY || this.data.touchCurrentY) - this.data.touchStartY;
+    
+    // 降低切换阈值，提高响应速度
+    if (Math.abs(deltaX) > 80) {
+      if (deltaX > 0) {
+        this.previousCard();
+      } else {
+        this.nextCard();
+      }
+    }
+    // 垂直滑动执行其他操作
+    else if (Math.abs(deltaY) > 80) {
+      if (deltaY < 0) {
+        // 向上滑动点赞
+        this.quickLikeCurrentCard();
+      } else {
+        // 向下滑动跳过
+        this.skipCurrentCard();
+      }
+    }
+    // 小幅移动，回弹到原位
+    else {
+      this.resetCardTransformSmooth();
+    }
+    
+    this.setData({ isDragging: false });
+  },
+
+  /**
+   * 更新卡片变换 - 性能优化版本
+   */
+  updateCardTransform(deltaX, deltaY) {
+    const currentIndex = this.data.currentCardIndex;
+    const rotation = Math.max(-15, Math.min(15, deltaX * 0.03)); // 限制旋转角度
+    const scale = Math.max(0.9, Math.min(1, 1 - Math.abs(deltaX) * 0.0002)); // 限制缩放范围
+    
+    const transform = `translate3d(${deltaX * 0.6}px, ${deltaY * 0.4}px, 0) rotate(${rotation}deg) scale(${scale})`;
+    
+    this.setData({
+      [`cardTransforms[${currentIndex}]`]: transform
+    });
+  },
+
+  /**
+   * 节流版本的卡片变换更新
+   */
+  updateCardTransformThrottled(deltaX, deltaY) {
+    // 使用节流机制，避免过于频繁的更新
+    if (this.transformUpdateTimer) {
+      return;
+    }
+    
+    this.transformUpdateTimer = setTimeout(() => {
+      this.updateCardTransform(deltaX, deltaY);
+      this.transformUpdateTimer = null;
+    }, 8); // 约120fps的更新频率
+  },
+
+  /**
+   * 重置卡片变换
+   */
+  resetCardTransform() {
+    const currentIndex = this.data.currentCardIndex;
+    this.setData({
+      [`cardTransforms[${currentIndex}]`]: ''
+    });
+  },
+
+  /**
+   * 平滑重置卡片变换
+   */
+  resetCardTransformSmooth() {
+    const currentIndex = this.data.currentCardIndex;
+    // 使用CSS transition实现平滑回弹
+    this.setData({
+      [`cardTransforms[${currentIndex}]`]: 'translate3d(0, 0, 0) rotate(0deg) scale(1)'
+    });
+    
+    // 清理变换状态
+    setTimeout(() => {
+      this.setData({
+        [`cardTransforms[${currentIndex}]`]: ''
+      });
+    }, 150);
+  },
+
+  /**
+   * 切换到下一张卡片
+   */
+  nextCard() {
+    if (this.data.currentCardIndex >= this.data.posts.length - 1) {
+      wx.showToast({
+        title: '已经是最后一张了',
+        icon: 'none',
+        duration: 1000
+      });
+      this.resetCardTransform();
+      return;
+    }
+    
+    this.setData({ cardAnimating: true });
+    
+    // 执行切换动画
+    this.animateCardSwitch('next', () => {
+      this.setData({
+        currentCardIndex: this.data.currentCardIndex + 1,
+        cardAnimating: false
+      });
+      this.resetCardTransform();
+    });
+  },
+
+  /**
+   * 切换到上一张卡片
+   */
+  previousCard() {
+    if (this.data.currentCardIndex <= 0) {
+      wx.showToast({
+        title: '已经是第一张了',
+        icon: 'none',
+        duration: 1000
+      });
+      this.resetCardTransform();
+      return;
+    }
+    
+    this.setData({ cardAnimating: true });
+    
+    // 执行切换动画
+    this.animateCardSwitch('previous', () => {
+      this.setData({
+        currentCardIndex: this.data.currentCardIndex - 1,
+        cardAnimating: false
+      });
+      this.resetCardTransform();
+    });
+  },
+
+  /**
+   * 卡片切换动画 - 性能优化版本
+   */
+  animateCardSwitch(direction, callback) {
+    const currentIndex = this.data.currentCardIndex;
+    
+    // 使用translate3d和优化的动画参数
+    const exitTransform = direction === 'next' 
+      ? 'translate3d(-100%, 0, 0) rotate(-8deg) scale(0.85)' 
+      : 'translate3d(100%, 0, 0) rotate(8deg) scale(0.85)';
+    
+    this.setData({
+      [`cardTransforms[${currentIndex}]`]: exitTransform
+    });
+    
+    // 使用更短的动画时间提升响应速度
+    setTimeout(() => {
+      callback && callback();
+    }, 200);
+  },
+
+  /**
+   * 快速点赞当前卡片
+   */
+  quickLikeCurrentCard() {
+    const currentPost = this.data.posts[this.data.currentCardIndex];
+    if (!currentPost) return;
+    
+    wx.vibrateShort();
+    wx.showToast({
+      title: currentPost.isLiked ? '取消点赞' : '点赞成功',
+      icon: 'none',
+      duration: 1000
+    });
+    
+    // 调用点赞方法
+    this.onQuickLike({ currentTarget: { dataset: { post: currentPost } } });
+    this.resetCardTransform();
+  },
+
+  /**
+   * 跳过当前卡片
+   */
+  skipCurrentCard() {
+    wx.vibrateShort();
+    wx.showToast({
+      title: '已跳过',
+      icon: 'none',
+      duration: 800
+    });
+    
+    this.nextCard();
+  },
+
+  /**
+   * 快速点赞
+   */
+  onQuickLike(e) {
+    const { post } = e.currentTarget.dataset;
+    
+    wx.vibrateShort();
+    
+    // 调用原有的点赞方法
+    this.onPostLike({ detail: { postId: post._id } });
+  },
+
+  /**
+   * 快速评论
+   */
+  onQuickComment(e) {
+    const { post } = e.currentTarget.dataset;
+    
+    // 调用原有的评论方法
+    this.onPostComment({ detail: { postId: post._id } });
+  },
+
+  /**
+   * 查看卡片详情
+   */
+  onViewCardDetail(e) {
+    const { post } = e.currentTarget.dataset;
+    
+    this.setData({
+      showCardDetail: true,
+      currentDetailPost: post
+    });
+  },
+
+  /**
+   * 关闭卡片详情
+   */
+  closeCardDetail() {
+    this.setData({
+      showCardDetail: false,
+      currentDetailPost: null
+    });
+  },
+
+  /**
+   * 详情页点赞
+   */
+  onDetailLike() {
+    if (!this.data.currentDetailPost) return;
+    
+    wx.vibrateShort();
+    
+    // 调用原有的点赞方法
+    this.onPostLike({ detail: { postId: this.data.currentDetailPost._id } });
+    
+    // 更新详情页数据
+    setTimeout(() => {
+      const updatedPost = this.data.posts.find(p => p._id === this.data.currentDetailPost._id);
+      if (updatedPost) {
+        this.setData({
+          currentDetailPost: updatedPost
+        });
+      }
+    }, 500);
+  },
+
+  /**
+   * 详情页评论
+   */
+  onDetailComment() {
+    if (!this.data.currentDetailPost) return;
+    
+    // 关闭详情页，打开评论输入框
+    this.setData({
+      showCardDetail: false
+    });
+    
+    // 调用原有的评论方法
+    this.onPostComment({ detail: { postId: this.data.currentDetailPost._id } });
+  },
+
+  /**
+   * 导航点点击
+   */
+  onNavDotTap(e) {
+    const { index } = e.currentTarget.dataset;
+    const targetIndex = parseInt(index);
+    
+    if (targetIndex === this.data.currentCardIndex || this.data.cardAnimating) return;
+    
+    this.setData({
+      currentCardIndex: targetIndex
+    });
+  },
+
+  /**
+   * 查看全部帖子
+   */
+  onViewAllPosts() {
+    wx.showActionSheet({
+      itemList: ['切换到列表模式', '保持卡片模式'],
+      success: (res) => {
+        if (res.tapIndex === 0) {
+          // 可以在这里实现切换到列表模式的逻辑
+          wx.showToast({
+            title: '列表模式开发中',
+            icon: 'none'
+          });
+        }
+      }
+    });
+  },
+
+  /**
+   * 卡片点击事件
+   */
+  onCardTap(e) {
+    // 如果正在拖拽，不触发点击事件
+    if (this.data.isDragging) return;
+    
+    // 显示详情页
+    this.onViewCardDetail(e);
+  },
+
+  /**
+   * 卡片长按事件
+   */
+  onCardLongPress(e) {
+    const { post } = e.currentTarget.dataset;
+    
+    wx.vibrateShort();
+    
+    const itemList = ['分享', '收藏'];
+    if (this.data.currentUser._id === post.author._id) {
+      itemList.push('删除');
+    }
+    
+    wx.showActionSheet({
+      itemList,
+      success: (res) => {
+        switch(res.tapIndex) {
+          case 0:
+            wx.showToast({ title: '分享功能开发中', icon: 'none' });
+            break;
+          case 1:
+            wx.showToast({ title: '收藏功能开发中', icon: 'none' });
+            break;
+          case 2:
+            this.onPostDelete({ detail: { postId: post._id } });
+            break;
+        }
+      }
+    });
   }
 });

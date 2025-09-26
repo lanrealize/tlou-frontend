@@ -1,9 +1,12 @@
-/* pages/details/details.wxss */
 
 /* 基础样式 */
 page {
   background-color: #ffffff;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  margin: 0; /* 确保page没有默认margin */
+  padding: 0; /* 确保page没有默认padding */
+  width: 100vw; /* 确保page占满屏幕宽度 */
+  box-sizing: border-box;
 }
 
 view, text, image {
@@ -15,10 +18,12 @@ view, text, image {
 /* 页面容器 */
 .page-container {
   position: relative;
-  width: 100%;
+  width: 100vw; /* 确保占满屏幕宽度 */
   height: 100vh;
   background-color: #ffffff;
   overflow: hidden; /* 防止页面滚动 */
+  padding: 0; /* 确保没有padding限制 */
+  margin: 0; /* 确保没有margin */
 }
 
 /* 状态栏占位 - 已集成到自定义导航栏中 */
@@ -35,132 +40,135 @@ view, text, image {
 
 /* 朋友圈页面主容器 */
 .moment-page {
-  background-color: #ffffff;
+  background-color: #f8f8f8; /* 更改背景色为浅灰，突出卡片效果 */
+  width: 100vw; /* 确保占满屏幕宽度 */
   height: 100vh;
   display: flex;
   flex-direction: column;
   padding-top: 20px; /* 默认导航栏高度，会被动态设置覆盖 */
+  padding-left: 0; /* 确保没有左padding */
+  padding-right: 0; /* 确保没有右padding */
+  margin: 0; /* 确保没有margin */
   overflow: hidden; /* 防止内容溢出 */
 }
 
-/* scroll-view样式 */
+/* scroll-view样式 - 卡片化布局 */
 .moment-scroll-view {
-  width: 100%;
+  width: 100vw;
+  padding: 20rpx 30rpx 0 30rpx; /* 添加左右内边距为卡片留出空间 */
   flex: 1;
+  box-sizing: border-box;
 }
 
 /* 自定义导航栏样式已移至custom-navigation组件 */
 
-/* 朋友圈信息卡片 */
-.friend-circle-info-card {
-  position: relative;
+/* 朋友圈信息卡片 - 新的卡片化设计 */
+.circle-info-card {
   background: #ffffff;
+  border-radius: 10rpx;
+  margin-bottom: 20rpx;
+  overflow: hidden;
 }
 
-.card-content {
+.card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
-  min-height: 80rpx;
-  padding-left: 30rpx;
-  padding-right: 15rpx;
-  box-sizing: border-box;
-  margin-top: 10rpx;
+  padding: 30rpx 30rpx 20rpx 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
 }
 
-/* 左侧内容区域：文字 + 头像按钮 */
-.left-content {
-  display: flex;
-  align-items: center;
-  gap: 25rpx;
-  flex: 1;
-  min-width: 0;
+.card-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333333;
 }
 
-.circle-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8rpx;
-  width: fit-content;
-  flex-shrink: 0;
-  min-width: 0;
+.card-body {
+  padding: 25rpx 30rpx 30rpx 30rpx;
 }
 
-.member-count {
+/* 成员统计信息区域 */
+.member-stats {
+  margin-bottom: 25rpx;
+}
+
+.member-count-text {
   font-size: 28rpx;
-  font-weight: 400;
-  color: #000000;
-  line-height: 1.2;
-  white-space: nowrap;
-  width: fit-content;
-}
-
-.circle-status {
-  font-size: 20rpx;
+  font-weight: 500;
+  color: #333333;
   line-height: 1.3;
-  white-space: normal; /* 允许换行 */
-  width: fit-content;
-  word-break: break-all; /* 长单词可以断行 */
-  color: #808080;
+  margin-bottom: 8rpx;
 }
 
-.avatars-section {
+.member-status-text {
+  font-size: 24rpx;
+  color: #808080;
+  line-height: 1.4;
+}
+
+/* 成员展示区域 */
+.members-display {
   display: flex;
   align-items: center;
-  flex-shrink: 0;
+  justify-content: center;
 }
 
-.avatar-group {
+/* 头像画廊样式 */
+.avatar-gallery {
   display: flex;
   align-items: center;
   gap: 20rpx;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
-.member-avatar {
-  width: 55rpx;
-  height: 55rpx;
-  border-radius: 50%;
-  border: none;
+.member-avatar-card {
+  width: 70rpx;
+  height: 70rpx;
+  border-radius: 12rpx; /* 使用圆角矩形而不是圆形 */
+  border: 3rpx solid #ffffff;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
 }
 
-.member-count-badge {
-  width: 55rpx;
-  height: 55rpx;
-  border-radius: 50%;
+.member-more-badge {
+  width: 70rpx;
+  height: 70rpx;
+  border-radius: 12rpx;
   position: relative;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  border: 3rpx solid #ffffff;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.member-count-bg {
+.member-more-bg {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  border-radius: 50%;
+  border-radius: 12rpx;
   z-index: 1;
 }
 
-.member-count-overlay {
+.member-more-overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 12rpx;
+  background-color: rgba(0, 0, 0, 0.5);
   z-index: 2;
 }
 
-.count-text {
-  font-size: 20rpx;
+.more-count-text {
+  font-size: 22rpx;
   font-weight: 600;
   color: #FFFFFF;
   line-height: 1;
@@ -169,22 +177,23 @@ view, text, image {
   z-index: 3;
 }
 
-.add-member-btn {
-  width: 55rpx;
-  height: 55rpx;
-  border-radius: 50%;
-  background-color: #F0F5FF;
+.add-member-card-btn {
+  width: 70rpx;
+  height: 70rpx;
+  border-radius: 12rpx;
+  background-color: #f8f9ff;
+  border: 2rpx dashed #1A73E8;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: none;
   padding: 0;
   line-height: normal;
   font-size: inherit;
   flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
-.add-member-btn::after {
+.add-member-card-btn::after {
   border: none;
 }
 
@@ -193,9 +202,9 @@ view, text, image {
   transform: scale(1.05);
 }
 
-.add-icon {
-  width: 56rpx;
-  height: 56rpx;
+.add-member-icon {
+  width: 32rpx;
+  height: 32rpx;
   filter: brightness(0) saturate(100%) invert(42%) sepia(55%) saturate(3611%) hue-rotate(205deg) brightness(96%) contrast(94%);
   opacity: 1;
 }
@@ -203,72 +212,999 @@ view, text, image {
 .setting-btn {
   font-size: 24rpx;
   font-weight: 500;
-  padding: 10rpx 30rpx;
-  color: #ffffff;
-  background-color: #1A73E8;
-  border-radius: 50rpx;
+  padding: 8rpx 20rpx;
+  color: #1A73E8;
+  background-color: #f8f9ff;
+  border: 1rpx solid #e0e7ff;
+  border-radius: 16rpx;
   flex-shrink: 0;
-  height: 55rpx;
+  transition: all 0.2s ease;
 }
 
-/* ===== 帖子列表区域 ===== */
-.posts-container {
-  margin-top: 50rpx;
-  padding-bottom: 200rpx; /* 为底部按钮留出空间 */
+.setting-btn:active {
+  background-color: #e8f4fd;
+  transform: scale(0.95);
+  border-color: #1A73E8;
 }
 
-.empty-content {
+/* 删除原有的分隔线，已被卡片设计替代 */
+
+/* ===== 滑动卡片区域 ===== */
+.posts-section {
+  margin-bottom: 20rpx;
+}
+
+/* 滑动卡片容器 */
+.swipe-cards-section {
+  height: 600rpx;
+  margin-bottom: 30rpx;
+}
+
+/* 空状态卡片 */
+.empty-state-card {
+  background: #ffffff;
+  border-radius: 10rpx;
+  padding: 60rpx 40rpx;
   text-align: center;
-  padding: 100rpx 40rpx;
-  color: #999999;
+  margin-bottom: 20rpx;
+}
+
+.empty-icon {
+  font-size: 48rpx;
+  margin-bottom: 20rpx;
 }
 
 .empty-title {
-  font-size: 32rpx;
-  margin-bottom: 20rpx;
-  color: #666666;
+  font-size: 28rpx;
+  font-weight: 500;
+  margin-bottom: 12rpx;
+  color: #333333;
 }
 
 .empty-subtitle {
+  font-size: 24rpx;
+  line-height: 1.5;
+  color: #808080;
+}
+
+/* ===== 创意卡片堆叠容器 ===== */
+.creative-cards-container {
+  margin-bottom: 30rpx;
+  min-height: 600rpx;
+}
+
+/* 卡片堆叠区域 - 性能优化版本 */
+.cards-stack-area {
+  position: relative;
+  height: 520rpx;
+  margin: 0 20rpx;
+  perspective: 1000rpx; /* 3D透视效果 */
+  /* 优化3D渲染 */
+  transform-style: preserve-3d;
+  /* 启用硬件加速 */
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* 背景装饰卡片 - 性能优化版本 */
+.bg-card {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 20rpx;
+  opacity: 0.3;
+  /* 启用硬件加速 */
+  transform: translateZ(0);
+  will-change: transform;
+  /* 优化渲染 */
+  backface-visibility: hidden;
+}
+
+.bg-card-1 {
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  transform: translateY(16rpx) scale(0.94) rotate(-1deg);
+  z-index: 1;
+}
+
+.bg-card-2 {
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  transform: translateY(12rpx) scale(0.96) rotate(0.5deg);
+  z-index: 2;
+}
+
+.bg-card-3 {
+  background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%);
+  transform: translateY(8rpx) scale(0.98) rotate(-0.3deg);
+  z-index: 3;
+}
+
+/* 主要帖子卡片 - 性能优化版本 */
+.post-card-creative {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 20rpx;
+  overflow: hidden;
+  /* 优化动画性能 */
+  transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), 
+              opacity 0.2s ease-out;
+  /* 启用硬件加速 */
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  /* 优化渲染 */
+  backface-visibility: hidden;
+  cursor: pointer;
+  box-shadow: 0 20rpx 40rpx rgba(0, 0, 0, 0.15);
+}
+
+.post-card-creative:hover {
+  transform: translateY(-10rpx) scale(1.02) !important;
+  box-shadow: 0 30rpx 60rpx rgba(0, 0, 0, 0.25);
+}
+
+/* 卡片背景渐变 */
+.card-gradient-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* 卡片内容包装器 - 性能优化版本 */
+.card-content-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 30rpx;
+  display: flex;
+  flex-direction: column;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.95);
+  /* 优化模糊效果性能 */
+  backdrop-filter: blur(8rpx);
+  /* 启用硬件加速 */
+  transform: translateZ(0);
+  will-change: auto;
+}
+
+/* 用户信息头部 */
+.card-user-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 25rpx;
+  z-index: 3;
+}
+
+.card-user-avatar {
+  width: 50rpx;
+  height: 50rpx;
+  border-radius: 50%;
+  border: 3rpx solid rgba(255, 255, 255, 0.8);
+  margin-right: 15rpx;
+  transition: all 0.3s ease;
+}
+
+.card-user-avatar:active {
+  transform: scale(1.1);
+  border-color: #1A73E8;
+}
+
+.card-user-info {
+  flex: 1;
+}
+
+.card-username {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #333333;
+  line-height: 1.3;
+  margin-bottom: 4rpx;
+}
+
+.card-time {
+  font-size: 22rpx;
+  color: #808080;
+  line-height: 1.2;
+}
+
+.card-action-btn {
+  width: 40rpx;
+  height: 40rpx;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.card-action-btn:active {
+  background: rgba(26, 115, 232, 0.1);
+  transform: scale(1.1);
+}
+
+.card-more-icon {
+  width: 20rpx;
+  height: 20rpx;
+  opacity: 0.7;
+}
+
+/* 卡片主内容区域 */
+.card-main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  overflow: hidden;
+}
+
+/* 文字内容 */
+.card-text-content {
+  max-height: 150rpx;
+  overflow: hidden;
+}
+
+.card-text {
   font-size: 28rpx;
+  line-height: 1.6;
+  color: #333333;
+  word-wrap: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 媒体内容 */
+.card-media-content {
+  flex: 1;
+  border-radius: 15rpx;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 单张图片展示 */
+.card-single-media {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  border-radius: 15rpx;
+  overflow: hidden;
+}
+
+.card-main-image {
+  width: 100%;
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.card-main-image:active {
+  transform: scale(1.05);
+}
+
+.card-image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.1) 100%);
+  pointer-events: none;
+}
+
+/* 多张图片创意网格 */
+.card-multi-media {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.media-grid-creative {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 4rpx;
+  border-radius: 15rpx;
+  overflow: hidden;
+}
+
+.grid-image-creative {
+  width: 100%;
+  height: 100%;
+  transition: all 0.2s ease;
+}
+
+.grid-image-creative:active {
+  transform: scale(1.02);
+  z-index: 10;
+}
+
+.grid-pos-0 {
+  grid-column: 1 / 3;
+  grid-row: 1 / 2;
+}
+
+.grid-pos-1 {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+}
+
+.grid-pos-2 {
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+}
+
+.more-images-overlay {
+  position: absolute;
+  bottom: 8rpx;
+  right: 8rpx;
+  width: 60rpx;
+  height: 60rpx;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+
+.more-count {
+  font-size: 20rpx;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* 卡片底部交互区域 */
+.card-bottom-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 25rpx;
+  z-index: 3;
+}
+
+/* 快速交互按钮 */
+.quick-actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 20rpx;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 25rpx;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(5rpx);
+}
+
+.quick-action-btn:active {
+  transform: scale(0.95);
+  background: rgba(26, 115, 232, 0.1);
+}
+
+.quick-action-btn.liked {
+  background: rgba(255, 59, 92, 0.1);
+  border: 1rpx solid rgba(255, 59, 92, 0.3);
+}
+
+.quick-action-icon {
+  width: 24rpx;
+  height: 24rpx;
+}
+
+.quick-action-text {
+  font-size: 22rpx;
+  color: #666666;
+  font-weight: 500;
+}
+
+.liked .quick-action-text {
+  color: #ff3b5c;
+}
+
+/* 滑动提示 */
+.swipe-hint {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  opacity: 0.6;
+}
+
+.swipe-indicator {
+  width: 30rpx;
+  height: 4rpx;
+  background: linear-gradient(to right, #1A73E8, transparent);
+  border-radius: 2rpx;
+  animation: swipeHint 2s ease-in-out infinite;
+}
+
+.swipe-text {
+  font-size: 20rpx;
+  color: #808080;
+}
+
+@keyframes swipeHint {
+  0%, 100% { transform: translateX(0); opacity: 0.6; }
+  50% { transform: translateX(10rpx); opacity: 1; }
+}
+
+/* 卡片装饰边框 */
+.card-border-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 20rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* 卡片阴影层 */
+.card-shadow-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 20rpx;
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* 卡片导航指示器 */
+.cards-navigation {
+  display: flex;
+  justify-content: center;
+  margin: 30rpx 0 20rpx 0;
+}
+
+.nav-dots {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 15rpx 25rpx;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 30rpx;
+  backdrop-filter: blur(10rpx);
+  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.1);
+}
+
+.nav-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: #d0d0d0;
+  transition: all 0.3s ease;
+}
+
+.nav-dot.active {
+  background: #1A73E8;
+  transform: scale(1.2);
+}
+
+.nav-more {
+  font-size: 20rpx;
+  color: #808080;
+  margin-left: 8rpx;
+}
+
+/* 查看全部按钮 */
+.view-all-posts {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  margin: 0 20rpx;
+  padding: 20rpx;
+  background: rgba(255, 255, 255, 0.8);
+  border: 2rpx dashed #e0e0e0;
+  border-radius: 15rpx;
+  transition: all 0.2s ease;
+}
+
+.view-all-posts:active {
+  background: rgba(26, 115, 232, 0.05);
+  border-color: #1A73E8;
+  transform: scale(0.98);
+}
+
+.view-all-text {
+  font-size: 26rpx;
+  color: #666666;
+  font-weight: 500;
+}
+
+.view-all-icon {
+  width: 20rpx;
+  height: 20rpx;
+  opacity: 0.6;
+}
+
+/* ===== 卡片详情弹窗样式 ===== */
+.card-detail-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: flex-end;
+}
+
+.card-detail-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5rpx);
+}
+
+.card-detail-container {
+  width: 100%;
+  max-height: 80vh;
+  background-color: #ffffff;
+  border-radius: 20rpx 20rpx 0 0;
+  z-index: 2001;
+  display: flex;
+  flex-direction: column;
+  animation: slideUpModal 0.3s ease-out;
+  box-shadow: 0 -10rpx 30rpx rgba(0, 0, 0, 0.2);
+}
+
+@keyframes slideUpModal {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* 详情头部 */
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 25rpx 30rpx 20rpx 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+  background: #fafafa;
+}
+
+.detail-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333333;
+}
+
+.close-detail-btn {
+  width: 40rpx;
+  height: 40rpx;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.close-detail-btn:active {
+  background: rgba(0, 0, 0, 0.1);
+  transform: scale(0.9);
+}
+
+.close-icon {
+  width: 20rpx;
+  height: 20rpx;
+  opacity: 0.7;
+}
+
+/* 详情内容区域 */
+.detail-content {
+  flex: 1;
+  padding: 0 30rpx;
+  overflow-y: auto;
+}
+
+/* 帖子基本信息 */
+.detail-post-info {
+  padding: 25rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+  margin-bottom: 25rpx;
+}
+
+.detail-user-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.detail-user-avatar {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  margin-right: 15rpx;
+  border: 2rpx solid #f0f0f0;
+}
+
+.detail-user-info {
+  flex: 1;
+}
+
+.detail-username {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333333;
+  line-height: 1.3;
+  margin-bottom: 4rpx;
+}
+
+.detail-time {
+  font-size: 22rpx;
+  color: #808080;
+  line-height: 1.2;
+}
+
+.detail-post-content {
+  margin-bottom: 20rpx;
+}
+
+.detail-text {
+  font-size: 28rpx;
+  line-height: 1.6;
+  color: #333333;
+  word-wrap: break-word;
+}
+
+.detail-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 15rpx;
+}
+
+.detail-image {
+  width: calc((100% - 16rpx) / 3);
+  height: 200rpx;
+  border-radius: 8rpx;
+  transition: all 0.2s ease;
+}
+
+.detail-image:active {
+  transform: scale(0.98);
+}
+
+/* 区域标题 */
+.detail-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 20rpx 0 15rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+  margin-bottom: 20rpx;
+}
+
+.section-icon {
+  width: 28rpx;
+  height: 28rpx;
+}
+
+.comment-section-icon {
+  filter: brightness(0) saturate(100%) invert(21%) sepia(86%) saturate(1780%) hue-rotate(206deg) brightness(99%) contrast(92%);
+}
+
+.section-title-text {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #333333;
+}
+
+/* 点赞列表 */
+.detail-likes-section {
+  margin-bottom: 30rpx;
+}
+
+.likes-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+
+.like-item {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 12rpx 16rpx;
+  background: #f8f9ff;
+  border-radius: 25rpx;
+  transition: all 0.2s ease;
+}
+
+.like-item:active {
+  background: #e8f4fd;
+  transform: scale(0.95);
+}
+
+.like-user-avatar {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  border: 1rpx solid rgba(255, 255, 255, 0.8);
+}
+
+.like-username {
+  font-size: 24rpx;
+  color: #1A73E8;
+  font-weight: 500;
+}
+
+/* 评论区域 */
+.detail-comments-section {
+  margin-bottom: 100rpx; /* 为底部操作栏留出空间 */
+}
+
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.detail-comment-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 15rpx;
+  padding: 20rpx;
+  background: #fafafa;
+  border-radius: 15rpx;
+  transition: all 0.2s ease;
+}
+
+.detail-comment-item:active {
+  background: #f0f0f0;
+}
+
+.detail-comment-avatar {
+  width: 45rpx;
+  height: 45rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1rpx solid rgba(255, 255, 255, 0.8);
+}
+
+.detail-comment-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.detail-comment-header {
+  display: flex;
+  align-items: center;
+  gap: 15rpx;
+  margin-bottom: 8rpx;
+}
+
+.detail-comment-author {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #333333;
+}
+
+.detail-comment-time {
+  font-size: 22rpx;
+  color: #808080;
+}
+
+.detail-comment-text {
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: #333333;
+  word-wrap: break-word;
+  margin-bottom: 10rpx;
+}
+
+.reply-target {
+  color: #1A73E8;
+  font-weight: 500;
+}
+
+.detail-comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.detail-reply-btn {
+  font-size: 22rpx;
+  color: #808080;
+  padding: 8rpx 12rpx;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 15rpx;
+  transition: all 0.2s ease;
+}
+
+.detail-reply-btn:active {
+  background: rgba(26, 115, 232, 0.1);
+  color: #1A73E8;
+  transform: scale(0.95);
+}
+
+.detail-delete-comment-btn {
+  width: 24rpx;
+  height: 24rpx;
+  padding: 8rpx;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.detail-delete-comment-btn:active {
+  background: #ffebee;
+  transform: scale(0.9);
+}
+
+/* 空评论状态 */
+.empty-comments {
+  text-align: center;
+  padding: 60rpx 40rpx;
+}
+
+.empty-comments-text {
+  font-size: 26rpx;
+  color: #999999;
   line-height: 1.5;
 }
 
-.load-more,
-.no-more {
-  text-align: center;
-  padding: 40rpx;
+/* 详情底部操作栏 */
+.detail-bottom-actions {
+  position: sticky;
+  bottom: 0;
+  background: #ffffff;
+  border-top: 1rpx solid #f0f0f0;
+  padding: 20rpx 30rpx;
+  box-shadow: 0 -5rpx 15rpx rgba(0, 0, 0, 0.05);
 }
 
-.load-more-text,
-.no-more-text {
+.detail-action-group {
+  display: flex;
+  gap: 20rpx;
+}
+
+.detail-action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  padding: 18rpx 30rpx;
+  background: #f8f9ff;
+  border-radius: 25rpx;
+  transition: all 0.2s ease;
+}
+
+.detail-action-btn:active {
+  background: #e8f4fd;
+  transform: scale(0.95);
+}
+
+.detail-action-btn.liked {
+  background: rgba(255, 59, 92, 0.1);
+  border: 1rpx solid rgba(255, 59, 92, 0.3);
+}
+
+.detail-action-icon {
+  width: 28rpx;
+  height: 28rpx;
+}
+
+.comment-action-icon {
+  filter: brightness(0) saturate(100%) invert(21%) sepia(86%) saturate(1780%) hue-rotate(206deg) brightness(99%) contrast(92%);
+}
+
+.detail-action-text {
   font-size: 26rpx;
-  color: #999999;
+  color: #333333;
+  font-weight: 500;
 }
 
-/* ===== 发布按钮 ===== */
-.publish-button-container {
-  position: fixed;
-  bottom: 40rpx;
-  left: 40rpx;
-  right: 40rpx;
-  z-index: 100;
+.liked .detail-action-text {
+  color: #ff3b5c;
 }
 
-.main-publish-btn {
-  width: 100%;
-  font-size: 32rpx;
+/* 活跃卡片样式 */
+.active-card {
+  box-shadow: 0 25rpx 50rpx rgba(26, 115, 232, 0.2) !important;
+}
+
+/* ===== 发布新动态卡片 ===== */
+.publish-section {
+  margin-bottom: 30rpx;
+}
+
+.publish-card {
+  background: linear-gradient(135deg, #1A73E8 0%, #4285F4 100%);
+  border-radius: 10rpx;
+  padding: 25rpx 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+.publish-card:active {
+  transform: scale(0.98);
+  box-shadow: 0px 2px 8px rgba(26, 115, 232, 0.3);
+}
+
+.publish-left {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  flex: 1;
+  z-index: 2;
+}
+
+.publish-icon-wrapper {
+  width: 50rpx;
+  height: 50rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.publish-icon {
+  width: 28rpx;
+  height: 28rpx;
+  filter: brightness(0) saturate(100%) invert(100%);
+}
+
+.publish-text-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.publish-title {
+  font-size: 28rpx;
   font-weight: 600;
-  padding: 30rpx;
-  border-radius: 30rpx;
-  background-color: #1A73E8;
   color: #ffffff;
-  border: none;
-  box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.25);
+  line-height: 1.3;
 }
 
-.main-publish-btn::after {
-  border: none;
+.publish-desc {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.4;
+}
+
+.publish-right {
+  width: 80rpx;
+  height: 60rpx;
+  z-index: 1;
+  opacity: 0.3;
+}
+
+.publish-decoration {
+  width: 100%;
+  height: 100%;
 }
 
 /* ===== 评论输入框模态框 ===== */
@@ -388,10 +1324,10 @@ view, text, image {
 
 /* 邀请横幅 */
 .invite-banner {
-  margin: 40rpx 40rpx 20rpx;
-  padding: 40rpx;
+  margin-bottom: 20rpx; /* 与其他卡片保持一致的间距 */
+  padding: 30rpx;
   background: linear-gradient(135deg, #1A73E8 0%, #4285F4 100%);
-  border-radius: 24rpx;
+  border-radius: 10rpx; /* 与其他卡片保持一致的圆角 */
   box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.25);
   color: #fff;
 }
@@ -403,8 +1339,8 @@ view, text, image {
 }
 
 .invite-icon {
-  font-size: 60rpx;
-  margin-right: 30rpx;
+  font-size: 50rpx;
+  margin-right: 20rpx;
 }
 
 .invite-text {
@@ -414,14 +1350,14 @@ view, text, image {
 }
 
 .invite-title {
-  font-size: 36rpx;
+  font-size: 32rpx;
   font-weight: 600;
   margin-bottom: 8rpx;
   line-height: 1.2;
 }
 
 .invite-desc {
-  font-size: 26rpx;
+  font-size: 24rpx;
   opacity: 0.9;
   line-height: 1.4;
 }
@@ -448,31 +1384,11 @@ view, text, image {
   transform: none;
 }
 
-/* 响应式适配 */
-@media (max-width: 400px) {
-  .invite-banner {
-    margin: 30rpx 30rpx 15rpx;
-    padding: 30rpx;
-  }
-  
-  .invite-icon {
-    font-size: 50rpx;
-    margin-right: 20rpx;
-  }
-  
-  .invite-title {
-    font-size: 32rpx;
-  }
-  
-  .invite-desc {
-    font-size: 24rpx;
-  }
-}
 
 /* === 申请加入朋友圈样式 === */
 
 .apply-section {
-  margin: 30rpx 40rpx 20rpx;
+  margin-bottom: 20rpx; /* 与其他卡片保持一致的间距 */
 }
 
 /* 申请卡片 - 采用与main页面一致的卡片设计 */
@@ -480,7 +1396,7 @@ view, text, image {
   position: relative;
   background-color: #ffffff;
   border-radius: 10rpx;
-  padding: 40rpx;
+  padding: 30rpx;
   margin-bottom: 20rpx;
   box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.25);
   overflow: hidden;
@@ -495,8 +1411,8 @@ view, text, image {
 }
 
 .apply-icon, .applied-icon, .private-icon {
-  font-size: 40rpx;
-  margin-right: 24rpx;
+  font-size: 36rpx;
+  margin-right: 20rpx;
 }
 
 .apply-info, .applied-info, .private-info {
@@ -505,7 +1421,7 @@ view, text, image {
 
 .apply-title, .applied-title, .private-title {
   display: block;
-  font-size: 28rpx;
+  font-size: 26rpx;
   font-weight: 400;
   color: #000000;
   margin-bottom: 8rpx;
@@ -513,7 +1429,7 @@ view, text, image {
 
 .apply-desc, .applied-desc, .private-desc {
   display: block;
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: #808080;
   line-height: 1.4;
 }
@@ -521,9 +1437,9 @@ view, text, image {
 /* 申请按钮 - 采用main页面的按钮设计 */
 .apply-btn {
   width: 100%;
-  height: 80rpx;
+  height: 70rpx;
   border-radius: 30rpx;
-  font-size: 28rpx;
+  font-size: 26rpx;
   font-weight: 500;
   background-color: #1A73E8;
   color: #ffffff;
@@ -577,223 +1493,6 @@ view, text, image {
   font-style: italic;
 }
 
-/* 响应式适配 */
-@media (max-width: 400px) {
-  .nav-back-btn {
-    left: 40rpx;
-    width: 28px;
-    height: 28px;
-  }
-  
-  .back-icon {
-    width: 24px;
-    height: 24px;
-  }
-  
-  .nav-title .title-text {
-    font-size: 16px;
-  }
-  
-  .friend-circle-info-card {
-    margin: 45rpx 30rpx 25rpx 30rpx;
-    padding: 30rpx;
-  }
-  
-  .circle-info {
-    gap: 6rpx;
-    width: fit-content;
-    max-width: 400rpx; /* 设置最大宽度避免过长 */
-  }
-  
-  .avatars-section {
-    gap: 20rpx;
-    margin: 0 16rpx;
-  }
-  
-  .avatar-group {
-    gap: 16rpx;
-  }
-  
-  .add-icon {
-    width: 40rpx;
-    height: 40rpx;
-  }
-  
-  .apply-section {
-    margin: 25rpx 30rpx 15rpx;
-  }
-  
-  .apply-card, .applied-card, .private-card {
-    padding: 30rpx;
-  }
-  
-  .apply-icon, .applied-icon, .private-icon {
-    font-size: 36rpx;
-    margin-right: 20rpx;
-  }
-  
-  .apply-title, .applied-title, .private-title {
-    font-size: 26rpx;
-  }
-  
-  .apply-desc, .applied-desc, .private-desc {
-    font-size: 22rpx;
-  }
-  
-  .apply-btn {
-    height: 70rpx;
-    font-size: 26rpx;
-  }
-  
-  .main-publish-btn {
-    font-size: 28rpx;
-    padding: 25rpx;
-  }
-  
-  .posts-container {
-    padding-bottom: 180rpx;
-  }
-}
 
-/* ===== 添加新分享部分样式 ===== */
+/* 删除原有的发布按钮样式，已被卡片设计替代 */
 
-.new-share-section {
-  position: fixed;
-  bottom: 60rpx;
-  left: 40rpx;
-  right: 40rpx;
-  z-index: 100;
-}
-
-.share-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  height: 140rpx;
-  border-radius: 20rpx;
-  backdrop-filter: blur(8rpx);
-  background: rgba(166, 166, 166, 0.2);
-  padding: 20rpx;
-  box-sizing: border-box;
-  transition: all 0.2s ease;
-}
-
-.share-container:active {
-  transform: scale(0.98);
-  background: rgba(166, 166, 166, 0.3);
-}
-
-.cards-image {
-  width: 150rpx;
-  height: 110rpx;
-  margin-right: 30rpx;
-  margin-left: 20rpx;
-  flex-shrink: 0;
-}
-
-.share-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 10rpx;
-  margin-right: 30rpx;
-}
-
-.share-first-line {
-  display: flex;
-  align-items: center;
-  gap: 10rpx;
-}
-
-.share-title {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: rgba(0, 0, 0, 1);
-  font-family: 'PingFang SC', sans-serif;
-}
-
-.new-share-image {
-  width: 100rpx;
-  height: 30rpx;
-  margin-top: 5rpx;
-}
-
-.share-second-line {
-  display: flex;
-  align-items: center;
-}
-
-  .share-desc {
-    font-size: 24rpx;
-    font-weight: 400;
-    font-family: 'PingFang SC', sans-serif;
-    line-height: 1.4;
-  }
-  
-  /* 分隔线 */
-  .share-divider {
-    width: 2rpx;
-    height: 70rpx;
-    background-color: rgba(0, 0, 0, 0.6);
-    margin: 0 30rpx;
-    flex-shrink: 0;
-  }
-  
-  .camera-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.2s ease;
-  margin-left: 35rpx;
-  margin-right: 30rpx;
-}
-
-.camera-btn:active {
-  transform: scale(0.9);
-}
-
-.camera-icon {
-  width: 164rpx;
-  height: 45rpx;
-  filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);
-}
-
-/* 响应式适配 */
-@media (max-width: 400px) {
-  .new-share-section {
-    bottom: 60rpx;
-    left: 30rpx;
-    right: 30rpx;
-  }
-  
-  .share-container {
-    height: 120rpx;
-    padding: 16rpx;
-  }
-  
-  .share-content {
-    margin-right: 24rpx;
-    gap: 8rpx;
-  }
-  
-  .share-title {
-    font-size: 28rpx;
-  }
-  
-  .share-desc {
-    font-size: 22rpx;
-  }
-  
-  .share-divider {
-    height: 60rpx;
-    margin: 0 12rpx;
-  }
-  
-  .camera-btn {
-    width: 50rpx;
-    height: 50rpx;
-  }
-  
-}

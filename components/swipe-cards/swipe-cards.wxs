@@ -1,0 +1,152 @@
+/*
+ * 滑动卡片WXS逻辑 - 高性能触摸处理
+ * 基于cardSwipe项目改造，适配帖子数据
+ */
+var SLIDE_THRESHOLD = 0; // 松手后滑出界面阈值
+var CONTEXT_WIDTH = 0; // 组件宽度
+var instance = {}; // 卡片实例
+var startX = 0; // 手指刚接触时屏幕X轴位置
+var moveX = 0; // 移动距离
+var cardIndex = 0; // 滑动卡片的层级索引
+var cardZindex = 0; // 滑动卡片的层级索引
+var currentCursor = 0; // 当前最上层卡片索引
+var lock = false;
+var ROTATE_DEG = 0; // 移出屏幕过程旋转角度
+var SLIDE_DURATION = 200; // 滑动动画时长
+
+function touchstart(event, ownerinstance) {
+  if (lock) return;
+  lock = true;
+  instance = event.instance;
+  var dataset = instance.getDataset();
+  cardIndex = dataset.cardIndex;
+  currentCursor = dataset.currentCursor;
+  
+  // 只允许最上层卡片被滑动
+  if (cardIndex !== currentCursor) {
+    instance = {};
+    lock = false;
+    return;
+  }
+  
+  ROTATE_DEG = dataset.rotateDeg || 8;
+  SLIDE_DURATION = dataset.slideDuration || 200;
+  SLIDE_THRESHOLD = dataset.slideThreshold || 80;
+  CONTEXT_WIDTH = dataset.contextWidth + Math.floor((Math.abs(ROTATE_DEG) % 360) * dataset.contextWidth / 180);
+  cardZindex = dataset.cardZindex;
+  startX = event.touches[0].clientX;
+}
+
+function touchmove(event, ownerinstance) {
+  if (!lock) return;
+  if (!instance || !startX || cardIndex !== currentCursor) {
+    lock = false;
+    return;
+  }
+  
+  var clientX = event.touches[0].clientX;
+  moveX = clientX - startX;
+  
+  // 限制移动范围，避免过度滑动
+  var maxMove = CONTEXT_WIDTH * 0.8;
+  if (Math.abs(moveX) > maxMove) {
+    moveX = moveX > 0 ? maxMove : -maxMove;
+  }
+  
+  // 计算旋转角度，使其更加平滑
+  var rotateAngle = ROTATE_DEG / CONTEXT_WIDTH * moveX;
+  rotateAngle = Math.max(-ROTATE_DEG, Math.min(ROTATE_DEG, rotateAngle));
+  
+  instance.setStyle({
+    "transition": "unset",
+    "transform": "translate3d(" + moveX + "px, 0, " + cardZindex + "px) rotate(" + rotateAngle + "deg)",
+    "opacity": Math.max(0.7, 1 - Math.abs(moveX) / CONTEXT_WIDTH * 0.3)
+  });
+}
+
+function touchend(event, ownerinstance) {
+  if (!lock) return;
+  if (!instance || !moveX || cardIndex !== currentCursor) {
+    lock = false;
+    return;
+  }
+  
+  var shouldSlide = Math.abs(moveX) >= SLIDE_THRESHOLD;
+  
+  instance.setStyle({
+    "transform": shouldSlide ?
+      // 如果达到滑出阈值，完全滑出
+      "translate3d(" + (moveX > 0 ? CONTEXT_WIDTH : -CONTEXT_WIDTH) + "px, 0, " + cardZindex + "px) rotate(" + (moveX > 0 ? ROTATE_DEG : -ROTATE_DEG) + "deg)" :
+      // 否则回弹到原位
+      "translate3d(0, 0, " + cardZindex + "px) rotate(0deg)",
+    "transition": "all cubic-bezier(0.25, 0.8, 0.25, 1) " + (SLIDE_DURATION / 1000).toString() + "s",
+    "opacity": shouldSlide ? "0" : "1"
+  });
+  
+  // 如果滑动距离足够，触发卡片切换
+  if (shouldSlide) {
+    ownerinstance.callMethod('nextCard', {
+      direction: moveX > 0 ? 'right' : 'left',
+      distance: Math.abs(moveX)
+    });
+  }
+  
+  // 重置状态
+  lock = false;
+  startX = 0;
+  moveX = 0;
+}
+
+/**
+ * 循环范围计算 - 确定哪些卡片应该显示
+ */
+function circleRange(index, current_cursor, showCards, total, removedCards, symbol) {
+  if (showCards > total || current_cursor === undefined) return false;
+  
+  var range = [];
+  var i = current_cursor;
+  var attempts = 0;
+  
+  while (range.length < showCards && attempts < total) {
+    if (removedCards.indexOf(i) === -1) {
+      range.push(i);
+    }
+    i += 1;
+    if (i === total) i = 0;
+    attempts++;
+  }
+  
+  switch (symbol) {
+    case 'in':
+      return range.indexOf(index) >= 0;
+    case 'loc':
+      return range.indexOf(index);
+    default:
+      return false;
+  }
+}
+
+/**
+ * 获取范围内移除的卡片数量
+ */
+function getRangeRemoves(removedCards, current_cursor, showCards, total) {
+  var count = 0;
+  var i = current_cursor;
+  
+  while (count < showCards && i < total) {
+    if (removedCards.indexOf(i) === -1) {
+      count++;
+    }
+    i++;
+  }
+  
+  return i;
+}
+
+module.exports = {
+  touchstart: touchstart,
+  touchmove: touchmove,
+  touchend: touchend,
+  circleRange: circleRange,
+  getRangeRemoves: getRangeRemoves
+};
