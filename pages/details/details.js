@@ -38,8 +38,6 @@ Page({
     lastDataLoadTime: 0,  // 上次数据加载时间
     needsDataRefresh: true, // 是否需要刷新数据
     
-    // 滑动卡片相关
-    removedPosts: [], // 已移除的帖子索引
     
     // 🔧 帖子数据（确保字段存在，用于同步设置）
     posts: [],            // 帖子列表
@@ -1137,13 +1135,13 @@ Page({
     }
   },
 
-  // ===== 滑动卡片功能 =====
+  // ===== 创意卡片滑动功能 =====
   
   /**
    * 初始化卡片系统
    */
   initCardSystem() {
-    console.log('初始化滑动卡片系统');
+    console.log('初始化卡片系统');
     
     // 为每个帖子分配渐变背景
     const posts = this.data.posts.map((post, index) => ({
@@ -1154,49 +1152,7 @@ Page({
     this.setData({
       posts,
       currentCardIndex: 0,
-      removedPosts: []
-    });
-  },
-
-  /**
-   * 处理帖子滑动事件
-   */
-  onPostSwipe(e) {
-    const { direction, swipedPostIndex, currentCursor, swipedPost } = e.detail;
-    
-    console.log('帖子滑动:', {
-      direction,
-      swipedPostIndex,
-      currentCursor,
-      postId: swipedPost?._id
-    });
-    
-    // 更新当前卡片索引
-    this.setData({
-      currentCardIndex: currentCursor
-    });
-    
-    // 显示滑动反馈
-    wx.showToast({
-      title: `向${direction === 'left' ? '左' : '右'}滑动`,
-      icon: 'none',
-      duration: 1000
-    });
-    
-    // 可以在这里添加更多的滑动后处理逻辑
-    // 比如记录用户行为、推荐算法等
-  },
-
-  /**
-   * 处理帖子详情事件 - 来自滑动卡片组件
-   */
-  onPostDetail(e) {
-    const { post } = e.detail;
-    console.log('查看帖子详情:', post._id);
-    
-    this.setData({
-      showCardDetail: true,
-      currentDetailPost: post
+      cardTransforms: {}
     });
   },
 
@@ -1217,7 +1173,7 @@ Page({
   },
 
   /**
-   * 卡片触摸移动 - 性能优化版本
+   * 卡片触摸移动
    */
   onCardTouchMove(e) {
     if (this.data.cardAnimating) return;
@@ -1228,47 +1184,31 @@ Page({
     
     // 如果移动距离超过阈值，开始拖拽
     if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
-      // 节流处理 - 减少setData调用频率
-      const now = Date.now();
-      if (!this.lastTouchMoveTime || now - this.lastTouchMoveTime > 16) { // 约60fps
-        this.setData({
-          isDragging: true,
-          touchCurrentX: touch.clientX,
-          touchCurrentY: touch.clientY
-        });
-        
-        // 使用requestAnimationFrame优化动画
-        this.updateCardTransformThrottled(deltaX, deltaY);
-        this.lastTouchMoveTime = now;
-      } else {
-        // 即使不更新数据，也要更新当前触摸位置用于计算
-        this.touchCurrentX = touch.clientX;
-        this.touchCurrentY = touch.clientY;
-      }
+      this.setData({
+        isDragging: true,
+        touchCurrentX: touch.clientX,
+        touchCurrentY: touch.clientY
+      });
+      
+      // 更新卡片位置
+      this.updateCardTransform(deltaX, deltaY);
     }
   },
 
   /**
-   * 卡片触摸结束 - 性能优化版本
+   * 卡片触摸结束
    */
   onCardTouchEnd(e) {
-    // 清理定时器
-    if (this.transformUpdateTimer) {
-      clearTimeout(this.transformUpdateTimer);
-      this.transformUpdateTimer = null;
-    }
-    
     if (this.data.cardAnimating || !this.data.isDragging) {
       this.setData({ isDragging: false });
       return;
     }
     
-    // 使用缓存的触摸位置或当前数据
-    const deltaX = (this.touchCurrentX || this.data.touchCurrentX) - this.data.touchStartX;
-    const deltaY = (this.touchCurrentY || this.data.touchCurrentY) - this.data.touchStartY;
+    const deltaX = this.data.touchCurrentX - this.data.touchStartX;
+    const deltaY = this.data.touchCurrentY - this.data.touchStartY;
     
-    // 降低切换阈值，提高响应速度
-    if (Math.abs(deltaX) > 80) {
+    // 水平滑动切换卡片
+    if (Math.abs(deltaX) > 100) {
       if (deltaX > 0) {
         this.previousCard();
       } else {
@@ -1276,7 +1216,7 @@ Page({
       }
     }
     // 垂直滑动执行其他操作
-    else if (Math.abs(deltaY) > 80) {
+    else if (Math.abs(deltaY) > 100) {
       if (deltaY < 0) {
         // 向上滑动点赞
         this.quickLikeCurrentCard();
@@ -1287,40 +1227,25 @@ Page({
     }
     // 小幅移动，回弹到原位
     else {
-      this.resetCardTransformSmooth();
+      this.resetCardTransform();
     }
     
     this.setData({ isDragging: false });
   },
 
   /**
-   * 更新卡片变换 - 性能优化版本
+   * 更新卡片变换
    */
   updateCardTransform(deltaX, deltaY) {
     const currentIndex = this.data.currentCardIndex;
-    const rotation = Math.max(-15, Math.min(15, deltaX * 0.03)); // 限制旋转角度
-    const scale = Math.max(0.9, Math.min(1, 1 - Math.abs(deltaX) * 0.0002)); // 限制缩放范围
+    const rotation = deltaX * 0.05;
+    const scale = 1 - Math.abs(deltaX) * 0.0001;
     
-    const transform = `translate3d(${deltaX * 0.6}px, ${deltaY * 0.4}px, 0) rotate(${rotation}deg) scale(${scale})`;
+    const transform = `translateX(${deltaX * 0.5}px) translateY(${deltaY * 0.3}px) rotate(${rotation}deg) scale(${scale})`;
     
     this.setData({
       [`cardTransforms[${currentIndex}]`]: transform
     });
-  },
-
-  /**
-   * 节流版本的卡片变换更新
-   */
-  updateCardTransformThrottled(deltaX, deltaY) {
-    // 使用节流机制，避免过于频繁的更新
-    if (this.transformUpdateTimer) {
-      return;
-    }
-    
-    this.transformUpdateTimer = setTimeout(() => {
-      this.updateCardTransform(deltaX, deltaY);
-      this.transformUpdateTimer = null;
-    }, 8); // 约120fps的更新频率
   },
 
   /**
@@ -1333,23 +1258,6 @@ Page({
     });
   },
 
-  /**
-   * 平滑重置卡片变换
-   */
-  resetCardTransformSmooth() {
-    const currentIndex = this.data.currentCardIndex;
-    // 使用CSS transition实现平滑回弹
-    this.setData({
-      [`cardTransforms[${currentIndex}]`]: 'translate3d(0, 0, 0) rotate(0deg) scale(1)'
-    });
-    
-    // 清理变换状态
-    setTimeout(() => {
-      this.setData({
-        [`cardTransforms[${currentIndex}]`]: ''
-      });
-    }, 150);
-  },
 
   /**
    * 切换到下一张卡片
@@ -1404,24 +1312,24 @@ Page({
   },
 
   /**
-   * 卡片切换动画 - 性能优化版本
+   * 卡片切换动画
    */
   animateCardSwitch(direction, callback) {
     const currentIndex = this.data.currentCardIndex;
     
-    // 使用translate3d和优化的动画参数
+    // 设置退出动画
     const exitTransform = direction === 'next' 
-      ? 'translate3d(-100%, 0, 0) rotate(-8deg) scale(0.85)' 
-      : 'translate3d(100%, 0, 0) rotate(8deg) scale(0.85)';
+      ? 'translateX(-100%) rotate(-10deg) scale(0.8)' 
+      : 'translateX(100%) rotate(10deg) scale(0.8)';
     
     this.setData({
       [`cardTransforms[${currentIndex}]`]: exitTransform
     });
     
-    // 使用更短的动画时间提升响应速度
+    // 延迟执行回调
     setTimeout(() => {
       callback && callback();
-    }, 200);
+    }, 300);
   },
 
   /**
