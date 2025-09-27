@@ -3,49 +3,40 @@
   <!-- 自定义导航栏 -->
   <custom-navigation title="两个人的朋友圈" bindnavigationReady="onNavigationReady"></custom-navigation>
 
-  <!-- 🔧 移除了整体的"加载中..."显示，改为在main page预加载 -->
-
   <!-- 朋友圈详情页面 -->
   <view class="moment-page" style="padding-top: {{navigationData.totalNavigationHeight}}px;">
     
-    <!-- 朋友圈信息卡片 - 采用卡片化设计 -->
+    <!-- 朋友圈信息卡片 -->
     <view class="circle-info-card card-shadow">
-      <!-- 卡片头部：标题和设置按钮 -->
       <view class="card-header">
         <view class="card-title">朋友圈详情</view>
         <view class="setting-btn theme-color" bindtap="openSettings">设置</view>
       </view>
       
-      <!-- 卡片内容：成员信息和头像组 -->
       <view class="card-body">
-        <!-- 成员统计信息 -->
         <view class="member-stats">
           <view class="member-count-text">{{circle.memberCount || 1}} 名成员</view>
           <view class="member-status-text">点击设置按钮可管理用户</view>
         </view>
         
-        <!-- 成员头像展示区域 -->
-        <view class="members-display">
-          <!-- 用户头像组 -->
-          <view class="avatar-gallery">
-            <!-- 显示实际成员头像（最多显示3个） -->
-            <image class="member-avatar-card" wx:for="{{circle.members || []}}" wx:for-item="member" wx:key="_id" wx:if="{{index < 3}}" src="{{member.avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
-            
-            <!-- 如果没有任何成员，显示一个默认头像作为占位 -->
-            <image class="member-avatar-card" wx:if="{{!circle.members || circle.members.length === 0}}" src="/images/default_avatar.png" mode="aspectFill"></image>
-            
-            <!-- 如果成员超过3个，显示剩余成员数量 -->
-            <view class="member-more-badge" wx:if="{{circle.members && circle.members.length > 3}}">
-              <image class="member-more-bg" src="{{circle.members[3].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
-              <view class="member-more-overlay"></view>
-              <text class="more-count-text">+{{circle.members.length - 3}}</text>
-            </view>
-            
-            <!-- 添加成员按钮 -->
-            <button class="add-member-card-btn" open-type="share" wx:if="{{isCircleOwner}}" hover-class="add-member-hover">
-              <image class="add-member-icon" src="/assets/icons/add.svg" mode="aspectFit"></image>
-            </button>
+        <view class="avatar-gallery">
+          <!-- 显示实际成员头像（最多显示3个） -->
+          <image class="member-avatar-card" wx:for="{{circle.members || []}}" wx:for-item="member" wx:key="_id" wx:if="{{index < 3}}" src="{{member.avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+          
+          <!-- 如果没有任何成员，显示一个默认头像作为占位 -->
+          <image class="member-avatar-card" wx:if="{{!circle.members || circle.members.length === 0}}" src="/images/default_avatar.png" mode="aspectFill"></image>
+          
+          <!-- 如果成员超过3个，显示剩余成员数量 -->
+          <view class="member-more-badge" wx:if="{{circle.members && circle.members.length > 3}}">
+            <image class="member-more-bg" src="{{circle.members[3].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+            <view class="member-more-overlay"></view>
+            <text class="more-count-text">+{{circle.members.length - 3}}</text>
           </view>
+          
+          <!-- 添加成员按钮 -->
+          <button class="add-member-card-btn" open-type="share" wx:if="{{isCircleOwner}}" hover-class="add-member-hover">
+            <image class="add-member-icon" src="/assets/icons/add.svg" mode="aspectFit"></image>
+          </button>
         </view>
       </view>
     </view>
@@ -54,7 +45,7 @@
     <scroll-view 
       class="moment-scroll-view"
       scroll-y="{{true}}"
-      style="height: calc(100vh - {{navigationData.totalNavigationHeight}}px - {{safeAreaBottom}}px - 120rpx);"
+      style="height: calc(100vh - {{navigationData.totalNavigationHeight}}px - 40rpx);"
       bindscrolltolower="onReachBottom"
       enhanced="{{true}}"
       show-scrollbar="{{false}}"
@@ -108,7 +99,7 @@
         </view>
       </view>
 
-      <!-- 帖子列表区域 - 卡片化设计 -->
+      <!-- 帖子列表区域 -->
       <view class="posts-section">
         <!-- 空状态卡片 -->
         <view class="empty-state-card card-shadow" wx:if="{{posts.length === 0 && !loading}}">
@@ -117,69 +108,63 @@
           <view class="empty-subtitle">还没有人发布动态，快来发布第一条吧！</view>
         </view>
 
-        <!-- 滑动卡片容器 -->
-        <view class="swipe-cards-container" wx:else>
-          <card-swipe 
-            cards="{{posts}}" 
-            removed-cards="{{removedCards}}" 
-            show-cards="{{3}}" 
-            slide-thershold="{{60}}" 
-            transition="{{true}}" 
-            scale-ratio="{{0.05}}" 
-            circling="{{false}}" 
-            up-height="{{40}}" 
-            rotate-deg="{{15}}" 
-            slide-duration="{{200}}"
-            bind:cardSwipe="onCardSwipe"
-            bind:like="onPostLike"
-            bind:comment="onPostComment"
-            bind:previewImage="onPreviewImage"
-            bind:tapAvatar="onTapAvatar"
-            bind:more="onPostMore"
-          ></card-swipe>
+        <!-- 滑动卡片组件 -->
+        <card-swipe 
+          wx:else
+          cards="{{posts}}" 
+          removed-cards="{{removedCards}}" 
+          show-cards="{{3}}" 
+          slide-thershold="{{60}}" 
+          transition="{{true}}" 
+          scale-ratio="{{0.05}}" 
+          circling="{{false}}" 
+          up-height="{{40}}" 
+          rotate-deg="{{15}}" 
+          slide-duration="{{200}}"
+          bind:cardSwipe="onCardSwipe"
+          bind:like="onPostLike"
+          bind:comment="onPostComment"
+          bind:previewImage="onPreviewImage"
+          bind:tapAvatar="onTapAvatar"
+          bind:more="onPostMore"
+        ></card-swipe>
 
-          <!-- 卡片导航指示器 -->
-          <view class="cards-navigation" wx:if="{{posts.length > 1}}">
-            <view class="nav-dots">
-              <view 
-                class="nav-dot {{index === currentCardIndex ? 'active' : ''}}" 
-                wx:for="{{posts}}" 
-                wx:key="_id"
-                wx:if="{{index < 5}}"
-              ></view>
-              <view class="nav-more" wx:if="{{posts.length > 5}}">+{{posts.length - 5}}</view>
-            </view>
+        <!-- 卡片导航指示器 -->
+        <view class="cards-navigation" wx:if="{{posts.length > 1}}">
+          <view class="nav-dots">
+            <view 
+              class="nav-dot {{index === currentCardIndex ? 'active' : ''}}" 
+              wx:for="{{posts}}" 
+              wx:key="_id"
+              wx:if="{{index < 5}}"
+            ></view>
+            <view class="nav-more" wx:if="{{posts.length > 5}}">+{{posts.length - 5}}</view>
           </view>
+        </view>
 
-          <!-- 查看全部按钮 -->
-          <view class="view-all-posts">
-            <text class="view-all-text">查看全部 {{posts.length}} 条动态</text>
-            <image class="view-all-icon" src="/assets/icons/right.svg" mode="aspectFit"></image>
-          </view>
+        <!-- 查看全部按钮 -->
+        <view class="view-all-posts" wx:if="{{posts.length > 0}}" bindtap="viewAllPosts">
+          <text class="view-all-text">查看全部 {{posts.length}} 条动态</text>
+          <image class="view-all-icon" src="/assets/icons/right.svg" mode="aspectFit"></image>
         </view>
       </view>
 
-      <!-- 发布新动态卡片 - 替代原发布按钮 -->
-      <view class="publish-section" wx:if="{{!isInviteMode || !showJoinButton}}">
-        <view class="publish-card card-shadow" bindtap="navigateToPublish">
-          <!-- 卡片左侧：图标和文字 -->
-          <view class="publish-left">
-            <view class="publish-icon-wrapper">
-              <image class="publish-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
-            </view>
-            <view class="publish-text-content">
-              <view class="publish-title">发布新动态</view>
-              <view class="publish-desc">分享你的精彩时刻</view>
-            </view>
+      <!-- 发布新动态卡片 - 融入文档流 -->
+      <view class="publish-card card-shadow" wx:if="{{showPublishButton}}" bindtap="navigateToPublish">
+        <view class="publish-left">
+          <view class="publish-icon-wrapper">
+            <image class="publish-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
           </view>
-          
-          <!-- 卡片右侧：装饰图片 -->
-          <view class="publish-right">
-            <image class="publish-decoration" src="/assets/pics/cards.png" mode="aspectFit"></image>
+          <view class="publish-text-content">
+            <view class="publish-title">发布新动态</view>
+            <view class="publish-desc">分享你的精彩时刻</view>
           </view>
         </view>
+        
+        <view class="publish-right">
+          <image class="publish-decoration" src="/assets/pics/cards.png" mode="aspectFit"></image>
+        </view>
       </view>
-
 
       <!-- 邀请提示和接受按钮 -->
       <view class="invite-banner" wx:if="{{isInviteMode && showJoinButton}}">
@@ -196,15 +181,15 @@
           {{isJoining ? '加入中...' : '接受邀请'}}
         </button>
       </view>
+
+      <!-- 底部安全区域占位 -->
+      <view class="bottom-safe-area" style="height: {{safeAreaInfo.bottomSafeArea || 20}}rpx;"></view>
     </scroll-view>
-
-    <!-- 原发布按钮已被新分享组件替代 -->
-
 
     <!-- 评论输入框 -->
     <view class="comment-input-modal" wx:if="{{showCommentInput}}">
       <view class="comment-input-overlay" bindtap="cancelComment"></view>
-      <view class="tlou-comment-input-no-anim">
+      <view class="comment-input-container">
         <view class="comment-input-header">
           <text class="comment-title">{{replyToUser ? '回复 ' + replyToUser.username : '发表评论'}}</text>
           <text class="cancel-btn" bindtap="cancelComment">取消</text>

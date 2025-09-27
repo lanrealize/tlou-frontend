@@ -1,6 +1,6 @@
 .wrapper{
     width: 100%;
-    height: 100%;
+    height: 600rpx;
     padding: 0 20rpx;
     box-sizing: border-box;
     overflow: hidden;
@@ -9,6 +9,7 @@
 .cards{
     position: relative;
     width: 100%;
+    height: 100%;
     display: flex;
     justify-content: center;
     padding: 20rpx;

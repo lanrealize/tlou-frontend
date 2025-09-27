@@ -107,14 +107,7 @@ view, text, image {
   line-height: 1.4;
 }
 
-/* 成员展示区域 */
-.members-display {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* 头像画廊样式 */
+/* 头像画廊样式 - 简化后直接使用 */
 .avatar-gallery {
   display: flex;
   align-items: center;
@@ -234,8 +227,8 @@ view, text, image {
   margin-bottom: 20rpx;
 }
 
-/* 滑动卡片容器 */
-.swipe-cards-container {
+/* 滑动卡片组件样式 */
+card-swipe {
   height: 600rpx;
   margin-bottom: 30rpx;
 }
@@ -339,15 +332,12 @@ view, text, image {
 }
 
 
-/* ===== 发布新动态卡片 ===== */
-.publish-section {
-  margin-bottom: 30rpx;
-}
-
+/* ===== 发布新动态卡片 - 融入文档流 ===== */
 .publish-card {
   background: linear-gradient(135deg, #1A73E8 0%, #4285F4 100%);
   border-radius: 10rpx;
   padding: 25rpx 30rpx;
+  margin: 20rpx 30rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -437,16 +427,13 @@ view, text, image {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
-/* 评论输入框容器 */
-.tlou-comment-input-no-anim {
+/* 评论输入框容器 - 简化类名 */
+.comment-input-container {
   width: 100%;
   background-color: #ffffff;
   border-radius: 20rpx 20rpx 0 0;
   z-index: 1001;
-  
-  /* 简洁的淡入动画 */
   animation: simpleFadeIn 0.2s ease-out;
-  
   box-shadow: 0px -4px 12px rgba(0, 0, 0, 0.1);
 }
 
@@ -703,5 +690,9 @@ view, text, image {
 }
 
 
-/* 删除原有的发布按钮样式，已被卡片设计替代 */
+/* 底部安全区域 */
+.bottom-safe-area {
+  width: 100%;
+  flex-shrink: 0;
+}
 
