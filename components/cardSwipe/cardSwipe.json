@@ -1,0 +1,6 @@
+{
+  "component": true,
+  "usingComponents": {
+    "post-card": "../post-card/post-card"
+  }
+}

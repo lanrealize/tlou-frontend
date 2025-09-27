@@ -44,6 +44,10 @@ Page({
     loading: false,       // 加载状态
     hasMore: true,        // 是否还有更多数据
     
+    // 卡片滑动相关数据
+    removedCards: [],     // 已移除的卡片索引
+    currentCardIndex: 0,  // 当前显示的卡片索引
+    
     // 安全区域信息
     safeAreaInfo: {
       statusBarHeight: 44
@@ -770,6 +774,42 @@ Page({
     });
   },
 
+  // ===== 卡片滑动事件处理 =====
+
+  // 卡片滑动事件
+  onCardSwipe(e) {
+    const { direction, swiped_card_index, current_cursor } = e.detail;
+    console.log('卡片滑动:', e.detail);
+    
+    // 更新当前卡片索引
+    this.setData({
+      currentCardIndex: current_cursor
+    });
+    
+    // 可以在这里添加滑动后的逻辑，比如统计、推荐等
+    wx.showToast({
+      title: `向${direction === 'left' ? '左' : '右'}滑动`,
+      icon: 'none',
+      duration: 1000
+    });
+  },
+
+  // 更多操作
+  onPostMore(e) {
+    const { postId } = e.detail;
+    // 这里可以显示更多操作菜单
+    wx.showActionSheet({
+      itemList: ['举报', '分享'],
+      success: (res) => {
+        if (res.tapIndex === 0) {
+          util.showToast('举报功能开发中');
+        } else if (res.tapIndex === 1) {
+          util.showToast('分享功能开发中');
+        }
+      }
+    });
+  },
+
   // ===== 帖子组件事件处理 =====
 
   // 点赞/取消点赞
@@ -862,7 +902,10 @@ Page({
   // 预览图片
   onPreviewImage(e) {
     const { current, urls } = e.detail;
-    util.previewImage(current, urls);
+    wx.previewImage({
+      current: current,
+      urls: urls || [current]
+    });
   },
 
   // 点击用户头像
