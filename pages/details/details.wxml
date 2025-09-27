@@ -117,43 +117,144 @@
           <view class="empty-subtitle">还没有人发布动态，快来发布第一条吧！</view>
         </view>
 
-        <!-- 滑动卡片容器 - 使用新的高性能组件 -->
-        <view class="swipe-cards-section" wx:else>
-          <swipe-cards
-            posts="{{posts}}"
-            removed-posts="{{removedPosts}}"
-            transition="{{true}}"
-            circling="{{false}}"
-            rotate-deg="{{8}}"
-            show-cards="{{3}}"
-            slide-duration="{{200}}"
-            slide-threshold="{{80}}"
-            up-height="{{20}}"
-            scale-ratio="{{0.03}}"
-            current-user="{{currentUser}}"
-            bind:postSwipe="onPostSwipe"
-            bind:postLike="onPostLike"
-            bind:postComment="onPostComment"
-            bind:postDetail="onPostDetail"
-          ></swipe-cards>
-          
+        <!-- 创意卡片堆叠容器 -->
+        <view class="creative-cards-container" wx:else>
+          <!-- 卡片堆叠区域 -->
+          <view class="cards-stack-area">
+            <!-- 背景装饰卡片 -->
+            <view class="bg-card bg-card-3"></view>
+            <view class="bg-card bg-card-2"></view>
+            <view class="bg-card bg-card-1"></view>
+            
+            <!-- 主要帖子卡片 -->
+            <view 
+              class="post-card-creative" 
+              wx:for="{{posts}}" 
+              wx:key="_id"
+              wx:if="{{index < 3}}"
+              style="z-index: {{100 - index}}; transform: translateY({{index * 8}}rpx) scale({{1 - index * 0.03}});"
+              data-index="{{index}}"
+              data-post="{{item}}"
+            >
+              <!-- 卡片背景渐变 -->
+              <view class="card-gradient-bg" style="background: {{item.gradientBg || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}"></view>
+              
+              <!-- 卡片内容 -->
+              <view class="card-content-wrapper">
+                <!-- 用户信息头部 -->
+                <view class="card-user-header">
+                  <image 
+                    class="card-user-avatar" 
+                    src="{{item.author.avatar || '/images/default_avatar.png'}}" 
+                    mode="aspectFill"
+                  ></image>
+                  <view class="card-user-info">
+                    <view class="card-username">{{item.author.username || item.author.name || '未知用户'}}</view>
+                    <view class="card-time">{{item.formattedTime || '刚刚'}}</view>
+                  </view>
+                  <!-- 卡片操作按钮 -->
+                  <view class="card-action-btn">
+                    <image class="card-more-icon" src="/assets/icons/more.svg" mode="aspectFit"></image>
+                  </view>
+                </view>
+
+                <!-- 卡片主内容区域 -->
+                <view class="card-main-content">
+                  <!-- 文字内容 -->
+                  <view class="card-text-content" wx:if="{{item.content}}">
+                    <text class="card-text">{{item.content}}</text>
+                  </view>
+
+                  <!-- 图片内容 - 特殊布局 -->
+                  <view class="card-media-content" wx:if="{{item.images && item.images.length > 0}}">
+                    <!-- 单张图片 - 全屏展示 -->
+                    <view class="card-single-media" wx:if="{{item.images.length === 1}}">
+                      <image 
+                        class="card-main-image" 
+                        src="{{item.images[0].url || item.images[0]}}" 
+                        mode="aspectFill"
+                        bindtap="onPreviewImage"
+                        data-current="{{item.images[0].url || item.images[0]}}"
+                        data-src="{{item.images[0].url || item.images[0]}}"
+                      ></image>
+                      <!-- 图片遮罩效果 -->
+                      <view class="card-image-overlay"></view>
+                    </view>
+
+                    <!-- 多张图片 - 创意拼接 -->
+                    <view class="card-multi-media" wx:else>
+                      <view class="media-grid-creative">
+                        <image 
+                          class="grid-image-creative grid-pos-{{index}}" 
+                          wx:for="{{item.images}}" 
+                          wx:for-item="img" 
+                          wx:key="*this"
+                          wx:if="{{index < 4}}"
+                          src="{{img.url || img}}" 
+                          mode="aspectFill"
+                          bindtap="onPreviewImage"
+                          data-current="{{img.url || img}}"
+                          data-src="{{img.url || img}}"
+                        ></image>
+                        <!-- 更多图片提示 -->
+                        <view class="more-images-overlay" wx:if="{{item.images.length > 4}}">
+                          <text class="more-count">+{{item.images.length - 4}}</text>
+                        </view>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+
+                <!-- 卡片底部交互区域 -->
+                <view class="card-bottom-actions">
+                  <!-- 快速交互按钮 -->
+                  <view class="quick-actions">
+                    <view 
+                      class="quick-action-btn like-btn {{item.isLiked ? 'liked' : ''}}"
+                    >
+                      <image class="quick-action-icon" src="/assets/icons/like.svg" mode="aspectFit"></image>
+                      <text class="quick-action-text">{{item.likes && item.likes.length > 0 ? item.likes.length : '赞'}}</text>
+                    </view>
+                    
+                    <view 
+                      class="quick-action-btn comment-btn"
+                    >
+                      <image class="quick-action-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
+                      <text class="quick-action-text">{{item.comments && item.comments.length > 0 ? item.comments.length : '评论'}}</text>
+                    </view>
+                  </view>
+
+                  <!-- 滑动提示 -->
+                  <view class="swipe-hint">
+                    <view class="swipe-indicator"></view>
+                    <text class="swipe-text">滑动查看下一张</text>
+                  </view>
+                </view>
+              </view>
+
+              <!-- 卡片边框装饰 -->
+              <view class="card-border-decoration"></view>
+              
+              <!-- 卡片阴影 -->
+              <view class="card-shadow-layer"></view>
+            </view>
+          </view>
+
           <!-- 卡片导航指示器 -->
           <view class="cards-navigation" wx:if="{{posts.length > 1}}">
             <view class="nav-dots">
               <view 
-                class="nav-dot {{index === currentCardIndex ? 'active' : ''}}" 
+                class="nav-dot" 
                 wx:for="{{posts}}" 
                 wx:key="_id"
                 wx:if="{{index < 5}}"
-                bindtap="onNavDotTap"
-                data-index="{{index}}"
               ></view>
               <view class="nav-more" wx:if="{{posts.length > 5}}">+{{posts.length - 5}}</view>
             </view>
           </view>
 
           <!-- 查看全部按钮 -->
-          <view class="view-all-posts" bindtap="onViewAllPosts">
+          <view class="view-all-posts">
             <text class="view-all-text">查看全部 {{posts.length}} 条动态</text>
             <image class="view-all-icon" src="/assets/icons/right.svg" mode="aspectFit"></image>
           </view>
@@ -201,150 +302,6 @@
 
     <!-- 原发布按钮已被新分享组件替代 -->
 
-    <!-- 卡片详情弹窗 -->
-    <view class="card-detail-modal" wx:if="{{showCardDetail}}">
-      <view class="card-detail-overlay" bindtap="closeCardDetail"></view>
-      <view class="card-detail-container">
-        <!-- 详情头部 -->
-        <view class="detail-header">
-          <view class="detail-title">帖子详情</view>
-          <view class="close-detail-btn" bindtap="closeCardDetail">
-            <image class="close-icon" src="/assets/icons/back.svg" mode="aspectFit"></image>
-          </view>
-        </view>
-
-        <!-- 详情内容 -->
-        <scroll-view class="detail-content" scroll-y="true">
-          <!-- 帖子基本信息 -->
-          <view class="detail-post-info" wx:if="{{currentDetailPost}}">
-            <view class="detail-user-header">
-              <image 
-                class="detail-user-avatar" 
-                src="{{currentDetailPost.author.avatar || '/images/default_avatar.png'}}" 
-                mode="aspectFill"
-              ></image>
-              <view class="detail-user-info">
-                <view class="detail-username">{{currentDetailPost.author.username || currentDetailPost.author.name || '未知用户'}}</view>
-                <view class="detail-time">{{currentDetailPost.formattedTime || '刚刚'}}</view>
-              </view>
-            </view>
-
-            <!-- 帖子内容 -->
-            <view class="detail-post-content" wx:if="{{currentDetailPost.content}}">
-              <text class="detail-text">{{currentDetailPost.content}}</text>
-            </view>
-
-            <!-- 帖子图片 -->
-            <view class="detail-images" wx:if="{{currentDetailPost.images && currentDetailPost.images.length > 0}}">
-              <image 
-                class="detail-image" 
-                wx:for="{{currentDetailPost.images}}" 
-                wx:key="*this"
-                src="{{item.url || item}}" 
-                mode="aspectFill"
-                bindtap="onPreviewImage"
-                data-current="{{item.url || item}}"
-                data-src="{{item.url || item}}"
-              ></image>
-            </view>
-          </view>
-
-          <!-- 点赞区域 -->
-          <view class="detail-likes-section" wx:if="{{currentDetailPost && currentDetailPost.likes && currentDetailPost.likes.length > 0}}">
-            <view class="detail-section-title">
-              <image class="section-icon" src="/assets/icons/like.svg" mode="aspectFit"></image>
-              <text class="section-title-text">{{currentDetailPost.likes.length}}人觉得很赞</text>
-            </view>
-            <view class="likes-list">
-              <view 
-                class="like-item" 
-                wx:for="{{currentDetailPost.likedUsers || []}}" 
-                wx:key="_id"
-                bindtap="onTapLikedUser"
-                data-user="{{item}}"
-              >
-                <image class="like-user-avatar" src="{{item.avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
-                <text class="like-username">{{item.username || item.name || '匿名用户'}}</text>
-              </view>
-            </view>
-          </view>
-
-          <!-- 评论区域 -->
-          <view class="detail-comments-section" wx:if="{{currentDetailPost}}">
-            <view class="detail-section-title">
-              <image class="section-icon comment-section-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
-              <text class="section-title-text">评论 ({{(currentDetailPost.comments && currentDetailPost.comments.length) || 0}})</text>
-            </view>
-            
-            <!-- 评论列表 -->
-            <view class="comments-list" wx:if="{{currentDetailPost.comments && currentDetailPost.comments.length > 0}}">
-              <view 
-                class="detail-comment-item" 
-                wx:for="{{currentDetailPost.comments}}" 
-                wx:key="_id"
-              >
-                <image 
-                  class="detail-comment-avatar" 
-                  src="{{item.author.avatar || '/images/default_avatar.png'}}" 
-                  mode="aspectFill"
-                  bindtap="onTapCommentUser"
-                  data-user="{{item.author}}"
-                ></image>
-                <view class="detail-comment-content">
-                  <view class="detail-comment-header">
-                    <text class="detail-comment-author">{{item.author.username || item.author.name || '匿名用户'}}</text>
-                    <text class="detail-comment-time">{{item.formattedTime || '刚刚'}}</text>
-                  </view>
-                  <view class="detail-comment-text">
-                    <text wx:if="{{item.replyTo}}" class="reply-target">@{{item.replyTo.username || item.replyTo.name || '未知用户'}} </text>
-                    <text>{{item.content || '内容为空'}}</text>
-                  </view>
-                  <view class="detail-comment-actions">
-                    <text 
-                      class="detail-reply-btn"
-                      bindtap="onReplyDetailComment"
-                      data-user="{{item.author}}"
-                      data-comment-id="{{item._id}}"
-                    >回复</text>
-                    <image 
-                      class="detail-delete-comment-btn" 
-                      wx:if="{{item.author && currentUser._id && currentUser._id === item.author._id}}"
-                      bindtap="onDeleteDetailComment"
-                      data-comment-id="{{item._id}}"
-                      src="/assets/icons/delete.svg"
-                      mode="aspectFit"
-                    ></image>
-                  </view>
-                </view>
-              </view>
-            </view>
-
-            <!-- 空评论状态 -->
-            <view class="empty-comments" wx:else>
-              <text class="empty-comments-text">还没有评论，快来抢沙发吧！</text>
-            </view>
-          </view>
-        </scroll-view>
-
-        <!-- 详情底部操作栏 -->
-        <view class="detail-bottom-actions">
-          <view class="detail-action-group">
-            <view 
-              class="detail-action-btn like-action {{currentDetailPost && currentDetailPost.isLiked ? 'liked' : ''}}" 
-              bindtap="onDetailLike"
-            >
-              <image class="detail-action-icon" src="/assets/icons/like.svg" mode="aspectFit"></image>
-              <text class="detail-action-text">{{currentDetailPost && currentDetailPost.isLiked ? '已赞' : '点赞'}}</text>
-            </view>
-            
-            <view class="detail-action-btn comment-action" bindtap="onDetailComment">
-              <image class="detail-action-icon comment-action-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
-              <text class="detail-action-text">评论</text>
-            </view>
-          </view>
-        </view>
-      </view>
-    </view>
 
     <!-- 评论输入框 -->
     <view class="comment-input-modal" wx:if="{{showCommentInput}}">
