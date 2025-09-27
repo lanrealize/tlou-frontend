@@ -8,43 +8,29 @@
   <!-- 朋友圈详情页面 -->
   <view class="moment-page" style="padding-top: {{navigationData.totalNavigationHeight}}px;">
     
-    <!-- 朋友圈信息卡片 - 采用卡片化设计 -->
-    <view class="circle-info-card card-shadow">
-      <!-- 卡片头部：标题和设置按钮 -->
-      <view class="card-header">
-        <view class="card-title">朋友圈详情</view>
-        <view class="setting-btn theme-color" bindtap="openSettings">设置</view>
+    <!-- 朋友圈信息区域 - 简洁原始设计 -->
+    <view class="circle-info">
+      <!-- 朋友圈标题和设置 -->
+      <view class="circle-header">
+        <view class="circle-name">{{circle.name || '朋友圈'}}</view>
+        <view class="setting-btn" bindtap="openSettings">设置</view>
       </view>
       
-      <!-- 卡片内容：成员信息和头像组 -->
-      <view class="card-body">
-        <!-- 成员统计信息 -->
-        <view class="member-stats">
-          <view class="member-count-text">{{circle.memberCount || 1}} 名成员</view>
-          <view class="member-status-text">点击设置按钮可管理用户</view>
-        </view>
-        
-        <!-- 成员头像展示区域 -->
-        <view class="members-display">
-          <!-- 用户头像组 -->
-          <view class="avatar-gallery">
-            <!-- 显示实际成员头像（最多显示3个） -->
-            <image class="member-avatar-card" wx:for="{{circle.members || []}}" wx:for-item="member" wx:key="_id" wx:if="{{index < 3}}" src="{{member.avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
-            
-            <!-- 如果没有任何成员，显示一个默认头像作为占位 -->
-            <image class="member-avatar-card" wx:if="{{!circle.members || circle.members.length === 0}}" src="/images/default_avatar.png" mode="aspectFill"></image>
-            
-            <!-- 如果成员超过3个，显示剩余成员数量 -->
-            <view class="member-more-badge" wx:if="{{circle.members && circle.members.length > 3}}">
-              <image class="member-more-bg" src="{{circle.members[3].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
-              <view class="member-more-overlay"></view>
-              <text class="more-count-text">+{{circle.members.length - 3}}</text>
-            </view>
-            
-            <!-- 添加成员按钮 -->
-            <button class="add-member-card-btn" open-type="share" wx:if="{{isCircleOwner}}" hover-class="add-member-hover">
-              <image class="add-member-icon" src="/assets/icons/add.svg" mode="aspectFit"></image>
-            </button>
+      <!-- 成员信息 -->
+      <view class="members-info">
+        <view class="member-count">{{circle.memberCount || 1}} 名成员</view>
+        <view class="members-avatars">
+          <image 
+            class="member-avatar" 
+            wx:for="{{circle.members || []}}" 
+            wx:for-item="member" 
+            wx:key="_id" 
+            wx:if="{{index < 5}}"
+            src="{{member.avatar || '/images/default_avatar.png'}}" 
+            mode="aspectFill"
+          ></image>
+          <view class="more-members" wx:if="{{circle.members && circle.members.length > 5}}">
+            +{{circle.members.length - 5}}
           </view>
         </view>
       </view>
@@ -54,7 +40,7 @@
     <scroll-view 
       class="moment-scroll-view"
       scroll-y="{{true}}"
-      style="height: calc(100vh - {{navigationData.totalNavigationHeight}}px - {{safeAreaBottom}}px - 120rpx);"
+      style="height: calc(100vh - {{navigationData.totalNavigationHeight}}px - {{safeAreaBottom}}px);"
       bindscrolltolower="onReachBottom"
       enhanced="{{true}}"
       show-scrollbar="{{false}}"
@@ -117,134 +103,34 @@
           <view class="empty-subtitle">还没有人发布动态，快来发布第一条吧！</view>
         </view>
 
-        <!-- 创意卡片堆叠容器 -->
-        <view class="creative-cards-container" wx:else>
-          <!-- 卡片堆叠区域 -->
-          <view class="cards-stack-area">
-            <!-- 背景装饰卡片 -->
-            <view class="bg-card bg-card-3"></view>
-            <view class="bg-card bg-card-2"></view>
-            <view class="bg-card bg-card-1"></view>
-            
-            <!-- 主要帖子卡片 -->
-            <view 
-              class="post-card-creative" 
-              wx:for="{{posts}}" 
-              wx:key="_id"
-              wx:if="{{index < 3}}"
-              style="z-index: {{100 - index}}; transform: translateY({{index * 8}}rpx) scale({{1 - index * 0.03}});"
-              data-index="{{index}}"
-              data-post="{{item}}"
-            >
-              <!-- 卡片背景渐变 -->
-              <view class="card-gradient-bg" style="background: {{item.gradientBg || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}"></view>
-              
-              <!-- 卡片内容 -->
-              <view class="card-content-wrapper">
-                <!-- 用户信息头部 -->
-                <view class="card-user-header">
-                  <image 
-                    class="card-user-avatar" 
-                    src="{{item.author.avatar || '/images/default_avatar.png'}}" 
-                    mode="aspectFill"
-                  ></image>
-                  <view class="card-user-info">
-                    <view class="card-username">{{item.author.username || item.author.name || '未知用户'}}</view>
-                    <view class="card-time">{{item.formattedTime || '刚刚'}}</view>
-                  </view>
-                  <!-- 卡片操作按钮 -->
-                  <view class="card-action-btn">
-                    <image class="card-more-icon" src="/assets/icons/more.svg" mode="aspectFit"></image>
-                  </view>
-                </view>
-
-                <!-- 卡片主内容区域 -->
-                <view class="card-main-content">
-                  <!-- 文字内容 -->
-                  <view class="card-text-content" wx:if="{{item.content}}">
-                    <text class="card-text">{{item.content}}</text>
-                  </view>
-
-                  <!-- 图片内容 - 特殊布局 -->
-                  <view class="card-media-content" wx:if="{{item.images && item.images.length > 0}}">
-                    <!-- 单张图片 - 全屏展示 -->
-                    <view class="card-single-media" wx:if="{{item.images.length === 1}}">
-                      <image 
-                        class="card-main-image" 
-                        src="{{item.images[0].url || item.images[0]}}" 
-                        mode="aspectFill"
-                        bindtap="onPreviewImage"
-                        data-current="{{item.images[0].url || item.images[0]}}"
-                        data-src="{{item.images[0].url || item.images[0]}}"
-                      ></image>
-                      <!-- 图片遮罩效果 -->
-                      <view class="card-image-overlay"></view>
-                    </view>
-
-                    <!-- 多张图片 - 创意拼接 -->
-                    <view class="card-multi-media" wx:else>
-                      <view class="media-grid-creative">
-                        <image 
-                          class="grid-image-creative grid-pos-{{index}}" 
-                          wx:for="{{item.images}}" 
-                          wx:for-item="img" 
-                          wx:key="*this"
-                          wx:if="{{index < 4}}"
-                          src="{{img.url || img}}" 
-                          mode="aspectFill"
-                          bindtap="onPreviewImage"
-                          data-current="{{img.url || img}}"
-                          data-src="{{img.url || img}}"
-                        ></image>
-                        <!-- 更多图片提示 -->
-                        <view class="more-images-overlay" wx:if="{{item.images.length > 4}}">
-                          <text class="more-count">+{{item.images.length - 4}}</text>
-                        </view>
-                      </view>
-                    </view>
-                  </view>
-                </view>
-
-                <!-- 卡片底部交互区域 -->
-                <view class="card-bottom-actions">
-                  <!-- 快速交互按钮 -->
-                  <view class="quick-actions">
-                    <view 
-                      class="quick-action-btn like-btn {{item.isLiked ? 'liked' : ''}}"
-                    >
-                      <image class="quick-action-icon" src="/assets/icons/like.svg" mode="aspectFit"></image>
-                      <text class="quick-action-text">{{item.likes && item.likes.length > 0 ? item.likes.length : '赞'}}</text>
-                    </view>
-                    
-                    <view 
-                      class="quick-action-btn comment-btn"
-                    >
-                      <image class="quick-action-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
-                      <text class="quick-action-text">{{item.comments && item.comments.length > 0 ? item.comments.length : '评论'}}</text>
-                    </view>
-                  </view>
-
-                  <!-- 滑动提示 -->
-                  <view class="swipe-hint">
-                    <view class="swipe-indicator"></view>
-                    <text class="swipe-text">滑动查看下一张</text>
-                  </view>
-                </view>
-              </view>
-
-              <!-- 卡片边框装饰 -->
-              <view class="card-border-decoration"></view>
-              
-              <!-- 卡片阴影 -->
-              <view class="card-shadow-layer"></view>
-            </view>
-          </view>
+        <!-- 卡片滑动容器 -->
+        <view class="swipe-cards-container" wx:else>
+          <card-swipe 
+            cards="{{posts}}"
+            removed-cards="{{removedCards}}"
+            transition="{{true}}"
+            circling="{{false}}"
+            rotate-deg="{{15}}"
+            show-cards="{{3}}"
+            slide-duration="{{300}}"
+            slide-thershold="{{80}}"
+            up-height="{{20}}"
+            scale-ratio="{{0.05}}"
+            current-user="{{currentUser}}"
+            is-logged-in="{{isLoggedIn}}"
+            bind:cardSwipe="onCardSwipe"
+            bind:postCardLike="onPostCardLike"
+            bind:postCardComment="onPostCardComment"
+            bind:postCardPreviewImage="onPostCardPreviewImage"
+            bind:postCardTapAvatar="onPostCardTapAvatar"
+            bind:postCardDelete="onPostCardDelete"
+          ></card-swipe>
 
           <!-- 卡片导航指示器 -->
           <view class="cards-navigation" wx:if="{{posts.length > 1}}">
             <view class="nav-dots">
               <view 
-                class="nav-dot" 
+                class="nav-dot {{currentCardIndex === index ? 'active' : ''}}" 
                 wx:for="{{posts}}" 
                 wx:key="_id"
                 wx:if="{{index < 5}}"
@@ -258,26 +144,24 @@
             <text class="view-all-text">查看全部 {{posts.length}} 条动态</text>
             <image class="view-all-icon" src="/assets/icons/right.svg" mode="aspectFit"></image>
           </view>
-        </view>
-      </view>
 
-      <!-- 发布新动态卡片 - 替代原发布按钮 -->
-      <view class="publish-section" wx:if="{{!isInviteMode || !showJoinButton}}">
-        <view class="publish-card card-shadow" bindtap="navigateToPublish">
-          <!-- 卡片左侧：图标和文字 -->
-          <view class="publish-left">
-            <view class="publish-icon-wrapper">
-              <image class="publish-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
+          <!-- 发布新动态卡片 - 统一在swipe-cards-container内 -->
+          <view class="publish-card card-shadow" wx:if="{{showPublishButton}}" bindtap="navigateToPublish">
+            <!-- 卡片左侧：图标和文字 -->
+            <view class="publish-left">
+              <view class="publish-icon-wrapper">
+                <image class="publish-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
+              </view>
+              <view class="publish-text-content">
+                <view class="publish-title">发布新动态</view>
+                <view class="publish-desc">分享你的精彩时刻</view>
+              </view>
             </view>
-            <view class="publish-text-content">
-              <view class="publish-title">发布新动态</view>
-              <view class="publish-desc">分享你的精彩时刻</view>
+            
+            <!-- 卡片右侧：装饰图片 -->
+            <view class="publish-right">
+              <image class="publish-decoration" src="/assets/pics/cards.png" mode="aspectFit"></image>
             </view>
-          </view>
-          
-          <!-- 卡片右侧：装饰图片 -->
-          <view class="publish-right">
-            <image class="publish-decoration" src="/assets/pics/cards.png" mode="aspectFit"></image>
           </view>
         </view>
       </view>

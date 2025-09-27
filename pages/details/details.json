@@ -5,7 +5,9 @@
   "disableScroll": true,
   "usingComponents": {
     "post-item": "/components/post-item/post-item",
-    "custom-navigation": "/components/custom-navigation/custom-navigation"
+    "custom-navigation": "/components/custom-navigation/custom-navigation",
+    "card-swipe": "/components/card-swipe/card-swipe",
+    "post-card": "/components/post-card/post-card"
   },
   "backgroundColor": "#f5f5f5"
 }

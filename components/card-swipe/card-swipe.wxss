@@ -1,0 +1,31 @@
+.wrapper{
+    width: 100%;
+    height: 100%;
+    padding: 10rpx 30rpx 0 30rpx; /* 增加顶部padding，确保卡片不被遮挡 */
+    box-sizing: border-box;
+    overflow: visible; /* 改为visible，避免卡片被裁剪 */
+}
+
+.cards{
+    position: relative;
+    width: 100%;
+    height: 100%; /* 确保卡片容器占满父容器高度 */
+    display: flex;
+    justify-content: center;
+    padding: 20rpx 0 5rpx 0; /* 增加上方padding，确保卡片顶部不被遮挡 */
+    box-sizing: border-box;
+    transform-style: preserve-3d;
+}
+
+.card-next{
+    animation: fadeIn 0.3s linear;
+}
+
+@keyframes fadeIn{
+    from{
+        opacity: 0;
+    }
+    to{
+        opacity: 1;
+    }
+}

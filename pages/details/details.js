@@ -44,11 +44,15 @@ Page({
     loading: false,       // 加载状态
     hasMore: true,        // 是否还有更多数据
     
+    // 卡片滑动相关
+    removedCards: [],     // 已移除的卡片索引
+    currentCardIndex: 0,  // 当前卡片索引
+    
     // 安全区域信息
     safeAreaInfo: {
       statusBarHeight: 44
     },
-    safeAreaBottom: 160,  // 底部安全区域 + 发布按钮区域
+    safeAreaBottom: 160,  // 底部安全区域
     
     // 导航栏数据
     navigationData: {
@@ -161,9 +165,8 @@ Page({
       const safeAreaInfo = navigationHelper.getSafeAreaInfo();
       const bottomSafeArea = safeAreaInfo.bottomSafeArea;
       
-      // 计算实际需要的底部空间：发布按钮(120rpx) + 底部安全区域 + 额外边距
-      const publishButtonHeight = 120; // rpx转px大约是60px
-      const calculatedBottom = bottomSafeArea + publishButtonHeight + 20;
+      // 计算实际需要的底部空间：只需要底部安全区域，发布按钮现在在scroll-view内部
+      const calculatedBottom = bottomSafeArea + 20; // 只保留底部安全区域和少量边距
       
       this.setData({
         safeAreaInfo: app.globalData.safeAreaInfo,
@@ -1028,6 +1031,42 @@ Page({
       query: `circleId=${this.data.circleId}`,
       imageUrl: circle.coverImage || ''
     };
+  },
+
+  // === 卡片滑动功能 ===
+  
+  // 卡片滑动事件处理
+  onCardSwipe(e) {
+    const { direction, swiped_card_index, current_cursor } = e.detail;
+    console.log('卡片滑动:', e.detail);
+    
+    // 更新当前卡片索引
+    this.setData({
+      currentCardIndex: current_cursor
+    });
+    
+    // 可以在这里添加滑动后的其他逻辑，比如统计、分析等
+  },
+
+  // 处理post-card组件的事件
+  onPostCardLike(e) {
+    this.onPostLike(e);
+  },
+
+  onPostCardComment(e) {
+    this.onPostComment(e);
+  },
+
+  onPostCardPreviewImage(e) {
+    this.onPreviewImage(e);
+  },
+
+  onPostCardTapAvatar(e) {
+    this.onTapAvatar(e);
+  },
+
+  onPostCardDelete(e) {
+    this.onPostDelete(e);
   },
 
   // === 申请加入功能 ===

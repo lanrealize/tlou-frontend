@@ -103,8 +103,10 @@ const postStore = observable({
       
       let allPosts;
       if (loadMore) {
-        // 加载更多：合并到现有列表
-        allPosts = [...this.posts, ...formattedPosts];
+        // 加载更多：合并到现有列表，并去重
+        const existingIds = new Set(this.posts.map(post => post._id));
+        const newUniquePosts = formattedPosts.filter(post => !existingIds.has(post._id));
+        allPosts = [...this.posts, ...newUniquePosts];
       } else {
         // 重新加载：替换现有列表
         allPosts = formattedPosts;
