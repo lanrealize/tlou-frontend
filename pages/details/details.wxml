@@ -15,44 +15,38 @@
       
       <view class="card-body">
         <view class="member-stats">
-          <view class="member-count-text">{{circle.memberCount || 1}} 名成员</view>
-          <view class="member-status-text">点击设置按钮可管理用户</view>
-        </view>
-        
-        <view class="avatar-gallery">
-          <!-- 显示实际成员头像（最多显示3个） -->
-          <image class="member-avatar-card" wx:for="{{circle.members || []}}" wx:for-item="member" wx:key="_id" wx:if="{{index < 3}}" src="{{member.avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
-          
-          <!-- 如果没有任何成员，显示一个默认头像作为占位 -->
-          <image class="member-avatar-card" wx:if="{{!circle.members || circle.members.length === 0}}" src="/images/default_avatar.png" mode="aspectFill"></image>
-          
-          <!-- 如果成员超过3个，显示剩余成员数量 -->
-          <view class="member-more-badge" wx:if="{{circle.members && circle.members.length > 3}}">
-            <image class="member-more-bg" src="{{circle.members[3].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
-            <view class="member-more-overlay"></view>
-            <text class="more-count-text">+{{circle.members.length - 3}}</text>
+          <view class="member-info-row">
+            <view class="member-text-info">
+              <view class="member-count-text">{{circle.memberCount || 1}} 名成员</view>
+              <view class="member-status-text">点击设置按钮可管理用户</view>
+            </view>
+            
+            <view class="avatar-gallery">
+              <!-- 显示实际成员头像（最多显示3个） -->
+              <image class="member-avatar-card" wx:for="{{circle.members || []}}" wx:for-item="member" wx:key="_id" wx:if="{{index < 3}}" src="{{member.avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+              
+              <!-- 如果没有任何成员，显示一个默认头像作为占位 -->
+              <image class="member-avatar-card" wx:if="{{!circle.members || circle.members.length === 0}}" src="/images/default_avatar.png" mode="aspectFill"></image>
+              
+              <!-- 如果成员超过3个，显示剩余成员数量 -->
+              <view class="member-more-badge" wx:if="{{circle.members && circle.members.length > 3}}">
+                <image class="member-more-bg" src="{{circle.members[3].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+                <view class="member-more-overlay"></view>
+                <text class="more-count-text">+{{circle.members.length - 3}}</text>
+              </view>
+              
+              <!-- 添加成员按钮 -->
+              <button class="add-member-card-btn" open-type="share" wx:if="{{isCircleOwner}}" hover-class="add-member-hover">
+                <image class="add-member-icon" src="/assets/icons/add.svg" mode="aspectFit"></image>
+              </button>
+            </view>
           </view>
-          
-          <!-- 添加成员按钮 -->
-          <button class="add-member-card-btn" open-type="share" wx:if="{{isCircleOwner}}" hover-class="add-member-hover">
-            <image class="add-member-icon" src="/assets/icons/add.svg" mode="aspectFit"></image>
-          </button>
         </view>
       </view>
     </view>
 
-    <!-- 可滚动内容区域 -->
-    <scroll-view 
-      class="moment-scroll-view"
-      scroll-y="{{true}}"
-      style="height: calc(100vh - {{navigationData.totalNavigationHeight}}px - 40rpx);"
-      bindscrolltolower="onReachBottom"
-      enhanced="{{true}}"
-      show-scrollbar="{{false}}"
-      enable-back-to-top="{{true}}"
-      scroll-with-animation="{{true}}"
-    >
-
+    <!-- 内容区域 -->
+    <view class="content-area">
       <!-- 申请加入朋友圈区域 -->
       <view class="apply-section" wx:if="{{!isMember}}">
         <!-- 显示申请按钮（公开朋友圈且未申请） -->
@@ -117,7 +111,7 @@
           slide-thershold="{{60}}" 
           transition="{{true}}" 
           scale-ratio="{{0.05}}" 
-          circling="{{false}}" 
+          circling="{{true}}" 
           up-height="{{40}}" 
           rotate-deg="{{15}}" 
           slide-duration="{{200}}"
@@ -184,7 +178,7 @@
 
       <!-- 底部安全区域占位 -->
       <view class="bottom-safe-area" style="height: {{safeAreaInfo.bottomSafeArea || 20}}rpx;"></view>
-    </scroll-view>
+    </view>
 
     <!-- 评论输入框 -->
     <view class="comment-input-modal" wx:if="{{showCommentInput}}">

@@ -1,7 +1,7 @@
 /* 主要帖子卡片 - 性能优化版本 */
 .post-card {
   width: 100%;
-  height: 520rpx;
+  height: 640rpx;
   border-radius: 20rpx;
   overflow: hidden;
   position: relative;

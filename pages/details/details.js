@@ -787,11 +787,7 @@ Page({
     });
     
     // 可以在这里添加滑动后的逻辑，比如统计、推荐等
-    wx.showToast({
-      title: `向${direction === 'left' ? '左' : '右'}滑动`,
-      icon: 'none',
-      duration: 1000
-    });
+    // 移除了滑动方向的文字提醒
   },
 
   // 更多操作
