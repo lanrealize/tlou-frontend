@@ -790,6 +790,55 @@ Page({
     // 移除了滑动方向的文字提醒
   },
 
+  // 时间地图点击事件
+  onTimelinePostTap(e) {
+    const { targetIndex } = e.detail;
+    console.log('时间地图点击跳转到:', targetIndex);
+    
+    // 更新当前卡片索引，cardSwipe组件会自动切换到对应卡片
+    this.setData({
+      currentCardIndex: targetIndex
+    });
+
+    // 添加震动反馈
+    wx.vibrateShort({
+      type: 'light'
+    });
+
+    // 显示跳转提示
+    const targetPost = this.data.posts[targetIndex];
+    if (targetPost) {
+      const postDate = new Date(targetPost.createdAt || targetPost.created_at || Date.now());
+      const timeLabel = this.formatTimeForDisplay(postDate);
+      
+      wx.showToast({
+        title: `跳转到 ${timeLabel}`,
+        icon: 'none',
+        duration: 1500
+      });
+    }
+  },
+
+  // 格式化时间显示
+  formatTimeForDisplay(date) {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+    const postDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const timeStr = `${hours}:${minutes}`;
+    
+    if (postDate.getTime() === today.getTime()) {
+      return `今天 ${timeStr}`;
+    } else if (postDate.getTime() === yesterday.getTime()) {
+      return `昨天 ${timeStr}`;
+    } else {
+      return `${date.getMonth() + 1}月${date.getDate()}日 ${timeStr}`;
+    }
+  },
+
   // 更多操作
   onPostMore(e) {
     const { postId } = e.detail;

@@ -1,0 +1,74 @@
+<!-- 水平时间地图导航 -->
+<view class="horizontal-timeline-map" wx:if="{{posts && posts.length > 0}}">
+  
+  <!-- 第一行：时间地图 -->
+  <view class="timeline-row">
+    <scroll-view class="timeline-scroll-horizontal" scroll-x="{{true}}" show-scrollbar="{{false}}">
+      <view class="timeline-track">
+        <!-- 时间点列表 -->
+        <view 
+          class="timeline-point {{currentPostIndex === index ? 'current' : ''}}"
+          wx:for="{{processedPosts}}" 
+          wx:key="_id"
+          wx:for-index="index"
+          wx:for-item="post"
+          id="timeline-point-{{index}}"
+          bindtap="onTimelinePostTap"
+          data-index="{{index}}"
+        >
+          <!-- 时间点标记 -->
+          <view class="point-marker">
+            <view class="marker-dot {{currentPostIndex === index ? 'active' : ''}}"></view>
+            <view class="connecting-line" wx:if="{{index < processedPosts.length - 1}}"></view>
+          </view>
+          
+          <!-- 时间信息 -->
+          <view class="point-info">
+            <view class="point-time">{{post.timeLabel}}</view>
+            <view class="point-type">
+              <image 
+                class="type-icon" 
+                src="{{post.images && post.images.length > 0 ? '/assets/icons/image.svg' : '/assets/icons/text.svg'}}" 
+                mode="aspectFit"
+              ></image>
+            </view>
+          </view>
+
+          <!-- 当前指示器 -->
+          <view class="current-pulse" wx:if="{{currentPostIndex === index}}"></view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 第二行：进度条和信息 -->
+  <view class="progress-row">
+    <!-- 当前时间信息 -->
+    <view class="current-info">
+      <text class="current-time">{{currentPostTime}}</text>
+      <text class="current-position">{{currentPostIndex + 1}}/{{processedPosts.length}}</text>
+    </view>
+
+    <!-- 进度条 -->
+    <view class="progress-container">
+      <view class="progress-track">
+        <view class="progress-fill" style="width: {{processedPosts.length > 1 ? (currentPostIndex / (processedPosts.length - 1)) * 100 : 100}}%"></view>
+        <view class="progress-thumb" style="left: {{processedPosts.length > 1 ? (currentPostIndex / (processedPosts.length - 1)) * 100 : 100}}%"></view>
+      </view>
+    </view>
+
+    <!-- 时间范围筛选 -->
+    <view class="time-filters">
+      <view 
+        class="filter-btn {{currentFilter === 'all' ? 'active' : ''}}"
+        bindtap="onFilterChange"
+        data-filter="all"
+      >全部</view>
+      <view 
+        class="filter-btn {{currentFilter === 'today' ? 'active' : ''}}"
+        bindtap="onFilterChange"
+        data-filter="today"
+      >今天</view>
+    </view>
+  </view>
+</view>

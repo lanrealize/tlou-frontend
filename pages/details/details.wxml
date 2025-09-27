@@ -123,18 +123,13 @@
           bind:more="onPostMore"
         ></card-swipe>
 
-        <!-- 卡片导航指示器 -->
-        <view class="cards-navigation" wx:if="{{posts.length > 1}}">
-          <view class="nav-dots">
-            <view 
-              class="nav-dot {{index === currentCardIndex ? 'active' : ''}}" 
-              wx:for="{{posts}}" 
-              wx:key="_id"
-              wx:if="{{index < 5}}"
-            ></view>
-            <view class="nav-more" wx:if="{{posts.length > 5}}">+{{posts.length - 5}}</view>
-          </view>
-        </view>
+        <!-- 水平时间地图导航 - 替代原有的导航指示器 -->
+        <timeline-map 
+          wx:if="{{posts.length > 0}}"
+          posts="{{posts}}"
+          current-post-index="{{currentCardIndex}}"
+          bind:timelinePostTap="onTimelinePostTap"
+        ></timeline-map>
 
         <!-- 查看全部按钮 -->
         <view class="view-all-posts" wx:if="{{posts.length > 0}}" bindtap="viewAllPosts">
