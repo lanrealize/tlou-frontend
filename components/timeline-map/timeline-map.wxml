@@ -5,6 +5,9 @@
   <view class="timeline-row">
     <scroll-view class="timeline-scroll-horizontal" scroll-x="{{true}}" show-scrollbar="{{false}}">
       <view class="timeline-track">
+        <!-- 连续的时间轴背景线 -->
+        <view class="timeline-backbone"></view>
+        
         <!-- 时间点列表 -->
         <view 
           class="timeline-point {{currentPostIndex === index ? 'current' : ''}}"
@@ -19,7 +22,6 @@
           <!-- 时间点标记 -->
           <view class="point-marker">
             <view class="marker-dot {{currentPostIndex === index ? 'active' : ''}}"></view>
-            <view class="connecting-line" wx:if="{{index < processedPosts.length - 1}}"></view>
           </view>
           
           <!-- 时间信息 -->
@@ -52,8 +54,8 @@
     <!-- 进度条 -->
     <view class="progress-container">
       <view class="progress-track">
-        <view class="progress-fill" style="width: {{processedPosts.length > 1 ? (currentPostIndex / (processedPosts.length - 1)) * 100 : 100}}%"></view>
-        <view class="progress-thumb" style="left: {{processedPosts.length > 1 ? (currentPostIndex / (processedPosts.length - 1)) * 100 : 100}}%"></view>
+        <view class="progress-fill" style="width: {{progressWidth}}%"></view>
+        <view class="progress-thumb" style="left: {{progressWidth}}%"></view>
       </view>
     </view>
 

@@ -40,19 +40,38 @@ const getOpenid = async () => {
       });
     });
     
-    // 调用后端接口换取 openid
-    const res = await new Promise((resolve, reject) => {
-      wx.request({
-        url: `${getBaseUrl()}/wechat/get-openid`,
-        method: 'POST',
-        data: { code: loginResult.code },
-        header: {
-          'Content-Type': 'application/json'
-        },
-        success: resolve,
-        fail: reject
-      });
-    });
+    // 调用后端接口换取 openid（增加重试机制）
+    let res;
+    let lastError;
+    
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        res = await new Promise((resolve, reject) => {
+          wx.request({
+            url: `${getBaseUrl()}/wechat/get-openid`,
+            method: 'POST',
+            data: { code: loginResult.code },
+            header: {
+              'Content-Type': 'application/json'
+            },
+            timeout: 15000,
+            success: resolve,
+            fail: reject
+          });
+        });
+        break; // 成功则跳出循环
+      } catch (error) {
+        lastError = error;
+        if (attempt < 2) {
+          console.log(`🔄 获取openid失败，${1000 * (attempt + 1)}ms后重试:`, error);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+        }
+      }
+    }
+    
+    if (!res) {
+      throw lastError || new Error('获取openid失败');
+    }
     
     // 验证响应数据
     if (res.statusCode === 200 && res.data?.success && res.data?.data?.openid) {
@@ -83,19 +102,38 @@ const checkLoginStatus = async () => {
       };
     }
     
-    // 3. 调用后端获取用户信息接口
-    const userInfoRes = await new Promise((resolve, reject) => {
-      wx.request({
-        url: `${getBaseUrl()}/wechat/get-user-info`,
-        method: 'POST',
-        data: { openid },
-        header: {
-          'Content-Type': 'application/json'
-        },
-        success: resolve,
-        fail: reject
-      });
-    });
+    // 3. 调用后端获取用户信息接口（增加重试机制）
+    let userInfoRes;
+    let lastError;
+    
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        userInfoRes = await new Promise((resolve, reject) => {
+          wx.request({
+            url: `${getBaseUrl()}/wechat/get-user-info`,
+            method: 'POST',
+            data: { openid },
+            header: {
+              'Content-Type': 'application/json'
+            },
+            timeout: 15000,
+            success: resolve,
+            fail: reject
+          });
+        });
+        break; // 成功则跳出循环
+      } catch (error) {
+        lastError = error;
+        if (attempt < 2) {
+          console.log(`🔄 获取用户信息失败，${1000 * (attempt + 1)}ms后重试:`, error);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+        }
+      }
+    }
+    
+    if (!userInfoRes) {
+      throw lastError || new Error('获取用户信息失败');
+    }
     
     // 4. 处理用户信息响应
     if (userInfoRes.statusCode !== 200) {

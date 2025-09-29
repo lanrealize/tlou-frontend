@@ -620,8 +620,62 @@ Page({
         } else {
           util.showToast('网络繁忙，请稍后再试');
         }
+      } else if (error.isNetworkError || error.message.includes('网络连接失败')) {
+        // 网络连接失败，提供重试选项
+        console.log('🌐 网络连接失败，提供用户重试选项');
+        
+        if (retryCount === 0) {
+          // 只在第一次失败时显示重试提示
+          wx.showModal({
+            title: '网络连接失败',
+            content: '无法连接到服务器，请检查网络后重试',
+            showCancel: true,
+            cancelText: '稍后再试',
+            confirmText: '立即重试',
+            success: (res) => {
+              if (res.confirm) {
+                // 用户选择重试
+                this.setData({ 
+                  isLoadingCircles: false,
+                  lastCirclesLoadTime: 0 
+                });
+                setTimeout(() => {
+                  this.loadCircles(0, true); // 强制刷新重试
+                }, 500);
+              }
+            }
+          });
+        } else {
+          util.showToast('网络连接失败，请检查网络设置');
+        }
       } else {
-        util.showToast('加载朋友圈失败');
+        // 其他错误
+        const errorMsg = error.message || '加载朋友圈失败';
+        console.log('💥 其他错误:', errorMsg);
+        
+        // 对于首次加载失败，提供更友好的错误处理
+        if (!this.data.hasInitialLoad && retryCount === 0) {
+          wx.showModal({
+            title: '加载失败',
+            content: `${errorMsg}，是否重试？`,
+            showCancel: true,
+            cancelText: '取消',
+            confirmText: '重试',
+            success: (res) => {
+              if (res.confirm) {
+                this.setData({ 
+                  isLoadingCircles: false,
+                  lastCirclesLoadTime: 0 
+                });
+                setTimeout(() => {
+                  this.loadCircles(0, true);
+                }, 500);
+              }
+            }
+          });
+        } else {
+          util.showToast(errorMsg.length > 15 ? '加载失败' : errorMsg);
+        }
       }
       
       // 重置加载状态（只在显示了loading时才重置）
@@ -968,6 +1022,19 @@ Page({
         });
       }
     } catch (error) {
+      console.error('🎯 加载推荐内容失败:', error);
+      
+      // 根据错误类型决定是否重试
+      if (error.isNetworkError || error.message.includes('网络连接失败')) {
+        // 网络错误，15秒后自动重试一次
+        setTimeout(() => {
+          if (this.data.recommendedCircles.length === 0 && !this.data.isLoadingRecommendations && this.data.isLoggedIn) {
+            console.log('🔄 推荐内容网络错误，自动重试');
+            this.loadRecommendations();
+          }
+        }, 15000);
+      }
+      
       this.setData({ 
         recommendedCircles: [],
         recommendationsLoaded: true  // 出现异常也标记为已加载

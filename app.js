@@ -30,6 +30,9 @@ App({
   onLaunch() {
     console.log('🚀 小程序启动');
     
+    // 检查网络状态
+    this.checkNetworkStatus();
+    
     // 设置导航栏信息
     this.setNavigationInfo();
     
@@ -122,5 +125,57 @@ App({
   recheckLoginStatus() {
     console.log('🔄 重新检查用户登录状态');
     userStore.checkLoginStatus();
+  },
+
+  // 检查网络状态
+  checkNetworkStatus() {
+    wx.getNetworkType({
+      success: (res) => {
+        const networkType = res.networkType;
+        console.log('🌐 当前网络类型:', networkType);
+        
+        if (networkType === 'none') {
+          // 无网络连接
+          setTimeout(() => {
+            wx.showModal({
+              title: '网络连接异常',
+              content: '当前无网络连接，请检查网络设置后重新启动应用',
+              showCancel: false,
+              confirmText: '知道了'
+            });
+          }, 1000);
+        } else if (networkType === '2g') {
+          // 2G网络提醒
+          setTimeout(() => {
+            wx.showToast({
+              title: '网络较慢，加载可能需要更长时间',
+              icon: 'none',
+              duration: 3000
+            });
+          }, 1000);
+        }
+        
+        // 监听网络状态变化
+        wx.onNetworkStatusChange((res) => {
+          console.log('🌐 网络状态变化:', res);
+          if (!res.isConnected) {
+            wx.showToast({
+              title: '网络连接已断开',
+              icon: 'none',
+              duration: 2000
+            });
+          } else if (res.networkType !== 'none') {
+            wx.showToast({
+              title: '网络已连接',
+              icon: 'success',
+              duration: 1500
+            });
+          }
+        });
+      },
+      fail: (error) => {
+        console.error('获取网络状态失败:', error);
+      }
+    });
   }
 });

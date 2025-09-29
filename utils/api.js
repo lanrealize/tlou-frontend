@@ -15,7 +15,7 @@ class API {
 
   // 通用请求方法
   async request(options) {
-    const { url, method = 'GET', data = {}, header = {}, timeout = 10000 } = options;
+    const { url, method = 'GET', data = {}, header = {}, timeout = 15000, retries = 2 } = options;
     
     try {
       // 🎯 从 mobx 获取当前身份的 openid
@@ -41,41 +41,70 @@ class API {
       // 静默处理openid获取失败
     }
 
-    return new Promise((resolve, reject) => {
-
-      wx.request({
-        url: this.getBaseUrl() + url,
-        method,
-        data,
-        header: {
-          'Content-Type': 'application/json',
-          ...header
-        },
-        timeout,
-        success: (res) => {
-          // 接受所有2xx状态码（200-299）作为成功
-          if (res.statusCode >= 200 && res.statusCode < 300) {
-            // 对于2xx状态码，如果有success字段则检查，否则直接认为成功
-            if (res.data.success === undefined || res.data.success) {
-              resolve(res.data);
+    // 实现重试逻辑
+    const attemptRequest = async (attemptCount = 0) => {
+      return new Promise((resolve, reject) => {
+        wx.request({
+          url: this.getBaseUrl() + url,
+          method,
+          data,
+          header: {
+            'Content-Type': 'application/json',
+            ...header
+          },
+          timeout,
+          success: (res) => {
+            // 接受所有2xx状态码（200-299）作为成功
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+              // 对于2xx状态码，如果有success字段则检查，否则直接认为成功
+              if (res.data.success === undefined || res.data.success) {
+                resolve(res.data);
+              } else {
+                reject(new Error(res.data.message || '请求失败'));
+              }
             } else {
-              reject(new Error(res.data.message || '请求失败'));
+              // 创建包含完整响应信息的错误对象
+              const error = new Error(`HTTP ${res.statusCode}: ${res.data.message || '网络错误'}`);
+              error.response = {
+                status: res.statusCode,
+                data: res.data
+              };
+              reject(error);
             }
-          } else {
-            // 创建包含完整响应信息的错误对象
-            const error = new Error(`HTTP ${res.statusCode}: ${res.data.message || '网络错误'}`);
-            error.response = {
-              status: res.statusCode,
-              data: res.data
-            };
+          },
+          fail: (err) => {
+            const error = new Error('网络连接失败，请检查网络设置');
+            error.isNetworkError = true;
             reject(error);
           }
-        },
-        fail: (err) => {
-          reject(new Error('网络连接失败，请检查网络设置'));
-        }
+        });
       });
-    });
+    };
+
+    // 执行请求，包含重试逻辑
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const result = await attemptRequest(attempt);
+        return result;
+      } catch (error) {
+        // 如果是最后一次尝试，直接抛出错误
+        if (attempt === retries) {
+          throw error;
+        }
+
+        // 只对网络错误进行重试，业务错误不重试
+        if (error.isNetworkError || (error.response && error.response.status >= 500)) {
+          // 指数退避：第一次重试等待1秒，第二次等待2秒
+          const delay = Math.pow(2, attempt) * 1000;
+          console.log(`🔄 请求失败，${delay}ms后进行第${attempt + 1}次重试:`, error.message);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        } else {
+          // 业务错误直接抛出，不重试
+          throw error;
+        }
+      }
+    }
   }
 
   // GET请求
@@ -154,11 +183,11 @@ class API {
     getAppliers: (circleId) => this.get(`/circles/${circleId}/appliers`),
     
     // === 随机公开朋友圈推荐功能 ===
-    // 获取随机公开朋友圈（返回单个朋友圈）- 5秒超时
+    // 获取随机公开朋友圈（返回单个朋友圈）- 增加超时时间和重试次数
     getRandomPublicCircle: (params = {}) => {
       const query = Object.keys(params).map(key => `${key}=${encodeURIComponent(params[key])}`).join('&');
       const fullUrl = query ? `/circles/random?${query}` : '/circles/random';
-      return this.request({ url: fullUrl, method: 'GET', timeout: 5000 });
+      return this.request({ url: fullUrl, method: 'GET', timeout: 12000, retries: 3 });
     },
 
     // === 邀请功能 ===

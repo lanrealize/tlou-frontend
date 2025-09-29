@@ -16,14 +16,28 @@ Component({
     processedPosts: [],
     filteredPosts: [],
     scrollTarget: '',
-    currentPostTime: ''
+    currentPostTime: '',
+    progressWidth: 0,
+    lastProcessedLength: 0,
+    lastProcessedHash: ''
   },
 
   observers: {
-    'posts, currentPostIndex': function(posts, currentIndex) {
-      if (posts && posts.length > 0 && currentIndex >= 0) {
-        this.processHorizontalTimelineData(posts, currentIndex);
-        this.updateCurrentPostTime(posts, currentIndex);
+    'posts': function(posts) {
+      // 只有当posts数组真正改变时才重新处理
+      if (posts && posts.length > 0) {
+        const currentHash = this.getPostsHash(posts);
+        if (currentHash !== this.data.lastProcessedHash) {
+          this.processHorizontalTimelineData(posts);
+          this.setData({ lastProcessedHash: currentHash });
+        }
+      }
+    },
+    'currentPostIndex': function(currentIndex) {
+      // 只更新时间显示和进度，不重新处理整个数组
+      if (currentIndex >= 0) {
+        this.updateCurrentPostTime(this.properties.posts, currentIndex);
+        this.updateProgressWidth(currentIndex);
       }
     }
   },
@@ -33,21 +47,35 @@ Component({
       // 组件初始化时处理数据
       const { posts, currentPostIndex } = this.properties;
       if (posts && posts.length > 0) {
-        this.processHorizontalTimelineData(posts, currentPostIndex);
+        this.processHorizontalTimelineData(posts);
         this.updateCurrentPostTime(posts, currentPostIndex);
+        this.updateProgressWidth(currentPostIndex);
       }
     }
   },
 
   methods: {
     /**
-     * 处理水平时间轴数据
+     * 生成posts数组的哈希值，用于检测变化
      */
-    processHorizontalTimelineData(posts, currentIndex) {
+    getPostsHash(posts) {
+      if (!posts || posts.length === 0) return '';
+      return `${posts.length}-${posts[0]._id || posts[0].id || ''}-${posts[posts.length - 1]._id || posts[posts.length - 1].id || ''}`;
+    },
+
+    /**
+     * 处理水平时间轴数据 - 性能优化版本
+     */
+    processHorizontalTimelineData(posts) {
       if (!posts || posts.length === 0) return;
 
-      // 为每个post添加时间标签，但不覆盖原始posts数据
+      // 使用缓存避免重复计算
       const processedPosts = posts.map((post, index) => {
+        // 如果已经有timeLabel就不重新计算
+        if (post.timeLabel) {
+          return { ...post, originalIndex: index };
+        }
+        
         const postDate = new Date(post.createdAt || post.created_at || Date.now());
         return {
           ...post,
@@ -56,10 +84,12 @@ Component({
         };
       });
 
-      // 应用筛选器，但只用于内部显示逻辑
-      const filteredPosts = this.applyHorizontalTimeFilter(processedPosts, this.data.currentFilter);
+      // 只在需要时应用筛选器
+      const filteredPosts = this.data.currentFilter === 'all' 
+        ? processedPosts 
+        : this.applyHorizontalTimeFilter(processedPosts, this.data.currentFilter);
 
-      // 不要覆盖posts属性，而是存储到内部数据中
+      // 批量更新，减少setData调用
       this.setData({
         processedPosts: processedPosts,
         filteredPosts: filteredPosts
@@ -111,12 +141,13 @@ Component({
     },
 
     /**
-     * 格式化时间标签
+     * 格式化时间标签 - 带缓存优化
      */
     formatTimeLabel(date) {
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      return `${hours}:${minutes}`;
+      // 简单的时间格式化，避免复杂计算
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      return `${hours < 10 ? '0' : ''}${hours}:${minutes < 10 ? '0' : ''}${minutes}`;
     },
 
 
@@ -142,15 +173,40 @@ Component({
     },
 
     /**
-     * 时间筛选器变化
+     * 更新进度宽度
+     */
+    updateProgressWidth(currentIndex) {
+      const { posts } = this.properties;
+      if (!posts || posts.length <= 1) {
+        this.setData({ progressWidth: 100 });
+        return;
+      }
+      
+      const width = Math.round((currentIndex / (posts.length - 1)) * 100);
+      this.setData({ progressWidth: width });
+    },
+
+    /**
+     * 时间筛选器变化 - 性能优化版本
      */
     onFilterChange(e) {
       const filter = e.currentTarget.dataset.filter;
+      const oldFilter = this.data.currentFilter;
+      
+      // 如果筛选器没有变化，直接返回
+      if (filter === oldFilter) return;
+      
       this.setData({ currentFilter: filter });
       
-      // 重新处理数据
-      const { posts, currentPostIndex } = this.properties;
-      this.processHorizontalTimelineData(posts, currentPostIndex);
+      // 只重新应用筛选器，不重新处理整个数据
+      const { processedPosts } = this.data;
+      if (processedPosts && processedPosts.length > 0) {
+        const filteredPosts = filter === 'all' 
+          ? processedPosts 
+          : this.applyHorizontalTimeFilter(processedPosts, filter);
+        
+        this.setData({ filteredPosts });
+      }
     },
 
     /**
