@@ -15,6 +15,8 @@ Component({
     currentFilter: 'all',
     processedPosts: [],
     filteredPosts: [],
+    timelineNodes: [],
+    timeScale: [],
     scrollTarget: '',
     currentPostTime: '',
     progressWidth: 0,
@@ -64,36 +66,194 @@ Component({
     },
 
     /**
-     * 处理水平时间轴数据 - 性能优化版本
+     * 处理动态间距时间轴数据
      */
     processHorizontalTimelineData(posts) {
       if (!posts || posts.length === 0) return;
 
-      // 使用缓存避免重复计算
+      // 处理posts数据，添加时间信息
       const processedPosts = posts.map((post, index) => {
-        // 如果已经有timeLabel就不重新计算
-        if (post.timeLabel) {
-          return { ...post, originalIndex: index };
-        }
-        
         const postDate = new Date(post.createdAt || post.created_at || Date.now());
         return {
           ...post,
           timeLabel: this.formatTimeLabel(postDate),
+          timestamp: postDate.getTime(),
           originalIndex: index
         };
       });
 
-      // 只在需要时应用筛选器
+      // 按时间排序
+      processedPosts.sort((a, b) => a.timestamp - b.timestamp);
+
+      // 计算时间轴节点
+      const timelineNodes = this.calculateTimelineNodes(processedPosts);
+      
+      // 暂时禁用时间刻度，因为使用固定间距
+      const timeScale = [];
+
+      // 应用筛选器
       const filteredPosts = this.data.currentFilter === 'all' 
         ? processedPosts 
         : this.applyHorizontalTimeFilter(processedPosts, this.data.currentFilter);
 
-      // 批量更新，减少setData调用
+      // 批量更新
       this.setData({
         processedPosts: processedPosts,
-        filteredPosts: filteredPosts
+        filteredPosts: filteredPosts,
+        timelineNodes: timelineNodes,
+        timeScale: timeScale
       });
+    },
+
+    /**
+     * 使用自定义间距算法计算时间轴节点位置
+     */
+    calculateTimelineNodes(posts) {
+      if (!posts || posts.length === 0) return [];
+
+      // 生成时间戳数组用于计算间距
+      const timestamps = posts.map(post => {
+        const date = new Date(post.timestamp);
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        const hour = date.getHours();
+        const minute = date.getMinutes();
+        return `${year}/${month}/${day}/${hour}/${minute}`;
+      });
+
+      // 使用自定义间距计算函数
+      const spacings = this.calculateTimeAxisSpacing(timestamps);
+      
+      // 计算每个节点的累积位置
+      const nodes = [];
+      let cumulativePosition = 0;
+
+      posts.forEach((post, index) => {
+        // 计算与前一个节点的时间间隔
+        let intervalLabel = '';
+        if (index > 0) {
+          const prevPost = posts[index - 1];
+          const intervalMs = post.timestamp - prevPost.timestamp;
+          intervalLabel = this.formatTimeInterval(intervalMs);
+        }
+
+        nodes.push({
+          ...post,
+          position: cumulativePosition, // 使用累积位置（vw单位）
+          intervalLabel: intervalLabel,
+          hasImages: post.images && post.images.length > 0
+        });
+
+        // 为下一个节点累加间距
+        if (index < spacings.length) {
+          cumulativePosition += parseFloat(spacings[index]);
+        }
+      });
+
+      return nodes;
+    },
+
+    /**
+     * 自定义时间轴间距计算函数
+     */
+    calculateTimeAxisSpacing(timestamps) {
+      const parseDate = (timestamp) => {
+        const [year, month, day, hour, minute] = timestamp.split('/').map(Number);
+        return new Date(year, month - 1, day, hour, minute);
+      };
+
+      const dates = timestamps.map(parseDate);
+      const spacings = [];
+
+      for (let i = 0; i < dates.length - 1; i++) {
+        const diffMs = dates[i + 1].getTime() - dates[i].getTime();
+        const diffMinutes = diffMs / (1000 * 60);
+
+        let vw;
+        if (diffMinutes < 5) vw = 7.5;
+        else if (diffMinutes < 15) vw = 10;
+        else if (diffMinutes < 30) vw = 12.5;
+        else if (diffMinutes < 60) vw = 15;
+        else if (diffMinutes < 120) vw = 17.5;
+        else if (diffMinutes < 240) vw = 20;
+        else if (diffMinutes < 480) vw = 22.5;
+        else if (diffMinutes < 1440) vw = 25;
+        else if (diffMinutes < 4320) vw = 27.5;
+        else vw = 30;
+
+        spacings.push(`${vw}`);
+      }
+
+      return spacings;
+    },
+
+    /**
+     * 格式化时间间隔
+     */
+    formatTimeInterval(milliseconds) {
+      const minutes = Math.floor(milliseconds / (1000 * 60));
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+
+      if (days > 0) {
+        return `${days}天`;
+      } else if (hours > 0) {
+        return `${hours}小时`;
+      } else if (minutes > 0) {
+        return `${minutes}分钟`;
+      } else {
+        return '刚刚';
+      }
+    },
+
+    /**
+     * 生成时间刻度
+     */
+    generateTimeScale(posts) {
+      if (!posts || posts.length < 2) return [];
+
+      const startTime = posts[0].timestamp;
+      const endTime = posts[posts.length - 1].timestamp;
+      const totalDuration = endTime - startTime;
+      
+      const scales = [];
+      
+      // 根据时间跨度决定刻度间隔
+      let interval, format;
+      if (totalDuration <= 4 * 60 * 60 * 1000) { // 4小时内，每小时一个刻度
+        interval = 60 * 60 * 1000; // 1小时
+        format = (time) => {
+          const date = new Date(time);
+          return `${date.getHours()}:00`;
+        };
+      } else if (totalDuration <= 24 * 60 * 60 * 1000) { // 1天内，每4小时一个刻度
+        interval = 4 * 60 * 60 * 1000; // 4小时
+        format = (time) => {
+          const date = new Date(time);
+          return `${date.getHours()}:00`;
+        };
+      } else { // 超过1天，每天一个刻度
+        interval = 24 * 60 * 60 * 1000; // 1天
+        format = (time) => {
+          const date = new Date(time);
+          return `${date.getMonth() + 1}/${date.getDate()}`;
+        };
+      }
+
+      // 生成刻度点
+      let currentTime = Math.ceil(startTime / interval) * interval;
+      while (currentTime <= endTime) {
+        const position = ((currentTime - startTime) / totalDuration) * 100;
+        scales.push({
+          time: currentTime,
+          position: Math.max(0, Math.min(100, position)),
+          label: format(currentTime)
+        });
+        currentTime += interval;
+      }
+
+      return scales;
     },
 
     /**
@@ -214,10 +374,16 @@ Component({
      */
     onTimelinePostTap(e) {
       const index = e.currentTarget.dataset.index;
+      const { timelineNodes } = this.data;
+      
+      if (!timelineNodes || !timelineNodes[index]) return;
+      
+      // 获取原始索引
+      const originalIndex = timelineNodes[index].originalIndex;
       
       // 触发事件，通知父组件切换到指定post
       this.triggerEvent('timelinePostTap', {
-        targetIndex: index
+        targetIndex: originalIndex
       });
 
       // 添加点击反馈

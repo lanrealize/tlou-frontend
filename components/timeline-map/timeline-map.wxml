@@ -4,40 +4,57 @@
   <!-- 第一行：时间地图 -->
   <view class="timeline-row">
     <scroll-view class="timeline-scroll-horizontal" scroll-x="{{true}}" show-scrollbar="{{false}}">
-      <view class="timeline-track">
-        <!-- 连续的时间轴背景线 -->
-        <view class="timeline-backbone"></view>
-        
-        <!-- 时间点列表 -->
-        <view 
-          class="timeline-point {{currentPostIndex === index ? 'current' : ''}}"
-          wx:for="{{processedPosts}}" 
-          wx:key="_id"
-          wx:for-index="index"
-          wx:for-item="post"
-          id="timeline-point-{{index}}"
-          bindtap="onTimelinePostTap"
-          data-index="{{index}}"
-        >
-          <!-- 时间点标记 -->
-          <view class="point-marker">
-            <view class="marker-dot {{currentPostIndex === index ? 'active' : ''}}"></view>
-          </view>
+      <view class="timeline-container">
+        <!-- 时间轴主体 -->
+        <view class="timeline-axis">
+          <!-- 连续的时间轴线 -->
+          <view class="axis-line"></view>
           
-          <!-- 时间信息 -->
-          <view class="point-info">
-            <view class="point-time">{{post.timeLabel}}</view>
-            <view class="point-type">
-              <image 
-                class="type-icon" 
-                src="{{post.images && post.images.length > 0 ? '/assets/icons/image.svg' : '/assets/icons/text.svg'}}" 
-                mode="aspectFit"
-              ></image>
+          <!-- 动态间距的时间点 -->
+          <view 
+            class="timeline-node {{currentPostIndex === node.originalIndex ? 'active' : ''}}"
+            wx:for="{{timelineNodes}}" 
+            wx:key="originalIndex"
+            wx:for-index="index"
+            wx:for-item="node"
+            style="left: {{node.position}}vw"
+            bindtap="onTimelinePostTap"
+            data-index="{{index}}"
+          >
+            <!-- 时间点圆圈 -->
+            <view class="node-circle">
+              <view class="node-dot"></view>
+              <view class="node-ring {{currentPostIndex === node.originalIndex ? 'active-ring' : ''}}"></view>
+            </view>
+            
+            <!-- 连接线：从圆圈到标签的稳定连接 -->
+            <view class="connector-line"></view>
+            
+            <!-- 时间标签 -->
+            <view class="node-label">
+              <view class="node-time">{{node.timeLabel}}</view>
+              <view class="node-type">
+                <image 
+                  class="type-icon" 
+                  src="{{node.hasImages ? '/assets/icons/image.svg' : '/assets/icons/text.svg'}}" 
+                  mode="aspectFit"
+                ></image>
+              </view>
+            </view>
+            
+            <!-- 时间间隔指示 -->
+            <view class="interval-indicator" wx:if="{{node.intervalLabel && index > 0}}">
+              {{node.intervalLabel}}
             </view>
           </view>
-
-          <!-- 当前指示器 -->
-          <view class="current-pulse" wx:if="{{currentPostIndex === index}}"></view>
+        </view>
+        
+        <!-- 时间刻度参考线 -->
+        <view class="time-scale">
+          <view class="scale-mark" wx:for="{{timeScale}}" wx:key="time" style="left: {{item.position}}%">
+            <view class="scale-tick"></view>
+            <view class="scale-label">{{item.label}}</view>
+          </view>
         </view>
       </view>
     </scroll-view>
