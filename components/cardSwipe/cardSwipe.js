@@ -48,6 +48,9 @@ Component({
 
   data: {
     just_shown: -1, // 如果显示卡片的数量和卡片总数量一样，那么开启循环的时候，被设置过transform的节点不会重新渲染，这会导致已经滑出界面的卡片无法回归原位，这个字段就是用来控制滑出卡片重新渲染的
+    card_history: [], // 卡片浏览历史
+    is_reversing: false, // 是否正在执行逆向动画
+    reverse_animating: -1, // 正在进行逆向动画的卡片索引
   },
 
   attached() {
@@ -82,7 +85,13 @@ Component({
       })
     },
     nextCard(e) {
-      let { current_cursor, just_shown, slideDuration } = this.data
+      let { current_cursor, just_shown, slideDuration, card_history } = this.data
+      
+      // 记录当前卡片到历史中
+      if (!card_history.includes(current_cursor)) {
+        card_history.push(current_cursor)
+      }
+      
       just_shown = current_cursor
       current_cursor = this.countCurrentCursor(current_cursor)
       Object.assign(e, {
@@ -91,7 +100,8 @@ Component({
       })
       setTimeout(() => {
         this.setData({
-          just_shown
+          just_shown,
+          card_history
         }, () => {
           this.setData({
             just_shown: -1,
@@ -110,6 +120,64 @@ Component({
         current_cursor += 1
       if (!removedCards.includes(current_cursor)) return current_cursor
       return this.countCurrentCursor(current_cursor)
+    },
+
+    // 逆向动画：回到上一张卡片
+    previousCard() {
+      const { card_history, current_cursor, is_reversing } = this.data
+      
+      // 防止重复执行
+      if (is_reversing) return
+      
+      // 检查是否有历史记录
+      if (card_history.length === 0) {
+        this.triggerEvent('noPreviousCard')
+        return
+      }
+      
+      // 获取上一张卡片的索引
+      const previousIndex = card_history.pop()
+      
+      this.setData({ 
+        is_reversing: true,
+        card_history 
+      })
+      
+      // 执行逆向动画
+      this.executeReverseAnimation(previousIndex, current_cursor)
+    },
+
+    // 执行逆向动画 - 最终修复版本
+    executeReverseAnimation(targetIndex, currentIndex) {
+      const { slideDuration } = this.data
+      
+      // 第一步：显示目标卡片并开始动画，但不改变current_cursor
+      // 这样目标卡片会以最高z-index显示并执行滑入动画
+      this.setData({
+        reverse_animating: targetIndex,
+      })
+      
+      // 第二步：动画完成后更新current_cursor并清理状态
+      setTimeout(() => {
+        this.setData({
+          current_cursor: targetIndex,
+          is_reversing: false,
+          reverse_animating: -1,
+          just_shown: -1
+        })
+        
+        // 触发逆向滑动事件
+        this.triggerEvent('cardReverseSwipe', {
+          direction: 'reverse',
+          target_index: targetIndex,
+          previous_index: currentIndex
+        })
+      }, slideDuration + 50) // 动画完成后再更新状态
+    },
+
+    // 检查是否可以回退
+    canGoBack() {
+      return this.data.card_history.length > 0 && !this.data.is_reversing
     },
 
     // 转发post-card组件的事件

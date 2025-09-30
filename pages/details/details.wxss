@@ -682,3 +682,38 @@ card-swipe {
   flex-shrink: 0;
 }
 
+/* 临时返回按钮样式 */
+.temp-back-button {
+  position: absolute;
+  bottom: 100rpx;
+  right: 30rpx;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 50rpx;
+  padding: 16rpx 24rpx;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  z-index: 1000;
+  backdrop-filter: blur(10rpx);
+  transition: all 0.3s ease;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
+}
+
+.temp-back-button:active {
+  transform: scale(0.95);
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.back-icon {
+  color: white;
+  font-size: 32rpx;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.back-text {
+  color: white;
+  font-size: 24rpx;
+  font-weight: 500;
+}
+

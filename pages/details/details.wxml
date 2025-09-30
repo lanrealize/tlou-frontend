@@ -105,6 +105,7 @@
         <!-- 滑动卡片组件 -->
         <card-swipe 
           wx:else
+          id="cardSwipeComponent"
           cards="{{posts}}" 
           removed-cards="{{removedCards}}" 
           show-cards="{{3}}" 
@@ -116,12 +117,20 @@
           rotate-deg="{{15}}" 
           slide-duration="{{200}}"
           bind:cardSwipe="onCardSwipe"
+          bind:cardReverseSwipe="onCardReverseSwipe"
+          bind:noPreviousCard="onNoPreviousCard"
           bind:like="onPostLike"
           bind:comment="onPostComment"
           bind:previewImage="onPreviewImage"
           bind:tapAvatar="onTapAvatar"
           bind:more="onPostMore"
         ></card-swipe>
+
+        <!-- 临时返回按钮 -->
+        <view class="temp-back-button" wx:if="{{canGoBack}}" bindtap="goToPreviousCard">
+          <text class="back-icon">←</text>
+          <text class="back-text">上一张</text>
+        </view>
 
         <!-- 水平时间地图导航 - 替代原有的导航指示器 -->
         <timeline-map 

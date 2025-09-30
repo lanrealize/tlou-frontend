@@ -47,6 +47,7 @@ Page({
     // 卡片滑动相关数据
     removedCards: [],     // 已移除的卡片索引
     currentCardIndex: 0,  // 当前显示的卡片索引
+    canGoBack: false,     // 是否可以回退到上一张卡片
     
     // 安全区域信息
     safeAreaInfo: {
@@ -781,13 +782,54 @@ Page({
     const { direction, swiped_card_index, current_cursor } = e.detail;
     console.log('卡片滑动:', e.detail);
     
-    // 更新当前卡片索引
-    this.setData({
-      currentCardIndex: current_cursor
-    });
+    // 更新当前卡片索引和返回按钮状态
+    this.updateCardState(current_cursor);
     
     // 可以在这里添加滑动后的逻辑，比如统计、推荐等
     // 移除了滑动方向的文字提醒
+  },
+
+  // 逆向滑动事件
+  onCardReverseSwipe(e) {
+    const { direction, target_index, previous_index } = e.detail;
+    console.log('逆向滑动:', e.detail);
+    
+    // 更新当前卡片索引和返回按钮状态
+    this.updateCardState(target_index);
+    
+    // 添加震动反馈
+    wx.vibrateShort({
+      type: 'light'
+    });
+  },
+
+  // 没有上一张卡片时的提示
+  onNoPreviousCard() {
+    wx.showToast({
+      title: '已经是第一张了',
+      icon: 'none',
+      duration: 1500
+    });
+  },
+
+  // 更新卡片状态
+  updateCardState(cardIndex) {
+    // 检查cardSwipe组件是否可以回退
+    const cardSwipeComponent = this.selectComponent('#cardSwipeComponent');
+    const canGoBack = cardSwipeComponent ? cardSwipeComponent.canGoBack() : false;
+    
+    this.setData({
+      currentCardIndex: cardIndex,
+      canGoBack: canGoBack
+    });
+  },
+
+  // 回到上一张卡片
+  goToPreviousCard() {
+    const cardSwipeComponent = this.selectComponent('#cardSwipeComponent');
+    if (cardSwipeComponent) {
+      cardSwipeComponent.previousCard();
+    }
   },
 
   // 时间地图点击事件
@@ -796,9 +838,7 @@ Page({
     console.log('时间地图点击跳转到:', targetIndex);
     
     // 更新当前卡片索引，cardSwipe组件会自动切换到对应卡片
-    this.setData({
-      currentCardIndex: targetIndex
-    });
+    this.updateCardState(targetIndex);
 
     // 添加震动反馈
     wx.vibrateShort({
