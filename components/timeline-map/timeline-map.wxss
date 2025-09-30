@@ -214,17 +214,6 @@
   text-align: center;
 }
 
-.node-type {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.type-icon {
-  width: 16rpx;
-  height: 16rpx;
-  opacity: 0.7;
-}
 
 /* 时间间隔指示器 */
 /* 时间间隔指示器 - 相对于timeline-node定位 */

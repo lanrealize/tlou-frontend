@@ -33,13 +33,6 @@
             <!-- 时间标签 -->
             <view class="node-label">
               <view class="node-time">{{node.timeLabel}}</view>
-              <view class="node-type">
-                <image 
-                  class="type-icon" 
-                  src="{{node.hasImages ? '/assets/icons/image.svg' : '/assets/icons/text.svg'}}" 
-                  mode="aspectFit"
-                ></image>
-              </view>
             </view>
             
           </view>

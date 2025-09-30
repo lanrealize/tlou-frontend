@@ -1,3 +1,5 @@
+import { formatReadableTime, dateToTimeString } from '../../utils/timeFormatter.js';
+
 Component({
   properties: {
     posts: {
@@ -301,13 +303,21 @@ Component({
     },
 
     /**
-     * 格式化时间标签 - 带缓存优化
+     * 格式化时间标签 - 使用新的formatReadableTime函数
      */
     formatTimeLabel(date) {
-      // 简单的时间格式化，避免复杂计算
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      return `${hours < 10 ? '0' : ''}${hours}:${minutes < 10 ? '0' : ''}${minutes}`;
+      try {
+        // 将Date对象转换为YYYY/MM/DD/HH/mm格式
+        const timeString = dateToTimeString(date);
+        // 使用formatReadableTime函数格式化
+        return formatReadableTime(timeString);
+      } catch (error) {
+        console.error('时间格式化错误:', error);
+        // 降级到简单格式
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        return `${hours < 10 ? '0' : ''}${hours}:${minutes < 10 ? '0' : ''}${minutes}`;
+      }
     },
 
 
