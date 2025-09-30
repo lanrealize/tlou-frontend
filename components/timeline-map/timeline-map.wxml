@@ -42,10 +42,6 @@
               </view>
             </view>
             
-            <!-- 时间间隔指示 -->
-            <view class="interval-indicator" wx:if="{{node.intervalLabel && index > 0}}">
-              {{node.intervalLabel}}
-            </view>
           </view>
         </view>
         
