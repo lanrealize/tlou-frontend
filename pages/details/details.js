@@ -791,7 +791,7 @@ Page({
 
   // 逆向滑动事件
   onCardReverseSwipe(e) {
-    const { direction, target_index, previous_index } = e.detail;
+    const { direction, target_index, previous_index, reverse_direction, original_swipe_direction } = e.detail;
     console.log('逆向滑动:', e.detail);
     
     // 更新当前卡片索引和返回按钮状态
@@ -801,6 +801,10 @@ Page({
     wx.vibrateShort({
       type: 'light'
     });
+    
+    // 可选：显示方向信息（调试用）
+    // const directionText = reverse_direction === 'from-right' ? '从右侧' : '从左侧';
+    // console.log(`卡片${target_index}${directionText}滑入，原始滑动方向：${original_swipe_direction}`);
   },
 
   // 没有上一张卡片时的提示
@@ -814,12 +818,33 @@ Page({
 
   // 更新卡片状态
   updateCardState(cardIndex) {
+    // 参数验证和类型转换
+    let validCardIndex = 0;
+    
+    if (typeof cardIndex === 'number' && !isNaN(cardIndex) && cardIndex >= 0) {
+      validCardIndex = Math.floor(cardIndex); // 确保是整数
+    } else if (typeof cardIndex === 'string' && !isNaN(Number(cardIndex))) {
+      validCardIndex = Math.floor(Number(cardIndex));
+    } else {
+      console.warn('[Details] updateCardState: 无效的卡片索引，使用默认值0:', cardIndex);
+      validCardIndex = 0;
+    }
+    
+    // 边界检查
+    const maxIndex = Math.max(0, this.data.posts.length - 1);
+    if (validCardIndex > maxIndex) {
+      console.warn(`[Details] updateCardState: 卡片索引超出范围 ${validCardIndex} > ${maxIndex}，调整为 ${maxIndex}`);
+      validCardIndex = maxIndex;
+    }
+    
     // 检查cardSwipe组件是否可以回退
     const cardSwipeComponent = this.selectComponent('#cardSwipeComponent');
     const canGoBack = cardSwipeComponent ? cardSwipeComponent.canGoBack() : false;
     
+    console.log(`[Details] 更新卡片状态: 索引 ${validCardIndex}, 可回退: ${canGoBack}`);
+    
     this.setData({
-      currentCardIndex: cardIndex,
+      currentCardIndex: validCardIndex,
       canGoBack: canGoBack
     });
   },
@@ -828,8 +853,27 @@ Page({
   goToPreviousCard() {
     const cardSwipeComponent = this.selectComponent('#cardSwipeComponent');
     if (cardSwipeComponent) {
+      // 调试信息
+      const debugInfo = cardSwipeComponent.getDebugInfo();
+      console.log('[Details] 点击上一张按钮, CardSwipe状态:', debugInfo);
+      
       cardSwipeComponent.previousCard();
+    } else {
+      console.error('[Details] 无法找到cardSwipe组件');
     }
+  },
+
+  // 调试方法：获取完整状态信息
+  getDebugInfo() {
+    const cardSwipeComponent = this.selectComponent('#cardSwipeComponent');
+    const cardSwipeInfo = cardSwipeComponent ? cardSwipeComponent.getDebugInfo() : null;
+    
+    return {
+      currentCardIndex: this.data.currentCardIndex,
+      postsLength: this.data.posts.length,
+      canGoBack: this.data.canGoBack,
+      cardSwipeInfo: cardSwipeInfo
+    };
   },
 
   // 时间地图点击事件
