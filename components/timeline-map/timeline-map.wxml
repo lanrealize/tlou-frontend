@@ -3,8 +3,8 @@
   
   <!-- 第一行：时间地图 -->
   <view class="timeline-row">
-    <scroll-view class="timeline-scroll-horizontal" scroll-x="{{true}}" show-scrollbar="{{false}}">
-      <view class="timeline-container">
+    <view class="timeline-viewport">
+      <view class="timeline-container" style="transform: translateX({{timelineTransform}}px);">
         <!-- 时间轴主体 -->
         <view class="timeline-axis">
           <!-- 连续的时间轴线 -->
@@ -46,7 +46,7 @@
           </view>
         </view>
       </view>
-    </scroll-view>
+    </view>
   </view>
 
   <!-- 第二行：进度条和信息 -->

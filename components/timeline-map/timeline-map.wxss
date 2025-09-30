@@ -3,22 +3,25 @@
   width: 100%;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10rpx);
-  border-radius: 20rpx;
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
-  margin: 30rpx 20rpx 20rpx 20rpx;
-  padding: 25rpx;
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+  margin: 15rpx 20rpx 15rpx 20rpx;
+  padding: 15rpx;
   border: 1rpx solid rgba(255, 255, 255, 0.8);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 /* 第一行：时间地图 */
 .timeline-row {
-  margin-bottom: 20rpx;
+  margin-bottom: 12rpx;
+  overflow: hidden; /* 防止内容溢出 */
 }
 
-.timeline-scroll-horizontal {
+/* 时间轴视窗 - 替代scroll-view */
+.timeline-viewport {
   width: 100%;
-  white-space: nowrap;
+  overflow: hidden; /* 隐藏超出部分 */
+  position: relative;
 }
 
 /* 时间轴容器 - 网格系统容器 */
@@ -26,15 +29,16 @@
   position: relative;
   width: 100%;
   min-width: 200vw;
-  height: 160rpx; /* 网格高度：120rpx + 上下边距 */
-  padding: 20rpx 5vw 20rpx 5vw; /* 为网格留出边距 */
+  height: 120rpx; /* 减少高度，更紧凑 */
+  padding: 10rpx 5vw 10rpx 5vw; /* 减少上下边距 */
+  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* 添加平移动画 */
 }
 
 /* 时间轴主体 - 使用flexbox居中对齐 */
 .timeline-axis {
   position: relative;
   width: 100%;
-  height: 120rpx;
+  height: 100rpx; /* 减少高度 */
   display: flex;
   align-items: center; /* 垂直居中：轴线和圆点自然对齐 */
   justify-content: flex-start;
@@ -66,7 +70,7 @@
   top: 50%; /* 相对于timeline-axis垂直居中 */
   transform: translateX(-50%) translateY(-50%); /* 精确居中 */
   width: 100rpx;
-  height: 60rpx;
+  height: 50rpx; /* 减少高度 */
   z-index: 5;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
@@ -76,7 +80,8 @@
 }
 
 .timeline-node.active {
-  /* 激活时容器保持位置不变，只有子元素变化 */
+  /* 激活时提升z-index，确保在最上层 */
+  z-index: 20;
 }
 
 /* 节点圆圈 - 在timeline-node内部居中 */
@@ -184,26 +189,31 @@
   top: 100%; /* 在timeline-node下方 */
   left: 50%;
   transform: translateX(-50%);
-  margin-top: 8rpx; /* 与圆圈的间距 */
+  margin-top: 6rpx; /* 减少与圆圈的间距 */
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4rpx;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(5rpx);
-  padding: 8rpx 12rpx;
-  border-radius: 12rpx;
+  padding: 6rpx 10rpx; /* 减少内边距 */
+  border-radius: 10rpx;
   border: 1rpx solid rgba(26, 115, 232, 0.2);
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
-  min-width: 60rpx;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.08);
+  min-width: 50rpx; /* 减少最小宽度 */
+  max-width: 120rpx; /* 限制最大宽度防止遮挡 */
   transition: all 0.3s ease;
-  z-index: 1; /* 标签在轴线下方 */
+  z-index: 10; /* 提高基础z-index */
+  white-space: nowrap; /* 防止文字换行 */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .timeline-node.active .node-label {
   background: rgba(26, 115, 232, 0.1);
   border-color: rgba(26, 115, 232, 0.4);
-  transform: translateX(-50%) translateY(-2rpx); /* 保持水平居中 */
+  transform: translateX(-50%) translateY(-4rpx); /* 稍微上移突出显示 */
+  z-index: 25; /* 激活时最高z-index */
+  box-shadow: 0 4rpx 12rpx rgba(26, 115, 232, 0.2);
 }
 
 .node-time {
@@ -270,7 +280,7 @@
 .progress-row {
   display: flex;
   align-items: center;
-  gap: 20rpx;
+  gap: 15rpx; /* 减少间距 */
 }
 
 /* 当前信息 */

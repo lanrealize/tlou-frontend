@@ -23,7 +23,9 @@ Component({
     currentPostTime: '',
     progressWidth: 0,
     lastProcessedLength: 0,
-    lastProcessedHash: ''
+    lastProcessedHash: '',
+    timelineTransform: 0, // 时间轴平移距离
+    viewportWidth: 0 // 视窗宽度
   },
 
   observers: {
@@ -42,6 +44,7 @@ Component({
       if (currentIndex >= 0) {
         this.updateCurrentPostTime(this.properties.posts, currentIndex);
         this.updateProgressWidth(currentIndex);
+        this.updateTimelineTransform(currentIndex);
       }
     }
   },
@@ -55,6 +58,8 @@ Component({
         this.updateCurrentPostTime(posts, currentPostIndex);
         this.updateProgressWidth(currentPostIndex);
       }
+      // 获取视窗宽度
+      this.getViewportWidth();
     }
   },
 
@@ -357,6 +362,48 @@ Component({
     },
 
     /**
+     * 获取视窗宽度
+     */
+    getViewportWidth() {
+      const query = this.createSelectorQuery();
+      query.select('.timeline-viewport').boundingClientRect((rect) => {
+        if (rect) {
+          this.setData({ viewportWidth: rect.width });
+        }
+      }).exec();
+    },
+
+    /**
+     * 更新时间轴transform，让active节点居中显示
+     */
+    updateTimelineTransform(currentIndex) {
+      const { timelineNodes, viewportWidth } = this.data;
+      if (!timelineNodes || timelineNodes.length === 0 || !viewportWidth) {
+        return;
+      }
+
+      // 找到当前active节点
+      const activeNode = timelineNodes.find(node => node.originalIndex === currentIndex);
+      if (!activeNode) return;
+
+      // 计算节点在时间轴上的实际位置（px）
+      // vw转换为px：1vw = viewportWidth / 100
+      const nodePositionPx = (activeNode.position * viewportWidth) / 100;
+      
+      // 计算需要的transform值，让节点居中显示
+      const centerOffset = viewportWidth / 2;
+      const transform = centerOffset - nodePositionPx;
+      
+      // 限制transform范围，防止过度滚动
+      const maxTransform = 0; // 不能向右滚动超过起始位置
+      const minTransform = viewportWidth - (200 * viewportWidth / 100); // 200vw是容器宽度
+      
+      const finalTransform = Math.max(minTransform, Math.min(maxTransform, transform));
+      
+      this.setData({ timelineTransform: finalTransform });
+    },
+
+    /**
      * 时间筛选器变化 - 性能优化版本
      */
     onFilterChange(e) {
@@ -390,6 +437,9 @@ Component({
       
       // 获取原始索引
       const originalIndex = timelineNodes[index].originalIndex;
+      
+      // 立即更新transform，让点击的节点居中
+      this.updateTimelineTransform(originalIndex);
       
       // 触发事件，通知父组件切换到指定post
       this.triggerEvent('timelinePostTap', {
