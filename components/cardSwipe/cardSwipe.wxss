@@ -135,20 +135,7 @@
     z-index: -1;
 }
 
-/* 优化卡片层叠效果，模拟拍立得照片堆叠 */
+/* 恢复原来的简单卡片出现动画 */
 .card-next{
-    animation: fadeInPolaroid 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-
-@keyframes fadeInPolaroid{
-    from{
-        opacity: 0;
-        transform: translateY(20rpx) rotate(2deg) scale(0.95);
-        filter: blur(1rpx);
-    }
-    to{
-        opacity: 1;
-        transform: translateY(0) rotate(0deg) scale(1);
-        filter: blur(0);
-    }
+    animation: fadeIn 0.3s linear;
 }
