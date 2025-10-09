@@ -1,216 +1,111 @@
-/* 主要帖子卡片 - 性能优化版本 */
-.post-card {
+/* 拍立得风格卡片 */
+.post-card.polaroid-card {
   width: 100%;
-  height: 640rpx;
-  border-radius: 20rpx;
-  overflow: hidden;
+  height: 720rpx; /* 调整为拍立得比例 */
   position: relative;
-  /* 优化动画性能 */
-  transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), 
-              opacity 0.2s ease-out;
-  /* 启用硬件加速 */
   transform: translateZ(0);
   will-change: transform, opacity;
-  /* 优化渲染 */
   backface-visibility: hidden;
   cursor: pointer;
-  box-shadow: 0 20rpx 40rpx rgba(0, 0, 0, 0.15);
+  /* 移除原有阴影，使用新的拍立得阴影 */
 }
 
-/* 移除hover效果 */
-
-/* 卡片背景渐变 */
-.card-gradient-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
+/* 拍立得主框架 */
+.polaroid-frame {
   width: 100%;
   height: 100%;
-  z-index: 1;
-}
-
-/* 卡片内容包装器 - 性能优化版本 */
-.card-content-wrapper {
+  background: #ffffff;
+  border-radius: 8rpx; /* 拍立得特有的小圆角 */
+  padding: 20rpx 20rpx 80rpx 20rpx; /* 底部留更多空间 */
+  box-sizing: border-box;
   position: relative;
+  /* 添加细微的纹理效果 */
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.02) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.02) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(120, 200, 255, 0.02) 0%, transparent 50%);
+  /* 拍立得特有的边框效果 */
+  border: 1rpx solid rgba(0, 0, 0, 0.05);
+}
+
+/* 拍立得照片区域 */
+.polaroid-photo-area {
+  width: 100%;
+  height: calc(100% - 120rpx); /* 为底部区域留空间 */
+  position: relative;
+  background: #f8f9fa;
+  border-radius: 4rpx;
+  overflow: hidden;
+  /* 添加内阴影模拟照片凹陷效果 */
+  box-shadow: inset 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+/* 图片内容容器 */
+.polaroid-image-content {
   width: 100%;
   height: 100%;
-  padding: 30rpx;
-  display: flex;
-  flex-direction: column;
-  z-index: 2;
-  background: rgba(255, 255, 255, 0.95);
-  /* 优化模糊效果性能 */
-  backdrop-filter: blur(8rpx);
-  /* 启用硬件加速 */
-  transform: translateZ(0);
-  will-change: auto;
+  position: relative;
 }
 
-/* 用户信息头部 */
-.card-user-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 25rpx;
-  z-index: 3;
+/* 单张图片样式 */
+.polaroid-single-image {
+  width: 100%;
+  height: 100%;
+  position: relative;
 }
 
-.card-user-avatar {
+.polaroid-main-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 4rpx;
+  /* 添加轻微的滤镜效果，模拟拍立得照片 */
+  filter: contrast(1.1) saturate(1.2) brightness(1.05);
+  transition: all 0.3s ease;
+}
+
+/* 多张图片拼贴样式 */
+.polaroid-multi-images {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.polaroid-image-collage {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  gap: 6rpx;
+  padding: 10rpx;
+  box-sizing: border-box;
+}
+
+.polaroid-collage-image {
+  flex: 1;
+  height: 100%;
+  border-radius: 4rpx;
+  filter: contrast(1.1) saturate(1.2) brightness(1.05);
+  transition: all 0.2s ease;
+  /* 添加轻微旋转效果，模拟随意摆放 */
+}
+
+.polaroid-img-0 {
+  transform: rotate(-1deg);
+}
+
+.polaroid-img-1 {
+  transform: rotate(0.5deg);
+}
+
+.polaroid-img-2 {
+  transform: rotate(-0.5deg);
+}
+
+.polaroid-more-overlay {
+  position: absolute;
+  bottom: 15rpx;
+  right: 15rpx;
   width: 50rpx;
   height: 50rpx;
-  border-radius: 50%;
-  border: 3rpx solid rgba(255, 255, 255, 0.8);
-  margin-right: 15rpx;
-  transition: all 0.3s ease;
-}
-
-/* 移除头像active效果 */
-
-.card-user-info {
-  flex: 1;
-}
-
-.card-username {
-  font-size: 26rpx;
-  font-weight: 600;
-  color: #333333;
-  line-height: 1.3;
-  margin-bottom: 4rpx;
-}
-
-.card-time {
-  font-size: 22rpx;
-  color: #808080;
-  line-height: 1.2;
-}
-
-.card-action-btn {
-  width: 40rpx;
-  height: 40rpx;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-/* 移除操作按钮active效果 */
-
-.card-more-icon {
-  width: 20rpx;
-  height: 20rpx;
-  opacity: 0.7;
-}
-
-/* 卡片主内容区域 */
-.card-main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 20rpx;
-  overflow: hidden;
-}
-
-/* 文字内容 */
-.card-text-content {
-  max-height: 150rpx;
-  overflow: hidden;
-}
-
-.card-text {
-  font-size: 28rpx;
-  line-height: 1.6;
-  color: #333333;
-  word-wrap: break-word;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* 媒体内容 */
-.card-media-content {
-  flex: 1;
-  border-radius: 15rpx;
-  overflow: hidden;
-  position: relative;
-}
-
-/* 单张图片展示 */
-.card-single-media {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  border-radius: 15rpx;
-  overflow: hidden;
-}
-
-.card-main-image {
-  width: 100%;
-  height: 100%;
-  transition: all 0.3s ease;
-}
-
-/* 移除主图片active效果 */
-
-.card-image-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.1) 100%);
-  pointer-events: none;
-}
-
-/* 多张图片创意网格 */
-.card-multi-media {
-  width: 100%;
-  height: 100%;
-  position: relative;
-}
-
-.media-grid-creative {
-  width: 100%;
-  height: 100%;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 4rpx;
-  border-radius: 15rpx;
-  overflow: hidden;
-}
-
-.grid-image-creative {
-  width: 100%;
-  height: 100%;
-  transition: all 0.2s ease;
-}
-
-/* 移除网格图片active效果 */
-
-.grid-pos-0 {
-  grid-column: 1 / 3;
-  grid-row: 1 / 2;
-}
-
-.grid-pos-1 {
-  grid-column: 1 / 2;
-  grid-row: 2 / 3;
-}
-
-.grid-pos-2 {
-  grid-column: 2 / 3;
-  grid-row: 2 / 3;
-}
-
-.more-images-overlay {
-  position: absolute;
-  bottom: 8rpx;
-  right: 8rpx;
-  width: 60rpx;
-  height: 60rpx;
   background: rgba(0, 0, 0, 0.7);
   border-radius: 50%;
   display: flex;
@@ -219,108 +114,233 @@
   z-index: 5;
 }
 
-.more-count {
+.polaroid-more-count {
   font-size: 20rpx;
   font-weight: 600;
   color: #ffffff;
 }
 
-/* 卡片底部交互区域 */
-.card-bottom-actions {
+/* 纯文字内容背景 */
+.polaroid-text-bg {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.polaroid-text-pattern {
+  width: 80%;
+  height: 80%;
+  background-image: 
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10rpx,
+      rgba(0, 0, 0, 0.02) 10rpx,
+      rgba(0, 0, 0, 0.02) 20rpx
+    );
+  border-radius: 4rpx;
+}
+
+/* 文字覆盖层 */
+.polaroid-text-overlay {
+  position: absolute;
+  bottom: 20rpx;
+  left: 20rpx;
+  right: 20rpx;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 15rpx 20rpx;
+  border-radius: 8rpx;
+  backdrop-filter: blur(10rpx);
+  /* 模拟手写标签效果 */
+  border-left: 4rpx solid #007AFF;
+}
+
+.polaroid-text {
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: #333333;
+  word-wrap: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* 模拟手写字体 */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* 拍立得底部区域 */
+.polaroid-bottom-area {
+  position: absolute;
+  bottom: 20rpx;
+  left: 20rpx;
+  right: 20rpx;
+  height: 100rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 15rpx;
+}
+
+/* 用户信息区域 */
+.polaroid-user-info {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.polaroid-avatar {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  border: 2rpx solid rgba(0, 0, 0, 0.1);
+  /* 添加轻微的拍立得滤镜效果 */
+  filter: contrast(1.1) saturate(1.1);
+}
+
+.polaroid-user-details {
+  flex: 1;
+}
+
+.polaroid-username {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #333333;
+  line-height: 1.2;
+  margin-bottom: 2rpx;
+  /* 模拟手写标签字体 */
+}
+
+.polaroid-time {
+  font-size: 20rpx;
+  color: #666666;
+  line-height: 1.2;
+}
+
+.polaroid-more-btn {
+  width: 32rpx;
+  height: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.polaroid-more-icon {
+  width: 16rpx;
+  height: 16rpx;
+  opacity: 0.6;
+}
+
+/* 交互按钮区域 */
+.polaroid-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 25rpx;
-  z-index: 3;
 }
 
-/* 快速交互按钮 */
-.quick-actions {
-  display: flex;
-  gap: 20rpx;
-}
-
-.quick-action-btn {
+.polaroid-action-btn {
   display: flex;
   align-items: center;
-  gap: 8rpx;
-  padding: 12rpx 20rpx;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 25rpx;
+  gap: 6rpx;
+  padding: 8rpx 12rpx;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 20rpx;
   transition: all 0.2s ease;
-  backdrop-filter: blur(5rpx);
+  /* 模拟拍立得标签效果 */
+  border: 1rpx solid rgba(0, 0, 0, 0.1);
 }
 
-/* 移除快速操作按钮active效果 */
-
-.quick-action-btn.liked {
+.polaroid-action-btn.liked {
   background: rgba(255, 59, 92, 0.1);
-  border: 1rpx solid rgba(255, 59, 92, 0.3);
+  border-color: rgba(255, 59, 92, 0.3);
 }
 
-.quick-action-icon {
-  width: 24rpx;
-  height: 24rpx;
+.polaroid-action-icon {
+  width: 20rpx;
+  height: 20rpx;
 }
 
-.quick-action-text {
-  font-size: 22rpx;
+.polaroid-action-text {
+  font-size: 20rpx;
   color: #666666;
   font-weight: 500;
+  min-width: 20rpx;
 }
 
-.liked .quick-action-text {
+.liked .polaroid-action-text {
   color: #ff3b5c;
 }
 
 /* 滑动提示 */
-.swipe-hint {
+.polaroid-swipe-hint {
   display: flex;
   align-items: center;
-  gap: 8rpx;
-  opacity: 0.6;
+  justify-content: center;
 }
 
-.swipe-indicator {
-  width: 30rpx;
-  height: 4rpx;
-  background: linear-gradient(to right, #1A73E8, transparent);
-  border-radius: 2rpx;
-  animation: swipeHint 2s ease-in-out infinite;
+.polaroid-swipe-dot {
+  width: 6rpx;
+  height: 6rpx;
+  background: #cccccc;
+  border-radius: 50%;
+  animation: polaroidPulse 2s ease-in-out infinite;
 }
 
-.swipe-text {
-  font-size: 20rpx;
-  color: #808080;
+@keyframes polaroidPulse {
+  0%, 100% { 
+    transform: scale(1); 
+    opacity: 0.6; 
+  }
+  50% { 
+    transform: scale(1.5); 
+    opacity: 1; 
+  }
 }
 
-@keyframes swipeHint {
-  0%, 100% { transform: translateX(0); opacity: 0.6; }
-  50% { transform: translateX(10rpx); opacity: 1; }
-}
-
-/* 卡片装饰边框 */
-.card-border-decoration {
+/* 拍立得阴影效果 */
+.polaroid-shadow {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 20rpx;
-  border: 2rpx solid rgba(255, 255, 255, 0.3);
-  pointer-events: none;
-  z-index: 4;
+  top: 8rpx;
+  left: 4rpx;
+  right: -4rpx;
+  bottom: -8rpx;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 8rpx;
+  z-index: -1;
+  /* 模拟真实照片的不规则阴影 */
+  transform: rotate(0.5deg);
+  filter: blur(8rpx);
 }
 
-/* 卡片阴影层 */
-.card-shadow-layer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 20rpx;
-  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.5);
-  pointer-events: none;
-  z-index: 5;
+/* 悬停效果（如果支持） */
+.polaroid-card:hover .polaroid-frame {
+  transform: translateY(-2rpx) rotate(-0.5deg);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.polaroid-card:hover .polaroid-shadow {
+  transform: rotate(0.5deg) translateY(4rpx);
+  opacity: 0.8;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* 响应式调整 */
+@media (max-width: 750rpx) {
+  .post-card.polaroid-card {
+    height: 680rpx;
+  }
+  
+  .polaroid-frame {
+    padding: 18rpx 18rpx 70rpx 18rpx;
+  }
+  
+  .polaroid-bottom-area {
+    height: 90rpx;
+  }
 }

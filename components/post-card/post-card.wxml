@@ -1,60 +1,31 @@
-<view class="post-card">
-  <!-- 卡片背景渐变 -->
-  <view class="card-gradient-bg" style="background: {{post.gradientBg || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}"></view>
-  
-  <!-- 卡片内容 -->
-  <view class="card-content-wrapper">
-    <!-- 用户信息头部 -->
-    <view class="card-user-header">
-      <image 
-        class="card-user-avatar" 
-        src="{{post.author.avatar || '/images/default_avatar.png'}}" 
-        mode="aspectFill"
-        bindtap="onTapAvatar"
-        hover-class="none"
-      ></image>
-      <view class="card-user-info">
-        <view class="card-username">{{post.author.username || post.author.name || '未知用户'}}</view>
-        <view class="card-time">{{post.formattedTime || '刚刚'}}</view>
-      </view>
-      <!-- 卡片操作按钮 -->
-      <view class="card-action-btn" bindtap="onMore" hover-class="none">
-        <image class="card-more-icon" src="/assets/icons/more.svg" mode="aspectFit"></image>
-      </view>
-    </view>
-
-    <!-- 卡片主内容区域 -->
-    <view class="card-main-content">
-      <!-- 文字内容 -->
-      <view class="card-text-content" wx:if="{{post.content}}">
-        <text class="card-text">{{post.content}}</text>
-      </view>
-
-      <!-- 图片内容 - 特殊布局 -->
-      <view class="card-media-content" wx:if="{{post.images && post.images.length > 0}}">
-        <!-- 单张图片 - 全屏展示 -->
-        <view class="card-single-media" wx:if="{{post.images.length === 1}}">
+<view class="post-card polaroid-card">
+  <!-- 拍立得白色边框 -->
+  <view class="polaroid-frame">
+    <!-- 拍立得照片区域 -->
+    <view class="polaroid-photo-area">
+      <!-- 图片内容 -->
+      <view class="polaroid-image-content" wx:if="{{post.images && post.images.length > 0}}">
+        <!-- 单张图片 -->
+        <view class="polaroid-single-image" wx:if="{{post.images.length === 1}}">
           <image 
-            class="card-main-image" 
+            class="polaroid-main-image" 
             src="{{post.images[0].url || post.images[0]}}" 
             mode="aspectFill"
             bindtap="onPreviewImage"
             data-current="{{post.images[0].url || post.images[0]}}"
             hover-class="none"
           ></image>
-          <!-- 图片遮罩效果 -->
-          <view class="card-image-overlay"></view>
         </view>
 
-        <!-- 多张图片 - 创意拼接 -->
-        <view class="card-multi-media" wx:else>
-          <view class="media-grid-creative">
+        <!-- 多张图片 - 拼贴风格 -->
+        <view class="polaroid-multi-images" wx:else>
+          <view class="polaroid-image-collage">
             <image 
-              class="grid-image-creative grid-pos-{{index}}" 
+              class="polaroid-collage-image polaroid-img-{{index}}" 
               wx:for="{{post.images}}" 
               wx:for-item="img" 
               wx:key="*this"
-              wx:if="{{index < 4}}"
+              wx:if="{{index < 3}}"
               src="{{img.url || img}}" 
               mode="aspectFill"
               bindtap="onPreviewImage"
@@ -62,48 +33,73 @@
               hover-class="none"
             ></image>
             <!-- 更多图片提示 -->
-            <view class="more-images-overlay" wx:if="{{post.images.length > 4}}">
-              <text class="more-count">+{{post.images.length - 4}}</text>
+            <view class="polaroid-more-overlay" wx:if="{{post.images.length > 3}}">
+              <text class="polaroid-more-count">+{{post.images.length - 3}}</text>
             </view>
           </view>
         </view>
       </view>
+
+      <!-- 纯文字内容时的背景 -->
+      <view class="polaroid-text-bg" wx:if="{{!post.images || post.images.length === 0}}">
+        <view class="polaroid-text-pattern"></view>
+      </view>
+
+      <!-- 文字内容覆盖层 -->
+      <view class="polaroid-text-overlay" wx:if="{{post.content}}">
+        <text class="polaroid-text">{{post.content}}</text>
+      </view>
     </view>
 
-    <!-- 卡片底部交互区域 -->
-    <view class="card-bottom-actions">
-      <!-- 快速交互按钮 -->
-      <view class="quick-actions">
-        <view 
-          class="quick-action-btn like-btn {{post.isLiked ? 'liked' : ''}}"
-          bindtap="onLike"
+    <!-- 拍立得底部白色区域 -->
+    <view class="polaroid-bottom-area">
+      <!-- 用户信息 -->
+      <view class="polaroid-user-info">
+        <image 
+          class="polaroid-avatar" 
+          src="{{post.author.avatar || '/images/default_avatar.png'}}" 
+          mode="aspectFill"
+          bindtap="onTapAvatar"
           hover-class="none"
-        >
-          <image class="quick-action-icon" src="/assets/icons/like.svg" mode="aspectFit"></image>
-          <text class="quick-action-text">{{post.likes && post.likes.length > 0 ? post.likes.length : '赞'}}</text>
+        ></image>
+        <view class="polaroid-user-details">
+          <view class="polaroid-username">{{post.author.username || post.author.name || '未知用户'}}</view>
+          <view class="polaroid-time">{{post.formattedTime || '刚刚'}}</view>
         </view>
-        
-        <view 
-          class="quick-action-btn comment-btn"
-          bindtap="onComment"
-          hover-class="none"
-        >
-          <image class="quick-action-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
-          <text class="quick-action-text">{{post.comments && post.comments.length > 0 ? post.comments.length : '评论'}}</text>
+        <!-- 更多操作按钮 -->
+        <view class="polaroid-more-btn" bindtap="onMore" hover-class="none">
+          <image class="polaroid-more-icon" src="/assets/icons/more.svg" mode="aspectFit"></image>
         </view>
       </view>
 
-      <!-- 滑动提示 -->
-      <view class="swipe-hint">
-        <view class="swipe-indicator"></view>
-        <text class="swipe-text">滑动查看下一张</text>
+      <!-- 交互按钮区域 -->
+      <view class="polaroid-actions">
+        <view 
+          class="polaroid-action-btn polaroid-like-btn {{post.isLiked ? 'liked' : ''}}"
+          bindtap="onLike"
+          hover-class="none"
+        >
+          <image class="polaroid-action-icon" src="/assets/icons/like.svg" mode="aspectFit"></image>
+          <text class="polaroid-action-text">{{post.likes && post.likes.length > 0 ? post.likes.length : ''}}</text>
+        </view>
+        
+        <view 
+          class="polaroid-action-btn polaroid-comment-btn"
+          bindtap="onComment"
+          hover-class="none"
+        >
+          <image class="polaroid-action-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
+          <text class="polaroid-action-text">{{post.comments && post.comments.length > 0 ? post.comments.length : ''}}</text>
+        </view>
+
+        <!-- 滑动提示 -->
+        <view class="polaroid-swipe-hint">
+          <view class="polaroid-swipe-dot"></view>
+        </view>
       </view>
     </view>
   </view>
 
-  <!-- 卡片边框装饰 -->
-  <view class="card-border-decoration"></view>
-  
-  <!-- 卡片阴影 -->
-  <view class="card-shadow-layer"></view>
+  <!-- 拍立得阴影 -->
+  <view class="polaroid-shadow"></view>
 </view>
