@@ -58,8 +58,6 @@
   width: 100%;
   height: 100%;
   border-radius: 4rpx;
-  /* 添加轻微的滤镜效果，模拟拍立得照片 */
-  filter: contrast(1.1) saturate(1.2) brightness(1.05);
   transition: all 0.3s ease;
 }
 
@@ -83,7 +81,6 @@
   flex: 1;
   height: 100%;
   border-radius: 4rpx;
-  filter: contrast(1.1) saturate(1.2) brightness(1.05);
   transition: all 0.2s ease;
   /* 添加轻微旋转效果，模拟随意摆放 */
 }
@@ -151,10 +148,9 @@
   bottom: 20rpx;
   left: 20rpx;
   right: 20rpx;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   padding: 15rpx 20rpx;
   border-radius: 8rpx;
-  backdrop-filter: blur(10rpx);
   /* 模拟手写标签效果 */
   border-left: 4rpx solid #007AFF;
 }
@@ -197,8 +193,6 @@
   height: 40rpx;
   border-radius: 50%;
   border: 2rpx solid rgba(0, 0, 0, 0.1);
-  /* 添加轻微的拍立得滤镜效果 */
-  filter: contrast(1.1) saturate(1.1);
 }
 
 .polaroid-user-details {
@@ -315,7 +309,6 @@
   z-index: -1;
   /* 模拟真实照片的不规则阴影 */
   transform: rotate(0.5deg);
-  filter: blur(8rpx);
 }
 
 /* 悬停效果（如果支持） */

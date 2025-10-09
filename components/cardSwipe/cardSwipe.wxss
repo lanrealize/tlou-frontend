@@ -1,6 +1,6 @@
 .wrapper{
     width: 100%;
-    height: 820rpx; /* 调整高度适配拍立得卡片 */
+    height: 820rpx;
     padding: 0;
     padding-top: 40rpx;
     box-sizing: border-box;
@@ -8,24 +8,19 @@
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    /* 添加拍立得风格的背景 */
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: #f8f9fa; /* 使用纯色背景提升性能 */
     position: relative;
 }
 
 .cards{
     position: relative;
-    width: 88%; /* 稍微减小宽度，给拍立得卡片更多呼吸空间 */
+    width: 88%;
     height: calc(100% - 40rpx);
     display: flex;
     justify-content: center;
     padding: 15rpx 0 50rpx 0;
     box-sizing: border-box;
     transform-style: preserve-3d;
-    /* 添加拍立得风格的装饰背景 */
-    background-image: 
-        radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
-        radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
 }
 
 .card-next{
@@ -93,47 +88,7 @@
     }
 }
 
-/* 拍立得风格装饰效果 */
-.wrapper::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: 
-        /* 模拟桌面纹理 */
-        repeating-linear-gradient(
-            90deg,
-            transparent,
-            transparent 100rpx,
-            rgba(255, 255, 255, 0.1) 100rpx,
-            rgba(255, 255, 255, 0.1) 102rpx
-        ),
-        repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 100rpx,
-            rgba(255, 255, 255, 0.05) 100rpx,
-            rgba(255, 255, 255, 0.05) 102rpx
-        );
-    pointer-events: none;
-    z-index: 0;
-}
-
-.cards::after {
-    content: '';
-    position: absolute;
-    top: -20rpx;
-    left: -20rpx;
-    right: -20rpx;
-    bottom: -20rpx;
-    background: 
-        radial-gradient(circle at 15% 15%, rgba(0, 0, 0, 0.02) 0%, transparent 30%),
-        radial-gradient(circle at 85% 85%, rgba(0, 0, 0, 0.02) 0%, transparent 30%);
-    pointer-events: none;
-    z-index: -1;
-}
+/* 移除性能杀手装饰效果 */
 
 /* 恢复原来的简单卡片出现动画 */
 .card-next{
