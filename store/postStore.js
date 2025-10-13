@@ -103,8 +103,10 @@ const postStore = observable({
       
       let allPosts;
       if (loadMore) {
-        // 加载更多：合并到现有列表
-        allPosts = [...this.posts, ...formattedPosts];
+        // 加载更多：合并到现有列表，并去重
+        const existingIds = new Set(this.posts.map(p => p._id));
+        const newUniquePosts = formattedPosts.filter(p => !existingIds.has(p._id));
+        allPosts = [...this.posts, ...newUniquePosts];
       } else {
         // 重新加载：替换现有列表
         allPosts = formattedPosts;
@@ -380,7 +382,11 @@ const postStore = observable({
 
   // 格式化帖子数据
   _formatPosts(posts) {
-    return posts.map(post => this._formatSinglePost(post));
+    // 确保输入数据去重（基于_id）
+    const uniquePosts = posts.filter((post, index, arr) => 
+      arr.findIndex(p => p._id === post._id) === index
+    );
+    return uniquePosts.map(post => this._formatSinglePost(post));
   },
 
   // 格式化单个帖子数据

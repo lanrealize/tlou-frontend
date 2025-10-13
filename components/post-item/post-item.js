@@ -361,6 +361,12 @@ Component({
     
     // 处理图片加载完成
     onImageLoaded(imageSrc) {
+      // 确保 imageSrc 是有效的字符串
+      if (!imageSrc || typeof imageSrc !== 'string') {
+        console.warn('onImageLoaded: 无效的图片URL', imageSrc);
+        return;
+      }
+      
       const { imageLoadStates } = this.data;
       const newLoadStates = { ...imageLoadStates };
       newLoadStates[imageSrc] = 'loaded';
@@ -396,6 +402,11 @@ Component({
     // 多张图片加载完成处理
     onGridImageLoad(e) {
       const imageSrc = e.currentTarget.dataset.src;
+      // 确保获取到有效的图片URL
+      if (!imageSrc) {
+        console.warn('onGridImageLoad: 无法获取图片URL', e.currentTarget.dataset);
+        return;
+      }
       this.onImageLoaded(imageSrc);
     },
     
@@ -410,6 +421,12 @@ Component({
       post.images.forEach(imgItem => {
         // 处理图片数据，支持对象和字符串格式
         const imageSrc = typeof imgItem === 'object' ? imgItem.url : imgItem;
+        
+        // 确保 imageSrc 是有效的字符串
+        if (!imageSrc || typeof imageSrc !== 'string') {
+          console.warn('initImageLoadStates: 无效的图片数据', imgItem);
+          return;
+        }
         
         // 只为没有状态的图片设置初始loading状态
         if (!newImageLoadStates[imageSrc]) {
