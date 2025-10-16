@@ -46,9 +46,9 @@
       </view>
 
       <!-- 多张图片网格 -->
-      <view class="images-grid" wx:else>
+      <view class="images-grid images-grid-{{post.images.length > 9 ? 9 : post.images.length}}" wx:else>
         <view 
-          class="grid-item {{post.images.length === 2 ? 'two-cols' : post.images.length === 4 ? 'two-cols' : 'three-cols'}}"
+          class="grid-item"
           wx:for="{{post.images}}" 
           wx:key="{{item.url || item}}"
           wx:for-index="imgIndex"

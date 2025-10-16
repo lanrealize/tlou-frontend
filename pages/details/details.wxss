@@ -46,7 +46,6 @@ view, text, image {
 /* scroll-view样式 */
 .moment-scroll-view {
   width: 100%;
-  flex: 1;
 }
 
 /* 自定义导航栏样式已移至custom-navigation组件 */
@@ -55,6 +54,14 @@ view, text, image {
 .friend-circle-info-card {
   position: relative;
   background: #ffffff;
+}
+
+/* 固定顶部的卡片容器 */
+.card-content-fixed {
+  position: relative;
+  width: 100%;
+  background: #ffffff;
+  z-index: 10;
 }
 
 .card-content {
@@ -66,6 +73,16 @@ view, text, image {
   padding-left: 30rpx;
   padding-right: 15rpx;
   box-sizing: border-box;
+  margin-top: 10rpx;
+  padding-bottom: 25rpx;
+}
+
+/* 分割线 */
+.divider {
+  width: 100%;
+  height: 2rpx;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.15) 50%, rgba(0, 0, 0, 0) 100%);
+  margin-bottom: 0;
   margin-top: 10rpx;
 }
 

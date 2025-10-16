@@ -184,6 +184,16 @@
   max-width: 100%;
 }
 
+/* 当没有文字内容时（图片是post-content的第一个子元素），增加顶部间距 */
+.post-content > .post-images:first-child {
+  margin-top: 20rpx;
+}
+
+/* 当有文字内容时，图片紧跟在文字后面，不需要额外顶部间距 */
+.post-text + .post-images {
+  margin-top: 0;
+}
+
 /* 单张图片容器 */
 .single-image {
   border-radius: 6rpx;
@@ -218,45 +228,105 @@
   height: auto;
 }
 
-/* 多张图片网格 */
-.images-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6rpx;
+/* 多张图片网格 - 参考 publish 页面的布局系统 */
+
+/* 2张图片：使用Grid布局，两列等宽 */
+.images-grid-2 {
+  display: grid;
+  width: 100%;
+  max-width: 500rpx; /* 与单张横向照片最大宽度一致 */
+  gap: 16rpx;
+  box-sizing: border-box;
+  grid-template-columns: 1fr 1fr;
   margin-bottom: 10rpx;
 }
 
+.images-grid-2 .grid-item {
+  width: 100%;
+  aspect-ratio: 1;
+  height: 0;
+  padding-bottom: 100%; /* 创建正方形 */
+}
+
+/* 3-9张图片：九宫格布局，使用Grid布局 */
+.images-grid-3,
+.images-grid-4,
+.images-grid-5,
+.images-grid-6,
+.images-grid-7,
+.images-grid-8,
+.images-grid-9 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3列等宽 */
+  grid-gap: 16rpx; /* 使用grid-gap确保兼容性，横向和纵向间距统一 */
+  row-gap: 16rpx; /* 显式设置行间距 */
+  column-gap: 16rpx; /* 显式设置列间距 */
+  width: 100%;
+  max-width: 500rpx; /* 与单张横向照片最大宽度一致 */
+  box-sizing: border-box;
+  margin-bottom: 10rpx;
+  padding: 0;
+}
+
+/* 九宫格中的每个图片项 - 使用padding-bottom技巧确保正方形 */
+.images-grid-3 .grid-item,
+.images-grid-4 .grid-item,
+.images-grid-5 .grid-item,
+.images-grid-6 .grid-item,
+.images-grid-7 .grid-item,
+.images-grid-8 .grid-item,
+.images-grid-9 .grid-item {
+  width: 100%;
+  height: 0;
+  padding-bottom: 100%; /* 创建正方形比例 */
+  position: relative;
+  margin: 0; /* 确保没有额外的margin */
+}
+
+/* 统一的图片容器样式 */
 .grid-item {
-  border-radius: 6rpx;
+  position: relative;
+  border-radius: 8rpx;
   overflow: hidden;
+  background-color: #f5f5f5;
+  box-sizing: border-box;
 }
 
-.grid-item.two-cols {
-  width: calc((100% - 6rpx) / 2);
-  height: 220rpx;
-}
-
-.grid-item.three-cols {
-  width: calc((100% - 12rpx) / 3);
-  height: 140rpx;
-}
-
+/* 图片元素样式 - 基础样式 */
 .post-image-grid {
   width: 100%;
   height: 100%;
+  object-fit: cover;
   display: block;
 }
 
+/* 2-9张图片使用padding-bottom技巧，图片需要绝对定位 */
+.images-grid-2 .grid-item .post-image-grid,
+.images-grid-3 .grid-item .post-image-grid,
+.images-grid-4 .grid-item .post-image-grid,
+.images-grid-5 .grid-item .post-image-grid,
+.images-grid-6 .grid-item .post-image-grid,
+.images-grid-7 .grid-item .post-image-grid,
+.images-grid-8 .grid-item .post-image-grid,
+.images-grid-9 .grid-item .post-image-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
 .more-images-tip {
-  width: calc((100% - 12rpx) / 3);
-  height: 140rpx;
+  width: 100%;
+  height: 100%;
   background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
   font-size: 28rpx;
-  border-radius: 6rpx;
+  border-radius: 8rpx;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 /* ===== 图片骨架屏样式 ===== */
@@ -550,4 +620,46 @@
   width: 26rpx;
   height: 26rpx;
   flex-shrink: 0;
+}
+
+/* 响应式调整 - 小屏幕优化 */
+@media (max-width: 400px) {
+  /* 2张图片的小屏幕适配 */
+  .images-grid-2 {
+    gap: 14rpx;
+  }
+  
+  .images-grid-2 .grid-item {
+    width: 100%;
+    height: 0;
+    padding-bottom: 100%; /* 小屏幕正方形 */
+  }
+  
+  /* 3-9张图片的小屏幕适配 */
+  .images-grid-3,
+  .images-grid-4,
+  .images-grid-5,
+  .images-grid-6,
+  .images-grid-7,
+  .images-grid-8,
+  .images-grid-9 {
+    grid-gap: 14rpx; /* 小屏幕统一间距 */
+    row-gap: 14rpx; /* 显式设置行间距 */
+    column-gap: 14rpx; /* 显式设置列间距 */
+  }
+  
+  /* 小屏幕下图片项样式与主样式保持一致 */
+  .images-grid-3 .grid-item,
+  .images-grid-4 .grid-item,
+  .images-grid-5 .grid-item,
+  .images-grid-6 .grid-item,
+  .images-grid-7 .grid-item,
+  .images-grid-8 .grid-item,
+  .images-grid-9 .grid-item {
+    width: 100%;
+    height: 0;
+    padding-bottom: 100%; /* 确保正方形 */
+    position: relative;
+    margin: 0; /* 确保没有额外的margin */
+  }
 }

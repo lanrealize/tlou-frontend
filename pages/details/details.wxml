@@ -8,18 +8,8 @@
   <!-- 朋友圈详情页面 -->
   <view class="moment-page" style="padding-top: {{navigationData.totalNavigationHeight}}px;">
     
-    <!-- 可滚动内容区域 -->
-    <scroll-view 
-      class="moment-scroll-view"
-      scroll-y="{{true}}"
-      style="height: calc(100vh - {{navigationData.totalNavigationHeight}}px - {{safeAreaBottom}}px);"
-      bindscrolltolower="onReachBottom"
-      enhanced="{{true}}"
-      show-scrollbar="{{false}}"
-      enable-back-to-top="{{true}}"
-      scroll-with-animation="{{true}}"
-    >
-      <!-- 朋友圈信息卡片 -->
+    <!-- 朋友圈信息卡片 - 固定在顶部 -->
+    <view class="card-content-fixed">
       <view class="card-content">
         <!-- 左侧内容区域：文字 + 头像按钮 -->
         <view class="left-content">
@@ -57,6 +47,21 @@
         <!-- 右侧设置按钮 -->
         <view class="setting-btn theme-color" bindtap="openSettings">设置</view>
       </view>
+      <!-- 分割线 -->
+      <view class="divider"></view>
+    </view>
+
+    <!-- 可滚动内容区域 -->
+    <scroll-view 
+      class="moment-scroll-view"
+      scroll-y="{{true}}"
+      style="height: calc(100vh - {{navigationData.totalNavigationHeight}}px - 117rpx);"
+      bindscrolltolower="onReachBottom"
+      enhanced="{{true}}"
+      show-scrollbar="{{false}}"
+      enable-back-to-top="{{true}}"
+      scroll-with-animation="{{true}}"
+    >
 
       <!-- 申请加入朋友圈区域 -->
       <view class="apply-section" wx:if="{{!isMember}}">
