@@ -17,6 +17,21 @@
 
     <!-- 帖子内容区域 -->
     <view class="post-content">
+    <!-- 🚀 上传状态提示 -->
+    <view class="upload-status-bar" wx:if="{{post._isUploading || post._uploadFailed}}">
+      <!-- 上传中 -->
+      <view class="uploading-indicator" wx:if="{{post._isUploading}}">
+        <view class="uploading-spinner"></view>
+        <text class="status-text">正在发布...</text>
+      </view>
+      
+      <!-- 上传失败 -->
+      <view class="upload-failed-indicator" wx:if="{{post._uploadFailed}}">
+        <image class="error-icon" src="/assets/icons/delete.svg" mode="aspectFit"></image>
+        <text class="error-text">{{post._errorMessage || '发布失败'}}</text>
+      </view>
+    </view>
+
     <!-- 文字内容 -->
     <view class="post-text" wx:if="{{post.content}}">
       <text>{{post.content}}</text>
@@ -33,7 +48,7 @@
         </view>
         
         <image 
-          class="post-image-single {{singleImageInfo.styleClass}} {{imageLoadStates[post.images[0].url || post.images[0]] === 'show' ? 'loaded' : 'loading'}}" 
+          class="post-image-single {{singleImageInfo.styleClass}} {{imageLoadStates[post.images[0].url || post.images[0]] === 'show' ? 'loaded' : 'loading'}} {{post._isUploading ? 'uploading' : ''}}" 
           src="{{post.images[0].url || post.images[0]}}" 
           mode="{{singleImageInfo.mode}}"
           bindload="onSingleImageLoad"
@@ -60,7 +75,7 @@
           </view>
           
           <image 
-            class="post-image-grid {{imageLoadStates[item.url || item] === 'show' ? 'loaded' : 'loading'}}" 
+            class="post-image-grid {{imageLoadStates[item.url || item] === 'show' ? 'loaded' : 'loading'}} {{post._isUploading ? 'uploading' : ''}}" 
             src="{{item.url || item}}" 
             mode="aspectFill"
             bindload="onGridImageLoad"

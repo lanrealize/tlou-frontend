@@ -663,3 +663,63 @@
     margin: 0; /* 确保没有额外的margin */
   }
 }
+/* 🚀 上传状态样式 */
+.upload-status-bar {
+  margin-bottom: 16rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 12rpx;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+}
+
+/* 上传中指示器 */
+.uploading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.uploading-spinner {
+  width: 32rpx;
+  height: 32rpx;
+  border: 4rpx solid #e8ecf1;
+  border-top-color: #1890ff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.status-text {
+  font-size: 28rpx;
+  color: #1890ff;
+  font-weight: 500;
+}
+
+/* 上传失败指示器 */
+.upload-failed-indicator {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.error-icon {
+  width: 32rpx;
+  height: 32rpx;
+  filter: brightness(0) saturate(100%) invert(32%) sepia(96%) saturate(3213%) hue-rotate(346deg) brightness(91%) contrast(94%);
+}
+
+.error-text {
+  font-size: 28rpx;
+  color: #ff4d4f;
+  font-weight: 500;
+}
+
+/* 上传中的图片样式 */
+.post-image-single.uploading,
+.post-image-grid.uploading {
+  opacity: 0.6;
+  filter: blur(1px);
+}
