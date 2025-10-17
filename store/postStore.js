@@ -389,6 +389,14 @@ const postStore = observable({
     const app = getApp();
     const currentUser = app.getUserStore?.()?.userInfo;
     
+    // 🔧 统一图片格式：将字符串路径转换为对象格式
+    const normalizedImages = (tempPostData.tempImages || []).map((img, index) => {
+      if (typeof img === 'string') {
+        return { url: img, _tempUrl: img, _index: index };
+      }
+      return img;
+    });
+    
     // 创建临时帖子对象
     const optimisticPost = {
       _id: tempId,
@@ -397,7 +405,7 @@ const postStore = observable({
       _uploadProgress: 0,
       circleId: circleId,
       content: tempPostData.content || '',
-      images: tempPostData.tempImages || [], // 暂时使用本地临时图片路径
+      images: normalizedImages, // 统一为对象格式
       _tempImagePaths: tempPostData.tempImages || [], // 保存临时路径用于显示
       author: currentUser ? {
         _id: currentUser._id,
@@ -559,8 +567,13 @@ const postStore = observable({
     // 确保likedUsers数组存在
     post.likedUsers = post.likedUsers || [];
     
-    // 确保images数组存在 - 保持原始数据格式，让组件层面处理兼容性
-    post.images = post.images || [];
+    // 🔧 统一图片格式：确保所有图片都是对象格式
+    post.images = (post.images || []).map((img, index) => {
+      if (typeof img === 'string') {
+        return { url: img, _index: index };
+      }
+      return img;
+    });
     
     // 正确设置点赞状态
     post.isLiked = this._checkIfUserLiked(post.likes);

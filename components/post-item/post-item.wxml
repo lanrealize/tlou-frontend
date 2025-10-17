@@ -65,7 +65,7 @@
         <view 
           class="grid-item"
           wx:for="{{post.images}}" 
-          wx:key="*this"
+          wx:key="url"
           wx:for-index="imgIndex"
           wx:if="{{imgIndex < 9}}"
         >
