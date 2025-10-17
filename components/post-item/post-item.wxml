@@ -112,7 +112,7 @@
           <!-- 点赞按钮 -->
           <view class="dropdown-item" catchtap="onLikeFromPopup">
             <image class="dropdown-icon" src="/assets/icons/like.svg" mode="aspectFit"></image>
-            <text class="dropdown-text">{{post.isLiked ? '取消点赞' : '点赞'}}</text>
+            <text class="dropdown-text">{{computedIsLiked ? '取消点赞' : '点赞'}}</text>
           </view>
           
           <!-- 评论按钮 -->

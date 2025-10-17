@@ -209,6 +209,16 @@ const postStore = observable({
         
         // 同时从likedUsers数组移除
         post.likedUsers = post.likedUsers.filter(user => user._id.toString() !== normalizedUserId);
+        
+        // 🔧 修复：确保当取消点赞后，如果数组为空或数据不一致，进行清理
+        // 如果 likedUsers 为空，likes 也应该为空
+        if (post.likedUsers.length === 0) {
+          post.likes = [];
+        }
+        // 如果 likes 为空，likedUsers 也应该为空
+        if (post.likes.length === 0) {
+          post.likedUsers = [];
+        }
       }
       
       // 重新计算点赞状态
@@ -391,13 +401,6 @@ const postStore = observable({
 
   // 格式化单个帖子数据
   _formatSinglePost(post) {
-    console.log('🔧 格式化帖子数据:', {
-      postId: post._id,
-      originalLikes: post.likes,
-      originalComments: post.comments?.length || 0,
-      hasLikedUsers: !!post.likedUsers
-    });
-    
     // 格式化时间
     post.formattedTime = util.formatRelativeTime(post.createdAt);
     
@@ -420,14 +423,6 @@ const postStore = observable({
     // 正确设置点赞状态
     post.isLiked = this._checkIfUserLiked(post.likes);
     
-    console.log('✅ 帖子格式化完成:', {
-      postId: post._id,
-      isLiked: post.isLiked,
-      likesCount: post.likes.length,
-      likedUsersCount: post.likedUsers.length,
-      commentsCount: post.comments?.length || 0
-    });
-    
     return post;
   },
 
@@ -436,18 +431,13 @@ const postStore = observable({
     try {
       const app = getApp();
       const currentUser = app.getUserStore?.()?.userInfo;
-      if (!currentUser) {
+      if (!currentUser || !currentUser._id) {
+        // 用户信息未加载，返回 false（组件层会重新计算）
         return false;
       }
       
       // 统一使用 _id 作为用户标识符，提高一致性
       const userId = currentUser._id;
-      
-      console.log('🔍 检查点赞状态:', {
-        userId,
-        likes,
-        likesLength: likes ? likes.length : 0
-      });
       
       if (!likes || likes.length === 0) {
         return false;
@@ -455,12 +445,13 @@ const postStore = observable({
       
       // 优先使用 _id 进行比较，确保一致性
       const isLiked = likes.some(likeId => {
-        const normalizedLikeId = likeId.toString();
+        // 处理 likes 数组中可能是对象的情况（后端返回的可能是用户对象）
+        const actualId = typeof likeId === 'object' ? likeId._id : likeId;
+        const normalizedLikeId = actualId ? actualId.toString() : '';
         const normalizedUserId = userId ? userId.toString() : '';
         return normalizedLikeId === normalizedUserId;
       });
       
-      console.log('✅ 点赞状态结果:', isLiked);
       return isLiked;
     } catch (error) {
       console.warn('⚠️ 获取用户信息失败，无法判断点赞状态:', error);

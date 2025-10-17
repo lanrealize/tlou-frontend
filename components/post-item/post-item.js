@@ -45,7 +45,9 @@ Component({
       displayHeight: 0
     },
     // 图片加载状态管理
-    imageLoadStates: {}  // 记录每张图片的加载状态
+    imageLoadStates: {},  // 记录每张图片的加载状态
+    // 计算后的点赞状态
+    computedIsLiked: false
   },
 
   /**
@@ -62,6 +64,16 @@ Component({
         this.setSingleImageStyleFromMeta();
         this.initImageLoadStates();
       }
+      // 当帖子数据变化时，重新计算点赞状态
+      this.updateLikedStatus();
+    },
+    // 监听currentUser变化（使用 ** 监听所有子属性）
+    'currentUser.**': function() {
+      this.updateLikedStatus();
+    },
+    // 也监听整个 currentUser 对象的替换
+    'currentUser': function(currentUser) {
+      this.updateLikedStatus();
     }
   },
 
@@ -89,6 +101,30 @@ Component({
    * 组件的方法列表
    */
   methods: {
+    // 更新点赞状态（基于当前用户和点赞列表动态计算）
+    updateLikedStatus() {
+      const { post, currentUser } = this.data;
+      
+      // 如果没有帖子数据或用户信息，默认为未点赞
+      if (!post || !currentUser || !currentUser._id) {
+        this.setData({ computedIsLiked: false });
+        return;
+      }
+      
+      // 检查当前用户是否在点赞列表中
+      const likes = post.likes || [];
+      const currentUserId = currentUser._id.toString();
+      
+      const isLiked = likes.some(likeId => {
+        // 处理 likes 数组中可能是对象的情况（后端返回的可能是用户对象）
+        const actualId = typeof likeId === 'object' ? likeId._id : likeId;
+        const normalizedLikeId = actualId ? actualId.toString() : '';
+        return normalizedLikeId === currentUserId;
+      });
+      
+      this.setData({ computedIsLiked: isLiked });
+    },
+    
     // 根据服务端图片尺寸信息设置单图样式
     setSingleImageStyleFromMeta() {
       const { post } = this.data;
@@ -302,8 +338,15 @@ Component({
 
     // 切换操作菜单显示状态
     toggleActionsMenu() {
+      const newShowState = !this.data.showActionsMenu;
+      
+      // 在打开菜单时，强制重新计算点赞状态，确保显示正确
+      if (newShowState) {
+        this.updateLikedStatus();
+      }
+      
       this.setData({
-        showActionsMenu: !this.data.showActionsMenu
+        showActionsMenu: newShowState
       });
     },
 
@@ -454,6 +497,8 @@ Component({
       this.updateDisplayComments();
       // 初始化图片加载状态
       this.initImageLoadStates();
+      // 初始化点赞状态
+      this.updateLikedStatus();
     },
     
     ready() {
@@ -461,6 +506,8 @@ Component({
       this.setSingleImageStyleFromMeta();
       // 确保图片加载状态初始化
       this.initImageLoadStates();
+      // 确保点赞状态正确
+      this.updateLikedStatus();
     },
     
     detached() {

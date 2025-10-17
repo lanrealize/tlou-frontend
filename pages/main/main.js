@@ -707,15 +707,35 @@ Page({
         
         // 使用用户_id进行点赞状态管理，与Store保持一致
         const userId = this.data.userInfo?._id;
+        const userInfo = this.data.userInfo;
         
         if (liked) {
           posts[index].likes = posts[index].likes || [];
+          posts[index].likedUsers = posts[index].likedUsers || [];
           // 确保不重复添加
           if (!posts[index].likes.includes(userId)) {
             posts[index].likes.push(userId);
           }
+          // 同时更新likedUsers数组
+          if (!posts[index].likedUsers.some(user => user._id === userId)) {
+            posts[index].likedUsers.push({
+              _id: userInfo._id,
+              username: userInfo.username,
+              avatar: userInfo.avatar
+            });
+          }
         } else {
+          // 取消点赞：同时更新 likes 和 likedUsers
           posts[index].likes = posts[index].likes.filter(id => id !== userId);
+          posts[index].likedUsers = posts[index].likedUsers.filter(user => user._id !== userId);
+          
+          // 🔧 修复：确保当取消点赞后，如果数组为空，进行清理
+          if (posts[index].likedUsers.length === 0) {
+            posts[index].likes = [];
+          }
+          if (posts[index].likes.length === 0) {
+            posts[index].likedUsers = [];
+          }
         }
         
         this.setData({ posts });
