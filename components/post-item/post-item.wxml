@@ -18,7 +18,7 @@
     <!-- 帖子内容区域 -->
     <view class="post-content">
     <!-- 🚀 上传状态提示 -->
-    <view class="upload-status-bar" wx:if="{{post._isUploading || post._uploadFailed}}">
+    <view class="upload-status-bar {{post.content ? 'has-text' : 'no-text'}}" wx:if="{{post._isUploading || post._uploadFailed}}">
       <!-- 上传中 -->
       <view class="uploading-indicator" wx:if="{{post._isUploading}}">
         <view class="uploading-spinner"></view>

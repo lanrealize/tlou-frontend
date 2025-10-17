@@ -176,6 +176,7 @@
   color: #000000;
   margin-bottom: 25rpx;
   word-wrap: break-word;
+  margin-top: 8rpx;
 }
 
 /* 图片区域 */
@@ -665,13 +666,22 @@
 }
 /* 🚀 上传状态样式 */
 .upload-status-bar {
-  margin-bottom: 30rpx;
   margin-top: 20rpx;
   padding: 16rpx 0;
   border-radius: 12rpx;
   background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
   width: 500rpx;
   box-sizing: border-box;
+}
+
+/* 当有文字内容时的 margin-bottom */
+.upload-status-bar.has-text {
+  margin-bottom: 23rpx;
+}
+
+/* 当没有文字内容时的 margin-bottom */
+.upload-status-bar.no-text {
+  margin-bottom: 32rpx;
 }
 
 /* 上传中指示器 */
