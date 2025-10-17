@@ -117,7 +117,7 @@
           
           <!-- 评论按钮 -->
           <view class="dropdown-item" catchtap="onCommentFromPopup">
-            <image class="dropdown-icon comment-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
+            <image class="dropdown-icon comment-icon" src="/assets/icons/edit.svg" mode="aspectFit"></image>
             <text class="dropdown-text">评论</text>
           </view>
           

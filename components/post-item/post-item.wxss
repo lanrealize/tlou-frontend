@@ -130,14 +130,14 @@
 /* 窄菜单样式 - 用于"点赞"状态，居中对齐 */
 .dropdown-menu.narrow-menu .dropdown-item {
   justify-content: center;
-  padding: 24rpx 32rpx;
+  padding: 24rpx 36rpx;
   min-width: 160rpx;
 }
 
 /* 宽菜单样式 - 用于"取消点赞"状态，左对齐 */
 .dropdown-menu.wide-menu .dropdown-item {
   justify-content: flex-start;
-  padding: 24rpx 32rpx;
+  padding: 24rpx 36rpx;
   min-width: 200rpx;
 }
 
@@ -157,13 +157,16 @@
 }
 
 .dropdown-icon {
-  width: 32rpx;
-  height: 32rpx;
+  width: 34rpx;
+  height: 34rpx;
   flex-shrink: 0;
   margin-right: 24rpx;
 }
 
+/* 编辑/评论图标 - 稍微放大以匹配视觉大小 */
 .dropdown-icon.comment-icon {
+  width: 38rpx;
+  height: 38rpx;
   filter: brightness(0) saturate(100%) invert(21%) sepia(86%) saturate(1780%) hue-rotate(206deg) brightness(99%) contrast(92%);
 }
 
