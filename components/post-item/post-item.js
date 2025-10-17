@@ -64,9 +64,11 @@ Component({
         this.setSingleImageStyleFromMeta();
         this.initImageLoadStates();
       }
+      // post 对象变化时也需要更新点赞状态
+      this.updateLikedStatus();
     },
-    // 监听点赞相关数据变化，自动更新点赞状态
-    'post.likedUsers, currentUser._id': function() {
+    // 监听用户变化，更新点赞状态
+    'currentUser._id': function() {
       this.updateLikedStatus();
     }
   },
@@ -101,15 +103,15 @@ Component({
       
       // 优先使用 likedUsers 数组（包含完整用户信息，更可靠）
       const likedUsers = post.likedUsers || [];
+      const currentUserId = currentUser._id.toString();
+      
       if (likedUsers.length > 0) {
-        const currentUserId = currentUser._id.toString();
         return likedUsers.some(user => user._id.toString() === currentUserId);
       }
       
       // 降级方案：使用 likes ID 数组（为了兼容旧数据）
       const likes = post.likes || [];
       if (likes.length > 0) {
-        const currentUserId = currentUser._id.toString();
         return likes.some(likeId => {
           const actualId = typeof likeId === 'object' ? likeId._id : likeId;
           const normalizedLikeId = actualId ? actualId.toString() : '';

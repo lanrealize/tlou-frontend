@@ -164,39 +164,40 @@ const postStore = observable({
       
       const response = await api.posts.like(postId);
       const { liked } = response.data;
-      
 
-
-      // 更新本地状态
+      // 更新本地状态 - 创建新对象以触发 MobX 响应式更新
       const updatedPosts = [...this.posts];
-      const post = updatedPosts[postIndex];
-      
-      // 确保likedUsers数组存在（主要数据源）
-      post.likedUsers = post.likedUsers || [];
-      
-      // 确保likes数组存在（用于兼容和显示点赞数量）
-      post.likes = post.likes || [];
+      const oldPost = updatedPosts[postIndex];
       
       const currentUserId = userInfo._id.toString();
+      const oldLikedUsers = oldPost.likedUsers || [];
+      
+      // 创建新的点赞用户列表
+      let newLikedUsers;
       
       if (liked) {
-        // 添加点赞：只维护 likedUsers 数组作为真实数据源
-        if (!post.likedUsers.some(user => user._id.toString() === currentUserId)) {
-          post.likedUsers.push({
+        // 添加点赞
+        const alreadyLiked = oldLikedUsers.some(user => user._id.toString() === currentUserId);
+        if (alreadyLiked) {
+          newLikedUsers = oldLikedUsers;
+        } else {
+          newLikedUsers = [...oldLikedUsers, {
             _id: userInfo._id,
             username: userInfo.username,
             avatar: userInfo.avatar
-          });
-        }
-        // 同步更新 likes 数组（保持数据一致性）
-        if (!post.likes.some(id => id.toString() === currentUserId)) {
-          post.likes.push(userInfo._id);
+          }];
         }
       } else {
-        // 移除点赞：从 likedUsers 和 likes 数组中移除
-        post.likedUsers = post.likedUsers.filter(user => user._id.toString() !== currentUserId);
-        post.likes = post.likes.filter(id => id.toString() !== currentUserId);
+        // 移除点赞
+        newLikedUsers = oldLikedUsers.filter(user => user._id.toString() !== currentUserId);
       }
+      
+      // 创建新的 post 对象（触发响应式更新）
+      updatedPosts[postIndex] = {
+        ...oldPost,
+        likedUsers: newLikedUsers,
+        likes: newLikedUsers.map(u => u._id)  // 从 likedUsers 同步生成，保持一致
+      };
       
       this.posts = updatedPosts;
       
