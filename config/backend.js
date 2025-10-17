@@ -11,10 +11,12 @@ const BACKEND_CONFIG = {
   
   // API基础路径
   API_PATH: '/api/tlou',
+  // API_PATH: ':3001/api',
   
   // 完整的API基础URL
   get BASE_URL() {
     return `https://${this.HOST}${this.API_PATH}`;
+    // return `http://${this.HOST}${this.API_PATH}`;
   }
 };
 
