@@ -238,14 +238,12 @@ view, text, image {
 }
 
 .setting-btn {
-  font-size: 24rpx;
-  font-weight: 500;
-  padding: 10rpx 30rpx;
-  color: #ffffff;
-  background-color: #1A73E8;
-  border-radius: 50rpx;
+  color: #1A73E8;
+  font-size: 32rpx;
+  line-height: 1.2;
+  font-weight: 400;
+  padding: 8rpx 16rpx;
   flex-shrink: 0;
-  height: 55rpx;
 }
 
 /* ===== 帖子列表区域 ===== */
@@ -654,6 +652,10 @@ view, text, image {
   .add-icon {
     width: 40rpx;
     height: 40rpx;
+  }
+  
+  .setting-btn {
+    font-size: 28rpx;
   }
   
   .apply-section {
