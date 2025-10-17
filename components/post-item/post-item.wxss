@@ -169,10 +169,11 @@
   top: 2rpx;
 }
 
-/* 编辑/评论图标 - 稍微放大以匹配视觉大小 */
+/* 编辑/评论图标 - 稍微放大并横向拉伸以匹配视觉大小 */
 .dropdown-icon.comment-icon {
-  width: 38rpx;
+  width: 40rpx;
   height: 38rpx;
+  transform: scaleX(1.1);
   filter: brightness(0) saturate(100%) invert(21%) sepia(86%) saturate(1780%) hue-rotate(206deg) brightness(99%) contrast(92%);
 }
 
