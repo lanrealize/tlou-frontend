@@ -171,48 +171,32 @@ const postStore = observable({
       const updatedPosts = [...this.posts];
       const post = updatedPosts[postIndex];
       
-      // 确保likes数组存在
-      post.likes = post.likes || [];
-      
-      // 确保likedUsers数组存在
+      // 确保likedUsers数组存在（主要数据源）
       post.likedUsers = post.likedUsers || [];
       
-      // 统一使用 _id 作为用户标识符
-      const userIdentifier = userInfo._id;
+      // 确保likes数组存在（用于兼容和显示点赞数量）
+      post.likes = post.likes || [];
       
-      if (!userIdentifier) {
-  
-        throw new Error('用户信息不完整');
-      }
-      
-
+      const currentUserId = userInfo._id.toString();
       
       if (liked) {
-        // 添加点赞：确保不重复添加
-        const normalizedUserId = userIdentifier.toString();
-        if (!post.likes.some(id => id.toString() === normalizedUserId)) {
-          post.likes.push(userIdentifier);
-          
-          // 同时更新likedUsers数组
-          if (!post.likedUsers.some(user => user._id.toString() === normalizedUserId)) {
-            post.likedUsers.push({
-              _id: userInfo._id,
-              username: userInfo.username,
-              avatar: userInfo.avatar
-            });
-          }
+        // 添加点赞：只维护 likedUsers 数组作为真实数据源
+        if (!post.likedUsers.some(user => user._id.toString() === currentUserId)) {
+          post.likedUsers.push({
+            _id: userInfo._id,
+            username: userInfo.username,
+            avatar: userInfo.avatar
+          });
+        }
+        // 同步更新 likes 数组（保持数据一致性）
+        if (!post.likes.some(id => id.toString() === currentUserId)) {
+          post.likes.push(userInfo._id);
         }
       } else {
-        // 移除点赞：精确匹配用户ID
-        const normalizedUserId = userIdentifier.toString();
-        post.likes = post.likes.filter(id => id.toString() !== normalizedUserId);
-        
-        // 同时从likedUsers数组移除
-        post.likedUsers = post.likedUsers.filter(user => user._id.toString() !== normalizedUserId);
+        // 移除点赞：从 likedUsers 和 likes 数组中移除
+        post.likedUsers = post.likedUsers.filter(user => user._id.toString() !== currentUserId);
+        post.likes = post.likes.filter(id => id.toString() !== currentUserId);
       }
-      
-      // 重新计算点赞状态
-      post.isLiked = this._checkIfUserLiked(post.likes);
       
       this.posts = updatedPosts;
       
@@ -544,13 +528,6 @@ const postStore = observable({
 
   // 格式化单个帖子数据
   _formatSinglePost(post) {
-    console.log('🔧 格式化帖子数据:', {
-      postId: post._id,
-      originalLikes: post.likes,
-      originalComments: post.comments?.length || 0,
-      hasLikedUsers: !!post.likedUsers
-    });
-    
     // 格式化时间
     post.formattedTime = util.formatRelativeTime(post.createdAt);
     
@@ -561,11 +538,11 @@ const postStore = observable({
       });
     }
     
-    // 确保likes数组存在
-    post.likes = post.likes || [];
-    
-    // 确保likedUsers数组存在
+    // 确保likedUsers数组存在（主要数据源）
     post.likedUsers = post.likedUsers || [];
+    
+    // 确保likes数组存在（用于兼容和显示数量）
+    post.likes = post.likes || [];
     
     // 🔧 统一图片格式：确保所有图片都是对象格式
     post.images = (post.images || []).map((img, index) => {
@@ -575,56 +552,9 @@ const postStore = observable({
       return img;
     });
     
-    // 正确设置点赞状态
-    post.isLiked = this._checkIfUserLiked(post.likes);
-    
-    console.log('✅ 帖子格式化完成:', {
-      postId: post._id,
-      isLiked: post.isLiked,
-      likesCount: post.likes.length,
-      likedUsersCount: post.likedUsers.length,
-      commentsCount: post.comments?.length || 0
-    });
-    
     return post;
   },
 
-  // 检查当前用户是否点赞了该帖子
-  _checkIfUserLiked(likes) {
-    try {
-      const app = getApp();
-      const currentUser = app.getUserStore?.()?.userInfo;
-      if (!currentUser) {
-        return false;
-      }
-      
-      // 统一使用 _id 作为用户标识符，提高一致性
-      const userId = currentUser._id;
-      
-      console.log('🔍 检查点赞状态:', {
-        userId,
-        likes,
-        likesLength: likes ? likes.length : 0
-      });
-      
-      if (!likes || likes.length === 0) {
-        return false;
-      }
-      
-      // 优先使用 _id 进行比较，确保一致性
-      const isLiked = likes.some(likeId => {
-        const normalizedLikeId = likeId.toString();
-        const normalizedUserId = userId ? userId.toString() : '';
-        return normalizedLikeId === normalizedUserId;
-      });
-      
-      console.log('✅ 点赞状态结果:', isLiked);
-      return isLiked;
-    } catch (error) {
-      console.warn('⚠️ 获取用户信息失败，无法判断点赞状态:', error);
-      return false;
-    }
-  },
 
   // 📊 计算属性 (Getters)
   

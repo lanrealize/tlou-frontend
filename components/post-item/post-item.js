@@ -46,8 +46,8 @@ Component({
     },
     // 图片加载状态管理
     imageLoadStates: {},  // 记录每张图片的加载状态
-    // 计算后的点赞状态
-    computedIsLiked: false
+    // 当前用户是否点赞（计算属性）
+    isLiked: false
   },
 
   /**
@@ -64,36 +64,10 @@ Component({
         this.setSingleImageStyleFromMeta();
         this.initImageLoadStates();
       }
-      // 当帖子数据变化时，重新计算点赞状态
-      this.updateLikedStatus();
     },
-    // 监听currentUser变化（使用 ** 监听所有子属性）
-    'currentUser.**': function() {
+    // 监听点赞相关数据变化，自动更新点赞状态
+    'post.likedUsers, currentUser._id': function() {
       this.updateLikedStatus();
-    },
-    // 也监听整个 currentUser 对象的替换
-    'currentUser': function(currentUser) {
-      this.updateLikedStatus();
-    }
-  },
-
-  /**
-   * 组件生命周期
-   */
-  lifetimes: {
-    // 组件实例刚创建好时
-    created() {
-      // 组件实例刚创建好，还不能调用 setData
-    },
-    
-    // 组件完全初始化完毕后
-    ready() {
-      // 🔧 组件准备完毕，立即根据数据设置图片尺寸
-      const { post } = this.data;
-      if (post && post.images && post.images.length > 0) {
-        this.setSingleImageStyleFromMeta();
-        this.initImageLoadStates();
-      }
     }
   },
 
@@ -101,43 +75,49 @@ Component({
    * 组件的方法列表
    */
   methods: {
-    // 更新点赞状态（基于当前用户和点赞列表动态计算）
+    /**
+     * 更新点赞状态到 data
+     * 由 observer 自动调用
+     */
     updateLikedStatus() {
+      const isLiked = this._computeIsLiked();
+      if (this.data.isLiked !== isLiked) {
+        this.setData({ isLiked });
+      }
+    },
+
+    /**
+     * 计算当前用户是否点赞了该帖子
+     * @returns {boolean} 是否点赞
+     * @private
+     */
+    _computeIsLiked() {
       const { post, currentUser } = this.data;
-      
-      console.log('🔍 updateLikedStatus 调用:', {
-        hasPost: !!post,
-        postId: post?._id,
-        hasCurrentUser: !!currentUser,
-        currentUserId: currentUser?._id,
-        likesCount: post?.likes?.length
-      });
       
       // 如果没有帖子数据或用户信息，默认为未点赞
       if (!post || !currentUser || !currentUser._id) {
-        this.setData({ computedIsLiked: false });
-        console.log('⚠️ 数据不完整，设置为未点赞');
-        return;
+        return false;
       }
       
-      // 检查当前用户是否在点赞列表中
+      // 优先使用 likedUsers 数组（包含完整用户信息，更可靠）
+      const likedUsers = post.likedUsers || [];
+      if (likedUsers.length > 0) {
+        const currentUserId = currentUser._id.toString();
+        return likedUsers.some(user => user._id.toString() === currentUserId);
+      }
+      
+      // 降级方案：使用 likes ID 数组（为了兼容旧数据）
       const likes = post.likes || [];
-      const currentUserId = currentUser._id.toString();
+      if (likes.length > 0) {
+        const currentUserId = currentUser._id.toString();
+        return likes.some(likeId => {
+          const actualId = typeof likeId === 'object' ? likeId._id : likeId;
+          const normalizedLikeId = actualId ? actualId.toString() : '';
+          return normalizedLikeId === currentUserId;
+        });
+      }
       
-      const isLiked = likes.some(likeId => {
-        // 处理 likes 数组中可能是对象的情况（后端返回的可能是用户对象）
-        const actualId = typeof likeId === 'object' ? likeId._id : likeId;
-        const normalizedLikeId = actualId ? actualId.toString() : '';
-        return normalizedLikeId === currentUserId;
-      });
-      
-      console.log('✅ 点赞状态计算结果:', {
-        postId: post._id,
-        isLiked,
-        currentComputedIsLiked: this.data.computedIsLiked
-      });
-      
-      this.setData({ computedIsLiked: isLiked });
+      return false;
     },
     
     // 根据服务端图片尺寸信息设置单图样式
@@ -353,22 +333,8 @@ Component({
 
     // 切换操作菜单显示状态
     toggleActionsMenu() {
-      const newShowState = !this.data.showActionsMenu;
-      
-      console.log('🔘 toggleActionsMenu 调用:', {
-        newShowState,
-        currentComputedIsLiked: this.data.computedIsLiked,
-        postIsLiked: this.data.post?.isLiked
-      });
-      
-      // 在打开菜单时，强制重新计算点赞状态，确保显示正确
-      if (newShowState) {
-        console.log('📢 打开菜单，重新计算点赞状态');
-        this.updateLikedStatus();
-      }
-      
       this.setData({
-        showActionsMenu: newShowState
+        showActionsMenu: !this.data.showActionsMenu
       });
     },
 
@@ -528,8 +494,6 @@ Component({
       this.setSingleImageStyleFromMeta();
       // 确保图片加载状态初始化
       this.initImageLoadStates();
-      // 确保点赞状态正确
-      this.updateLikedStatus();
     },
     
     detached() {

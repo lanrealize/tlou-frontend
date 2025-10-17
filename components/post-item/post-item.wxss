@@ -130,7 +130,7 @@
 /* 窄菜单样式 - 用于"点赞"状态，居中对齐 */
 .dropdown-menu.narrow-menu .dropdown-item {
   justify-content: center;
-  padding: 24rpx 36rpx;
+  padding: 24rpx 34rpx;
   min-width: 160rpx;
 }
 
