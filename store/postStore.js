@@ -294,7 +294,7 @@ const postStore = observable({
             
             // 构建新评论对象
             const newComment = {
-              _id: response.data?.commentId || Date.now().toString(),
+              _id: response.data?.commentId || `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
               author: {
                 _id: currentUser._id,
                 username: currentUser.username,

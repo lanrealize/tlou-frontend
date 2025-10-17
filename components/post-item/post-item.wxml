@@ -65,8 +65,8 @@
         <view 
           class="grid-item"
           wx:for="{{post.images}}" 
-          wx:key="{{item.url || item}}"
           wx:for-index="imgIndex"
+          wx:key="imgIndex"
           wx:if="{{imgIndex < 9}}"
         >
           <!-- 网格图片骨架屏 -->
