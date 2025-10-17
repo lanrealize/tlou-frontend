@@ -134,6 +134,9 @@ class API {
     // 退出朋友圈
     leave: (circleId, openid) => this.delete(`/circles/${circleId}/leave`, { openid }),
     
+    // 删除朋友圈
+    delete: (circleId) => this.delete(`/circles/${circleId}`),
+    
     // 添加成员
     addMember: (circleId, data) => this.post(`/circles/${circleId}/members`, data),
     
