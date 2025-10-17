@@ -2,7 +2,7 @@
 
 .post-item {
   background-color: #ffffff;
-  margin: 20rpx 20rpx 60rpx 25rpx;
+  margin: 20rpx 20rpx 25rpx 25rpx;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
@@ -665,10 +665,13 @@
 }
 /* 🚀 上传状态样式 */
 .upload-status-bar {
-  margin-bottom: 16rpx;
-  padding: 16rpx 20rpx;
+  margin-bottom: 30rpx;
+  margin-top: 20rpx;
+  padding: 16rpx 0;
   border-radius: 12rpx;
   background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  width: 500rpx;
+  box-sizing: border-box;
 }
 
 /* 上传中指示器 */
@@ -676,6 +679,7 @@
   display: flex;
   align-items: center;
   gap: 16rpx;
+  padding: 0 20rpx;
 }
 
 .uploading-spinner {
@@ -703,6 +707,7 @@
   display: flex;
   align-items: center;
   gap: 16rpx;
+  padding: 0 20rpx;
 }
 
 .error-icon {

@@ -209,16 +209,6 @@ const postStore = observable({
         
         // 同时从likedUsers数组移除
         post.likedUsers = post.likedUsers.filter(user => user._id.toString() !== normalizedUserId);
-        
-        // 🔧 修复：确保当取消点赞后，如果数组为空或数据不一致，进行清理
-        // 如果 likedUsers 为空，likes 也应该为空
-        if (post.likedUsers.length === 0) {
-          post.likes = [];
-        }
-        // 如果 likes 为空，likedUsers 也应该为空
-        if (post.likes.length === 0) {
-          post.likedUsers = [];
-        }
       }
       
       // 重新计算点赞状态
@@ -294,7 +284,7 @@ const postStore = observable({
             
             // 构建新评论对象
             const newComment = {
-              _id: response.data?.commentId || `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              _id: response.data?.commentId || Date.now().toString(),
               author: {
                 _id: currentUser._id,
                 username: currentUser.username,
@@ -388,6 +378,151 @@ const postStore = observable({
     }
   },
 
+  // 🚀 乐观更新：添加临时帖子到列表顶部
+  addOptimisticPost(circleId, tempPostData) {
+    console.log('🚀 添加乐观更新帖子:', tempPostData);
+    
+    // 生成临时ID
+    const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // 获取当前用户信息
+    const app = getApp();
+    const currentUser = app.getUserStore?.()?.userInfo;
+    
+    // 创建临时帖子对象
+    const optimisticPost = {
+      _id: tempId,
+      _tempId: tempId,
+      _isUploading: true,
+      _uploadProgress: 0,
+      circleId: circleId,
+      content: tempPostData.content || '',
+      images: tempPostData.tempImages || [], // 暂时使用本地临时图片路径
+      _tempImagePaths: tempPostData.tempImages || [], // 保存临时路径用于显示
+      author: currentUser ? {
+        _id: currentUser._id,
+        username: currentUser.username,
+        name: currentUser.name,
+        avatar: currentUser.avatar,
+        openid: currentUser.openid
+      } : {},
+      likes: [],
+      likedUsers: [],
+      comments: [],
+      isLiked: false,
+      createdAt: new Date().toISOString(),
+      formattedTime: '刚刚',
+      __optimistic: true // 标记为乐观更新的帖子
+    };
+    
+    // 将临时帖子添加到列表顶部
+    this.posts = [optimisticPost, ...this.posts];
+    
+    // 如果之前是空状态，更新为已加载状态
+    if (this.status === POST_STATUS.EMPTY) {
+      this.status = POST_STATUS.LOADED;
+    }
+    
+    console.log('✅ 临时帖子已添加到列表');
+    return tempId;
+  },
+
+  // 🚀 更新临时帖子的上传进度
+  updatePostUploadProgress(tempId, progress) {
+    const postIndex = this.posts.findIndex(p => p._tempId === tempId);
+    if (postIndex === -1) return;
+    
+    const updatedPosts = [...this.posts];
+    updatedPosts[postIndex] = {
+      ...updatedPosts[postIndex],
+      _uploadProgress: progress
+    };
+    
+    this.posts = updatedPosts;
+  },
+
+  // 🚀 将临时帖子替换为真实帖子
+  replaceOptimisticPost(tempId, realPost) {
+    console.log('🔄 替换临时帖子为真实帖子:', { tempId, realPostId: realPost._id });
+    
+    const postIndex = this.posts.findIndex(p => p._tempId === tempId);
+    if (postIndex === -1) {
+      console.warn('⚠️ 未找到临时帖子:', tempId);
+      return;
+    }
+    
+    // 格式化真实帖子数据
+    const formattedPost = this._formatSinglePost(realPost);
+    
+    // 替换临时帖子
+    const updatedPosts = [...this.posts];
+    updatedPosts[postIndex] = formattedPost;
+    
+    this.posts = updatedPosts;
+    console.log('✅ 帖子替换成功');
+  },
+
+  // 🚀 标记临时帖子上传失败
+  markPostUploadFailed(tempId, errorMessage) {
+    console.log('❌ 标记帖子上传失败:', tempId);
+    
+    const postIndex = this.posts.findIndex(p => p._tempId === tempId);
+    if (postIndex === -1) return;
+    
+    const updatedPosts = [...this.posts];
+    updatedPosts[postIndex] = {
+      ...updatedPosts[postIndex],
+      _isUploading: false,
+      _uploadFailed: true,
+      _errorMessage: errorMessage || '上传失败'
+    };
+    
+    this.posts = updatedPosts;
+  },
+
+  // 🚀 删除临时帖子（用于上传失败后用户主动删除）
+  removeOptimisticPost(tempId) {
+    console.log('🗑️ 删除临时帖子:', tempId);
+    this.posts = this.posts.filter(p => p._tempId !== tempId);
+    
+    // 如果删除后列表为空，更新状态
+    if (this.posts.length === 0) {
+      this.setStatus(POST_STATUS.EMPTY);
+    }
+  },
+
+  // 🚀 重试上传失败的帖子
+  async retryOptimisticPost(tempId) {
+    console.log('🔄 重试上传帖子:', tempId);
+    
+    const postIndex = this.posts.findIndex(p => p._tempId === tempId);
+    if (postIndex === -1) {
+      throw new Error('未找到要重试的帖子');
+    }
+    
+    const post = this.posts[postIndex];
+    
+    // 重置状态
+    const updatedPosts = [...this.posts];
+    updatedPosts[postIndex] = {
+      ...post,
+      _isUploading: true,
+      _uploadFailed: false,
+      _uploadProgress: 0,
+      _errorMessage: null
+    };
+    
+    this.posts = updatedPosts;
+    
+    // 返回帖子数据供重试使用
+    return {
+      tempId: post._tempId,
+      circleId: post.circleId,
+      content: post.content,
+      tempImages: post._tempImagePaths || []
+    };
+  },
+
   // 🔧 工具方法
 
   // 格式化帖子数据
@@ -401,6 +536,13 @@ const postStore = observable({
 
   // 格式化单个帖子数据
   _formatSinglePost(post) {
+    console.log('🔧 格式化帖子数据:', {
+      postId: post._id,
+      originalLikes: post.likes,
+      originalComments: post.comments?.length || 0,
+      hasLikedUsers: !!post.likedUsers
+    });
+    
     // 格式化时间
     post.formattedTime = util.formatRelativeTime(post.createdAt);
     
@@ -423,6 +565,14 @@ const postStore = observable({
     // 正确设置点赞状态
     post.isLiked = this._checkIfUserLiked(post.likes);
     
+    console.log('✅ 帖子格式化完成:', {
+      postId: post._id,
+      isLiked: post.isLiked,
+      likesCount: post.likes.length,
+      likedUsersCount: post.likedUsers.length,
+      commentsCount: post.comments?.length || 0
+    });
+    
     return post;
   },
 
@@ -431,13 +581,18 @@ const postStore = observable({
     try {
       const app = getApp();
       const currentUser = app.getUserStore?.()?.userInfo;
-      if (!currentUser || !currentUser._id) {
-        // 用户信息未加载，返回 false（组件层会重新计算）
+      if (!currentUser) {
         return false;
       }
       
       // 统一使用 _id 作为用户标识符，提高一致性
       const userId = currentUser._id;
+      
+      console.log('🔍 检查点赞状态:', {
+        userId,
+        likes,
+        likesLength: likes ? likes.length : 0
+      });
       
       if (!likes || likes.length === 0) {
         return false;
@@ -445,13 +600,12 @@ const postStore = observable({
       
       // 优先使用 _id 进行比较，确保一致性
       const isLiked = likes.some(likeId => {
-        // 处理 likes 数组中可能是对象的情况（后端返回的可能是用户对象）
-        const actualId = typeof likeId === 'object' ? likeId._id : likeId;
-        const normalizedLikeId = actualId ? actualId.toString() : '';
+        const normalizedLikeId = likeId.toString();
         const normalizedUserId = userId ? userId.toString() : '';
         return normalizedLikeId === normalizedUserId;
       });
       
+      console.log('✅ 点赞状态结果:', isLiked);
       return isLiked;
     } catch (error) {
       console.warn('⚠️ 获取用户信息失败，无法判断点赞状态:', error);

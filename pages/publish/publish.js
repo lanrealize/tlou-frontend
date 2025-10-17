@@ -473,76 +473,122 @@ Page({
     this.setData({ isPublishing: true });
 
     try {
-      wx.showLoading({ title: '发布中...', mask: true });
+      // 🚀 乐观更新：立即添加临时帖子到列表
+      const { postStore } = require('../../store/postStore');
+      const tempPostData = {
+        content: this.data.content.trim(),
+        tempImages: this.data.tempImages // 临时图片路径
+      };
+      
+      const tempId = postStore.addOptimisticPost(this.data.circleId, tempPostData);
+      console.log('🚀 临时帖子已添加，ID:', tempId);
 
+      // 保存临时图片路径和内容，用于后台上传
+      const contentToUpload = this.data.content.trim();
+      const imagesToUpload = [...this.data.tempImages];
+      const circleId = this.data.circleId;
+
+      // 🎯 立即提示用户并返回上一页，不等待上传完成
+      wx.showToast({
+        title: '正在发布...',
+        icon: 'loading',
+        duration: 1500
+      });
+
+      // 立即返回上一页，让用户看到新帖子
+      setTimeout(() => {
+        wx.navigateBack();
+        
+        // 🔥 在后台继续上传（不阻塞UI）
+        this.uploadPostInBackground(tempId, circleId, contentToUpload, imagesToUpload, postStore);
+      }, 500);
+
+    } catch (error) {
+      this.setData({ isPublishing: false });
+      console.error('发布失败:', error);
+      util.showToast(error.message || '发布失败，请重试');
+    }
+  },
+
+  // 🚀 在后台上传帖子（不阻塞UI）
+  async uploadPostInBackground(tempId, circleId, content, tempImages, postStore) {
+    console.log('🔄 开始后台上传帖子...');
+    
+    try {
       // 上传图片（如果有的话）
       let uploadedImages = [];
       
-      if (this.data.tempImages.length > 0) {
+      if (tempImages.length > 0) {
         console.log('📸 需要上传图片，开始上传...');
+        
         try {
+          // 重新设置数据以便uploadImages可以使用
+          this.setData({ tempImages: tempImages });
           uploadedImages = await this.uploadImages();
-        } catch (uploadError) {
-          console.error('📸 图片上传失败，继续发布流程:', uploadError);
-          // 如果上传失败，继续发布流程（不包含图片）
-          uploadedImages = [];
           
-          // 提示用户图片上传失败，但帖子会继续发布
-          setTimeout(() => {
-            wx.showToast({
-              title: '图片上传失败，已发布文字内容',
-              icon: 'none',
-              duration: 3000
-            });
-          }, 1000);
+          // 更新上传进度
+          postStore.updatePostUploadProgress(tempId, 50);
+          
+        } catch (uploadError) {
+          console.error('📸 图片上传失败:', uploadError);
+          
+          // 静默处理：如果图片上传失败，仍然尝试发布文字内容
+          console.log('⚠️ 图片上传失败，尝试仅发布文字内容');
+          uploadedImages = [];
         }
-      } else {
-        console.log('📝 纯文字发布，跳过图片上传');
       }
 
-      // 发布帖子
+      // 发布帖子到服务器
       const postData = {
-        circleId: this.data.circleId,
-        content: this.data.content.trim(),
-        images: uploadedImages  // 现在包含完整的图片信息 {url, key, size, hash, uploadTime}
+        circleId: circleId,
+        content: content,
+        images: uploadedImages
       };
 
-
-      
+      console.log('📤 发送帖子数据到服务器...');
       const response = await api.posts.create(postData);
       
-      wx.hideLoading();
-      util.showToast('发布成功');
-
-      // 🎯 方案二：通知details页面帖子列表已更新
-      this.notifyDetailsPostChanged();
-
-      // 发布成功后返回上一页
-      setTimeout(() => {
-        wx.navigateBack();
-      }, 1000);
+      console.log('✅ 服务器返回真实帖子数据:', response.data);
+      
+      // 更新进度到100%
+      postStore.updatePostUploadProgress(tempId, 100);
+      
+      // 用真实帖子替换临时帖子
+      if (response.data && response.data.post) {
+        postStore.replaceOptimisticPost(tempId, response.data.post);
+        console.log('✅ 帖子发布成功，临时帖子已替换为真实帖子');
+      }
 
     } catch (error) {
-      wx.hideLoading();
-      this.setData({ isPublishing: false });
-      console.error('发布失败:', error);
+      console.error('❌ 后台上传失败:', error);
       
-      // 🔍 添加详细调试信息
-      console.log('错误详情分析:');
-      console.log('- error.response:', error.response);
-      console.log('- error.response?.status:', error.response?.status);
-      console.log('- error.response?.data:', error.response?.data);
-      console.log('- violationDetails存在:', !!error.response?.data?.violationDetails);
-      
-      // 处理图片违规检查错误
+      // 🔍 检查是否是图片违规错误
       if (error.response?.status === 422 && error.response?.data?.violationDetails) {
-        console.log('✅ 检测到图片违规错误，启动违规处理流程');
-        this.handleImageViolation(error.response.data);
+        console.log('⚠️ 检测到图片违规，标记帖子失败');
+        postStore.markPostUploadFailed(tempId, '图片内容不符合规范');
+        
+        // 显示违规提示
+        wx.showModal({
+          title: '内容审核未通过',
+          content: '检测到图片内容不符合平台规范，帖子发布失败。请修改后重新发布。',
+          showCancel: false,
+          confirmText: '我知道了'
+        });
       } else {
-        console.log('❌ 非违规错误或缺少violation数据，显示通用错误提示');
-        // 处理其他错误
-        util.showToast(error.message || '发布失败，请重试');
+        // 标记上传失败
+        const errorMsg = error.message || '上传失败，请重试';
+        postStore.markPostUploadFailed(tempId, errorMsg);
+        
+        // 显示错误提示
+        wx.showToast({
+          title: '发布失败',
+          icon: 'none',
+          duration: 2000
+        });
       }
+    } finally {
+      // 重置发布状态
+      this.setData({ isPublishing: false });
     }
   },
 
