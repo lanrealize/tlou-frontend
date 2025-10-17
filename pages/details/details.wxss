@@ -79,11 +79,15 @@ view, text, image {
 
 /* 分割线 */
 .divider {
-  width: 100%;
+  width: 100vw;
   height: 2rpx;
-  background: linear-gradient(to right, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.15) 50%, rgba(0, 0, 0, 0) 100%);
+  background: rgba(0, 0, 0, 0.15);
   margin-bottom: 0;
   margin-top: 10rpx;
+  margin-left: 0;
+  margin-right: 0;
+  position: absolute;
+  left: 0;
 }
 
 /* 左侧内容区域：文字 + 头像按钮 */
