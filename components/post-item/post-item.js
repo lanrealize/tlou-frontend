@@ -105,9 +105,18 @@ Component({
     updateLikedStatus() {
       const { post, currentUser } = this.data;
       
+      console.log('🔍 updateLikedStatus 调用:', {
+        hasPost: !!post,
+        postId: post?._id,
+        hasCurrentUser: !!currentUser,
+        currentUserId: currentUser?._id,
+        likesCount: post?.likes?.length
+      });
+      
       // 如果没有帖子数据或用户信息，默认为未点赞
       if (!post || !currentUser || !currentUser._id) {
         this.setData({ computedIsLiked: false });
+        console.log('⚠️ 数据不完整，设置为未点赞');
         return;
       }
       
@@ -120,6 +129,12 @@ Component({
         const actualId = typeof likeId === 'object' ? likeId._id : likeId;
         const normalizedLikeId = actualId ? actualId.toString() : '';
         return normalizedLikeId === currentUserId;
+      });
+      
+      console.log('✅ 点赞状态计算结果:', {
+        postId: post._id,
+        isLiked,
+        currentComputedIsLiked: this.data.computedIsLiked
       });
       
       this.setData({ computedIsLiked: isLiked });
@@ -340,8 +355,15 @@ Component({
     toggleActionsMenu() {
       const newShowState = !this.data.showActionsMenu;
       
+      console.log('🔘 toggleActionsMenu 调用:', {
+        newShowState,
+        currentComputedIsLiked: this.data.computedIsLiked,
+        postIsLiked: this.data.post?.isLiked
+      });
+      
       // 在打开菜单时，强制重新计算点赞状态，确保显示正确
       if (newShowState) {
+        console.log('📢 打开菜单，重新计算点赞状态');
         this.updateLikedStatus();
       }
       
