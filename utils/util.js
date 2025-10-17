@@ -106,7 +106,7 @@ const throttle = (func, limit) => {
  * @param {string} icon 图标类型
  * @param {number} duration 持续时间
  */
-const showToast = (title, icon = 'none', duration = 2000) => {
+const showToast = (title, icon = 'none', duration = 1000) => {
   wx.showToast({
     title,
     icon,
