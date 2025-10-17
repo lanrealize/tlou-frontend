@@ -108,7 +108,7 @@
         </view>
         
         <!-- 下拉式操作菜单 -->
-        <view class="dropdown-menu {{showActions && showActionsMenu ? 'show' : 'hide'}}">
+        <view class="dropdown-menu {{showActions && showActionsMenu ? 'show' : 'hide'}} {{computedIsLiked ? 'wide-menu' : 'narrow-menu'}}">
           <!-- 点赞按钮 -->
           <view class="dropdown-item" catchtap="onLikeFromPopup">
             <image class="dropdown-icon" src="/assets/icons/like.svg" mode="aspectFit"></image>
