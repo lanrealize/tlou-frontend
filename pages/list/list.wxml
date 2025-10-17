@@ -50,6 +50,13 @@
       </discover-circle-card>
     </view>
 
+    <!-- 没有更多了提示 -->
+    <view class="no-more-tip" wx:if="{{circles.length > 0}}">
+      <view class="no-more-line"></view>
+      <text class="no-more-text">没有更多了</text>
+      <view class="no-more-line"></view>
+    </view>
+
     <!-- 空状态 -->
     <view class="empty-state" wx:if="{{circles.length === 0 && !loading}}">
       <view class="empty-icon">{{isHistoryMode ? '📋' : '🌟'}}</view>

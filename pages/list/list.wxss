@@ -40,7 +40,7 @@
 .circles-container {
   flex: 1;
   height: calc(100vh - 120rpx);
-  padding: 0 0 40rpx 0; /* 添加底部留白 */
+  padding: 0 0 120rpx 0; /* 增加底部留白，确保最后一个卡片完整显示 */
 }
 
 /* .circle-item 样式已不再需要，因为现在使用discover-circle-card组件 */
@@ -358,6 +358,28 @@
   color: #ffffff;
   font-weight: bold;
   font-size: 32rpx;
+}
+
+/* 没有更多了提示 */
+.no-more-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 0 150rpx 0;
+  gap: 20rpx;
+}
+
+.no-more-line {
+  flex: 1;
+  height: 1rpx;
+  background-color: #e8e8e8;
+  max-width: 100rpx;
+}
+
+.no-more-text {
+  font-size: 24rpx;
+  color: #999;
+  white-space: nowrap;
 }
 
 /* 响应式适配 */
