@@ -230,7 +230,7 @@ view, text, image {
 
 /* ===== 帖子列表区域 ===== */
 .posts-container {
-  margin-top: 50rpx;
+  padding-top: 60rpx;
   padding-bottom: 200rpx; /* 为底部按钮留出空间 */
 }
 

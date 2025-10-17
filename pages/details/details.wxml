@@ -47,9 +47,10 @@
         <!-- 右侧设置按钮 -->
         <view class="setting-btn theme-color" bindtap="openSettings">设置</view>
       </view>
-      <!-- 分割线 -->
-      <view class="divider"></view>
     </view>
+    
+    <!-- 分割线 - 提升到独立层级，延伸到屏幕边缘 -->
+    <view class="divider" style="top: calc({{navigationData.totalNavigationHeight}}px + 117rpx);"></view>
 
     <!-- 可滚动内容区域 -->
     <scroll-view 
