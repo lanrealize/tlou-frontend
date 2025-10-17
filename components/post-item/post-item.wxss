@@ -163,6 +163,12 @@
   margin-right: 24rpx;
 }
 
+/* 点赞图标 - 向下微调以视觉居中 */
+.dropdown-icon.like-icon-dropdown {
+  position: relative;
+  top: 2rpx;
+}
+
 /* 编辑/评论图标 - 稍微放大以匹配视觉大小 */
 .dropdown-icon.comment-icon {
   width: 38rpx;
