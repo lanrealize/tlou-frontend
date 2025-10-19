@@ -1120,10 +1120,11 @@ Page({
           icon: 'success'
         });
 
-        // 更新状态
+        // 更新状态 - 关键修复：同时更新 userStatus
         this.setData({
           hasApplied: true,
-          showApplyButton: false
+          showApplyButton: false,
+          userStatus: 'applied'  // 🔧 修复：更新 userStatus 让组件显示"申请已提交"状态
         });
 
 
