@@ -71,9 +71,15 @@ Page({
   // 处理导航栏准备完成事件
   onNavigationReady(event) {
     const { navigationData } = event.detail;
-    this.setData({
-      navigationData: navigationData
-    });
+    // 确保 navigationData 存在且包含必要字段
+    if (navigationData && navigationData.totalNavigationHeight) {
+      this.setData({
+        navigationData: navigationData
+      });
+    } else {
+      // 如果事件数据有问题，使用当前 data 中的默认值
+      console.warn('导航栏数据不完整，使用默认值');
+    }
   },
 
   onShow() {

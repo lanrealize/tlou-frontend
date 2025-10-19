@@ -31,7 +31,7 @@ Component({
   },
 
   data: {
-    // 导航栏数据
+    // 导航栏数据 - 设置初始默认值，确保首次渲染不会出现 undefined
     navigationData: {
       statusBarHeight: 44,
       navigationBarHeight: 44,
@@ -43,6 +43,12 @@ Component({
   lifetimes: {
     attached() {
       this.getNavigationData();
+    },
+    ready() {
+      // 在组件布局完成时再次确保数据正确
+      if (!this.data.navigationData || !this.data.navigationData.totalNavigationHeight) {
+        this.getNavigationData();
+      }
     }
   },
 
@@ -54,7 +60,7 @@ Component({
         
         // 获取系统信息和胶囊按钮信息
         const systemInfo = wx.getSystemInfoSync();
-        const statusBarHeight = systemInfo.statusBarHeight || 44;
+        const statusBarHeight = systemInfo.statusBarHeight || this.data.navigationData.statusBarHeight;
         const navigationBarHeight = 44;
         
         // 获取胶囊按钮信息
