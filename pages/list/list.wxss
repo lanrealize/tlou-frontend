@@ -43,6 +43,11 @@
   padding: 0 0 120rpx 0; /* 增加底部留白，确保最后一个卡片完整显示 */
 }
 
+.circles-list {
+  /* 🎯 修复：阻止子元素 margin-top 穿透（CSS margin collapse），避免产生可滚动空间 */
+  overflow: hidden;
+}
+
 /* .circle-item 样式已不再需要，因为现在使用discover-circle-card组件 */
 
 .circle-header {
