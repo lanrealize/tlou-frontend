@@ -322,6 +322,7 @@ view, text, image {
   font-size: 24rpx;
   color: #808080;
   z-index: 4;
+  margin-top: 3rpx;
 }
 
 /* 空状态朋友圈卡片 */

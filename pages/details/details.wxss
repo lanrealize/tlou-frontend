@@ -228,7 +228,7 @@ view, text, image {
 
 /* ===== 帖子列表区域 ===== */
 .posts-container {
-  padding-top: 40rpx; /* 缩小间距，让内容更紧凑自然 */
+  padding-top: 50rpx; /* 缩小间距，让内容更紧凑自然 */
   padding-bottom: 180rpx; /* 为底部统一组件留出空间 */
   position: relative;
 }
