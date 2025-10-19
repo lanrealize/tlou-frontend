@@ -61,10 +61,15 @@ view, text, image {
   position: relative;
   width: 100vw;
   margin-left: calc(-50vw + 50%);
-  background: #ffffff;
+  background: linear-gradient(to bottom, 
+    #ffffff 0%, 
+    #ffffff 80%, 
+    rgba(255, 255, 255, 0.85) 95%,
+    rgba(249, 249, 249, 0.3) 100%
+  );
   z-index: 10;
   border-radius: 0 0 32rpx 32rpx; /* 下面两个圆角，上面直角 */
-  box-shadow: 0px 4px 8px -2px rgba(0, 0, 0, 0.1); /* 只向下的阴影，不影响顶部 */
+  box-shadow: 0px 2px 6px -2px rgba(0, 0, 0, 0.06); /* 更轻的阴影，淡化分隔感 */
   overflow: hidden;
   transition: all 0.2s ease;
 }
@@ -223,8 +228,25 @@ view, text, image {
 
 /* ===== 帖子列表区域 ===== */
 .posts-container {
-  padding-top: 60rpx;
+  padding-top: 40rpx; /* 缩小间距，让内容更紧凑自然 */
   padding-bottom: 180rpx; /* 为底部统一组件留出空间 */
+  position: relative;
+}
+
+/* 添加顶部渐变过渡，与卡片底部渐变呼应 */
+.posts-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60rpx;
+  background: linear-gradient(to bottom, 
+    rgba(249, 249, 249, 0.3) 0%, 
+    transparent 100%
+  );
+  pointer-events: none; /* 不影响内容点击 */
+  z-index: 1;
 }
 
 .empty-content {
