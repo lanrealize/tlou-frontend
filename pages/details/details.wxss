@@ -257,7 +257,7 @@ view, text, image {
 .load-more,
 .no-more {
   text-align: center;
-  padding: 40rpx;
+  padding: 10rpx 40rpx 40rpx 40rpx;
 }
 
 .load-more-text,
