@@ -222,34 +222,41 @@ Page({
       // 检查当前用户权限
       const isOwner = this.checkIsCircleOwner(circle);
       
-      // 🎯 立即显示基本信息，提升用户体验
+      // 🎯 关键修复：在loading状态下预加载申请列表，避免页面内容显示后再加载导致闪现
+      let appliers = [];
+      let isLoadingAppliers = false;
+      
+      // 如果是管理员，先加载申请列表，再显示页面
+      if (isOwner) {
+        try {
+          const appliersRes = await api.circles.getAppliers(circleId);
+          if (appliersRes.success) {
+            appliers = appliersRes.data.appliers || [];
+          }
+        } catch (error) {
+          console.error('加载申请列表失败:', error);
+          // 加载失败时使用空数组，不影响主流程
+          appliers = [];
+        }
+      }
+      
+      // 🎯 一次性设置所有数据，避免页面闪烁
       this.setData({
         circle,
         isCircleOwner: isOwner,
         'settingData.isPublic': circle.isPublic || false,
-        lastSettingsLoadTime: Date.now()
+        lastSettingsLoadTime: Date.now(),
+        appliers: appliers,
+        isLoadingAppliers: false
       });
       
       this.setStatus(STATUS_CONSTANTS.SUCCESS);
 
-      // 🚀 并行加载成员信息和申请者列表
-      const loadPromises = [];
-      
-      // 1. 加载成员信息（如果朋友圈详情中没有）
+      // 🚀 异步加载成员信息（如果朋友圈详情中没有）
       if (circle.members && Array.isArray(circle.members)) {
         this.setData({ circleMembers: circle.members });
       } else {
-        loadPromises.push(this.loadMembersAsync());
-      }
-      
-      // 2. 如果是创建者，并行加载申请者列表
-      if (isOwner) {
-        loadPromises.push(this.loadAppliersAsync());
-      }
-      
-      // 🔄 等待所有并行任务完成（不阻塞基本页面显示）
-      if (loadPromises.length > 0) {
-        await Promise.allSettled(loadPromises);
+        this.loadMembersAsync();
       }
 
     } catch (error) {
