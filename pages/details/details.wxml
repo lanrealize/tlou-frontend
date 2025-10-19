@@ -48,15 +48,12 @@
         <view class="setting-btn theme-color" bindtap="openSettings">设置</view>
       </view>
     </view>
-    
-    <!-- 分割线 - 提升到独立层级，延伸到屏幕边缘 -->
-    <view class="divider" style="top: calc({{navigationData.totalNavigationHeight}}px + 117rpx);"></view>
 
     <!-- 可滚动内容区域 -->
     <scroll-view 
       class="moment-scroll-view"
       scroll-y="{{true}}"
-      style="height: calc(100vh - {{navigationData.totalNavigationHeight}}px - 117rpx - 10rpx - 1px); margin-top: calc(10rpx + 1px);"
+      style="height: calc(100vh - {{navigationData.totalNavigationHeight}}px - 117rpx - 10rpx);"
       bindscrolltolower="onReachBottom"
       enhanced="{{true}}"
       show-scrollbar="{{false}}"

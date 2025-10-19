@@ -40,7 +40,7 @@ view, text, image {
   display: flex;
   flex-direction: column;
   padding-top: 20px; /* 默认导航栏高度，会被动态设置覆盖 */
-  overflow: hidden; /* 防止内容溢出 */
+  overflow: visible; /* 允许阴影显示 */
 }
 
 /* scroll-view样式 */
@@ -59,9 +59,14 @@ view, text, image {
 /* 固定顶部的卡片容器 */
 .card-content-fixed {
   position: relative;
-  width: 100%;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
   background: #ffffff;
   z-index: 10;
+  border-radius: 0 0 32rpx 32rpx; /* 下面两个圆角，上面直角 */
+  box-shadow: 0px 4px 8px -2px rgba(0, 0, 0, 0.1); /* 只向下的阴影，不影响顶部 */
+  overflow: hidden;
+  transition: all 0.2s ease;
 }
 
 .card-content {
@@ -70,25 +75,11 @@ view, text, image {
   justify-content: space-between;
   width: 100%;
   min-height: 80rpx;
-  padding-left: 30rpx;
-  padding-right: 15rpx;
+  padding-left: 50rpx;
+  padding-right: 35rpx;
   box-sizing: border-box;
   margin-top: 10rpx;
   padding-bottom: 25rpx;
-}
-
-/* 分割线 */
-.divider {
-  width: 100vw;
-  height: 2rpx;
-  background: linear-gradient(to right, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.15) 50%, rgba(0, 0, 0, 0) 100%);
-  margin-bottom: 0;
-  margin-top: 10rpx;
-  margin-left: 0;
-  margin-right: 0;
-  position: absolute;
-  left: 0;
-  z-index: 15;
 }
 
 /* 左侧内容区域：文字 + 头像按钮 */
