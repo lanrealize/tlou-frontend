@@ -285,12 +285,11 @@
 /* 申请管理区域的副标题样式 */
 .section-header .section-subtitle.badge {
   font-size: 24rpx;
-  color: #1A73E8;
-  font-weight: 400;
+  color: #FA5151;
+  font-weight: 600;
   margin-left: 20rpx;
-  background: rgba(26, 115, 232, 0.1);
-  padding: 4rpx 12rpx;
-  border-radius: 12rpx;
+  padding: 0;
+  border-radius: 0;
 }
 
 /* 申请者列表 */
@@ -346,7 +345,7 @@
   height: auto;
   padding: 8rpx 16rpx;
   border-radius: 8rpx;
-  font-size: 32rpx;
+  font-size: 28rpx;
   line-height: 1.2;
   font-weight: 400;
   border: none;

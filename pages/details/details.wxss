@@ -217,13 +217,37 @@ view, text, image {
   opacity: 1;
 }
 
+.setting-btn-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 8rpx 16rpx;
+  flex-shrink: 0;
+}
+
 .setting-btn {
   color: #1A73E8;
   font-size: 32rpx;
   line-height: 1.2;
   font-weight: 400;
-  padding: 8rpx 16rpx;
+}
+
+.setting-badge {
+  min-width: 32rpx;
+  height: 32rpx;
+  padding: 0 8rpx;
+  background-color: #FA5151;
+  color: #ffffff;
+  font-size: 20rpx;
+  font-weight: 600;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-sizing: border-box;
   flex-shrink: 0;
+  text-align: center;
 }
 
 /* ===== 帖子列表区域 ===== */

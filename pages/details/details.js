@@ -18,6 +18,7 @@ Page({
     selectedPostId: '',   // 当前选中的帖子ID（用于评论）
     showCommentInput: false, // 是否显示评论输入框
     focusInput: false,    // 是否聚焦输入框
+    pendingApplicationsCount: 0, // 待处理申请数量
     
     // 邀请相关状态
     isInviteMode: false,  // 是否为邀请模式
@@ -412,6 +413,11 @@ Page({
       // 清理全局预加载数据
       app.globalData.preloadedCircleData = null;
 
+      // 如果是朋友圈主人，加载待处理申请数量
+      if (userStatus.isOwner) {
+        this.loadPendingApplicationsCount();
+      }
+
     } catch (error) {
       // 回退到常规加载
       this.loadCircleDetail();
@@ -468,6 +474,11 @@ Page({
       
       if (canViewPosts) {
         await this.loadPosts(this.data.circleId);
+      }
+
+      // 如果是朋友圈主人，加载待处理申请数量
+      if (userStatus.isOwner) {
+        this.loadPendingApplicationsCount();
       }
 
     } catch (error) {
@@ -613,6 +624,25 @@ Page({
   },
 
 
+
+  // 加载待处理申请数量
+  async loadPendingApplicationsCount() {
+    try {
+      const res = await api.circles.getAppliers(this.data.circleId);
+      if (res.success) {
+        const appliers = res.data.appliers || [];
+        this.setData({
+          pendingApplicationsCount: appliers.length
+        });
+      }
+    } catch (error) {
+      console.error('加载待处理申请数量失败:', error);
+      // 静默失败，不影响主要功能
+      this.setData({
+        pendingApplicationsCount: 0
+      });
+    }
+  },
 
   // 打开设置
   openSettings() {
