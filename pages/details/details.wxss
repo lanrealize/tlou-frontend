@@ -78,7 +78,6 @@ view, text, image {
   padding-left: 50rpx;
   padding-right: 35rpx;
   box-sizing: border-box;
-  margin-top: 10rpx;
   padding-bottom: 25rpx;
 }
 
