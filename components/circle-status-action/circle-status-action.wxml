@@ -1,0 +1,79 @@
+<!--components/circle-status-action/circle-status-action.wxml-->
+<view class="circle-status-action">
+  
+  <!-- 状态1: 未登录 -->
+  <view class="status-card" wx:if="{{status === 'not_logged_in'}}">
+    <view class="card-layout">
+      <view class="left-content">
+        <text class="main-title">欢迎访问</text>
+        <text class="sub-title">登录后可申请加入公开朋友圈</text>
+      </view>
+      <button class="action-btn" bindtap="onLogin">去登录</button>
+    </view>
+  </view>
+
+  <!-- 状态2: 成员 - 发布新动态 -->
+  <view class="status-card" wx:elif="{{status === 'member'}}" bindtap="onPublish">
+    <view class="card-layout">
+      <view class="left-content">
+        <text class="main-title">发布新动态</text>
+        <text class="sub-title">分享你的精彩瞬间</text>
+      </view>
+      <view class="action-btn static">发布</view>
+    </view>
+  </view>
+
+  <!-- 状态3: 被邀请 -->
+  <view class="status-card" wx:elif="{{status === 'invited'}}">
+    <view class="card-layout">
+      <view class="left-content">
+        <text class="main-title">你收到了邀请</text>
+        <text class="sub-title">点击右侧按钮加入这个朋友圈</text>
+      </view>
+      <button class="action-btn {{isJoining ? 'disabled' : ''}}" 
+              bindtap="onAcceptInvite" 
+              disabled="{{isJoining}}">
+        {{isJoining ? '加入中...' : '接受邀请'}}
+      </button>
+    </view>
+  </view>
+
+  <!-- 状态4: 已申请 -->
+  <view class="status-card" wx:elif="{{status === 'applied'}}">
+    <view class="card-layout">
+      <view class="left-content">
+        <text class="main-title">申请已提交</text>
+        <text class="sub-title">等待朋友圈主人审核中</text>
+      </view>
+      <view class="action-btn static disabled">审核中</view>
+    </view>
+  </view>
+
+  <!-- 状态5: 可申请加入 -->
+  <view class="status-card" wx:elif="{{status === 'can_apply'}}">
+    <view class="card-layout">
+      <view class="left-content">
+        <text class="main-title">公开朋友圈</text>
+        <text class="sub-title">你可以申请加入这个朋友圈</text>
+      </view>
+      <button class="action-btn {{isApplying ? 'disabled' : ''}}" 
+              bindtap="onApply" 
+              disabled="{{isApplying}}">
+        {{isApplying ? '申请中...' : '申请加入'}}
+      </button>
+    </view>
+  </view>
+
+  <!-- 状态6: 私密无权限 -->
+  <view class="status-card" wx:elif="{{status === 'no_access'}}">
+    <view class="card-layout">
+      <view class="left-content">
+        <text class="main-title">私密朋友圈</text>
+        <text class="sub-title">仅限受邀用户查看</text>
+      </view>
+      <view class="action-btn static disabled">无权限</view>
+    </view>
+  </view>
+
+</view>
+

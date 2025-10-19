@@ -1,0 +1,122 @@
+/* components/circle-status-action/circle-status-action.wxss */
+
+.circle-status-action {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
+
+/* 状态卡片基础样式 - 统一风格 */
+.status-card {
+  background-color: #ffffff;
+  border-radius: 32rpx 32rpx 0 0; /* 上面两个圆角，下面直角 */
+  box-shadow: 0px -2px 8px rgba(0, 0, 0, 0.1); /* 向上的阴影 */
+  overflow: hidden;
+  transition: all 0.2s ease;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* 淡入动画 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 统一的卡片布局 */
+.card-layout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 30rpx 40rpx;
+  gap: 30rpx;
+}
+
+/* 左侧内容区域 */
+.left-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  min-width: 0; /* 防止文字溢出 */
+}
+
+/* 主标题 - 参考card-main-title */
+.main-title {
+  font-size: 28rpx;
+  color: #000000;
+  font-weight: 400;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 副标题 - 参考card-sub-title */
+.sub-title {
+  font-size: 24rpx;
+  color: #808080;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+/* 右侧操作按钮 - 参考setting-btn */
+.action-btn {
+  color: #1A73E8;
+  font-size: 32rpx;
+  line-height: 1.2;
+  font-weight: 400;
+  padding: 8rpx 16rpx;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  white-space: nowrap;
+}
+
+.action-btn::after {
+  border: none;
+}
+
+.action-btn:active {
+  opacity: 0.7;
+}
+
+/* 静态按钮（不可点击） */
+.action-btn.static {
+  pointer-events: none;
+}
+
+/* 禁用状态 */
+.action-btn.disabled {
+  color: #BDBDBD;
+  opacity: 0.6;
+}
+
+/* ========== 响应式适配 ========== */
+@media (max-width: 400px) {
+  .card-layout {
+    padding: 25rpx 50rpx 50rpx 60rpx;
+    gap: 24rpx;
+  }
+
+  .main-title {
+    font-size: 26rpx;
+  }
+
+  .sub-title {
+    font-size: 22rpx;
+  }
+
+  .action-btn {
+    font-size: 28rpx;
+    padding: 6rpx 12rpx;
+  }
+}
+

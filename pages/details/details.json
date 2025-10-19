@@ -5,7 +5,8 @@
   "disableScroll": true,
   "usingComponents": {
     "post-item": "/components/post-item/post-item",
-    "custom-navigation": "/components/custom-navigation/custom-navigation"
+    "custom-navigation": "/components/custom-navigation/custom-navigation",
+    "circle-status-action": "/components/circle-status-action/circle-status-action"
   },
   "backgroundColor": "#f5f5f5"
 }

@@ -34,6 +34,9 @@ Page({
     showApplyButton: false, // 是否显示申请按钮
     showPublishButton: false, // 是否显示发布按钮
     
+    // 统一状态（传递给circle-status-action组件）
+    userStatus: 'not_logged_in', // not_logged_in | member | invited | applied | can_apply | no_access
+    
     // 数据缓存相关
     lastDataLoadTime: 0,  // 上次数据加载时间
     needsDataRefresh: true, // 是否需要刷新数据
@@ -385,7 +388,8 @@ Page({
         hasApplied: userStatus.hasApplied,
         showApplyButton: userStatus.showApplyButton,
         showJoinButton: userStatus.showJoinButton,
-        showPublishButton: userStatus.showPublishButton
+        showPublishButton: userStatus.showPublishButton,
+        userStatus: userStatus.status // 设置统一状态
       });
 
       // 直接通过setData同步设置帖子数据，确保页面切换时立即有数据
@@ -446,7 +450,8 @@ Page({
         hasApplied: userStatus.hasApplied,
         showApplyButton: userStatus.showApplyButton,
         showJoinButton: userStatus.showJoinButton,
-        showPublishButton: userStatus.showPublishButton
+        showPublishButton: userStatus.showPublishButton,
+        userStatus: userStatus.status // 设置统一状态
       });
 
       // 帖子查看权限：公开朋友圈所有人可看，私密朋友圈只有成员和被邀请者可看
@@ -1030,6 +1035,13 @@ Page({
 
   // === 申请加入功能 ===
   
+  // 去登录（由组件触发）
+  goToLogin() {
+    wx.navigateTo({
+      url: '/pages/userInfo/userInfo'
+    });
+  },
+
   // 申请加入朋友圈
   async applyToJoin() {
     const { circleId, isApplying, currentUser } = this.data;
@@ -1047,9 +1059,7 @@ Page({
         success: (res) => {
           if (res.confirm) {
             // 触发登录流程
-            wx.navigateTo({
-              url: '/pages/userInfo/userInfo'
-            });
+            this.goToLogin();
           }
         }
       });

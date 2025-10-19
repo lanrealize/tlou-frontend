@@ -64,51 +64,7 @@
       scroll-with-animation="{{true}}"
     >
 
-      <!-- 申请加入朋友圈区域 -->
-      <view class="apply-section" wx:if="{{!isMember}}">
-        <!-- 显示申请按钮（公开朋友圈且未申请） -->
-        <view class="apply-card card-shadow" wx:if="{{showApplyButton}}">
-          <view class="apply-header">
-            <text class="apply-icon">🔓</text>
-            <view class="apply-info">
-              <text class="apply-title">公开朋友圈</text>
-              <text class="apply-desc">你可以申请加入这个朋友圈</text>
-            </view>
-          </view>
-          <button class="apply-btn theme-btn {{isApplying ? 'disabled' : ''}}" 
-                  bindtap="applyToJoin" 
-                  disabled="{{isApplying}}">
-            {{isApplying ? '申请中...' : '申请加入'}}
-          </button>
-        </view>
-
-        <!-- 已申请状态 -->
-        <view class="applied-card card-shadow" wx:elif="{{hasApplied}}">
-          <view class="applied-header">
-            <text class="applied-icon">⏳</text>
-            <view class="applied-info">
-              <text class="applied-title">申请已提交</text>
-              <text class="applied-desc">等待朋友圈主人审核中</text>
-            </view>
-          </view>
-        </view>
-
-        <!-- 私密朋友圈（无法申请） -->
-        <view class="private-card card-shadow" wx:elif="{{circle.isPublic === false}}">
-          <view class="private-header">
-            <text class="private-icon">🔒</text>
-            <view class="private-info">
-              <text class="private-title">私密朋友圈</text>
-              <text class="private-desc">仅限受邀用户查看</text>
-            </view>
-          </view>
-        </view>
-
-        <!-- 浏览模式提示 -->
-        <view class="browse-tip" wx:if="{{!currentUser._id}}">
-          <text class="tip-text">登录后可申请加入公开朋友圈</text>
-        </view>
-      </view>
+      <!-- 申请加入朋友圈区域 - 已移至底部统一组件 -->
 
       <!-- 帖子列表区域 -->
       <view class="posts-container">
@@ -148,55 +104,21 @@
         </view>
       </view>
 
-      <!-- 添加新分享部分 - 替代原发布按钮 -->
-      <view class="new-share-section" wx:if="{{!isInviteMode || !showJoinButton}}">
-        <view class="share-container" bindtap="navigateToPublish">
-          <!-- 左侧cards图片 -->
-          <image class="cards-image" src="/assets/pics/cards.png" mode="aspectFit"></image>
-          
-          <!-- 中间分享内容 -->
-          <view class="share-content">
-            <!-- 第一行：添加 + newShare图片 -->
-            <view class="share-first-line">
-              <text class="share-title">添加</text>
-              <image class="new-share-image" src="/assets/pics/newShare.png" mode="aspectFit"></image>
-            </view>
-            
-            <!-- 第二行：提示文字 -->
-            <view class="share-second-line">
-              <text class="share-desc">点击右侧相机按钮添加新分享</text>
-            </view>
-          </view>
-          
-          <!-- 分隔线 -->
-          <view class="share-divider"></view>
-          
-          <!-- 右侧相机图标（黑色） -->
-          <view class="camera-btn">
-            <image class="camera-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
-          </view>
-        </view>
-      </view>
-
-
-      <!-- 邀请提示和接受按钮 -->
-      <view class="invite-banner" wx:if="{{isInviteMode && showJoinButton}}">
-        <view class="invite-info">
-          <text class="invite-icon">🎉</text>
-          <view class="invite-text">
-            <text class="invite-title">你收到了邀请</text>
-            <text class="invite-desc">点击下方按钮加入这个朋友圈</text>
-          </view>
-        </view>
-        <button class="join-btn theme-btn {{isJoining ? 'disabled' : ''}}" 
-                bindtap="acceptInvite" 
-                disabled="{{isJoining}}">
-          {{isJoining ? '加入中...' : '接受邀请'}}
-        </button>
-      </view>
+      <!-- 发布按钮和邀请提示 - 已移至底部统一组件 -->
     </scroll-view>
 
-    <!-- 原发布按钮已被新分享组件替代 -->
+    <!-- 统一的底部状态操作组件 -->
+    <circle-status-action
+      status="{{userStatus}}"
+      circle="{{circle}}"
+      isApplying="{{isApplying}}"
+      isJoining="{{isJoining}}"
+      isOwner="{{isCircleOwner}}"
+      bind:publish="navigateToPublish"
+      bind:apply="applyToJoin"
+      bind:acceptInvite="acceptInvite"
+      bind:login="goToLogin"
+    ></circle-status-action>
 
     <!-- 评论输入框 -->
     <view class="comment-input-modal" wx:if="{{showCommentInput}}">
