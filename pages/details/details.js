@@ -189,6 +189,7 @@ Page({
   },
 
   onShow() {
+    console.log('📱 details 页面 onShow 被触发');
     // 智能刷新：基于场景和数据状态精确判断
     if (this.data.circleId) {
       this.intelligentRefreshData();
@@ -200,10 +201,13 @@ Page({
     const now = Date.now();
     const { lastDataLoadTime, needsDataRefresh } = this.data;
     
+    console.log('🔍 检查是否需要刷新，needsDataRefresh:', needsDataRefresh);
+    
     // 分析刷新场景
     const refreshContext = this.analyzeRefreshContext();
     // 根据场景决定刷新策略
     if (refreshContext.shouldRefresh) {
+      console.log('✅ 执行刷新，原因:', refreshContext.reason, '刷新类型:', refreshContext.refreshType);
       
       // 根据刷新类型执行相应的数据加载
       this.executeRefreshByType(refreshContext.refreshType);
@@ -213,6 +217,8 @@ Page({
         lastDataLoadTime: now,
         needsDataRefresh: false
       });
+    } else {
+      console.log('⏭️ 跳过刷新，原因:', refreshContext.skipReason);
     }
   },
 
@@ -250,14 +256,6 @@ Page({
           shouldRefresh: true,
           refreshType: 'posts-only',
           reason: '从发布页面返回，刷新帖子列表'
-        };
-      }
-      
-      // 从设置页面返回（已通过变更追踪处理，这里不应该触发）
-      if (prevPage.route.includes('setting')) {
-        return {
-          shouldRefresh: false,
-          skipReason: '从设置页面返回，已通过变更追踪处理'
         };
       }
       
@@ -347,6 +345,7 @@ Page({
   
   // 标记数据需要刷新（供其他页面调用）
   markDataNeedsRefresh() {
+    console.log('🔔 details 页面被标记需要刷新');
     this.setData({
       needsDataRefresh: true
     });
@@ -415,7 +414,7 @@ Page({
 
       // 如果是朋友圈主人，加载待处理申请数量
       if (userStatus.isOwner) {
-        this.loadPendingApplicationsCount();
+        await this.loadPendingApplicationsCount();
       }
 
     } catch (error) {
@@ -478,7 +477,7 @@ Page({
 
       // 如果是朋友圈主人，加载待处理申请数量
       if (userStatus.isOwner) {
-        this.loadPendingApplicationsCount();
+        await this.loadPendingApplicationsCount();
       }
 
     } catch (error) {

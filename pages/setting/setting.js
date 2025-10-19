@@ -94,6 +94,7 @@ Page({
   // 🎯 方案二：记录数据变更
   markDataChanged(changeType, hasChanged = true) {
     if (changeType === 'circleSettings' || changeType === 'memberList' || changeType === 'applications') {
+      console.log(`📝 标记变更类型: ${changeType} = ${hasChanged}`);
       this.setData({
         [`dataChanges.${changeType}`]: hasChanged
       });
@@ -316,6 +317,79 @@ Page({
         this.loadCircleSettings(); // loadCircleSettings 内部会根据权限决定是否加载申请者列表
       }
     }
+  },
+
+  // 🎯 优雅方案：处理返回按钮点击
+  handleBackButton() {
+    console.log('🔙 用户点击返回按钮');
+    this.notifyAndGoBack();
+  },
+
+  // 🎯 统一的通知和返回逻辑
+  notifyAndGoBack() {
+    // 检查是否有数据变更
+    const hasChanges = this.hasAnyDataChanges();
+    console.log('📊 数据变更状态:', hasChanges, this.data.dataChanges);
+    
+    if (hasChanges) {
+      // 在返回之前通知 details 页面
+      const pages = getCurrentPages();
+      const prevPage = pages[pages.length - 2]; // 上一个页面（details）
+      
+      console.log('📚 页面栈长度:', pages.length);
+      console.log('📄 上一个页面:', prevPage?.route);
+      
+      if (prevPage && 
+          prevPage.route === 'pages/details/details' && 
+          typeof prevPage.markDataNeedsRefresh === 'function') {
+        console.log('✅ 通知 details 页面需要刷新');
+        prevPage.markDataNeedsRefresh();
+        
+        // 标记已通知，避免 onUnload 重复通知
+        this._alreadyNotified = true;
+      }
+    } else {
+      console.log('⏭️ 没有数据变更，跳过通知');
+    }
+    
+    // 重置变更标记
+    this.resetDataChanges();
+    
+    // 执行返回
+    wx.navigateBack({
+      success: () => {
+        console.log('✅ 返回成功');
+      },
+      fail: (err) => {
+        console.error('❌ 返回失败:', err);
+      }
+    });
+  },
+
+  // 🎯 兜底方案：处理滑动返回等情况
+  onUnload() {
+    // 如果已经通过 handleBackButton 通知过，就不再重复通知
+    if (this._alreadyNotified) {
+      console.log('⏭️ 已通过返回按钮通知，跳过');
+      return;
+    }
+    
+    console.log('🔄 通过 onUnload 兜底通知（可能是滑动返回）');
+    
+    const hasChanges = this.hasAnyDataChanges();
+    if (hasChanges) {
+      const pages = getCurrentPages();
+      const detailsPage = pages.find(page => 
+        page.route === 'pages/details/details'
+      );
+      
+      if (detailsPage && typeof detailsPage.markDataNeedsRefresh === 'function') {
+        console.log('✅ 兜底通知 details 页面刷新');
+        detailsPage.markDataNeedsRefresh();
+      }
+    }
+    
+    this.resetDataChanges();
   },
 
   // 切换公开状态（乐观更新模式）
@@ -588,6 +662,7 @@ Page({
         this.loadCircleSettings();
         
         // 🎯 方案二：记录成员和申请变更
+        console.log('📝 标记数据变更：memberList 和 applications');
         this.markDataChanged('memberList');
         this.markDataChanged('applications');
       } else {

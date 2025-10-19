@@ -1,7 +1,7 @@
 <!--pages/setting/setting.wxml-->
 <view class="container">
   <!-- 自定义导航栏 -->
-  <custom-navigation title="朋友圈设置"></custom-navigation>
+  <custom-navigation title="朋友圈设置" customBack="{{true}}" bind:back="handleBackButton"></custom-navigation>
   
   <!-- 内容区域 -->
   <view class="page-content">
