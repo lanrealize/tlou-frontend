@@ -2,11 +2,16 @@
 
 .post-item {
   background-color: #ffffff;
-  margin: 20rpx 20rpx 25rpx 25rpx;
+  margin: 20rpx 20rpx 70rpx 25rpx;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
   gap: 20rpx;
+}
+
+/* 最后一个帖子的底部边距调整 */
+.post-item.last-item {
+  margin-bottom: 25rpx;
 }
 
 .user-avatar {

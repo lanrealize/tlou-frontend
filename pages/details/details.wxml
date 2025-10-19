@@ -79,6 +79,7 @@
             post="{{item}}"
             current-user="{{currentUser}}"
             show-actions="{{true}}"
+            is-last="{{index === posts.length - 1}}"
             bind:like="onPostLike"
             bind:comment="onPostComment"
             bind:replyComment="onPostReplyComment"

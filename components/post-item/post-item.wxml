@@ -1,5 +1,5 @@
 <!--components/post-item/post-item.wxml-->
-<view class="post-item" id="post-{{post._id}}">
+<view class="post-item {{isLast ? 'last-item' : ''}}" id="post-{{post._id}}">
   <!-- 第一个item：用户头像 -->
   <image 
     class="user-avatar" 
