@@ -47,7 +47,7 @@
         <!-- 右侧设置按钮 -->
         <view class="setting-btn-wrapper" bindtap="openSettings">
           <text class="setting-btn theme-color">设置</text>
-          <view class="setting-badge" wx:if="{{isCircleOwner && pendingApplicationsCount > 0}}">{{pendingApplicationsCount}}</view>
+          <text class="setting-count" wx:if="{{isCircleOwner && pendingApplicationsCount > 0}}">({{pendingApplicationsCount}})</text>
         </view>
       </view>
     </view>
