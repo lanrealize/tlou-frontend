@@ -1,8 +1,8 @@
 <!--components/custom-navigation/custom-navigation.wxml-->
 <!-- 自定义导航栏 -->
-<view class="custom-navigation" style="height: {{navigationData.totalNavigationHeight + (showActionBar ? 60 : 0)}}px;">
+<view class="custom-navigation" style="height: {{(navigationData.totalNavigationHeight || 88) + (showActionBar ? 60 : 0)}}px;">
   <!-- 第一行：主导航栏 -->
-  <view class="navigation-content" style="height: {{navigationData.navigationBarHeight}}px; margin-top: {{navigationData.statusBarHeight}}px;">
+  <view class="navigation-content" style="height: {{navigationData.navigationBarHeight || 44}}px; margin-top: {{navigationData.statusBarHeight || 44}}px;">
     <!-- 左侧返回按钮 -->
     <view class="nav-back-btn" wx:if="{{showBack}}" bindtap="onBackTap">
       <image class="back-icon" src="/assets/icons/back.svg" mode="aspectFit"></image>

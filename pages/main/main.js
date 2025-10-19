@@ -73,15 +73,19 @@ Page({
   getSafeAreaInfo() {
     const navData = navigationHelper.getNavigationInfo();
     const app = getApp();
+    
+    // 确保安全区域信息有值，如果没有则使用默认值
+    const globalSafeAreaInfo = app.globalData.safeAreaInfo || {};
+    
     this.setData({
       safeAreaInfo: {
-        statusBarHeight: app.globalData.safeAreaInfo.statusBarHeight,
-        navBarHeight: app.globalData.safeAreaInfo.navBarHeight,
-        safeAreaTop: app.globalData.safeAreaInfo.statusBarHeight,
-        menuHeight: navData.menuHeight,
-        menuTop: navData.menuTop,
-        menuLeft: navData.menuLeft,
-        menuRight: navData.menuRight
+        statusBarHeight: globalSafeAreaInfo.statusBarHeight || 44,
+        navBarHeight: globalSafeAreaInfo.navBarHeight || 88,
+        safeAreaTop: globalSafeAreaInfo.statusBarHeight || 44,
+        menuHeight: navData.menuHeight || 32,
+        menuTop: navData.menuTop || 48,
+        menuLeft: navData.menuLeft || 0,
+        menuRight: navData.menuRight || 0
       }
     });
   },

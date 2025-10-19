@@ -1,7 +1,7 @@
 <!--pages/main/main.wxml-->
 <view class="page-container">
   <!-- 状态栏占位 -->
-  <view class="status-bar" style="height: {{safeAreaInfo.statusBarHeight}}px;"></view>
+  <view class="status-bar" style="height: {{safeAreaInfo.statusBarHeight || 44}}px;"></view>
   
   <!-- 头部区域 -->
   <view class="header">
