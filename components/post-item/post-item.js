@@ -18,6 +18,11 @@ Component({
     showActions: {
       type: Boolean,
       value: true
+    },
+    // 是否是列表中的最后一个
+    isLast: {
+      type: Boolean,
+      value: false
     }
   },
 
@@ -40,9 +45,9 @@ Component({
       isPortrait: false,
       mode: 'aspectFit',
       styleClass: '',
-      // 精确的显示尺寸，用于占位
-      displayWidth: 0,
-      displayHeight: 0
+      // 精确的显示尺寸，用于占位 - 设置最小值1，避免0或undefined导致的样式问题
+      displayWidth: 1,
+      displayHeight: 1
     },
     // 图片加载状态管理
     imageLoadStates: {},  // 记录每张图片的加载状态

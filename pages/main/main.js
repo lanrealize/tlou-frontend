@@ -74,14 +74,14 @@ Page({
     const navData = navigationHelper.getNavigationInfo();
     const app = getApp();
     
-    // 确保安全区域信息有值，如果没有则使用默认值
-    const globalSafeAreaInfo = app.globalData.safeAreaInfo || {};
+    // 安全地获取全局数据，如果全局数据不存在则使用当前 data 中的默认值
+    const globalSafeArea = app.globalData.safeAreaInfo || {};
     
     this.setData({
       safeAreaInfo: {
-        statusBarHeight: globalSafeAreaInfo.statusBarHeight || 44,
-        navBarHeight: globalSafeAreaInfo.navBarHeight || 88,
-        safeAreaTop: globalSafeAreaInfo.statusBarHeight || 44,
+        statusBarHeight: globalSafeArea.statusBarHeight || this.data.safeAreaInfo.statusBarHeight,
+        navBarHeight: globalSafeArea.navBarHeight || this.data.safeAreaInfo.navBarHeight,
+        safeAreaTop: globalSafeArea.statusBarHeight || this.data.safeAreaInfo.safeAreaTop,
         menuHeight: navData.menuHeight || 32,
         menuTop: navData.menuTop || 48,
         menuLeft: navData.menuLeft || 0,

@@ -50,11 +50,16 @@ const navigationHelper = {
     const windowInfo = this.getWindowInfo();
     const { statusBarHeight, safeArea, windowHeight } = windowInfo;
     
+    // 智能默认值：优先使用系统值，失败时使用安全默认值
+    // 44px 是基于 iPhone X 系列的安全值，比大部分设备的实际值都大，避免内容被遮挡
+    const safeStatusBarHeight = statusBarHeight || 44;
+    const navigationBarHeight = 44; // 微信小程序标准导航栏高度
+    
     return {
       windowInfo: windowInfo, // 原始窗口信息
-      statusBarHeight: statusBarHeight || 44,
-      navBarHeight: (statusBarHeight || 44) + 44,
-      safeAreaTop: safeArea?.top || statusBarHeight || 44,
+      statusBarHeight: safeStatusBarHeight,
+      navBarHeight: safeStatusBarHeight + navigationBarHeight,
+      safeAreaTop: safeArea?.top || safeStatusBarHeight,
       safeAreaBottom: safeArea?.bottom || windowHeight,
       windowHeight: windowHeight
     };

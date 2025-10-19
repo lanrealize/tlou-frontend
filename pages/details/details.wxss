@@ -40,7 +40,7 @@ view, text, image {
   display: flex;
   flex-direction: column;
   padding-top: 20px; /* 默认导航栏高度，会被动态设置覆盖 */
-  overflow: hidden; /* 防止内容溢出 */
+  overflow: visible; /* 允许阴影显示 */
 }
 
 /* scroll-view样式 */
@@ -59,9 +59,19 @@ view, text, image {
 /* 固定顶部的卡片容器 */
 .card-content-fixed {
   position: relative;
-  width: 100%;
-  background: #ffffff;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  background: linear-gradient(to bottom, 
+    #ffffff 0%, 
+    #ffffff 80%, 
+    rgba(255, 255, 255, 0.85) 95%,
+    rgba(249, 249, 249, 0.3) 100%
+  );
   z-index: 10;
+  border-radius: 0 0 32rpx 32rpx; /* 下面两个圆角，上面直角 */
+  box-shadow: 0px 2px 6px -2px rgba(0, 0, 0, 0.06); /* 更轻的阴影，淡化分隔感 */
+  overflow: hidden;
+  transition: all 0.2s ease;
 }
 
 .card-content {
@@ -70,25 +80,10 @@ view, text, image {
   justify-content: space-between;
   width: 100%;
   min-height: 80rpx;
-  padding-left: 30rpx;
-  padding-right: 15rpx;
+  padding-left: 50rpx;
+  padding-right: 35rpx;
   box-sizing: border-box;
-  margin-top: 10rpx;
   padding-bottom: 25rpx;
-}
-
-/* 分割线 */
-.divider {
-  width: 100vw;
-  height: 2rpx;
-  background: linear-gradient(to right, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.15) 50%, rgba(0, 0, 0, 0) 100%);
-  margin-bottom: 0;
-  margin-top: 10rpx;
-  margin-left: 0;
-  margin-right: 0;
-  position: absolute;
-  left: 0;
-  z-index: 15;
 }
 
 /* 左侧内容区域：文字 + 头像按钮 */
@@ -233,8 +228,25 @@ view, text, image {
 
 /* ===== 帖子列表区域 ===== */
 .posts-container {
-  padding-top: 60rpx;
+  padding-top: 50rpx; /* 缩小间距，让内容更紧凑自然 */
   padding-bottom: 180rpx; /* 为底部统一组件留出空间 */
+  position: relative;
+}
+
+/* 添加顶部渐变过渡，与卡片底部渐变呼应 */
+.posts-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60rpx;
+  background: linear-gradient(to bottom, 
+    rgba(249, 249, 249, 0.3) 0%, 
+    transparent 100%
+  );
+  pointer-events: none; /* 不影响内容点击 */
+  z-index: 1;
 }
 
 .empty-content {
@@ -257,7 +269,7 @@ view, text, image {
 .load-more,
 .no-more {
   text-align: center;
-  padding: 10rpx 40rpx 40rpx 40rpx;
+  padding: 0rpx 40rpx 40rpx 40rpx;
 }
 
 .load-more-text,

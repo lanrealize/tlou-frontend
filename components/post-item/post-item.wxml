@@ -1,5 +1,5 @@
 <!--components/post-item/post-item.wxml-->
-<view class="post-item" id="post-{{post._id}}">
+<view class="post-item {{isLast ? 'last-item' : ''}}" id="post-{{post._id}}">
   <!-- 第一个item：用户头像 -->
   <image 
     class="user-avatar" 
@@ -41,7 +41,7 @@
     <view class="post-images" wx:if="{{post.images && post.images.length > 0}}">
       <!-- 单张图片 -->
       <view class="single-image" wx:if="{{post.images.length === 1}}" 
-            style="width: {{singleImageInfo.displayWidth || 0}}rpx; height: {{singleImageInfo.displayHeight || 0}}rpx;">
+            style="width: {{singleImageInfo.displayWidth}}rpx; height: {{singleImageInfo.displayHeight}}rpx;">
         <!-- 骨架屏占位 -->
         <view class="image-skeleton single-skeleton {{imageLoadStates[post.images[0].url || post.images[0]] === 'show' ? '' : 'show'}}">
           <view class="skeleton-shimmer"></view>
