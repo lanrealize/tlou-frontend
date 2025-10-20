@@ -150,4 +150,16 @@
       </view>
     </view>
   </view>
+
+  <!-- 用户信息弹出层 -->
+  <user-info-popup
+    visible="{{userInfoPopupVisible}}"
+    rejectReason="{{userInfoPopupReason}}"
+    pendingIntent="{{userInfoPopupIntent}}"
+    circleId="{{userInfoPopupCircleId}}"
+    bind:success="onUserInfoSuccess"
+    bind:cancel="onUserInfoCancel"
+    bind:close="onUserInfoClose"
+  ></user-info-popup>
+
 </view>

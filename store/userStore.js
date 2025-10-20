@@ -101,7 +101,7 @@ const userStore = observable({
       const result = await registerUser();
       
       if (result.status === 'redirected') {
-        this.setLoading(false); // 等待用户在userInfo页面完成注册
+        this.setLoading(false); // 等待用户在弹出层完成注册
       } else if (result.status === 'loggedIn') {
         this.setStatus(USER_STATUS.LOGGEDIN, { userInfo: result.userInfo });
         wx.showToast({ title: '注册成功！', icon: 'success' });

@@ -54,7 +54,13 @@ Page({
       statusBarHeight: 44,
       navBarHeight: 88,
       safeAreaTop: 44
-    }
+    },
+    
+    // 用户信息弹出层
+    userInfoPopupVisible: false,
+    userInfoPopupReason: '',
+    userInfoPopupIntent: '',
+    userInfoPopupCircleId: ''
   },
 
   onLoad(options) {
@@ -149,20 +155,18 @@ Page({
   },
 
   onShow() {
-    // 检查是否从userInfo页面返回，如果是则刷新用户状态
-    const pages = getCurrentPages();
-    const currentPage = pages[pages.length - 1];
-    const prevPage = pages[pages.length - 2];
-    
-    if (prevPage && prevPage.route === 'pages/userInfo/userInfo') {
-      // 刷新用户状态，检查是否注册成功
-      const app = getApp();
-      const userStore = app.getUserStore();
-      userStore.checkLoginStatus();
-    }
+    // 注册用户信息弹出层回调
+    const app = getApp();
+    app.registerUserInfoPopupCallback((config) => {
+      this.setData({
+        userInfoPopupVisible: config.visible,
+        userInfoPopupReason: config.rejectReason,
+        userInfoPopupIntent: config.pendingIntent,
+        userInfoPopupCircleId: config.circleId
+      });
+    });
     
     // 始终检查一次用户状态，以防状态不同步
-    const app = getApp();
     const userStore = app.getUserStore();
     const globalUserInfo = app.globalData.userInfo;
     const globalLoginStatus = app.globalData.loginStatus;
@@ -178,7 +182,8 @@ Page({
     }
     
     // 🔧 确保登录状态检查完成后再加载数据（包括推荐朋友圈）
-    this.waitForLoginCheckAndLoadData(prevPage);
+    // 注意：由于userInfo页面已改为弹出组件，不再需要检查prevPage
+    this.waitForLoginCheckAndLoadData(null);
   },
 
   // 缓存工具方法
@@ -1264,6 +1269,124 @@ Page({
     
     // 私密朋友圈只有成员和被邀请者可看
     return isMember || isInvited;
+  },
+
+  // === 用户信息弹出层相关方法 ===
+  
+  // 用户信息注册成功
+  async onUserInfoSuccess(e) {
+    const { pendingIntent, circleId } = e.detail;
+    
+    // 关闭弹出层
+    this.setData({
+      userInfoPopupVisible: false
+    });
+    
+    // 清除全局配置
+    const app = getApp();
+    app.clearUserInfoPopupConfig();
+    
+    // 如果有待处理的意图，执行相应操作
+    if (pendingIntent && circleId) {
+      await this.handlePendingIntent(pendingIntent, circleId);
+    } else {
+      // 刷新页面数据
+      this.loadCirclesWithThrottle(true);
+    }
+  },
+  
+  // 用户信息取消
+  onUserInfoCancel() {
+    this.setData({
+      userInfoPopupVisible: false
+    });
+    
+    const app = getApp();
+    app.clearUserInfoPopupConfig();
+  },
+  
+  // 用户信息关闭（点击遮罩）
+  onUserInfoClose() {
+    this.setData({
+      userInfoPopupVisible: false
+    });
+    
+    const app = getApp();
+    app.clearUserInfoPopupConfig();
+  },
+  
+  // 处理待处理的意图
+  async handlePendingIntent(intentType, circleId) {
+    try {
+      if (intentType === 'invited') {
+        // 接受邀请并跳转到详情页
+        await this.acceptInviteAndNavigate(circleId);
+      } else if (intentType === 'can_apply') {
+        // 申请加入并跳转到详情页
+        await this.applyToJoinAndNavigate(circleId);
+      }
+    } catch (error) {
+      console.error('处理意图失败:', error);
+      util.showToast(error.message || '操作失败', 'error');
+    }
+  },
+  
+  // 接受邀请并跳转
+  async acceptInviteAndNavigate(circleId) {
+    const auth = require('../../utils/auth');
+    const openid = await auth.getOpenid();
+    
+    return new Promise((resolve, reject) => {
+      wx.request({
+        url: `${api.getBaseUrl()}/circles/${circleId}/accept-invite`,
+        method: 'POST',
+        data: { openid },
+        header: { 'Content-Type': 'application/json' },
+        success: (res) => {
+          if (res.statusCode === 200 && res.data.success) {
+            util.showToast('已加入朋友圈', 'success');
+            setTimeout(() => {
+              wx.navigateTo({
+                url: `/pages/details/details?circleId=${circleId}`
+              });
+            }, 1000);
+            resolve(res.data);
+          } else {
+            reject(new Error(res.data?.message || '接受邀请失败'));
+          }
+        },
+        fail: reject
+      });
+    });
+  },
+  
+  // 申请加入并跳转
+  async applyToJoinAndNavigate(circleId) {
+    const auth = require('../../utils/auth');
+    const openid = await auth.getOpenid();
+    
+    return new Promise((resolve, reject) => {
+      wx.request({
+        url: `${api.getBaseUrl()}/circles/${circleId}/apply`,
+        method: 'POST',
+        data: { openid },
+        header: { 'Content-Type': 'application/json' },
+        success: (res) => {
+          if (res.statusCode === 200 && res.data.success) {
+            util.showToast('申请已提交', 'success');
+            setTimeout(() => {
+              wx.navigateTo({
+                url: `/pages/details/details?circleId=${circleId}`
+              });
+            }, 1000);
+            resolve(res.data);
+          } else {
+            reject(new Error(res.data?.message || '申请失败'));
+          }
+        },
+        fail: reject
+      });
+    });
   },
 
 });

@@ -60,7 +60,13 @@ Page({
       navigationBarHeight: 44,
       totalNavigationHeight: 88,
       capsuleVerticalCenter: 22
-    }
+    },
+    
+    // 用户信息弹出层
+    userInfoPopupVisible: false,
+    userInfoPopupReason: '',
+    userInfoPopupIntent: '',
+    userInfoPopupCircleId: ''
   },
 
   onLoad(options) {
@@ -186,6 +192,18 @@ Page({
 
   onShow() {
     console.log('📱 details 页面 onShow 被触发');
+    
+    // 注册用户信息弹出层回调
+    const app = getApp();
+    app.registerUserInfoPopupCallback((config) => {
+      this.setData({
+        userInfoPopupVisible: config.visible,
+        userInfoPopupReason: config.rejectReason,
+        userInfoPopupIntent: config.pendingIntent,
+        userInfoPopupCircleId: config.circleId || this.data.circleId
+      });
+    });
+    
     // 智能刷新：基于场景和数据状态精确判断
     if (this.data.circleId) {
       this.intelligentRefreshData();
@@ -975,8 +993,9 @@ Page({
   
   // 去登录（由组件触发）
   goToLogin() {
-    wx.navigateTo({
-      url: '/pages/userInfo/userInfo'
+    const app = getApp();
+    app.showUserInfoPopup({
+      reason: '请完善您的个人信息'
     });
   },
 
@@ -993,9 +1012,9 @@ Page({
         cancelText: '返回',
         success: (res) => {
           if (res.confirm) {
-            wx.navigateTo({
-              url: '/pages/userInfo/userInfo?reason=登录后可以查看朋友圈详情',
-              fail: () => wx.navigateBack()
+            const app = getApp();
+            app.showUserInfoPopup({
+              reason: '登录后可以查看朋友圈详情'
             });
           } else {
             wx.navigateBack();
@@ -1047,5 +1066,66 @@ Page({
       });
       this.setData({ isApplying: false });
     }
+  },
+
+  // === 用户信息弹出层相关方法 ===
+  
+  // 用户信息注册成功
+  async onUserInfoSuccess(e) {
+    const { pendingIntent, circleId } = e.detail;
+    
+    // 关闭弹出层
+    this.setData({
+      userInfoPopupVisible: false
+    });
+    
+    // 清除全局配置
+    const app = getApp();
+    app.clearUserInfoPopupConfig();
+    
+    // 如果有待处理的意图，执行相应操作
+    if (pendingIntent && circleId) {
+      await this.handlePendingIntent(pendingIntent, circleId);
+    } else {
+      // 刷新页面数据
+      this.loadCircleDetail(this.data.isInviteMode, this.data.inviterId);
+    }
+  },
+  
+  // 用户信息取消
+  onUserInfoCancel() {
+    this.setData({
+      userInfoPopupVisible: false
+    });
+    
+    const app = getApp();
+    app.clearUserInfoPopupConfig();
+  },
+  
+  // 用户信息关闭（点击遮罩）
+  onUserInfoClose() {
+    this.setData({
+      userInfoPopupVisible: false
+    });
+    
+    const app = getApp();
+    app.clearUserInfoPopupConfig();
+  },
+  
+  // 处理待处理的意图
+  async handlePendingIntent(intentType, circleId) {
+    try {
+      if (intentType === 'invited') {
+        // 接受邀请
+        await this.acceptInvite();
+      } else if (intentType === 'can_apply') {
+        // 申请加入
+        await this.applyToJoin();
+      }
+    } catch (error) {
+      console.error('处理意图失败:', error);
+      util.showToast(error.message || '操作失败', 'error');
+    }
   }
+
 });

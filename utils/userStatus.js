@@ -79,7 +79,6 @@ const ACTION_RULES = {
     requireLogin: true,
     requireMembership: false,
     loginMessage: '您需要登录才能查看朋友圈列表',
-    redirectTo: '/pages/userInfo/userInfo',
     saveIntent: false
   },
   
@@ -88,7 +87,6 @@ const ACTION_RULES = {
     requireMembership: true,
     loginMessage: '您需要登录才能修改设置',
     membershipMessage: '只有朋友圈成员可以修改设置',
-    redirectTo: '/pages/userInfo/userInfo',
     saveIntent: false
   },
   
@@ -96,7 +94,6 @@ const ACTION_RULES = {
     requireLogin: true,
     requireMembership: false,
     loginMessage: '您需要登录才能发布动态',
-    redirectTo: '/pages/userInfo/userInfo',
     saveIntent: false
   },
   
@@ -106,7 +103,6 @@ const ACTION_RULES = {
     requireMembership: true,
     loginMessage: '登录后才能点赞',
     membershipMessage: '请先加入朋友圈才能点赞',
-    redirectTo: '/pages/userInfo/userInfo',
     saveIntent: false
   },
   
@@ -115,7 +111,6 @@ const ACTION_RULES = {
     requireMembership: true,
     loginMessage: '登录后才能发表评论',
     membershipMessage: '请先加入朋友圈才能评论',
-    redirectTo: '/pages/userInfo/userInfo',
     saveIntent: false
   },
   
@@ -124,7 +119,6 @@ const ACTION_RULES = {
     requireMembership: true,
     loginMessage: '您需要登录才能发布动态',
     membershipMessage: '请先加入朋友圈才能发布动态',
-    redirectTo: '/pages/userInfo/userInfo',
     saveIntent: false
   },
   
@@ -132,7 +126,6 @@ const ACTION_RULES = {
     requireLogin: true,
     requireMembership: false,
     loginMessage: '您需要登录才能分享朋友圈',
-    redirectTo: '/pages/userInfo/userInfo',
     saveIntent: false
   },
   
@@ -141,7 +134,6 @@ const ACTION_RULES = {
     requireLogin: true,
     requireMembership: false,
     loginMessage: '请先完成注册后加入朋友圈',
-    redirectTo: '/pages/userInfo/userInfo',
     saveIntent: true,
     intentType: 'invited'
   },
@@ -150,7 +142,6 @@ const ACTION_RULES = {
     requireLogin: true,
     requireMembership: false,
     loginMessage: '请先完成注册后提交申请',
-    redirectTo: '/pages/userInfo/userInfo',
     saveIntent: true,
     intentType: 'can_apply'
   },
@@ -159,7 +150,6 @@ const ACTION_RULES = {
     requireLogin: true,
     requireMembership: false,
     loginMessage: '您需要登录才能创建朋友圈',
-    redirectTo: '/pages/userInfo/userInfo',
     saveIntent: false
   }
 };
@@ -238,21 +228,13 @@ function handleLoginRequired(rule, options = {}) {
     });
   }
   
-  // 构建跳转URL
-  let url = rule.redirectTo;
-  if (rule.saveIntent && circleId) {
-    url += `?intent=${rule.intentType}&circleId=${circleId}&reason=${encodeURIComponent(rule.loginMessage)}`;
-  } else {
-    url += `?reason=${encodeURIComponent(rule.loginMessage)}`;
-  }
-  
-  // 跳转到登录页
-  wx.navigateTo({
-    url,
-    fail: () => {
-      // 如果是 tabBar 页面，使用 switchTab
-      wx.switchTab({ url: rule.redirectTo });
-    }
+  // 触发用户信息弹出层（替代页面跳转）
+  const app = getApp();
+  app.showUserInfoPopup({
+    reason: rule.loginMessage,
+    intent: rule.intentType,
+    circleId: circleId || '',
+    saveIntent: rule.saveIntent
   });
 }
 

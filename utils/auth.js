@@ -10,20 +10,20 @@ const getBaseUrl = () => {
   return app ? app.globalData.baseUrl : BACKEND_CONFIG.BASE_URL;
 };
 
-// 跳转到用户信息填写页面
-const redirectToUserInfoPage = () => {
+// 触发用户信息弹出层（替代页面跳转）
+const showUserInfoPopup = () => {
   return new Promise((resolve, reject) => {
-    wx.navigateTo({
-      url: '/pages/userInfo/userInfo?from=register',
-      success: () => {
-        // 注意：由于是页面跳转，这里不能直接resolve
-        // 实际的注册逻辑会在userInfo页面中完成
-        resolve({ status: 'redirected' });
-      },
-      fail: (error) => {
-        reject(new Error('跳转到用户信息页面失败'));
-      }
-    });
+    try {
+      const app = getApp();
+      app.showUserInfoPopup({
+        reason: '请完善您的个人信息',
+        intent: '',
+        circleId: ''
+      });
+      resolve({ status: 'popup_shown' });
+    } catch (error) {
+      reject(new Error('显示用户信息弹出层失败'));
+    }
   });
 };
 
@@ -138,15 +138,15 @@ const registerUser = async () => {
     // 1. 确保有openid（预先获取）
     await getOpenid();
     
-    // 2. 跳转到用户信息填写页面
-    const result = await redirectToUserInfoPage();
+    // 2. 触发用户信息弹出层
+    const result = await showUserInfoPopup();
     
-    if (result.status === 'redirected') {
-      // 返回重定向状态，实际注册会在userInfo页面完成
-      return { status: 'redirected' };
+    if (result.status === 'popup_shown') {
+      // 返回弹出层已显示状态，实际注册会在弹出层中完成
+      return { status: 'popup_shown' };
     }
     
-    throw new Error('跳转失败');
+    throw new Error('显示弹出层失败');
     
   } catch (error) {
     return { status: 'error', reason: error.message };

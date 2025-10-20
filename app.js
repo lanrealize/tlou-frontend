@@ -127,6 +127,35 @@ App({
     userStore.checkLoginStatus();
   },
 
+  // 触发用户信息弹出层
+  showUserInfoPopup(options = {}) {
+    console.log('📝 触发用户信息弹出层', options);
+    // 保存弹出层配置到全局数据
+    this.globalData.userInfoPopupConfig = {
+      visible: true,
+      rejectReason: options.reason || options.loginMessage || '',
+      pendingIntent: options.intent || options.intentType || '',
+      circleId: options.circleId || '',
+      timestamp: Date.now()
+    };
+    
+    // 触发全局事件（通过 wx.eventChannel 或自定义事件系统）
+    // 页面需要监听此事件来显示弹出层
+    if (this.userInfoPopupCallback) {
+      this.userInfoPopupCallback(this.globalData.userInfoPopupConfig);
+    }
+  },
+
+  // 注册用户信息弹出层回调
+  registerUserInfoPopupCallback(callback) {
+    this.userInfoPopupCallback = callback;
+  },
+
+  // 清除用户信息弹出层配置
+  clearUserInfoPopupConfig() {
+    this.globalData.userInfoPopupConfig = null;
+  },
+
   // 🛠️ 初始化开发者工具
   initDevTools() {
     const devTools = require('./utils/devTools');
