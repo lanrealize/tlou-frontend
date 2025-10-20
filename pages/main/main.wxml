@@ -46,15 +46,6 @@
     </view>
   </view>
 
-  <!-- 登录状态检查中 -->
-  <view class="login-checking-card" wx:if="{{isLoading || loginStatus !== 'loggedIn' && loginStatus !== 'unregistered'}}">
-    <view class="loading-bg"></view>
-    <view class="loading-content">
-      <view class="loading-spinner"></view>
-      <view class="loading-text">正在检查登录状态...</view>
-    </view>
-  </view>
-
   <!-- 朋友圈数据加载中状态 -->
   <view class="friend-circle-loading" wx:elif="{{loginStatus === 'loggedIn' && isLoadingCircles}}">
     <view class="loading-bg"></view>

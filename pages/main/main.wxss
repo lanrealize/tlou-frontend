@@ -119,21 +119,6 @@ view, text, image {
   box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.25);
 }
 
-/* 登录状态检查卡片 */
-.login-checking-card {
-  position: relative;
-  margin: 30rpx 40rpx;
-  height: 228rpx;
-  border-radius: 10rpx;
-  background: #ffffff;
-  box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
 /* 朋友圈加载状态卡片 */
 .friend-circle-loading {
   position: relative;
@@ -794,7 +779,6 @@ view, text, image {
     padding: 4rpx 12rpx;
   }
   
-  .login-checking-card,
   .friend-circle-loading,
   .friend-circle-card,
   .empty-state-card,

@@ -351,23 +351,14 @@ Page({
   },
 
   // 用户登录/注册处理
-  async handleUserAuth() {
-
-    
+  handleUserAuth() {
     // 根据当前状态执行不同的操作
-    if (this.data.loginStatus === 'unregistered' && !this.data.isLoading) {
-      // 未注册状态，触发注册
-      await this.performUserRegistration();
-      
-      // 注册成功后加载数据
-      if (this.data.isLoggedIn) {
-        this.loadCirclesWithThrottle(true); // 强制刷新
-        
-        // ✅ 修复：登录成功后加载推荐内容
-        if (!this.data.recommendationsLoaded) {
-          this.loadRecommendations();
-        }
-      }
+    if (this.data.loginStatus === 'unregistered') {
+      // 未注册状态，直接弹出用户信息组件
+      const app = getApp();
+      app.showUserInfoPopup({
+        reason: '请完善您的个人信息'
+      });
     } else if (this.data.hasError) {
       // 错误状态，提示用户重新启动
       wx.showModal({
