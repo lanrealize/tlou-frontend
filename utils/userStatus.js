@@ -12,6 +12,33 @@ function getUserLoginStatus() {
   };
 }
 
+// ===== 1.5 获取最新的用户信息（直接从store获取，避免MobX绑定延迟）=====
+/**
+ * 获取当前用户的最新信息
+ * 
+ * 🔑 关键说明：
+ * - 直接从 userStore 获取，避免依赖 this.data 中可能延迟的 MobX 绑定
+ * - 这是获取用户信息的标准方式，应优先使用此函数
+ * 
+ * @returns {Object|null} 当前用户信息，如果未登录则返回 null
+ */
+function getCurrentUser() {
+  try {
+    const app = getApp();
+    const userStore = app?.getUserStore();
+    
+    // 如果用户已登录且有有效的用户信息（必须有_id），返回用户信息
+    if (userStore && userStore.isLoggedIn && userStore.userInfo && userStore.userInfo._id) {
+      return userStore.userInfo;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('❌ 获取当前用户信息失败:', error);
+    return null;
+  }
+}
+
 // ===== 2. Action 规则配置 =====
 const ACTION_RULES = {
   // 页面访问类（只需要登录）
@@ -246,7 +273,27 @@ function clearUserIntent() {
 }
 
 // ===== 7. 获取用户与朋友圈的关系 =====
+/**
+ * 获取用户与朋友圈的关系
+ * 
+ * 🔑 核心改进：
+ * - currentUser 参数现在是可选的
+ * - 如果未传入或传入的数据不完整，函数会自动从 userStore 获取最新数据
+ * - 这样可以避免 MobX 绑定延迟导致的状态判断错误
+ * 
+ * @param {Object} circle - 朋友圈对象
+ * @param {Object} [currentUser] - 当前用户信息（可选，如果不传或不完整，会自动从store获取）
+ * @param {boolean} [isInviteMode=false] - 是否为邀请模式
+ * @returns {Object} 用户与朋友圈的关系对象
+ */
 function getUserCircleRelation(circle, currentUser, isInviteMode = false) {
+  // 🔧 核心改进：自动获取最新的用户信息，避免依赖可能过期的数据
+  // 如果传入的 currentUser 是空对象或没有 _id，说明可能是 MobX 绑定延迟，需要主动获取
+  if (!currentUser || !currentUser._id) {
+    console.log('⚠️ currentUser 参数无效，自动从 userStore 获取最新数据');
+    currentUser = getCurrentUser();
+  }
+  
   // 🔑 未登录用户处理：根据朋友圈类型和访问方式，返回相应状态
   // 注意：需要后端提供公开 API 才能真正支持未登录用户查看
   if (!currentUser || !currentUser._id) {
@@ -291,7 +338,12 @@ function getUserCircleRelation(circle, currentUser, isInviteMode = false) {
   const isOwner = checkIsOwner(circle, userId);
   const isMember = isOwner || checkIsMember(circle, userId);
   
+  // 🔧 关键防护：如果用户已经是成员，邀请模式应该被忽略
+  // 这是最高优先级的判断，避免因为URL参数残留导致的状态错误
   if (isMember) {
+    if (isInviteMode) {
+      console.log('⚠️ 用户已是成员，但检测到邀请模式，自动忽略邀请模式');
+    }
     return {
       layer1: 'logged_in',
       layer2: 'member',
@@ -378,6 +430,7 @@ function checkHasApplied(circle, userId) {
 // ===== 8. 导出 =====
 module.exports = {
   getUserLoginStatus,
+  getCurrentUser,      // 🔧 新增：获取最新的用户信息（推荐使用）
   checkAccess,         // 统一的权限检查函数（登录 + 成员资格）
   saveUserIntent,
   getUserIntent,

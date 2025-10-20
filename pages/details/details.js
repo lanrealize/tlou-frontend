@@ -640,7 +640,6 @@ Page({
       return {
         title: `邀请你加入"${circle.name}"朋友圈`,
         path: `/pages/details/details?circleId=${circleId}&type=invite&inviterId=${currentUser._id}`,
-        imageUrl: circle.coverImage || '/images/default_avatar.png'
       };
     } else {
       wx.showToast({
@@ -671,9 +670,11 @@ Page({
       wx.hideLoading();
       wx.showToast({ title: '加入成功！', icon: 'success' });
       
+      // 🔧 清除邀请模式状态，确保后续判断正确
       this.setData({ isInviteMode: false, isJoining: false });
       wx.showShareMenu({ withShareTicket: false, menus: ['shareAppMessage'] });
       
+      // 重新加载朋友圈详情，getUserCircleRelation会自动获取最新用户信息并返回正确状态
       await this.loadCircleDetail();
     } catch (error) {
       wx.hideLoading();
@@ -966,7 +967,7 @@ Page({
     return {
       title: circle.name || '查看朋友圈',
       query: `circleId=${this.data.circleId}`,
-      imageUrl: circle.coverImage || ''
+      imageUrl: circle.coverImage || '/assets/pics/newShare.png'
     };
   },
 
