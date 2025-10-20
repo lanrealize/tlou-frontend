@@ -526,7 +526,8 @@ Page({
 
   // 打开设置
   openSettings() {
-    const { circleId } = this.data;
+    const { circleId, circle, currentUser, isInviteMode } = this.data;
+    
     if (!circleId) {
       wx.showToast({
         title: '朋友圈信息不完整',
@@ -535,14 +536,15 @@ Page({
       return;
     }
     
-    // 标记准备进入设置页面
-
+    // 使用统一的权限检查：只有朋友圈成员才能进入设置页面
+    if (!userStatus.checkAccess('enterSettingsPage', { circle, currentUser, isInviteMode })) {
+      return; // checkAccess 会自动处理未登录（跳转）或非成员（Toast）
+    }
     
     // 导航到朋友圈设置页面，传递朋友圈ID
     wx.navigateTo({
       url: `/pages/setting/setting?circleId=${circleId}`,
       fail: (err) => {
-
         wx.showToast({
           title: '打开设置失败',
           icon: 'none'
@@ -606,13 +608,13 @@ Page({
     }
   },
 
-  // 接受邀请加入朋友圈（临时版本，稍后会用 userStatus.js 重构）
+  // 接受邀请加入朋友圈
   async acceptInvite() {
     const { circleId, isJoining } = this.data;
     
     // 访问控制：检查是否登录
-    if (!userStatus.requireLogin('acceptInvite', { circleId })) {
-      return; // requireLogin 会自动处理跳转和意图保存
+    if (!userStatus.checkAccess('acceptInvite', { circleId })) {
+      return; // checkAccess 会自动处理跳转和意图保存
     }
     
     if (isJoining) return;
@@ -673,9 +675,9 @@ Page({
   async onPostLike(e) {
     const { postId } = e.detail;
 
-    // 使用全局成员资格检查：必须是成员才能点赞
+    // 使用统一的权限检查：登录 + 成员资格
     const { circle, currentUser, isInviteMode } = this.data;
-    if (!userStatus.requireMembership(circle, currentUser, isInviteMode, '点赞')) {
+    if (!userStatus.checkAccess('likePost', { circle, currentUser, isInviteMode })) {
       return;
     }
 
@@ -691,9 +693,9 @@ Page({
   onPostComment(e) {
     const { postId } = e.detail;
 
-    // 使用全局成员资格检查：必须是成员才能评论
+    // 使用统一的权限检查：登录 + 成员资格
     const { circle, currentUser, isInviteMode } = this.data;
-    if (!userStatus.requireMembership(circle, currentUser, isInviteMode, '评论')) {
+    if (!userStatus.checkAccess('commentPost', { circle, currentUser, isInviteMode })) {
       return;
     }
 
@@ -711,9 +713,9 @@ Page({
   onPostReplyComment(e) {
     const { postId, replyToUser } = e.detail;
 
-    // 使用全局成员资格检查：必须是成员才能回复评论
+    // 使用统一的权限检查：登录 + 成员资格
     const { circle, currentUser, isInviteMode } = this.data;
-    if (!userStatus.requireMembership(circle, currentUser, isInviteMode, '回复评论')) {
+    if (!userStatus.checkAccess('commentPost', { circle, currentUser, isInviteMode })) {
       return;
     }
 
@@ -776,9 +778,9 @@ Page({
 
   // 导航到发布页面
   navigateToPublish() {
-    // 使用全局成员资格检查：必须是成员才能发布动态
+    // 使用统一的权限检查：登录 + 成员资格
     const { circle, currentUser, isInviteMode } = this.data;
-    if (!userStatus.requireMembership(circle, currentUser, isInviteMode, '发布动态')) {
+    if (!userStatus.checkAccess('publishPost', { circle, currentUser, isInviteMode })) {
       return;
     }
 
@@ -791,9 +793,9 @@ Page({
 
   // 回复评论
   replyComment(e) {
-    // 使用全局成员资格检查：必须是成员才能回复评论
+    // 使用统一的权限检查：登录 + 成员资格
     const { circle, currentUser, isInviteMode } = this.data;
-    if (!userStatus.requireMembership(circle, currentUser, isInviteMode, '回复评论')) {
+    if (!userStatus.checkAccess('commentPost', { circle, currentUser, isInviteMode })) {
       return;
     }
 
@@ -934,13 +936,13 @@ Page({
     });
   },
 
-  // 申请加入朋友圈（临时版本，稍后会用 userStatus.js 重构）
+  // 申请加入朋友圈
   async applyToJoin() {
     const { circleId, isApplying } = this.data;
     
     // 访问控制：检查是否登录
-    if (!userStatus.requireLogin('applyToJoin', { circleId })) {
-      return; // requireLogin 会自动处理跳转和意图保存
+    if (!userStatus.checkAccess('applyToJoin', { circleId })) {
+      return; // checkAccess 会自动处理跳转和意图保存
     }
     
     if (isApplying) return;

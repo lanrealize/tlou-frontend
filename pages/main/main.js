@@ -401,7 +401,7 @@ Page({
   // 直接创建朋友圈（无对话框，使用默认设置）
   async createCircleDirectly() {
     // 使用全局访问控制
-    if (!userStatus.requireLogin('createCircle')) {
+    if (!userStatus.checkAccess('createCircle')) {
       return;
     }
 
@@ -446,7 +446,7 @@ Page({
   // 进入最新活动朋友圈详情页面
   goToRecentCircle() {
     // 使用全局访问控制
-    if (!userStatus.requireLogin('enterListPage')) {
+    if (!userStatus.checkAccess('enterListPage')) {
       return;
     }
 
@@ -462,7 +462,7 @@ Page({
   // 刷新数据
   refreshData() {
     // 使用全局访问控制
-    if (!userStatus.requireLogin('enterListPage')) {
+    if (!userStatus.checkAccess('enterListPage')) {
       return;
     }
 
@@ -481,7 +481,7 @@ Page({
     const { id } = e.currentTarget.dataset;
     
     // 使用全局访问控制
-    if (!userStatus.requireLogin('enterListPage')) {
+    if (!userStatus.checkAccess('enterListPage')) {
       return;
     }
 
@@ -680,7 +680,7 @@ Page({
     const { postId, index } = e.currentTarget.dataset;
     
     // 使用全局访问控制
-    if (!userStatus.requireLogin('likePost')) {
+    if (!userStatus.checkAccess('likePost')) {
       return;
     }
 
@@ -739,7 +739,7 @@ Page({
     const { postId } = e.currentTarget.dataset;
     
     // 使用全局访问控制
-    if (!userStatus.requireLogin('commentPost')) {
+    if (!userStatus.checkAccess('commentPost')) {
       return;
     }
 
@@ -756,7 +756,7 @@ Page({
     const { postId, userId, username } = e.currentTarget.dataset;
     
     // 使用全局访问控制
-    if (!userStatus.requireLogin('commentPost')) {
+    if (!userStatus.checkAccess('commentPost')) {
       return;
     }
 
@@ -831,9 +831,9 @@ Page({
 
   // 跳转到朋友圈管理（需要登录）
   goToCircleList() {
-    // 使用新的全局访问控制
-    if (!userStatus.requireLogin('enterListPage')) {
-      return; // requireLogin 会自动处理跳转到登录页
+    // 使用全局访问控制
+    if (!userStatus.checkAccess('enterListPage')) {
+      return; // checkAccess 会自动处理跳转到登录页
     }
     
     wx.switchTab({
@@ -844,7 +844,7 @@ Page({
   // 跳转到历史记录页面（需要登录）
   goToHistory() {
     // 使用全局访问控制
-    if (!userStatus.requireLogin('enterListPage')) {
+    if (!userStatus.checkAccess('enterListPage')) {
       return;
     }
 
@@ -891,7 +891,7 @@ Page({
     const { postId, index } = e.currentTarget.dataset;
     
     // 使用全局访问控制
-    if (!userStatus.requireLogin('enterPublishPage')) {
+    if (!userStatus.checkAccess('enterPublishPage')) {
       return;
     }
 

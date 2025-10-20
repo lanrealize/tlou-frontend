@@ -2,6 +2,7 @@
 const api = require('../../utils/api');
 const util = require('../../utils/util');
 const auth = require('../../utils/auth');
+const userStatus = require('../../utils/userStatus');
 
 // 状态常量
 const STATUS_CONSTANTS = {
@@ -206,7 +207,7 @@ Page({
 
   // 🚀 优化版：并行加载朋友圈设置
   async loadCircleSettings() {
-    const { circleId } = this.data;
+    const { circleId, currentUser } = this.data;
     if (!circleId) return;
 
     this.setStatus(STATUS_CONSTANTS.LOADING);
@@ -218,6 +219,20 @@ Page({
       
       if (!circle) {
         throw new Error('朋友圈不存在或已被删除');
+      }
+
+      // 权限检查：只有成员才能访问设置页面
+      const relation = userStatus.getUserCircleRelation(circle, currentUser, false);
+      if (relation.status !== 'member') {
+        wx.showModal({
+          title: '权限不足',
+          content: '只有朋友圈成员可以修改设置',
+          showCancel: false,
+          success: () => {
+            wx.navigateBack();
+          }
+        });
+        return;
       }
 
       // 检查当前用户权限

@@ -14,54 +14,73 @@ function getUserLoginStatus() {
 
 // ===== 2. Action 规则配置 =====
 const ACTION_RULES = {
-  // 页面访问类
+  // 页面访问类（只需要登录）
   enterListPage: {
     requireLogin: true,
-    rejectMessage: '您需要登录才能查看朋友圈列表',
+    requireMembership: false,
+    loginMessage: '您需要登录才能查看朋友圈列表',
     redirectTo: '/pages/userInfo/userInfo',
     saveIntent: false
   },
   
   enterSettingsPage: {
     requireLogin: true,
-    rejectMessage: '您需要登录才能修改设置',
+    requireMembership: true,
+    loginMessage: '您需要登录才能修改设置',
+    membershipMessage: '只有朋友圈成员可以修改设置',
     redirectTo: '/pages/userInfo/userInfo',
     saveIntent: false
   },
   
   enterPublishPage: {
     requireLogin: true,
-    rejectMessage: '您需要登录才能发布动态',
+    requireMembership: false,
+    loginMessage: '您需要登录才能发布动态',
     redirectTo: '/pages/userInfo/userInfo',
     saveIntent: false
   },
   
-  // 互动操作类
+  // 互动操作类（需要登录 + 成员资格）
   likePost: {
     requireLogin: true,
-    rejectMessage: '登录后才能点赞',
+    requireMembership: true,
+    loginMessage: '登录后才能点赞',
+    membershipMessage: '请先加入朋友圈才能点赞',
     redirectTo: '/pages/userInfo/userInfo',
     saveIntent: false
   },
   
   commentPost: {
     requireLogin: true,
-    rejectMessage: '登录后才能发表评论',
+    requireMembership: true,
+    loginMessage: '登录后才能发表评论',
+    membershipMessage: '请先加入朋友圈才能评论',
+    redirectTo: '/pages/userInfo/userInfo',
+    saveIntent: false
+  },
+  
+  publishPost: {
+    requireLogin: true,
+    requireMembership: true,
+    loginMessage: '您需要登录才能发布动态',
+    membershipMessage: '请先加入朋友圈才能发布动态',
     redirectTo: '/pages/userInfo/userInfo',
     saveIntent: false
   },
   
   shareCircle: {
     requireLogin: true,
-    rejectMessage: '您需要登录才能分享朋友圈',
+    requireMembership: false,
+    loginMessage: '您需要登录才能分享朋友圈',
     redirectTo: '/pages/userInfo/userInfo',
     saveIntent: false
   },
   
-  // 朋友圈操作类
+  // 朋友圈操作类（需要登录，不需要成员资格）
   acceptInvite: {
     requireLogin: true,
-    rejectMessage: '请先完成注册后加入朋友圈',
+    requireMembership: false,
+    loginMessage: '请先完成注册后加入朋友圈',
     redirectTo: '/pages/userInfo/userInfo',
     saveIntent: true,
     intentType: 'invited'
@@ -69,7 +88,8 @@ const ACTION_RULES = {
   
   applyToJoin: {
     requireLogin: true,
-    rejectMessage: '请先完成注册后提交申请',
+    requireMembership: false,
+    loginMessage: '请先完成注册后提交申请',
     redirectTo: '/pages/userInfo/userInfo',
     saveIntent: true,
     intentType: 'can_apply'
@@ -77,15 +97,28 @@ const ACTION_RULES = {
   
   createCircle: {
     requireLogin: true,
-    rejectMessage: '您需要登录才能创建朋友圈',
+    requireMembership: false,
+    loginMessage: '您需要登录才能创建朋友圈',
     redirectTo: '/pages/userInfo/userInfo',
     saveIntent: false
   }
 };
 
-// ===== 3. 核心访问控制函数 =====
-function requireLogin(actionName, options = {}) {
-  const { isLoggedIn } = getUserLoginStatus();
+// ===== 3. 统一的权限检查函数 =====
+/**
+ * 检查用户对特定操作的访问权限（统一入口）
+ * @param {string} actionName - 操作名称（在 ACTION_RULES 中定义）
+ * @param {Object} options - 参数：{ circleId, postId, circle, currentUser, isInviteMode, customData }
+ * @returns {boolean} - 是否允许访问（true=允许，false=拒绝）
+ * 
+ * 工作流程：
+ * 1. 第一层：检查是否需要登录 (requireLogin)
+ *    - 未登录 → redirect 到登录页 + 保存意图
+ * 2. 第二层：检查是否需要成员资格 (requireMembership)
+ *    - 非成员 → showToast 提示
+ * 3. 两层都通过 → 允许操作
+ */
+function checkAccess(actionName, options = {}) {
   const rule = ACTION_RULES[actionName];
   
   if (!rule) {
@@ -93,22 +126,42 @@ function requireLogin(actionName, options = {}) {
     return false;
   }
   
-  // 如果不需要登录，直接通过
-  if (!rule.requireLogin) {
-    return true;
+  // ========== 第一层：检查登录 ==========
+  if (rule.requireLogin) {
+    const { isLoggedIn } = getUserLoginStatus();
+    
+    if (!isLoggedIn) {
+      // 未登录：跳转到登录页
+      handleLoginRequired(rule, options);
+      return false;
+    }
   }
   
-  // 如果已登录，直接通过
-  if (isLoggedIn) {
-    return true;
+  // ========== 第二层：检查成员资格 ==========
+  if (rule.requireMembership) {
+    const { circle, currentUser, isInviteMode } = options;
+    
+    // 验证必需参数
+    if (!circle || !currentUser) {
+      console.error(`❌ ${actionName} 需要 circle 和 currentUser 参数`);
+      return false;
+    }
+    
+    // 获取用户与朋友圈的关系
+    const relation = getUserCircleRelation(circle, currentUser, isInviteMode || false);
+    
+    // 如果不是成员，显示相应提示
+    if (relation.status !== 'member') {
+      handleMembershipRequired(rule, relation);
+      return false;
+    }
   }
   
-  // 未登录，执行拒绝逻辑
-  handleLoginRequired(rule, options);
-  return false;
+  // 所有检查都通过
+  return true;
 }
 
-// ===== 4. 处理登录要求 =====
+// ===== 4. 处理登录要求（未登录时） =====
 function handleLoginRequired(rule, options = {}) {
   const { circleId, postId, customData } = options;
   
@@ -120,7 +173,7 @@ function handleLoginRequired(rule, options = {}) {
       circleId,
       postId,
       customData,
-      message: rule.rejectMessage,
+      message: rule.loginMessage,
       timestamp: Date.now()
     });
   }
@@ -128,9 +181,9 @@ function handleLoginRequired(rule, options = {}) {
   // 构建跳转URL
   let url = rule.redirectTo;
   if (rule.saveIntent && circleId) {
-    url += `?intent=${rule.intentType}&circleId=${circleId}&reason=${encodeURIComponent(rule.rejectMessage)}`;
+    url += `?intent=${rule.intentType}&circleId=${circleId}&reason=${encodeURIComponent(rule.loginMessage)}`;
   } else {
-    url += `?reason=${encodeURIComponent(rule.rejectMessage)}`;
+    url += `?reason=${encodeURIComponent(rule.loginMessage)}`;
   }
   
   // 跳转到登录页
@@ -143,7 +196,38 @@ function handleLoginRequired(rule, options = {}) {
   });
 }
 
-// ===== 5. 意图管理 =====
+// ===== 5. 处理成员资格要求（非成员时） =====
+function handleMembershipRequired(rule, relation) {
+  // 根据用户与朋友圈的关系，显示不同的提示
+  let message = rule.membershipMessage || '请先加入朋友圈';
+  
+  // 根据不同的状态，提供更具体的提示
+  switch (relation.status) {
+    case 'invited':
+      message = '请先点击底部按钮接受邀请';
+      break;
+    case 'can_apply':
+      message = '请先点击底部按钮申请加入朋友圈';
+      break;
+    case 'applied':
+      message = '您的申请正在审核中，请耐心等待';
+      break;
+    case 'no_access':
+      message = '您无权访问此朋友圈';
+      break;
+    default:
+      // 使用规则中配置的默认消息
+      break;
+  }
+  
+  wx.showToast({
+    title: message,
+    icon: 'none',
+    duration: 2500
+  });
+}
+
+// ===== 6. 意图管理 =====
 function saveUserIntent(intent) {
   const app = getApp();
   app.globalData.pendingIntent = intent;
@@ -161,7 +245,7 @@ function clearUserIntent() {
   console.log('🗑️ 清除用户意图');
 }
 
-// ===== 6. Details 页面专用：获取用户与朋友圈的关系 =====
+// ===== 7. 获取用户与朋友圈的关系 =====
 function getUserCircleRelation(circle, currentUser, isInviteMode = false) {
   // 第一层：是否登录
   if (!currentUser || !currentUser._id) {
@@ -264,72 +348,10 @@ function checkHasApplied(circle, userId) {
   });
 }
 
-// ===== 7. 检查成员资格（用于细粒度权限控制） =====
-/**
- * 检查用户是否是朋友圈成员，如果不是则显示相应的提示
- * @param {Object} circle - 朋友圈对象
- * @param {Object} currentUser - 当前用户对象
- * @param {boolean} isInviteMode - 是否为邀请模式
- * @param {string} actionName - 操作名称（用于提示消息）
- * @returns {boolean} - 是否是成员
- */
-function requireMembership(circle, currentUser, isInviteMode = false, actionName = '此操作') {
-  // 第一层：检查是否登录
-  const { isLoggedIn } = getUserLoginStatus();
-  if (!isLoggedIn) {
-    wx.showToast({
-      title: '请先登录',
-      icon: 'none',
-      duration: 2500
-    });
-    return false;
-  }
-
-  // 第二层：获取用户与朋友圈的关系
-  const relation = getUserCircleRelation(circle, currentUser, isInviteMode);
-  
-  // 如果是成员，允许操作
-  if (relation.status === 'member') {
-    return true;
-  }
-
-  // 不是成员，根据状态显示不同的提示
-  let message = '';
-  
-  switch (relation.status) {
-    case 'invited':
-      message = '请先点击底部按钮接受邀请';
-      break;
-    case 'can_apply':
-      message = '请先点击底部按钮申请加入朋友圈';
-      break;
-    case 'applied':
-      message = '您的申请正在审核中，请耐心等待';
-      break;
-    case 'not_logged_in':
-      message = '请先登录';
-      break;
-    case 'no_access':
-      message = '您无权访问此朋友圈';
-      break;
-    default:
-      message = '请先加入朋友圈';
-  }
-
-  wx.showToast({
-    title: message,
-    icon: 'none',
-    duration: 2500
-  });
-
-  return false;
-}
-
 // ===== 8. 导出 =====
 module.exports = {
   getUserLoginStatus,
-  requireLogin,
-  requireMembership,
+  checkAccess,         // 统一的权限检查函数（登录 + 成员资格）
   saveUserIntent,
   getUserIntent,
   clearUserIntent,
