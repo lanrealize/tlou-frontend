@@ -774,25 +774,15 @@ Page({
     try {
       wx.showLoading({ title: '退出中...' });
       
-      // 获取当前用户的openid
+      // 获取当前用户的 openid（统一处理真实和虚拟身份）
       const app = getApp();
       const userStore = app?.getUserStore();
-      let openid;
       
-      if (userStore && userStore.isLoggedIn) {
-        if (userStore.isVirtualIdentity) {
-          // 虚拟身份：使用虚拟用户的openid
-          openid = userStore.userInfo?.openid;
-        } else {
-          // 真实身份：从本地存储获取
-          openid = wx.getStorageSync('openid');
-        }
-      }
-      
-      if (!openid) {
+      if (!userStore || !userStore.isLoggedIn || !userStore.userInfo?.openid) {
         throw new Error('用户身份验证失败');
       }
       
+      const openid = userStore.userInfo.openid;
       const res = await api.circles.leave(this.data.circleId, openid);
       
       wx.hideLoading();

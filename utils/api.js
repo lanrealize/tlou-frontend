@@ -18,24 +18,12 @@ class API {
     const { url, method = 'GET', data = {}, header = {}, timeout = 10000 } = options;
     
     try {
-      // 🎯 从 mobx 获取当前身份的 openid
+      // 🎯 从 mobx 获取当前身份的 openid（统一处理真实和虚拟身份）
       const app = getApp();
       const userStore = app?.getUserStore();
       
-      if (userStore && userStore.isLoggedIn) {
-        let openid;
-        
-        if (userStore.isVirtualIdentity) {
-          // 虚拟身份：使用虚拟用户的openid
-          openid = userStore.userInfo?.openid;
-        } else {
-          // 真实身份：从本地存储获取
-          openid = wx.getStorageSync('openid');
-        }
-        
-        if (openid) {
-          header['x-openid'] = openid;
-        }
+      if (userStore && userStore.isLoggedIn && userStore.userInfo?.openid) {
+        header['x-openid'] = userStore.userInfo.openid;
       }
     } catch (error) {
       // 静默处理openid获取失败
@@ -55,11 +43,14 @@ class API {
         success: (res) => {
           // 接受所有2xx状态码（200-299）作为成功
           if (res.statusCode >= 200 && res.statusCode < 300) {
-            // 对于2xx状态码，如果有success字段则检查，否则直接认为成功
-            if (res.data.success === undefined || res.data.success) {
-              resolve(res.data);
-            } else {
+            // 检查响应是否表示失败
+            // 1. 如果有 success 字段且为 false，表示失败
+            // 2. 如果有 status 字段且为 "fail"，表示失败
+            if (res.data.success === false || res.data.status === 'fail') {
               reject(new Error(res.data.message || '请求失败'));
+            } else {
+              // 其他情况认为成功
+              resolve(res.data);
             }
           } else {
             // 创建包含完整响应信息的错误对象
@@ -165,20 +156,18 @@ class API {
     },
 
     // === 邀请功能 ===
-    // 邀请用户加入
-    inviteUser: (circleId, userId) => this.post(`/circles/${circleId}/invite`, { userId }),
-    
-    // 接受邀请
-    acceptInvite: (circleId) => this.post(`/circles/${circleId}/accept-invite`),
-    
-    // 拒绝邀请  
-    declineInvite: (circleId) => this.post(`/circles/${circleId}/decline-invite`),
-    
-    // 取消邀请
-    cancelInvite: (circleId, userId) => this.delete(`/circles/${circleId}/invite/${userId}`),
-    
-    // 获取邀请列表
-    getInvitees: (circleId) => this.get(`/circles/${circleId}/invitees`)
+    // 接受邀请（加入朋友圈）
+    acceptInvite: async (circleId) => {
+      // 获取当前用户的 openid（统一处理真实和虚拟身份）
+      const app = getApp();
+      const userStore = app?.getUserStore();
+      
+      if (!userStore || !userStore.isLoggedIn || !userStore.userInfo?.openid) {
+        throw new Error('未获取到用户openid');
+      }
+      
+      return this.post(`/circles/${circleId}/join`, { openid: userStore.userInfo.openid });
+    }
   };
 
   // 帖子相关API

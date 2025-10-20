@@ -38,6 +38,9 @@ App({
     
     // 检查用户登录状态（使用MobX状态管理）
     this.initUserState();
+    
+    // 🛠️ 启用开发者工具（仅开发环境）
+    this.initDevTools();
   },
 
   onShow() {
@@ -122,5 +125,13 @@ App({
   recheckLoginStatus() {
     console.log('🔄 重新检查用户登录状态');
     userStore.checkLoginStatus();
+  },
+
+  // 🛠️ 初始化开发者工具
+  initDevTools() {
+    const devTools = require('./utils/devTools');
+    if (devTools.DEV_MODE) {
+      devTools.installDevTools();
+    }
   }
 });
