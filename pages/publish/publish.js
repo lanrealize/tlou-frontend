@@ -45,32 +45,29 @@ Page({
       return;
     }
 
-    // 延迟执行用户信息同步，确保MobX绑定完成
-    setTimeout(() => {
-      const app = getApp();
-      const userStore = app.getUserStore();
-      
-      this.setData({
-        userInfo: this.data.userInfo || app.globalData.userInfo || userStore.userInfo,
-        isLoggedIn: this.data.isLoggedIn || app.globalData.loginStatus === 'loggedIn' || userStore.isLoggedIn
-      });
-      
-
-    }, 100);
+    // ✅ 修复：使用统一的用户状态获取函数，无需setTimeout
+    const userStatus = require('../../utils/userStatus');
+    const currentUser = userStatus.getCurrentUser();
+    const isLoggedIn = userStatus.isUserLoggedIn();
+    
+    this.setData({
+      userInfo: currentUser,
+      isLoggedIn: isLoggedIn
+    });
   },
 
   onShow() {
     
-    // 页面显示时检查用户状态
-    const app = getApp();
-    const userStore = app.getUserStore();
+    // ✅ 修复：使用统一的用户状态获取函数
+    const userStatus = require('../../utils/userStatus');
+    const currentUser = userStatus.getCurrentUser();
+    const isLoggedIn = userStatus.isUserLoggedIn();
     
     // 更新当前用户信息（可能在其他页面发生了变化）
     this.setData({
-      userInfo: this.data.userInfo || app.globalData.userInfo || userStore.userInfo,
-      isLoggedIn: this.data.isLoggedIn || app.globalData.loginStatus === 'loggedIn' || userStore.isLoggedIn
+      userInfo: currentUser,
+      isLoggedIn: isLoggedIn
     });
-    
 
   },
 
@@ -290,63 +287,17 @@ Page({
         });
       }
       
-      // 获取用户ID - 多种方式尝试获取
-      const app = getApp();
-      const userStore = app.getUserStore();
+      // ✅ 修复：使用统一的用户ID获取函数，替换多重fallback
+      const userStatus = require('../../utils/userStatus');
+      const userId = userStatus.getCurrentUserId();
       
-
-
-      let userId = null;
-      let userInfoSource = '';
-      
-      // 方式1: 从页面data中获取，尝试多种字段名
-      if (this.data.userInfo) {
-        const userInfo = this.data.userInfo;
-        userId = userInfo._id || userInfo.openid || userInfo.id || userInfo.userId || userInfo.user_id;
-        if (userId) {
-          userInfoSource = 'pageData';
-        }
-      }
-      
-      // 方式2: 从全局数据中获取
-      if (!userId && app.globalData.userInfo) {
-        const globalUserInfo = app.globalData.userInfo;
-        userId = globalUserInfo._id || globalUserInfo.openid || globalUserInfo.id || globalUserInfo.userId || globalUserInfo.user_id;
-        if (userId) {
-          userInfoSource = 'globalData';
-        }
-      }
-      
-      // 方式3: 从userStore中直接获取
-      if (!userId && userStore.userInfo) {
-        const storeUserInfo = userStore.userInfo;
-        userId = storeUserInfo._id || storeUserInfo.openid || storeUserInfo.id || storeUserInfo.userId || storeUserInfo.user_id;
-        if (userId) {
-          userInfoSource = 'userStore';
-        }
-      }
-
-      // 方式4: 从全局openid中获取（备选方案）
-      if (!userId && app.globalData.openid) {
-        userId = app.globalData.openid;
-        userInfoSource = 'globalOpenid';
-      }
-
-      // 方式5: 使用临时ID（最后的备选方案）
+      // 如果没有获取到用户ID，说明用户未登录
       if (!userId) {
-        // 生成一个基于时间戳的临时ID
-        userId = 'temp_user_' + Date.now();
-        userInfoSource = 'temporary';
-        console.warn('⚠️ 使用临时用户ID:', userId);
-        
-        // 提示用户这是临时解决方案
-        wx.showToast({
-          title: '使用临时身份上传',
-          icon: 'none',
-          duration: 2000
-        });
+        console.error('❌ 获取用户ID失败：用户未登录');
+        throw new Error('用户未登录，无法上传图片');
       }
-
+      
+      console.log('✅ 获取用户ID成功:', userId);
 
 
       // 获取本地图片尺寸信息
@@ -447,18 +398,12 @@ Page({
       return;
     }
 
-    // 验证登录状态 - 多重检查
-    const app = getApp();
-    const userStore = app.getUserStore();
-    const isLoggedIn = this.data.isLoggedIn || 
-                      app.globalData.loginStatus === 'loggedIn' || 
-                      userStore.isLoggedIn;
+    // ✅ 修复：使用统一的登录状态检查函数
+    const userStatus = require('../../utils/userStatus');
+    const isLoggedIn = userStatus.isUserLoggedIn();
 
     console.log('🔍 登录状态检查:', {
-      pageIsLoggedIn: this.data.isLoggedIn,
-      globalLoginStatus: app.globalData.loginStatus,
-      storeIsLoggedIn: userStore.isLoggedIn,
-      finalIsLoggedIn: isLoggedIn
+      isLoggedIn: isLoggedIn
     });
 
     if (!isLoggedIn) {

@@ -180,14 +180,15 @@ Page({
     // 🔧 确保登录状态检查完成后再加载数据
     this.waitForLoginCheckAndLoadData(prevPage);
     
-    // 使用setTimeout延迟检查，确保MobX状态已同步到页面
-    setTimeout(() => {
-      // 加载公开朋友圈推荐（需要登录才能查看）
-      // 只在首次自动加载，之后需要用户手动点击刷新按钮
-      if (!this.data.recommendationsLoaded && this.data.isLoggedIn) {
-        this.loadRecommendations();
-      }
-    }, 500); // 延迟500毫秒确保状态同步
+    // ✅ 修复：使用统一的登录状态检查，无需setTimeout
+    const userStatus = require('../../utils/userStatus');
+    const isLoggedIn = userStatus.isUserLoggedIn();
+    
+    // 加载公开朋友圈推荐（需要登录才能查看）
+    // 只在首次自动加载，之后需要用户手动点击刷新按钮
+    if (!this.data.recommendationsLoaded && isLoggedIn) {
+      this.loadRecommendations();
+    }
   },
 
   // 缓存工具方法

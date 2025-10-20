@@ -27,10 +27,8 @@ Page({
     this.setupStoreBindings();
     this.initNavigation();
     
-    // 等待一个微任务周期让MobX绑定生效
-    setTimeout(() => {
-      this.checkPermissionAndLoad();
-    }, 100);
+    // ✅ 修复：直接检查权限，无需setTimeout
+    this.checkPermissionAndLoad();
   },
 
   onShow() {
@@ -42,11 +40,9 @@ Page({
 
   // 权限检查和加载逻辑
   checkPermissionAndLoad() {
-    const app = getApp();
-    const userStore = app.getUserStore();
-    
-    // 使用UserStore的状态进行权限检查（更可靠）
-    const hasAdminPermission = userStore.isAdmin;
+    // ✅ 修复：使用统一的权限检查函数
+    const userStatus = require('../../utils/userStatus');
+    const hasAdminPermission = userStatus.isCurrentUserAdmin();
     const pageIsAdmin = this.data.isAdmin;
     
     if (!hasAdminPermission) {
@@ -63,10 +59,14 @@ Page({
     
     // 如果UserStore有权限但页面状态没同步，手动同步
     if (hasAdminPermission && pageIsAdmin !== hasAdminPermission) {
+      const currentUser = userStatus.getCurrentUser();
+      const app = getApp();
+      const userStore = app?.getUserStore();
+      
       this.setData({
         isAdmin: hasAdminPermission,
-        userInfo: userStore.userInfo,
-        loginStatus: userStore.loginStatus
+        userInfo: currentUser,
+        loginStatus: userStore?.loginStatus || 'unregistered'
       });
     }
     

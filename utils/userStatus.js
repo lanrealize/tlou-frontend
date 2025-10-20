@@ -39,6 +39,39 @@ function getCurrentUser() {
   }
 }
 
+/**
+ * 获取当前用户ID（支持多种ID字段格式）
+ * 
+ * @returns {string|null} 用户ID，如果未登录则返回 null
+ */
+function getCurrentUserId() {
+  const user = getCurrentUser();
+  if (!user) return null;
+  
+  // 优先级：_id > openid > id > userId > user_id
+  return user._id || user.openid || user.id || user.userId || user.user_id || null;
+}
+
+/**
+ * 检查当前用户是否为管理员
+ * 
+ * @returns {boolean} 是否为管理员
+ */
+function isCurrentUserAdmin() {
+  const user = getCurrentUser();
+  return user?.isAdmin === true;
+}
+
+/**
+ * 检查当前用户是否已登录
+ * 
+ * @returns {boolean} 是否已登录
+ */
+function isUserLoggedIn() {
+  const user = getCurrentUser();
+  return user !== null && user._id !== undefined;
+}
+
 // ===== 2. Action 规则配置 =====
 const ACTION_RULES = {
   // 页面访问类（只需要登录）
@@ -430,7 +463,10 @@ function checkHasApplied(circle, userId) {
 // ===== 8. 导出 =====
 module.exports = {
   getUserLoginStatus,
-  getCurrentUser,      // 🔧 新增：获取最新的用户信息（推荐使用）
+  getCurrentUser,      // 🔧 获取最新的用户信息（推荐使用）
+  getCurrentUserId,    // 🔧 获取当前用户ID（支持多种格式）
+  isCurrentUserAdmin,  // 🔧 检查是否为管理员
+  isUserLoggedIn,      // 🔧 检查是否已登录
   checkAccess,         // 统一的权限检查函数（登录 + 成员资格）
   saveUserIntent,
   getUserIntent,
