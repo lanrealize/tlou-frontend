@@ -1,5 +1,5 @@
 <!--components/circle-status-action/circle-status-action.wxml-->
-<view class="circle-status-action">
+<view class="circle-status-action {{hidden ? 'hidden' : ''}}">
   
   <!-- 状态1: 成员 - 发布新动态 -->
   <view class="status-card" wx:if="{{status === 'member'}}" bindtap="onPublish">

@@ -115,6 +115,7 @@
       isApplying="{{isApplying}}"
       isJoining="{{isJoining}}"
       isOwner="{{isCircleOwner}}"
+      hidden="{{userInfoPopupVisible}}"
       bind:publish="navigateToPublish"
       bind:apply="applyToJoin"
       bind:acceptInvite="acceptInvite"

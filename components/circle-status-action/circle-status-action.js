@@ -29,6 +29,11 @@ Component({
     isOwner: {
       type: Boolean,
       value: false
+    },
+    // 是否隐藏（用于与 user-info-popup 的联动动画）
+    hidden: {
+      type: Boolean,
+      value: false
     }
   },
 
