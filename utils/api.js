@@ -28,16 +28,52 @@ class API {
   async request(options) {
     const { url, method = 'GET', data = {}, header = {}, timeout = 10000 } = options;
     
+    // 🔍 调试模式：记录请求信息
+    const DEBUG_API = true; // 设置为 false 可关闭调试日志
+    
     try {
       // 🎯 从 mobx 获取当前身份的 openid（统一处理真实和虚拟身份）
       const app = getApp();
       const userStore = app?.getUserStore();
       
+      if (DEBUG_API) {
+        console.log(`\n📤 API请求: ${method} ${url}`);
+        console.log('🔐 认证状态:', {
+          hasApp: !!app,
+          hasUserStore: !!userStore,
+          isLoggedIn: userStore?.isLoggedIn,
+          hasUserInfo: !!userStore?.userInfo,
+          hasOpenid: !!userStore?.userInfo?.openid,
+          openidValue: userStore?.userInfo?.openid || 'null'
+        });
+      }
+      
       if (userStore && userStore.isLoggedIn && userStore.userInfo?.openid) {
         header['x-openid'] = userStore.userInfo.openid;
+        if (DEBUG_API) {
+          console.log('✅ 已添加 x-openid:', header['x-openid']);
+        }
+      } else {
+        if (DEBUG_API) {
+          console.warn('⚠️ 未添加 x-openid，可能导致403错误！');
+          
+          // 尝试从其他来源获取
+          const globalOpenid = app?.globalData?.openid;
+          const storageOpenid = wx.getStorageSync('openid');
+          
+          if (globalOpenid) {
+            console.warn('💡 globalData.openid 存在:', globalOpenid);
+          }
+          if (storageOpenid) {
+            console.warn('💡 storage openid 存在:', storageOpenid);
+          }
+        }
       }
     } catch (error) {
       // 静默处理openid获取失败
+      if (DEBUG_API) {
+        console.error('❌ 获取openid失败:', error);
+      }
     }
 
     return new Promise((resolve, reject) => {
@@ -52,19 +88,40 @@ class API {
         },
         timeout,
         success: (res) => {
+          if (DEBUG_API) {
+            console.log(`📥 响应状态: ${res.statusCode}`);
+          }
+          
           // 接受所有2xx状态码（200-299）作为成功
           if (res.statusCode >= 200 && res.statusCode < 300) {
             // 检查响应是否表示失败
             // 1. 如果有 success 字段且为 false，表示失败
             // 2. 如果有 status 字段且为 "fail"，表示失败
             if (res.data.success === false || res.data.status === 'fail') {
+              if (DEBUG_API) {
+                console.error('❌ 请求失败:', res.data.message);
+              }
               reject(new Error(res.data.message || '请求失败'));
             } else {
               // 其他情况认为成功
+              if (DEBUG_API) {
+                console.log('✅ 请求成功');
+              }
               resolve(res.data);
             }
           } else {
             // 创建包含完整响应信息的错误对象
+            if (DEBUG_API) {
+              console.error(`❌ HTTP ${res.statusCode}:`, res.data.message);
+              
+              // 特别处理403错误
+              if (res.statusCode === 403) {
+                console.error('🚨 403错误诊断:');
+                console.error('   请求header:', header);
+                console.error('   是否有x-openid:', !!header['x-openid']);
+              }
+            }
+            
             const error = new Error(`HTTP ${res.statusCode}: ${res.data.message || '网络错误'}`);
             error.response = {
               status: res.statusCode,

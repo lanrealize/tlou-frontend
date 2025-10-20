@@ -1,7 +1,7 @@
 <!--pages/details/details.wxml-->
 <view class="page-container">
   <!-- 自定义导航栏 -->
-  <custom-navigation title="两个人的朋友圈" bindnavigationReady="onNavigationReady"></custom-navigation>
+  <custom-navigation title="两个人的朋友圈" customBack="{{true}}" bindnavigationReady="onNavigationReady" bind:back="navigateBack"></custom-navigation>
 
   <!-- 🔧 移除了整体的"加载中..."显示，改为在main page预加载 -->
 
