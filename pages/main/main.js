@@ -177,18 +177,8 @@ Page({
       this.setData({ isLoadingCircles: true });
     }
     
-    // 🔧 确保登录状态检查完成后再加载数据
+    // 🔧 确保登录状态检查完成后再加载数据（包括推荐朋友圈）
     this.waitForLoginCheckAndLoadData(prevPage);
-    
-    // ✅ 修复：使用统一的登录状态检查，无需setTimeout
-    const userStatus = require('../../utils/userStatus');
-    const isLoggedIn = userStatus.isUserLoggedIn();
-    
-    // 加载公开朋友圈推荐（需要登录才能查看）
-    // 只在首次自动加载，之后需要用户手动点击刷新按钮
-    if (!this.data.recommendationsLoaded && isLoggedIn) {
-      this.loadRecommendations();
-    }
   },
 
   // 缓存工具方法
@@ -347,10 +337,11 @@ Page({
         this.loadCirclesWithThrottle();
       }
       
-      // 登录后加载推荐内容（此处注释掉，由onShow中的延迟检查统一处理）
-      // if (!this.data.recommendationsLoaded) {
-      //   this.loadRecommendations();
-      // }
+      // ✅ 修复：登录状态检查完成后，加载推荐朋友圈
+      // 只在首次自动加载，之后需要用户手动点击刷新按钮
+      if (!this.data.recommendationsLoaded) {
+        this.loadRecommendations();
+      }
     }
   },
 
@@ -366,10 +357,11 @@ Page({
       // 注册成功后加载数据
       if (this.data.isLoggedIn) {
         this.loadCirclesWithThrottle(true); // 强制刷新
-                        // 登录成功后加载推荐内容（此处注释掉，由onShow中的延迟检查统一处理）
-                // if (!this.data.recommendationsLoaded) {
-                //   this.loadRecommendations();
-                // }
+        
+        // ✅ 修复：登录成功后加载推荐内容
+        if (!this.data.recommendationsLoaded) {
+          this.loadRecommendations();
+        }
       }
     } else if (this.data.hasError) {
       // 错误状态，提示用户重新启动
@@ -922,8 +914,11 @@ Page({
       return;
     }
 
-    // 检查登录状态，API需要认证
-    if (!this.data.isLoggedIn) {
+    // ✅ 修复：使用统一的登录状态检查，避免 MobX 绑定延迟
+    const userStatus = require('../../utils/userStatus');
+    const isLoggedIn = userStatus.isUserLoggedIn();
+    
+    if (!isLoggedIn) {
       this.setData({ 
         recommendedCircles: [],
         recommendationsLoaded: true,
