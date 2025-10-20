@@ -5,43 +5,48 @@
 <!-- 弹出层 -->
 <view class="user-info-popup {{visible ? 'show' : ''}}">
   <view class="popup-content" catchtouchmove="preventMove">
-    <!-- 头部 -->
-    <view class="popup-header">
-      <text class="header-title">完善个人信息</text>
-      <text class="header-subtitle">请设置您的头像和昵称</text>
-    </view>
-
-    <!-- 操作原因提示 -->
-    <view class="reject-reason" wx:if="{{rejectReason}}">
-      <text class="reason-text">{{rejectReason}}</text>
-    </view>
-
-    <!-- 表单内容 -->
+    
     <form bindsubmit="onFormSubmit">
-      <view class="form-section">
-        <!-- 头像选择区域 -->
-        <view class="avatar-section">
-          <text class="label">设置头像</text>
+      <!-- 头部卡片 - 参考 circle-status-action -->
+      <view class="header-card">
+        <view class="card-layout">
+          <view class="left-content">
+            <text class="main-title">完善个人信息</text>
+            <text class="sub-title">{{rejectReason || '请设置您的头像和昵称'}}</text>
+          </view>
           <button 
-            class="avatar-wrapper" 
+            form-type="submit" 
+            class="action-btn {{canSubmit && !isSubmitting ? '' : 'disabled'}}"
+            disabled="{{!canSubmit || isSubmitting}}">
+            {{isSubmitting ? '提交中' : '完成'}}
+          </button>
+        </view>
+      </view>
+
+      <!-- 表单内容区域 -->
+      <view class="form-content">
+        <!-- 头像选择 -->
+        <view class="form-item">
+          <text class="item-label">头像</text>
+          <button 
+            class="avatar-picker" 
             open-type="chooseAvatar" 
             bind:chooseavatar="onChooseAvatar"
             disabled="{{isUploadingAvatar}}">
             <image 
-              class="avatar" 
+              class="avatar-image" 
               src="{{avatarUrl}}" 
               mode="aspectFill"></image>
-            <view class="avatar-overlay" wx:if="{{isUploadingAvatar}}">
-              <text class="avatar-tip">正在上传...</text>
+            <view class="avatar-status" wx:if="{{isUploadingAvatar}}">
+              <text class="status-text">上传中...</text>
             </view>
           </button>
-          <text class="avatar-help">点击选择头像</text>
         </view>
 
-        <!-- 昵称填写区域 -->
-        <view class="nickname-section">
-          <text class="label">设置昵称</text>
-          <view class="input-wrapper">
+        <!-- 昵称输入 -->
+        <view class="form-item">
+          <text class="item-label">昵称</text>
+          <view class="input-container">
             <input 
               type="nickname" 
               class="nickname-input" 
@@ -51,34 +56,12 @@
               bindinput="onNicknameInput"
               maxlength="20"
               placeholder-class="input-placeholder"/>
-            <text class="char-count">{{nickname.length}}/20</text>
           </view>
         </view>
       </view>
-
-      <!-- 操作按钮 -->
-      <view class="button-section">
-        <button 
-          form-type="submit" 
-          class="submit-btn primary-btn"
-          disabled="{{!canSubmit}}"
-          loading="{{isSubmitting}}">
-          {{isSubmitting ? '注册中...' : '完成注册'}}
-        </button>
-        <button 
-          bindtap="onCancel"
-          class="cancel-btn secondary-btn"
-          disabled="{{isSubmitting}}">
-          取消
-        </button>
-      </view>
     </form>
 
-    <!-- 提示信息 -->
-    <view class="tip-section">
-      <text class="tip-text">• 您的头像和昵称将用于在小程序中展示</text>
-      <text class="tip-text">• 请确保信息真实有效，符合社区规范</text>
-    </view>
   </view>
 </view>
+
 

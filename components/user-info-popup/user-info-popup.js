@@ -79,13 +79,6 @@ Component({
     },
 
     /**
-     * 点击遮罩层关闭
-     */
-    onMaskTap() {
-      this.triggerEvent('close');
-    },
-
-    /**
      * 头像选择回调
      */
     async onChooseAvatar(e) {
@@ -282,11 +275,11 @@ Component({
     },
 
     /**
-     * 取消按钮点击
+     * 点击遮罩层 - 直接关闭（不触发 cancel 事件）
      */
-    onCancel() {
+    onMaskTap() {
       this.resetForm();
-      this.triggerEvent('cancel');
+      this.triggerEvent('close');
     },
 
     /**

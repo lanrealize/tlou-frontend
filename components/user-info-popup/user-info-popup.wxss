@@ -22,15 +22,16 @@
   opacity: 0;
 }
 
-/* 显示状态 - 延迟等待 circle-status-action 下沉 */
+/* 显示状态 - 和 circle-status-action 一样快 */
 .user-info-popup.show {
   transform: translateY(0);
   opacity: 1;
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.15s, 
-              opacity 0.3s ease 0.15s;
+  /* 0.3s 和 circle-status-action 保持一致，无延迟 */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.3s ease;
 }
 
-/* 隐藏状态 - 快速下沉消失（类似状态卡片切换） */
+/* 隐藏状态 - 快速下沉消失 */
 .user-info-popup:not(.show) {
   transform: translateY(100%);
   opacity: 0;
@@ -49,9 +50,9 @@
   padding: 40rpx 30rpx 40rpx;
 }
 
-/* 内容淡入动画 - 在弹出层升起后开始 */
+/* 内容淡入动画 - 和弹出层同步，无延迟 */
 .user-info-popup.show .popup-content {
-  animation: fadeInUp 0.3s ease-out 0.2s both;
+  animation: fadeInUp 0.3s ease-out both;
 }
 
 /* 淡入动画 - 参考 circle-status-action */
@@ -66,195 +67,175 @@
   }
 }
 
-/* 头部区域 */
-.popup-header {
-  text-align: center;
-  margin-bottom: 30rpx;
+/* ========== 头部卡片 - 完全参考 circle-status-action ========== */
+.header-card {
+  border-bottom: 1rpx solid #f0f0f0;
 }
 
-.header-title {
-  display: block;
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 10rpx;
+.card-layout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 30rpx 40rpx;
+  gap: 30rpx;
 }
 
-.header-subtitle {
-  display: block;
-  font-size: 26rpx;
-  color: #666;
+.left-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5rpx;
+  min-width: 0;
 }
 
-/* 操作原因提示 */
-.reject-reason {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 24rpx;
-  border-radius: 16rpx;
-  margin-bottom: 30rpx;
-  box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
-}
-
-.reason-text {
-  display: block;
-  font-size: 26rpx;
-  line-height: 1.6;
-  text-align: center;
-  font-weight: 500;
-}
-
-/* 表单区域 */
-.form-section {
-  background: #f8f9fa;
-  border-radius: 20rpx;
-  padding: 40rpx 30rpx;
-  margin-bottom: 30rpx;
-}
-
-/* 头像选择区域 */
-.avatar-section {
-  text-align: center;
-  margin-bottom: 40rpx;
-}
-
-.label {
-  display: block;
+.main-title {
   font-size: 28rpx;
-  color: #333;
-  font-weight: 600;
-  margin-bottom: 25rpx;
+  color: #000000;
+  font-weight: 400;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.avatar-help {
-  display: block;
-  font-size: 22rpx;
-  color: #999;
-  margin-top: 15rpx;
-  text-align: center;
+.sub-title {
+  font-size: 24rpx;
+  color: #808080;
+  font-weight: 400;
+  line-height: 1.6;
 }
 
-.avatar-wrapper {
+/* 右侧操作按钮 - 严格参考 circle-status-action */
+.action-btn {
+  color: #1A73E8;
+  font-size: 32rpx;
+  line-height: 1.2;
+  font-weight: 400;
+  padding: 8rpx 16rpx;
+  flex-shrink: 0;
+  background: none !important;
+  border: none;
+  white-space: nowrap;
+}
+
+.action-btn::after {
+  border: none !important;
+  background: none !important;
+}
+
+.action-btn:active {
+  opacity: 0.7;
+  background: none !important;
+}
+
+/* 静态按钮（不可点击） */
+.action-btn.static {
+  pointer-events: none;
+}
+
+/* 禁用状态 - 完全参考 circle-status-action */
+.action-btn.disabled {
+  color: #BDBDBD !important;
+  opacity: 0.6;
+  background: none !important;
+}
+
+/* 覆盖微信button的默认样式 */
+.action-btn[disabled] {
+  background: none !important;
+  color: #BDBDBD !important;
+  opacity: 0.6;
+}
+
+/* ========== 表单内容区域 ========== */
+.form-content {
+  padding: 24rpx 40rpx 28rpx;
+}
+
+.form-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18rpx 0;
+  gap: 40rpx;
+}
+
+.form-item:not(:last-child) {
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.item-label {
+  font-size: 28rpx;
+  color: #000000;
+  font-weight: 400;
+  flex-shrink: 0;
+}
+
+/* ========== 头像选择器 - 重新设计 ========== */
+.avatar-picker {
   position: relative;
-  width: 160rpx;
-  height: 160rpx;
-  margin: 0 auto;
+  width: 120rpx;
+  height: 120rpx;
   border-radius: 50%;
   overflow: hidden;
+  background: none;
   border: none;
   padding: 0;
-  background: none;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 0 2rpx rgba(26, 115, 232, 0.1);
+  transition: all 0.2s ease;
 }
 
-.avatar {
+.avatar-picker::after {
+  border: none;
+}
+
+.avatar-picker:active {
+  transform: scale(0.95);
+  box-shadow: 0 0 0 2rpx rgba(26, 115, 232, 0.3);
+}
+
+.avatar-image {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
+  display: block;
 }
 
-.avatar-overlay {
+.avatar-status {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
+  background: rgba(26, 115, 232, 0.8);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 8rpx;
 }
 
-.avatar-tip {
+.status-text {
   font-size: 22rpx;
+  color: white;
+  font-weight: 400;
 }
 
-/* 昵称填写区域 */
-.nickname-section {
-  margin-bottom: 10rpx;
-}
-
-.input-wrapper {
-  position: relative;
-  background: white;
-  border-radius: 12rpx;
-  border: 2rpx solid #e9ecef;
-  transition: border-color 0.3s ease;
-}
-
-.input-wrapper:focus-within {
-  border-color: #667eea;
+/* ========== 昵称输入框 ========== */
+.input-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
 }
 
 .nickname-input {
-  width: 100%;
-  padding: 20rpx 18rpx;
+  flex: 1;
   font-size: 28rpx;
-  color: #333;
-  background: transparent;
-  border: none;
-  outline: none;
+  color: #000000;
+  text-align: right;
+  font-weight: 400;
 }
 
 .input-placeholder {
-  color: #999;
-}
-
-.char-count {
-  position: absolute;
-  right: 18rpx;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 22rpx;
-  color: #999;
-}
-
-/* 按钮区域 */
-.button-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-  margin-bottom: 30rpx;
-}
-
-.primary-btn {
-  background: #007aff;
-  color: white;
-  border: none;
-  border-radius: 12rpx;
-  padding: 22rpx 0;
-  font-size: 30rpx;
-  font-weight: 600;
-}
-
-.primary-btn:disabled {
-  opacity: 0.5;
-}
-
-.secondary-btn {
-  background: white;
-  color: #007aff;
-  border: 2rpx solid #007aff;
-  border-radius: 12rpx;
-  padding: 22rpx 0;
-  font-size: 28rpx;
-}
-
-.secondary-btn:disabled {
-  opacity: 0.5;
-}
-
-/* 提示信息区域 */
-.tip-section {
-  padding-top: 20rpx;
-}
-
-.tip-text {
-  display: block;
-  font-size: 22rpx;
-  color: #999;
-  line-height: 1.6;
-  margin-bottom: 8rpx;
+  color: #BDBDBD;
 }
 
