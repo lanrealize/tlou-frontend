@@ -35,6 +35,24 @@
   color: #666;
 }
 
+/* 操作原因提示 */
+.reject-reason {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 30rpx;
+  border-radius: 16rpx;
+  margin: 0 30rpx 40rpx;
+  box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
+}
+
+.reason-text {
+  display: block;
+  font-size: 28rpx;
+  line-height: 1.6;
+  text-align: center;
+  font-weight: 500;
+}
+
 /* 表单区域 */
 .form-section {
   background: white;

@@ -118,7 +118,6 @@
       bind:publish="navigateToPublish"
       bind:apply="applyToJoin"
       bind:acceptInvite="acceptInvite"
-      bind:login="goToLogin"
     ></circle-status-action>
 
     <!-- 评论输入框 -->

@@ -3,6 +3,7 @@
   "navigationStyle": "custom",
   "enablePullDownRefresh": false,
   "disableScroll": true,
+  "enableShareAppMessage": true,
   "usingComponents": {
     "post-item": "/components/post-item/post-item",
     "custom-navigation": "/components/custom-navigation/custom-navigation",

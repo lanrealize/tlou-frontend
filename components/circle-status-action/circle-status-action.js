@@ -4,10 +4,11 @@ Component({
    * 组件的属性列表
    */
   properties: {
-    // 当前状态：not_logged_in | member | invited | applied | can_apply | no_access
+    // 当前状态：member | invited | applied | can_apply | no_access
+    // 注意：已去掉 not_logged_in 状态（未注册用户也能看到操作按钮）
     status: {
       type: String,
-      value: 'not_logged_in'
+      value: 'member'
     },
     // 朋友圈信息
     circle: {
@@ -55,11 +56,6 @@ Component({
     // 接受邀请
     onAcceptInvite() {
       this.triggerEvent('acceptInvite');
-    },
-
-    // 去登录
-    onLogin() {
-      this.triggerEvent('login');
     }
   }
 });

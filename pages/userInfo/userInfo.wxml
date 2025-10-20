@@ -11,6 +11,11 @@
     <text class="subtitle">请设置您的头像和昵称</text>
   </view>
 
+  <!-- 操作原因提示 -->
+  <view class="reject-reason" wx:if="{{rejectReason}}">
+    <text class="reason-text">{{rejectReason}}</text>
+  </view>
+
   <form bindsubmit="onFormSubmit" bindreset="onFormReset">
     <view class="form-section">
       <!-- 头像选择区域 -->

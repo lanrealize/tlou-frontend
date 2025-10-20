@@ -4,6 +4,7 @@ const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const api = require('../../utils/api');
 const util = require('../../utils/util');
 const navigationHelper = require('../../utils/navigationHelper');
+const userStatus = require('../../utils/userStatus');
 
 Page({
   // 使用MobX状态管理行为
@@ -392,40 +393,6 @@ Page({
     }
   },
 
-  // 需要登录的操作统一检查
-  requireUserAuth(callback) {
-    if (this.data.isLoggedIn && !this.data.isLoading) {
-      // 已登录，直接执行操作
-      callback && callback();
-    } else if (this.data.loginStatus === 'unregistered' && !this.data.isLoading) {
-      // 未注册，提示并引导注册
-      wx.showModal({
-        title: '需要登录',
-        content: '该操作需要登录，是否现在登录？',
-        success: (res) => {
-          if (res.confirm) {
-            this.handleUserAuth().then(() => {
-              // 注册完成后执行原操作
-              if (this.data.isLoggedIn) {
-                callback && callback();
-                // 登录成功后加载推荐内容（此处注释掉，由onShow中的延迟检查统一处理）
-                // if (!this.data.recommendationsLoaded) {
-                //   this.loadRecommendations();
-                // }
-              }
-            });
-          }
-        }
-      });
-    } else {
-      // 其他状态，提示错误
-      wx.showToast({
-        title: this.data.errorMessage || '当前无法执行操作',
-        icon: 'none',
-        duration: 2000
-      });
-    }
-  },
 
   // ===== 创建朋友圈相关 =====
   
@@ -433,66 +400,75 @@ Page({
 
   // 直接创建朋友圈（无对话框，使用默认设置）
   async createCircleDirectly() {
-    this.requireUserAuth(async () => {
-      try {
-        wx.showLoading({ title: '创建中...', mask: true });
+    // 使用全局访问控制
+    if (!userStatus.requireLogin('createCircle')) {
+      return;
+    }
 
-        const data = {
-          name: util.generateDefaultCircleName(),
-          isPublic: false // 默认私密
-        };
+    try {
+      wx.showLoading({ title: '创建中...', mask: true });
 
-        const result = await api.circles.create(data);
+      const data = {
+        name: util.generateDefaultCircleName(),
+        isPublic: false // 默认私密
+      };
 
-        
-        // 尝试获取新创建的朋友圈ID，支持多种可能的响应格式
-        const newCircleId = result.data?.circle?._id || result.data?._id || result.circle?._id;
+      const result = await api.circles.create(data);
 
-        wx.hideLoading();
-        wx.showToast({ title: '创建成功', icon: 'success' });
+      
+      // 尝试获取新创建的朋友圈ID，支持多种可能的响应格式
+      const newCircleId = result.data?.circle?._id || result.data?._id || result.circle?._id;
 
-        // 导航到朋友圈详情页面查看新创建的朋友圈
-        setTimeout(() => {
-          if (newCircleId) {
-            wx.navigateTo({
-              url: `/pages/details/details?circleId=${newCircleId}`
-            });
-          } else {
-            // 如果没有获取到ID，导航到朋友圈管理页面
-            wx.navigateTo({
-              url: '/pages/list/list'
-            });
-          }
-        }, 1000); // 延迟1秒让用户看到成功提示
+      wx.hideLoading();
+      wx.showToast({ title: '创建成功', icon: 'success' });
 
-      } catch (error) {
-        wx.hideLoading();
+      // 导航到朋友圈详情页面查看新创建的朋友圈
+      setTimeout(() => {
+        if (newCircleId) {
+          wx.navigateTo({
+            url: `/pages/details/details?circleId=${newCircleId}`
+          });
+        } else {
+          // 如果没有获取到ID，导航到朋友圈管理页面
+          wx.navigateTo({
+            url: '/pages/list/list'
+          });
+        }
+      }, 1000); // 延迟1秒让用户看到成功提示
 
-        wx.showToast({ title: '创建失败', icon: 'error' });
-      }
-    });
+    } catch (error) {
+      wx.hideLoading();
+
+      wx.showToast({ title: '创建失败', icon: 'error' });
+    }
   },
 
   // 进入最新活动朋友圈详情页面
   goToRecentCircle() {
-    this.requireUserAuth(() => {
-      if (this.data.recentCircle && this.data.recentCircle._id) {
-        this.preloadAndNavigateToCircleWithTimer(this.data.recentCircle._id);
-      } else {
-        util.showToast('朋友圈信息获取失败');
-      }
-    });
+    // 使用全局访问控制
+    if (!userStatus.requireLogin('enterListPage')) {
+      return;
+    }
+
+    if (this.data.recentCircle && this.data.recentCircle._id) {
+      this.preloadAndNavigateToCircleWithTimer(this.data.recentCircle._id);
+    } else {
+      util.showToast('朋友圈信息获取失败');
+    }
   },
 
   // ===== 数据加载相关 =====
 
   // 刷新数据
   refreshData() {
-    this.requireUserAuth(() => {
-      // 重置缓存，确保强制更新
-      this.resetRecentCircleCache();
-      this.loadCirclesWithThrottle(true); // 强制刷新
-    });
+    // 使用全局访问控制
+    if (!userStatus.requireLogin('enterListPage')) {
+      return;
+    }
+
+    // 重置缓存，确保强制更新
+    this.resetRecentCircleCache();
+    this.loadCirclesWithThrottle(true); // 强制刷新
   },
 
   // 刷新发现内容
@@ -504,9 +480,12 @@ Page({
   viewDiscover(e) {
     const { id } = e.currentTarget.dataset;
     
-    this.requireUserAuth(() => {
-      wx.showToast({ title: '功能开发中', icon: 'none' });
-    });
+    // 使用全局访问控制
+    if (!userStatus.requireLogin('enterListPage')) {
+      return;
+    }
+
+    wx.showToast({ title: '功能开发中', icon: 'none' });
   },
 
   // 带节流的加载朋友圈列表
@@ -700,69 +679,75 @@ Page({
   async toggleLike(e) {
     const { postId, index } = e.currentTarget.dataset;
     
-    this.requireUserAuth(async () => {
-      try {
-        const res = await api.posts.like(postId);
-        const liked = res.data.liked;
-        
-        // 更新本地数据 - 使用_id而不是openid保持一致性
-        const posts = [...this.data.posts];
-        posts[index].isLiked = liked;
-        
-        // 使用用户_id进行点赞状态管理，与Store保持一致
-        const userId = this.data.userInfo?._id;
-        const userInfo = this.data.userInfo;
-        
-        if (liked) {
-          posts[index].likes = posts[index].likes || [];
-          posts[index].likedUsers = posts[index].likedUsers || [];
-          // 确保不重复添加
-          if (!posts[index].likes.includes(userId)) {
-            posts[index].likes.push(userId);
-          }
-          // 同时更新likedUsers数组
-          if (!posts[index].likedUsers.some(user => user._id === userId)) {
-            posts[index].likedUsers.push({
-              _id: userInfo._id,
-              username: userInfo.username,
-              avatar: userInfo.avatar
-            });
-          }
-        } else {
-          // 取消点赞：同时更新 likes 和 likedUsers
-          posts[index].likes = posts[index].likes.filter(id => id !== userId);
-          posts[index].likedUsers = posts[index].likedUsers.filter(user => user._id !== userId);
-          
-          // 🔧 修复：确保当取消点赞后，如果数组为空，进行清理
-          if (posts[index].likedUsers.length === 0) {
-            posts[index].likes = [];
-          }
-          if (posts[index].likes.length === 0) {
-            posts[index].likedUsers = [];
-          }
+    // 使用全局访问控制
+    if (!userStatus.requireLogin('likePost')) {
+      return;
+    }
+
+    try {
+      const res = await api.posts.like(postId);
+      const liked = res.data.liked;
+      
+      // 更新本地数据 - 使用_id而不是openid保持一致性
+      const posts = [...this.data.posts];
+      posts[index].isLiked = liked;
+      
+      // 使用用户_id进行点赞状态管理，与Store保持一致
+      const userId = this.data.userInfo?._id;
+      const userInfo = this.data.userInfo;
+      
+      if (liked) {
+        posts[index].likes = posts[index].likes || [];
+        posts[index].likedUsers = posts[index].likedUsers || [];
+        // 确保不重复添加
+        if (!posts[index].likes.includes(userId)) {
+          posts[index].likes.push(userId);
         }
+        // 同时更新likedUsers数组
+        if (!posts[index].likedUsers.some(user => user._id === userId)) {
+          posts[index].likedUsers.push({
+            _id: userInfo._id,
+            username: userInfo.username,
+            avatar: userInfo.avatar
+          });
+        }
+      } else {
+        // 取消点赞：同时更新 likes 和 likedUsers
+        posts[index].likes = posts[index].likes.filter(id => id !== userId);
+        posts[index].likedUsers = posts[index].likedUsers.filter(user => user._id !== userId);
         
-        this.setData({ posts });
-        
-        util.showToast(liked ? '点赞成功' : '取消点赞');
-      } catch (error) {
-        console.error('点赞操作失败:', error);
-        util.showToast('操作失败');
+        // 🔧 修复：确保当取消点赞后，如果数组为空，进行清理
+        if (posts[index].likedUsers.length === 0) {
+          posts[index].likes = [];
+        }
+        if (posts[index].likes.length === 0) {
+          posts[index].likedUsers = [];
+        }
       }
-    });
+      
+      this.setData({ posts });
+      
+      util.showToast(liked ? '点赞成功' : '取消点赞');
+    } catch (error) {
+      console.error('点赞操作失败:', error);
+      util.showToast('操作失败');
+    }
   },
 
   // 显示评论输入框（需要登录）
   showCommentInput(e) {
     const { postId } = e.currentTarget.dataset;
     
-    this.requireUserAuth(() => {
-      this.setData({
-        showCommentInput: true,
-        commentPostId: postId,
-        commentText: '',
-        replyToUser: null
-      });
+    // 使用全局访问控制
+    if (!userStatus.requireLogin('commentPost')) {
+      return;
+    }
+
+    this.setData({
+      showCommentInput: true,
+      commentPostId: postId,
+      commentText: '',
+      replyToUser: null
     });
   },
 
@@ -770,13 +755,16 @@ Page({
   replyComment(e) {
     const { postId, userId, username } = e.currentTarget.dataset;
     
-    this.requireUserAuth(() => {
-      this.setData({
-        showCommentInput: true,
-        commentPostId: postId,
-        commentText: '',
-        replyToUser: { id: userId, username }
-      });
+    // 使用全局访问控制
+    if (!userStatus.requireLogin('commentPost')) {
+      return;
+    }
+
+    this.setData({
+      showCommentInput: true,
+      commentPostId: postId,
+      commentText: '',
+      replyToUser: { id: userId, username }
     });
   },
 
@@ -843,19 +831,25 @@ Page({
 
   // 跳转到朋友圈管理（需要登录）
   goToCircleList() {
-    this.requireUserAuth(() => {
-      wx.switchTab({
-        url: '/pages/list/list'
-      });
+    // 使用新的全局访问控制
+    if (!userStatus.requireLogin('enterListPage')) {
+      return; // requireLogin 会自动处理跳转到登录页
+    }
+    
+    wx.switchTab({
+      url: '/pages/list/list'
     });
   },
 
   // 跳转到历史记录页面（需要登录）
   goToHistory() {
-    this.requireUserAuth(() => {
-      wx.navigateTo({
-        url: '/pages/list/list?mode=history'
-      });
+    // 使用全局访问控制
+    if (!userStatus.requireLogin('enterListPage')) {
+      return;
+    }
+
+    wx.navigateTo({
+      url: '/pages/list/list?mode=history'
     });
   },
 
@@ -896,24 +890,27 @@ Page({
   async deletePost(e) {
     const { postId, index } = e.currentTarget.dataset;
     
-    this.requireUserAuth(async () => {
-      const confirm = await util.showConfirm('确定要删除这条动态吗？');
-      if (!confirm) return;
+    // 使用全局访问控制
+    if (!userStatus.requireLogin('enterPublishPage')) {
+      return;
+    }
+
+    const confirm = await util.showConfirm('确定要删除这条动态吗？');
+    if (!confirm) return;
+    
+    try {
+      await api.posts.delete(postId);
       
-      try {
-        await api.posts.delete(postId);
-        
-        // 从列表中移除
-        const posts = [...this.data.posts];
-        posts.splice(index, 1);
-        this.setData({ posts });
-        
-        util.showToast('删除成功');
-      } catch (error) {
-        console.error('删除帖子失败:', error);
-        util.showToast('删除失败');
-      }
-    });
+      // 从列表中移除
+      const posts = [...this.data.posts];
+      posts.splice(index, 1);
+      this.setData({ posts });
+      
+      util.showToast('删除成功');
+    } catch (error) {
+      console.error('删除帖子失败:', error);
+      util.showToast('删除失败');
+    }
   },
 
   // === 公开朋友圈推荐功能 ===
@@ -1085,7 +1082,7 @@ Page({
     }
   },
 
-  // 查看推荐的朋友圈
+  // 查看推荐的朋友圈（从发现页面进入，添加source参数）
   viewRecommendedCircle(e) {
     // 兼容新组件事件和原来的点击事件
     let circleId;
@@ -1101,12 +1098,12 @@ Page({
       return;
     }
     
-    // 使用预加载逻辑
-    this.preloadAndNavigateToCircleWithTimer(circleId);
+    // 🔑 关键：使用预加载逻辑，并在跳转时添加 source=discover 参数
+    this.preloadAndNavigateToCircleWithTimer(circleId, 'discover');
   },
 
-  // 预加载朋友圈数据并跳转（带1秒延迟判断）
-  async preloadAndNavigateToCircleWithTimer(circleId) {
+  // 预加载朋友圈数据并跳转（带1秒延迟判断，支持source参数）
+  async preloadAndNavigateToCircleWithTimer(circleId, source = '') {
     const startTime = Date.now();
     let showLoadingTimer = null;
     let isLoadingShown = false;
@@ -1199,8 +1196,10 @@ Page({
       await new Promise(resolve => setTimeout(resolve, 100));
 
       // 预加载完成，跳转到详情页
+      // 🔑 关键：如果有source参数，添加到URL中
+      const sourceParam = source ? `&source=${source}` : '';
       wx.navigateTo({
-        url: `/pages/details/details?circleId=${circleId}&preloaded=true`
+        url: `/pages/details/details?circleId=${circleId}&preloaded=true${sourceParam}`
       });
 
     } catch (error) {
@@ -1213,8 +1212,10 @@ Page({
       util.showToast('加载朋友圈失败');
       
       // 预加载失败，仍然跳转到详情页
+      // 🔑 关键：如果有source参数，添加到URL中
+      const sourceParam = source ? `&source=${source}` : '';
       wx.navigateTo({
-        url: `/pages/details/details?circleId=${circleId}&preloadFailed=true`
+        url: `/pages/details/details?circleId=${circleId}&preloadFailed=true${sourceParam}`
       });
     } finally {
       // 清理预加载状态

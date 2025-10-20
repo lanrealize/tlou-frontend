@@ -4,6 +4,7 @@ const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const api = require('../../utils/api');
 const util = require('../../utils/util');
 const navigationHelper = require('../../utils/navigationHelper');
+const userStatus = require('../../utils/userStatus');
 
 Page({
   // 使用MobX状态管理行为
@@ -74,34 +75,29 @@ Page({
       return;
     }
     
-    // 处理邀请模式
-    if (type === 'invite' && inviterId) {
+    // 确定是否是邀请模式
+    const isInviteMode = (type === 'invite' && inviterId);
+    
+    // 设置邀请模式状态
+    if (isInviteMode) {
       this.setData({ 
         circleId,
         isInviteMode: true,
-        inviterId: inviterId,
-        showJoinButton: true
+        inviterId: inviterId
       });
-      
-      // 方案一：被邀请访客完全禁止分享
       wx.hideShareMenu();
-
     } else {
-      // 正常模式
       this.setData({ 
         circleId,
-        isInviteMode: false,
-        showJoinButton: false
+        isInviteMode: false
       });
     }
     
-    // 检查是否有预加载数据
+    // 加载朋友圈数据
     if (preloaded === 'true') {
-      this.loadWithPreloadedData(circleId);
-    } else if (preloadFailed === 'true') {
-      this.loadCircleDetail();
+      this.loadWithPreloadedData(circleId, isInviteMode, inviterId);
     } else {
-      this.loadCircleDetail();
+      this.loadCircleDetail(isInviteMode, inviterId);
     }
   },
 
@@ -366,8 +362,8 @@ Page({
     this.loadMorePosts();
   },
 
-  // 使用预加载数据加载朋友圈详情
-  async loadWithPreloadedData(circleId) {
+  // 使用预加载数据加载朋友圈详情（优化：接受邀请状态参数）
+  async loadWithPreloadedData(circleId, isInviteMode = null, inviterId = null) {
     try {
       const app = getApp();
       const preloadedData = app.globalData.preloadedCircleData;
@@ -377,25 +373,26 @@ Page({
           preloadedData.circleId !== circleId ||
           !preloadedData.circleData ||
           (Date.now() - preloadedData.timestamp) > 10000) {
-        this.loadCircleDetail();
+        this.loadCircleDetail(isInviteMode, inviterId);
         return;
       }
 
       const targetCircle = preloadedData.circleData;
       
-      // 检查用户状态
-      const userStatus = this.checkUserStatus(targetCircle);
+      // 🔑 使用全局状态管理判断用户关系
+      const { currentUser } = this.data;
+      const relation = userStatus.getUserCircleRelation(targetCircle, currentUser, isInviteMode);
 
       this.setData({
         circle: targetCircle,
-        isCircleOwner: userStatus.isOwner,
-        isMember: userStatus.isMember,
-        isInvited: userStatus.isInvited,
-        hasApplied: userStatus.hasApplied,
-        showApplyButton: userStatus.showApplyButton,
-        showJoinButton: userStatus.showJoinButton,
-        showPublishButton: userStatus.showPublishButton,
-        userStatus: userStatus.status // 设置统一状态
+        isCircleOwner: relation.isOwner || false,
+        isMember: relation.status === 'member',
+        isInvited: relation.status === 'invited',
+        hasApplied: relation.status === 'applied',
+        showApplyButton: relation.status === 'can_apply',
+        showJoinButton: relation.status === 'invited',
+        showPublishButton: relation.status === 'member',
+        userStatus: relation.status // 设置统一状态
       });
 
       // 直接通过setData同步设置帖子数据，确保页面切换时立即有数据
@@ -413,7 +410,7 @@ Page({
       app.globalData.preloadedCircleData = null;
 
       // 如果是朋友圈主人，加载待处理申请数量
-      if (userStatus.isOwner) {
+      if (relation.isOwner) {
         await this.loadPendingApplicationsCount();
       }
 
@@ -423,8 +420,8 @@ Page({
     }
   },
 
-  // 加载朋友圈详情
-  async loadCircleDetail() {
+  // 加载朋友圈详情（优化：接受邀请状态参数，避免异步问题）
+  async loadCircleDetail(isInviteMode = null, inviterId = null) {
     try {
       let targetCircle = null;
       
@@ -450,25 +447,26 @@ Page({
       targetCircle.formattedTime = util.formatRelativeTime(targetCircle.createdAt);
       targetCircle.memberCount = targetCircle.members ? targetCircle.members.length : 0;
 
-      // 检查用户状态
-      const userStatus = this.checkUserStatus(targetCircle);
+      // 🔑 使用全局状态管理判断用户关系
+      const { currentUser } = this.data;
+      const relation = userStatus.getUserCircleRelation(targetCircle, currentUser, isInviteMode);
 
       this.setData({
         circle: targetCircle,
-        isCircleOwner: userStatus.isOwner,
-        isMember: userStatus.isMember,
-        isInvited: userStatus.isInvited,
-        hasApplied: userStatus.hasApplied,
-        showApplyButton: userStatus.showApplyButton,
-        showJoinButton: userStatus.showJoinButton,
-        showPublishButton: userStatus.showPublishButton,
-        userStatus: userStatus.status // 设置统一状态
+        isCircleOwner: relation.isOwner || false,
+        isMember: relation.status === 'member',
+        isInvited: relation.status === 'invited',
+        hasApplied: relation.status === 'applied',
+        showApplyButton: relation.status === 'can_apply',
+        showJoinButton: relation.status === 'invited',
+        showPublishButton: relation.status === 'member',
+        userStatus: relation.status // 设置统一状态
       });
 
       // 帖子查看权限：公开朋友圈所有人可看，私密朋友圈只有成员和被邀请者可看
       const canViewPosts = targetCircle.isPublic || // 公开朋友圈任何人都能看
-                          userStatus.isMember ||   // 私密朋友圈的成员能看
-                          userStatus.isInvited;   // 私密朋友圈的被邀请者能看
+                          relation.status === 'member' ||   // 私密朋友圈的成员能看
+                          relation.status === 'invited';   // 私密朋友圈的被邀请者能看
                           // 注意：私密朋友圈的申请者不能看（可能是之前公开时申请，后来改为私密）
       
       if (canViewPosts) {
@@ -476,7 +474,7 @@ Page({
       }
 
       // 如果是朋友圈主人，加载待处理申请数量
-      if (userStatus.isOwner) {
+      if (relation.isOwner) {
         await this.loadPendingApplicationsCount();
       }
 
@@ -490,132 +488,15 @@ Page({
     }
   },
 
-  // 检查用户状态（使用后端完善的状态数据）
-  checkUserStatus(circle) {
-    const { currentUser, isInviteMode } = this.data;
-    
-    // 如果用户未登录
-    if (!currentUser || !currentUser._id) {
-      return {
-        status: 'not_logged_in',
-        isOwner: false,
-        isMember: false,
-        isInvited: false,
-        hasApplied: false,
-        showApplyButton: false,
-        showJoinButton: false,
-        showPublishButton: false
-      };
-    }
-
-    const userId = currentUser._id;
-    
-    // 🔧 修复：首先检查用户是否是创建者
-    const creatorId = typeof circle.creator === 'object' ? circle.creator._id : circle.creator;
-    const isOwner = creatorId === userId;
-    
-    // 🔧 修复：检查用户的各种状态 - 创建者自动是成员
-    const isMemberByArray = circle.members && circle.members.some(member => {
-      const memberId = typeof member === 'object' ? member._id : member;
-      return memberId === userId;
-    });
-    
-    // 🔧 关键修复：创建者自动是成员，即使不在members数组中
-    const isMember = isOwner || isMemberByArray;
-
-
-    const isInvited = circle.invitees && circle.invitees.some(invitee => {
-      const inviteeId = typeof invitee === 'object' ? invitee._id : invitee;
-      return inviteeId === userId;
-    });
-
-    const hasApplied = circle.appliers && circle.appliers.some(applier => {
-      const applierId = typeof applier === 'object' ? applier._id : applier;
-      return applierId === userId;
-    });
-
-    // 状态优先级判断（解决冲突）
-    if (isMember) {
-
-      return {
-        status: 'member',
-        isOwner,
-        isMember: true,
-        isInvited: false,
-        hasApplied: false,
-        showApplyButton: false,
-        showJoinButton: false,
-        showPublishButton: true
-      };
-    }
-    
-    if (isInviteMode && isInvited) {
-
-      return {
-        status: 'invited',
-        isOwner: false,
-        isMember: false,
-        isInvited: true,
-        hasApplied: false,
-        showApplyButton: false,
-        showJoinButton: true,
-        showPublishButton: false
-      };
-    }
-    
-    if (hasApplied) {
-
-      return {
-        status: 'applied',
-        isOwner: false,
-        isMember: false,
-        isInvited: false,
-        hasApplied: true,
-        showApplyButton: false,
-        showJoinButton: false,
-        showPublishButton: false
-      };
-    }
-    
-    if (circle.isPublic && !isInviteMode) {
-
-      return {
-        status: 'can_apply',
-        isOwner: false,
-        isMember: false,
-        isInvited: false,
-        hasApplied: false,
-        showApplyButton: true,
-        showJoinButton: false,
-        showPublishButton: false
-      };
-    }
-    
-
-    return {
-      status: 'no_access',
-      isOwner: false,
-      isMember: false,
-      isInvited: false,
-      hasApplied: false,
-      showApplyButton: false,
-      showJoinButton: false,
-      showPublishButton: false
-    };
-  },
-
-  // 智能返回：有上一个页面就返回，没有就跳转到主页面
+  // 智能返回：根据页面栈判断返回方式
   navigateBack() {
     const pages = getCurrentPages();
-
     
     if (pages.length >= 2) {
       // 有上一个页面，直接返回
-
       wx.navigateBack();
     } else {
-      // 没有上一个页面，重启到主页面
-
+      // 页面栈只有当前页，使用 reLaunch 回到首页
       wx.reLaunch({
         url: '/pages/main/main'
       });
@@ -692,7 +573,7 @@ Page({
   onShareAppMessage() {
     const { circle, circleId, currentUser, isInviteMode } = this.data;
     
-    // 方案一：被邀请访客完全无法分享
+    // 被邀请访客无法分享
     if (isInviteMode) {
       wx.showToast({
         title: '请先加入朋友圈才能分享',
@@ -717,7 +598,6 @@ Page({
         imageUrl: circle.coverImage || '/images/default_avatar.png'
       };
     } else {
-      // 普通成员的分享（暂时返回null，后续可考虑推荐分享）
       wx.showToast({
         title: '目前只有朋友圈主人可以邀请新成员',
         icon: 'none'
@@ -726,54 +606,33 @@ Page({
     }
   },
 
-  // 接受邀请加入朋友圈
+  // 接受邀请加入朋友圈（临时版本，稍后会用 userStatus.js 重构）
   async acceptInvite() {
-    const { circleId, inviterId, currentUser, isJoining } = this.data;
+    const { circleId, isJoining } = this.data;
     
-    if (isJoining) return; // 防止重复点击
-    
-    if (!currentUser || !currentUser._id) {
-      wx.showToast({
-        title: '请先登录再加入朋友圈',
-        icon: 'none'
-      });
-      return;
+    // 访问控制：检查是否登录
+    if (!userStatus.requireLogin('acceptInvite', { circleId })) {
+      return; // requireLogin 会自动处理跳转和意图保存
     }
+    
+    if (isJoining) return;
     
     this.setData({ isJoining: true });
     
     try {
       wx.showLoading({ title: '正在加入...' });
-      
-      // 调用新的接受邀请API
       await api.circles.acceptInvite(circleId);
       
       wx.hideLoading();
-      wx.showToast({
-        title: '加入成功！',
-        icon: 'success'
-      });
+      wx.showToast({ title: '加入成功！', icon: 'success' });
       
-      // 更新状态，切换到正常模式
-      this.setData({
-        isInviteMode: false,
-        showJoinButton: false,
-        isJoining: false
-      });
+      this.setData({ isInviteMode: false, isJoining: false });
+      wx.showShareMenu({ withShareTicket: false, menus: ['shareAppMessage'] });
       
-      // 恢复分享功能
-      wx.showShareMenu({
-        withShareTicket: false,
-        menus: ['shareAppMessage']
-      });
-      
-      // 重新加载朋友圈详情，获取最新成员信息
       await this.loadCircleDetail();
-      
     } catch (error) {
       wx.hideLoading();
       this.setData({ isJoining: false });
-      
       console.error('加入朋友圈失败:', error);
       wx.showModal({
         title: '加入失败',
@@ -814,8 +673,9 @@ Page({
   async onPostLike(e) {
     const { postId } = e.detail;
 
-    if (!this.data.isLoggedIn) {
-      util.showToast('请先登录');
+    // 使用全局成员资格检查：必须是成员才能点赞
+    const { circle, currentUser, isInviteMode } = this.data;
+    if (!userStatus.requireMembership(circle, currentUser, isInviteMode, '点赞')) {
       return;
     }
 
@@ -831,8 +691,9 @@ Page({
   onPostComment(e) {
     const { postId } = e.detail;
 
-    if (!this.data.isLoggedIn) {
-      util.showToast('请先登录');
+    // 使用全局成员资格检查：必须是成员才能评论
+    const { circle, currentUser, isInviteMode } = this.data;
+    if (!userStatus.requireMembership(circle, currentUser, isInviteMode, '评论')) {
       return;
     }
 
@@ -850,8 +711,9 @@ Page({
   onPostReplyComment(e) {
     const { postId, replyToUser } = e.detail;
 
-    if (!this.data.isLoggedIn) {
-      util.showToast('请先登录');
+    // 使用全局成员资格检查：必须是成员才能回复评论
+    const { circle, currentUser, isInviteMode } = this.data;
+    if (!userStatus.requireMembership(circle, currentUser, isInviteMode, '回复评论')) {
       return;
     }
 
@@ -914,8 +776,9 @@ Page({
 
   // 导航到发布页面
   navigateToPublish() {
-    if (!this.data.isLoggedIn) {
-      util.showToast('请先登录');
+    // 使用全局成员资格检查：必须是成员才能发布动态
+    const { circle, currentUser, isInviteMode } = this.data;
+    if (!userStatus.requireMembership(circle, currentUser, isInviteMode, '发布动态')) {
       return;
     }
 
@@ -928,6 +791,12 @@ Page({
 
   // 回复评论
   replyComment(e) {
+    // 使用全局成员资格检查：必须是成员才能回复评论
+    const { circle, currentUser, isInviteMode } = this.data;
+    if (!userStatus.requireMembership(circle, currentUser, isInviteMode, '回复评论')) {
+      return;
+    }
+
     const { userId, username, postId } = e.currentTarget.dataset;
     this.setData({
       showCommentInput: true,
@@ -1044,19 +913,7 @@ Page({
     }
   },
 
-  // 分享朋友圈
-  onShareAppMessage() {
-    const { circle } = this.data;
-    if (!circle) return {};
-
-    return {
-      title: circle.name || '查看朋友圈',
-      path: `/pages/details/details?circleId=${this.data.circleId}`,
-      imageUrl: circle.coverImage || ''
-    };
-  },
-
-  // 分享到朋友圈
+  // 分享到朋友圈（分享到微信朋友圈，不是分享给朋友）
   onShareTimeline() {
     const { circle } = this.data;
     if (!circle) return {};
@@ -1077,70 +934,38 @@ Page({
     });
   },
 
-  // 申请加入朋友圈
+  // 申请加入朋友圈（临时版本，稍后会用 userStatus.js 重构）
   async applyToJoin() {
-    const { circleId, isApplying, currentUser } = this.data;
+    const { circleId, isApplying } = this.data;
     
-    // 防止重复点击
-    if (isApplying) {
-      return;
+    // 访问控制：检查是否登录
+    if (!userStatus.requireLogin('applyToJoin', { circleId })) {
+      return; // requireLogin 会自动处理跳转和意图保存
     }
-
-    // 检查登录状态
-    if (!currentUser || !currentUser._id) {
-      wx.showModal({
-        title: '需要登录',
-        content: '申请加入朋友圈需要先登录，是否前往登录？',
-        success: (res) => {
-          if (res.confirm) {
-            // 触发登录流程
-            this.goToLogin();
-          }
-        }
-      });
-      return;
-    }
+    
+    if (isApplying) return;
 
     this.setData({ isApplying: true });
 
     try {
-  
-
       wx.showLoading({ title: '申请中...' });
-      
-      // 调用API申请加入
       const res = await api.circles.applyToJoin(circleId);
       
       wx.hideLoading();
 
       if (res.success) {
-        wx.showToast({
-          title: '申请已提交',
-          icon: 'success'
-        });
-
-        // 更新状态 - 关键修复：同时更新 userStatus
-        this.setData({
-          hasApplied: true,
-          showApplyButton: false,
-          userStatus: 'applied'  // 🔧 修复：更新 userStatus 让组件显示"申请已提交"状态
-        });
-
-
+        wx.showToast({ title: '申请已提交', icon: 'success' });
+        this.setData({ userStatus: 'applied', isApplying: false });
       } else {
         throw new Error(res.message || '申请失败');
       }
-
     } catch (error) {
       wx.hideLoading();
-
-      
       wx.showModal({
         title: '申请失败',
         content: error.message || '申请加入朋友圈失败，请稍后重试',
         showCancel: false
       });
-    } finally {
       this.setData({ isApplying: false });
     }
   }

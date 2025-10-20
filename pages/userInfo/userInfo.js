@@ -4,6 +4,7 @@ const util = require('../../utils/util');
 const qiniuUploader = require('../../utils/qiniuUploader');
 const qiniuConfig = require('../../utils/qiniuConfig');
 const navigationHelper = require('../../utils/navigationHelper');
+const userStatus = require('../../utils/userStatus');
 
 // 默认头像地址
 const defaultAvatarUrl = '/images/default_avatar.png';
@@ -21,7 +22,11 @@ Page({
     // 导航栏信息
     navigationData: {
       totalNavigationHeight: 88
-    }
+    },
+    // 意图信息
+    rejectReason: '',
+    pendingIntent: null,
+    circleId: null
   },
 
   /**
@@ -29,6 +34,20 @@ Page({
    */
   onLoad(options) {
     this.initQiniuConfig();
+    
+    // 处理从其他页面传来的参数
+    if (options.reason) {
+      this.setData({
+        rejectReason: decodeURIComponent(options.reason)
+      });
+    }
+    
+    if (options.intent && options.circleId) {
+      this.setData({
+        pendingIntent: options.intent,
+        circleId: options.circleId
+      });
+    }
   },
 
   // 处理导航栏准备完成事件
@@ -163,23 +182,31 @@ Page({
       if (result.status === 'loggedIn') {
         util.showToast('注册成功！', 'success');
         
-        // ✅ 使用简化的状态更新接口
+        // 更新用户状态
         const app = getApp();
         const userStore = app.getUserStore();
         const { USER_STATUS } = require('../../store/userStore');
         userStore.setStatus(USER_STATUS.LOGGEDIN, { userInfo: result.userInfo });
         
-        setTimeout(() => {
-          wx.switchTab({
-            url: '/pages/main/main'
-          });
-        }, 1500);
+        // 检查是否有待处理的意图
+        const { pendingIntent, circleId } = this.data;
+        
+        if (pendingIntent && circleId) {
+          // 有待处理的意图，执行相应操作
+          await this.handlePendingIntent(pendingIntent, circleId);
+        } else {
+          // 无意图，跳转到主页
+          setTimeout(() => {
+            wx.switchTab({
+              url: '/pages/main/main'
+            });
+          }, 1500);
+        }
       } else {
         throw new Error(result.reason || '注册失败');
       }
       
     } catch (error) {
-      // ✅ 使用简化的错误状态接口
       const app = getApp();
       const userStore = app.getUserStore();
       const { USER_STATUS } = require('../../store/userStore');
@@ -267,6 +294,88 @@ Page({
   onCancel() {
     wx.switchTab({
       url: '/pages/main/main'
+    });
+  },
+
+  /**
+   * 处理待处理的意图
+   */
+  async handlePendingIntent(intentType, circleId) {
+    try {
+      if (intentType === 'invited') {
+        // 接受邀请
+        await this.executeAcceptInvite(circleId);
+        util.showToast('已加入朋友圈', 'success');
+      } else if (intentType === 'can_apply') {
+        // 申请加入
+        await this.executeApplyToJoin(circleId);
+        util.showToast('申请已提交', 'success');
+      }
+      
+      // 跳转到朋友圈详情页
+      setTimeout(() => {
+        wx.redirectTo({
+          url: `/pages/details/details?circleId=${circleId}`
+        });
+      }, 1500);
+      
+    } catch (error) {
+      util.showToast(error.message || '操作失败', 'error');
+      
+      // 即使失败也跳转到详情页，让用户重试
+      setTimeout(() => {
+        wx.redirectTo({
+          url: `/pages/details/details?circleId=${circleId}`
+        });
+      }, 1500);
+    }
+  },
+
+  /**
+   * 执行接受邀请
+   */
+  async executeAcceptInvite(circleId) {
+    const openid = await auth.getOpenid();
+    
+    return new Promise((resolve, reject) => {
+      wx.request({
+        url: `${this.getBaseUrl()}/circles/${circleId}/accept-invite`,
+        method: 'POST',
+        data: { openid },
+        header: { 'Content-Type': 'application/json' },
+        success: (res) => {
+          if (res.statusCode === 200 && res.data.success) {
+            resolve(res.data);
+          } else {
+            reject(new Error(res.data?.message || '接受邀请失败'));
+          }
+        },
+        fail: reject
+      });
+    });
+  },
+
+  /**
+   * 执行申请加入
+   */
+  async executeApplyToJoin(circleId) {
+    const openid = await auth.getOpenid();
+    
+    return new Promise((resolve, reject) => {
+      wx.request({
+        url: `${this.getBaseUrl()}/circles/${circleId}/apply`,
+        method: 'POST',
+        data: { openid },
+        header: { 'Content-Type': 'application/json' },
+        success: (res) => {
+          if (res.statusCode === 200 && res.data.success) {
+            resolve(res.data);
+          } else {
+            reject(new Error(res.data?.message || '申请失败'));
+          }
+        },
+        fail: reject
+      });
     });
   }
 });
