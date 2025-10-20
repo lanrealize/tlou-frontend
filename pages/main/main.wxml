@@ -10,13 +10,13 @@
       <image class="avatar-main" src="{{avatarUrl}}" mode="aspectFill"></image>
     </block>
     <block wx:elif="{{loginStatus === 'unregistered'}}">
-      <view class="avatar-main" bindtap="handleUserAuth" style="background-image: url(/images/default_avatar.png);"></view>
+      <image class="avatar-main" src="https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0" mode="aspectFill" bindtap="handleUserAuth"></image>
     </block>
     <block wx:elif="{{loginStatus === 'error'}}">
-      <view class="avatar-main error-avatar" bindtap="handleUserAuth" style="background-image: url(/images/default_avatar.png);"></view>
+      <image class="avatar-main error-avatar" src="https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0" mode="aspectFill" bindtap="handleUserAuth"></image>
     </block>
     <block wx:else>
-      <view class="avatar-main loading-avatar" style="background-image: url(/images/default_avatar.png);"></view>
+      <image class="avatar-main loading-avatar" src="https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0" mode="aspectFill"></image>
     </block>
     
     <!-- 标题组 -->
@@ -159,10 +159,10 @@
     bind:refresh="refreshRecommendations">
   </discover-circle-card>
 
-  <!-- 暂无推荐时的占位 - 只在明确无推荐且已登录时显示 -->
-  <view class="discover-empty" wx:elif="{{recommendationsLoaded && recommendedCircles.length === 0 && isLoggedIn}}" bindtap="refreshRecommendations">
+  <!-- 暂无推荐时的占位 - 允许未登录用户刷新 -->
+  <view class="discover-empty" wx:elif="{{recommendationsLoaded && recommendedCircles.length === 0}}" bindtap="refreshRecommendations">
     <text class="card-main-title">暂无可推荐的朋友圈</text>
-    <text class="card-sub-title">请稍后再试或者创建一个新的公开朋友圈吧</text>
+    <text class="card-sub-title">请稍后再试或者{{isLoggedIn ? '创建一个新的公开朋友圈吧' : '登录后可创建朋友圈'}}</text>
     <view class="refresh-hint">
       <image src="/assets/icons/refresh.svg" mode="aspectFit"></image>
       <text>点击刷新</text>

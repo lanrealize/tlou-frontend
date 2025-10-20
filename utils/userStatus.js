@@ -247,14 +247,41 @@ function clearUserIntent() {
 
 // ===== 7. 获取用户与朋友圈的关系 =====
 function getUserCircleRelation(circle, currentUser, isInviteMode = false) {
-  // 第一层：是否登录
+  // 🔑 未登录用户处理：根据朋友圈类型和访问方式，返回相应状态
+  // 注意：需要后端提供公开 API 才能真正支持未登录用户查看
   if (!currentUser || !currentUser._id) {
+    // 如果是邀请模式，显示"接受邀请"
+    if (isInviteMode) {
+      return {
+        layer1: 'not_logged_in',
+        layer2: 'invited',
+        status: 'invited',
+        isOwner: false,
+        actionType: 'accept_invite',
+        message: '接受邀请加入朋友圈'
+      };
+    }
+    
+    // 如果是公开朋友圈，显示"申请加入"
+    if (circle && circle.isPublic) {
+      return {
+        layer1: 'not_logged_in',
+        layer2: 'can_apply',
+        status: 'can_apply',
+        isOwner: false,
+        actionType: 'apply',
+        message: '申请加入这个朋友圈'
+      };
+    }
+    
+    // 私密朋友圈且非邀请模式，无权访问
     return {
       layer1: 'not_logged_in',
-      layer2: null,
-      status: 'not_logged_in',
+      layer2: 'no_access',
+      status: 'no_access',
+      isOwner: false,
       actionType: null,
-      message: '登录后可以进行更多操作'
+      message: '无权访问此朋友圈'
     };
   }
   

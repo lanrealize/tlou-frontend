@@ -131,7 +131,8 @@ App({
   initDevTools() {
     const devTools = require('./utils/devTools');
     if (devTools.DEV_MODE) {
-      devTools.installDevTools();
+      // 传入 this (App 实例) 避免 onLaunch 时 getApp() 返回 undefined
+      devTools.installDevTools(this);
     }
   }
 });

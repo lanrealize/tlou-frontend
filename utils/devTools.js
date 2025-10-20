@@ -147,16 +147,20 @@ function clearAllCache() {
 
 /**
  * 将开发者工具挂载到全局（方便在控制台调用）
+ * @param {Object} appInstance - App 实例（从外部传入，避免 onLaunch 时 getApp() 返回 undefined）
  */
-function installDevTools() {
+function installDevTools(appInstance) {
   if (!DEV_MODE) {
     return;
   }
 
-  const app = getApp();
+  if (!appInstance) {
+    console.error('❌ installDevTools: appInstance 为空，无法挂载开发者工具');
+    return;
+  }
   
   // 挂载到 app.devTools
-  app.devTools = {
+  appInstance.devTools = {
     simulateLogout,
     restoreLogin,
     toggleLoginStatus,

@@ -1004,12 +1004,7 @@ Page({
       return;
     }
 
-    // 检查登录状态，API需要认证
-    if (!this.data.isLoggedIn) {
-      wx.showToast({ title: '请先登录', icon: 'none' });
-      return;
-    }
-
+    // ✅ 允许未登录用户刷新发现的公开朋友圈
     try {
       // 调用随机API并重置访问历史
       this.setData({ isLoadingRecommendations: true });
@@ -1098,7 +1093,7 @@ Page({
       return;
     }
     
-    // 🔑 关键：使用预加载逻辑，并在跳转时添加 source=discover 参数
+    // 🔑 优雅的解决方案：允许未登录用户查看，details 页面会处理权限
     this.preloadAndNavigateToCircleWithTimer(circleId, 'discover');
   },
 
@@ -1120,21 +1115,33 @@ Page({
         }
       }, 1000);
 
-      // 预加载朋友圈详情数据（使用与details页面相同的逻辑）
+      // 预加载朋友圈详情数据
       let targetCircle = null;
+      const currentUser = this.data.currentUser || {};
+      const isLoggedIn = currentUser && currentUser._id;
       
-      // 首先尝试从用户参与的朋友圈中查找
-      try {
-        const circlesRes = await api.circles.getMy();
-        targetCircle = circlesRes.data.circles.find(c => c._id === circleId);
-      } catch (error) {
-        // 用户未登录或不是此朋友圈成员，尝试直接获取朋友圈详情
+      // ✅ 优雅方案：API 层会自动判断调用认证API还是公开API
+      
+      // 已登录用户：先从我的朋友圈中查找
+      if (isLoggedIn) {
+        try {
+          const circlesRes = await api.circles.getMy();
+          targetCircle = circlesRes.data.circles.find(c => c._id === circleId);
+        } catch (error) {
+          console.log('📝 预加载：从我的朋友圈中未找到');
+        }
       }
       
-      // 如果没有找到，尝试直接获取朋友圈详情（可能是公开朋友圈）
+      // 如果没找到（或未登录），获取朋友圈详情
+      // API 层会自动判断：已登录 → /circles/:id，未登录 → /public/circles/:id
       if (!targetCircle) {
-        const detailRes = await api.circles.getDetail(circleId);
-        targetCircle = detailRes.data.circle;
+        try {
+          const detailRes = await api.circles.getDetail(circleId);
+          targetCircle = detailRes.data.circle;
+        } catch (error) {
+          // 预加载失败不影响跳转，details 页面会处理
+          console.log('📝 预加载失败（将由 details 页面处理）:', error.message);
+        }
       }
       
       if (!targetCircle) {

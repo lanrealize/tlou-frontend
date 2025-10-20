@@ -13,6 +13,17 @@ class API {
     };
   }
 
+  // 🔑 核心方法：检查用户是否登录
+  isUserLoggedIn() {
+    try {
+      const app = getApp();
+      const userStore = app?.getUserStore();
+      return userStore && userStore.isLoggedIn;
+    } catch (error) {
+      return false;
+    }
+  }
+
   // 通用请求方法
   async request(options) {
     const { url, method = 'GET', data = {}, header = {}, timeout = 10000 } = options;
@@ -98,14 +109,19 @@ class API {
 
   // 朋友圈相关API
   circles = {
-    // 获取我创建的朋友圈列表（原有方法）
+    // 获取我创建的朋友圈列表（始终需要认证）
     getMy: () => this.get('/circles/my'),
     
     // 获取我参与的所有朋友圈列表（包含最新帖子）
     getMyParticipated: () => this.get('/circles/my'),
     
-    // 获取朋友圈详情
-    getDetail: (circleId) => this.get(`/circles/${circleId}`),
+    // ⭐ 获取朋友圈详情（自动适配：已登录用认证API，未登录用公开API）
+    getDetail: (circleId) => {
+      const url = this.isUserLoggedIn() 
+        ? `/circles/${circleId}`          // 已登录：认证API
+        : `/public/circles/${circleId}`;  // 未登录：公开API
+      return this.get(url);
+    },
     
     // 获取朋友圈成员
     getMembers: (circleId) => this.get(`/circles/${circleId}/members`),
@@ -148,10 +164,10 @@ class API {
     getAppliers: (circleId) => this.get(`/circles/${circleId}/appliers`),
     
     // === 随机公开朋友圈推荐功能 ===
-    // 获取随机公开朋友圈（返回单个朋友圈）- 5秒超时
+    // ⭐ 获取随机公开朋友圈（使用公开API，支持未登录用户）
     getRandomPublicCircle: (params = {}) => {
       const query = Object.keys(params).map(key => `${key}=${encodeURIComponent(params[key])}`).join('&');
-      const fullUrl = query ? `/circles/random?${query}` : '/circles/random';
+      const fullUrl = query ? `/public/circles/random?${query}` : '/public/circles/random';
       return this.request({ url: fullUrl, method: 'GET', timeout: 5000 });
     },
 
@@ -172,8 +188,13 @@ class API {
 
   // 帖子相关API
   posts = {
-    // 获取朋友圈的帖子列表
-    getList: (circleId, params = {}) => this.get('/posts', { circleId, ...params }),
+    // ⭐ 获取朋友圈的帖子列表（自动适配：已登录用认证API，未登录用公开API）
+    getList: (circleId, params = {}) => {
+      const url = this.isUserLoggedIn() 
+        ? '/posts'          // 已登录：认证API
+        : '/public/posts';  // 未登录：公开API
+      return this.get(url, { circleId, ...params });
+    },
     
     // 创建帖子
     create: (data) => this.post('/posts', data),

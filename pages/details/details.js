@@ -365,6 +365,10 @@ Page({
   // 使用预加载数据加载朋友圈详情（优化：接受邀请状态参数）
   async loadWithPreloadedData(circleId, isInviteMode = null, inviterId = null) {
     try {
+      // 🔑 关键修复：当参数为 null 时，从 this.data 读取，保持邀请状态的持久性
+      const finalIsInviteMode = isInviteMode !== null ? isInviteMode : this.data.isInviteMode;
+      const finalInviterId = inviterId !== null ? inviterId : this.data.inviterId;
+      
       const app = getApp();
       const preloadedData = app.globalData.preloadedCircleData;
       
@@ -373,15 +377,23 @@ Page({
           preloadedData.circleId !== circleId ||
           !preloadedData.circleData ||
           (Date.now() - preloadedData.timestamp) > 10000) {
-        this.loadCircleDetail(isInviteMode, inviterId);
+        this.loadCircleDetail(finalIsInviteMode, finalInviterId);
         return;
       }
 
       const targetCircle = preloadedData.circleData;
       
-      // 🔑 使用全局状态管理判断用户关系
+      // 🔑 使用全局状态管理判断用户关系（使用处理后的参数）
       const { currentUser } = this.data;
-      const relation = userStatus.getUserCircleRelation(targetCircle, currentUser, isInviteMode);
+      const relation = userStatus.getUserCircleRelation(targetCircle, currentUser, finalIsInviteMode);
+      
+      console.log('✅ 用户关系判断结果 (预加载):', {
+        状态: relation.status,
+        是否邀请模式: finalIsInviteMode,
+        朋友圈类型: targetCircle.isPublic ? '公开' : '私密',
+        是否成员: relation.status === 'member',
+        是否被邀请: relation.status === 'invited'
+      });
 
       this.setData({
         circle: targetCircle,
@@ -423,20 +435,43 @@ Page({
   // 加载朋友圈详情（优化：接受邀请状态参数，避免异步问题）
   async loadCircleDetail(isInviteMode = null, inviterId = null) {
     try {
-      let targetCircle = null;
+      // 🔑 关键修复：当参数为 null 时，从 this.data 读取，保持邀请状态的持久性
+      // 这样可以避免在刷新、删除评论等场景下丢失邀请状态
+      const finalIsInviteMode = isInviteMode !== null ? isInviteMode : this.data.isInviteMode;
+      const finalInviterId = inviterId !== null ? inviterId : this.data.inviterId;
       
-      // 首先尝试从用户参与的朋友圈中查找
-      try {
-        const circlesRes = await api.circles.getMy();
-        targetCircle = circlesRes.data.circles.find(c => c._id === this.data.circleId);
-      } catch (error) {
-        // 用户未登录或不是此朋友圈成员，尝试直接获取朋友圈详情
+      console.log('🔍 loadCircleDetail 邀请状态:', {
+        传入参数: isInviteMode,
+        数据中的值: this.data.isInviteMode,
+        最终使用: finalIsInviteMode
+      });
+      
+      let targetCircle = null;
+      const { currentUser } = this.data;
+      const isLoggedIn = currentUser && currentUser._id;
+      
+      // ✅ 优雅方案：API 层会自动判断调用认证API还是公开API
+      
+      // 已登录用户：先从我的朋友圈中查找（判断是否是成员）
+      if (isLoggedIn) {
+        try {
+          const circlesRes = await api.circles.getMy();
+          targetCircle = circlesRes.data.circles.find(c => c._id === this.data.circleId);
+        } catch (error) {
+          console.log('📝 从我的朋友圈中未找到，尝试获取详情');
+        }
       }
       
-      // 如果没有找到，尝试直接获取朋友圈详情（可能是公开朋友圈）
+      // 如果没找到（或未登录），获取朋友圈详情
+      // API 层会自动判断：已登录 → /circles/:id，未登录 → /public/circles/:id
       if (!targetCircle) {
-        const detailRes = await api.circles.getDetail(this.data.circleId);
-        targetCircle = detailRes.data.circle;
+        try {
+          const detailRes = await api.circles.getDetail(this.data.circleId);
+          targetCircle = detailRes.data.circle;
+        } catch (error) {
+          this.handleCircleLoadError(error);
+          return;
+        }
       }
       
       if (!targetCircle) {
@@ -447,9 +482,17 @@ Page({
       targetCircle.formattedTime = util.formatRelativeTime(targetCircle.createdAt);
       targetCircle.memberCount = targetCircle.members ? targetCircle.members.length : 0;
 
-      // 🔑 使用全局状态管理判断用户关系
-      const { currentUser } = this.data;
-      const relation = userStatus.getUserCircleRelation(targetCircle, currentUser, isInviteMode);
+      // 🔑 使用全局状态管理判断用户关系（使用处理后的参数）
+      // currentUser 已在上面声明
+      const relation = userStatus.getUserCircleRelation(targetCircle, currentUser, finalIsInviteMode);
+      
+      console.log('✅ 用户关系判断结果:', {
+        状态: relation.status,
+        是否邀请模式: finalIsInviteMode,
+        朋友圈类型: targetCircle.isPublic ? '公开' : '私密',
+        是否成员: relation.status === 'member',
+        是否被邀请: relation.status === 'invited'
+      });
 
       this.setData({
         circle: targetCircle,
@@ -934,6 +977,39 @@ Page({
     wx.navigateTo({
       url: '/pages/userInfo/userInfo'
     });
+  },
+
+  // 统一的朋友圈加载错误处理
+  handleCircleLoadError(error) {
+    console.error('加载朋友圈失败:', error);
+    
+    // 401/403: 权限问题，引导登录
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      wx.showModal({
+        title: '需要登录',
+        content: '请先登录后再查看朋友圈详情',
+        confirmText: '去登录',
+        cancelText: '返回',
+        success: (res) => {
+          if (res.confirm) {
+            wx.navigateTo({
+              url: '/pages/userInfo/userInfo?reason=登录后可以查看朋友圈详情',
+              fail: () => wx.navigateBack()
+            });
+          } else {
+            wx.navigateBack();
+          }
+        }
+      });
+    } else {
+      // 其他错误
+      wx.showModal({
+        title: '加载失败',
+        content: error.message || '朋友圈不存在或网络错误',
+        showCancel: false,
+        success: () => wx.navigateBack()
+      });
+    }
   },
 
   // 申请加入朋友圈
