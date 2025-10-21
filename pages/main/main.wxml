@@ -5,22 +5,11 @@
   
   <!-- 头部区域 -->
   <view class="header">
-    <!-- 用户头像 -->
-    <block wx:if="{{loginStatus === 'loggedIn'}}">
-      <image class="avatar-main" src="{{avatarUrl}}" mode="aspectFill"></image>
-    </block>
-    <block wx:elif="{{loginStatus === 'unregistered'}}">
-      <image class="avatar-main" src="https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0" mode="aspectFill" bindtap="handleUserAuth"></image>
-    </block>
-    <block wx:elif="{{loginStatus === 'error'}}">
-      <image class="avatar-main error-avatar" src="https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0" mode="aspectFill" bindtap="handleUserAuth"></image>
-    </block>
-    <block wx:else>
-      <image class="avatar-main loading-avatar" src="https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0" mode="aspectFill"></image>
-    </block>
+    <!-- 用户头像 - 只在已登录状态显示 -->
+    <image wx:if="{{loginStatus === 'loggedIn'}}" class="avatar-main" src="{{avatarUrl}}" mode="aspectFill"></image>
     
     <!-- 标题组 -->
-    <view class="title-group">
+    <view class="title-group {{loginStatus !== 'loggedIn' ? 'no-avatar' : ''}}">
       <view class="welcome-text">
         <block wx:if="{{loginStatus === 'loggedIn'}}">你好，{{displayName}}</block>
         <block wx:elif="{{loginStatus === 'unregistered'}}">欢迎来到</block>

@@ -55,6 +55,11 @@ view, text, image {
   margin-left: 30rpx;
 }
 
+/* 未登录状态下的标题组 - 不显示头像时左移 */
+.title-group.no-avatar {
+  margin-left: 0;
+}
+
 .welcome-text {
   font-size: 32rpx;
   color: #A6A6A6;
