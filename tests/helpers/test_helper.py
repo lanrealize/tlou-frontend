@@ -80,11 +80,8 @@ function callEndTestMode() {
         mini.app.evaluate(js_code.strip())
         print('✅ endTestMode 调用完成')
         
-        # 等待后端清理和身份恢复完成
-        time.sleep(2.0)
-        
         # 等待一下，避免与测试中的页面跳转冲突
-        time.sleep(1.0)
+        time.sleep(0.5)
         
         # 返回 main 页面结束测试
         print('🔙 返回 main 页面...')

@@ -5,6 +5,13 @@ node_modules/
 dist/
 build/
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
 # 日志文件
 *.log
 npm-debug.log*
