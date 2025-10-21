@@ -243,10 +243,15 @@ Component({
           throw new Error(registerResult.data?.message || '注册失败');
         }
 
+        // 🔧 修复：后端返回的用户数据在 data.user 中，需要正确提取 _id
+        const backendUser = registerResult.data.data?.user || registerResult.data.data;
+        
+        // 🔑 关键：确保 userInfo 中包含完整的后端数据（_id）和 openid
         const finalUserInfo = { 
-          username: nickname, 
-          avatar: avatarUrl,
-          ...registerResult.data.data
+          ...backendUser,      // 先展开后端数据（包含 _id）
+          openid,              // 确保包含 openid
+          username: nickname,  // 确保使用最新的 username
+          avatar: avatarUrl    // 确保使用最新的 avatar
         };
         
         wx.setStorageSync('userInfo', finalUserInfo);

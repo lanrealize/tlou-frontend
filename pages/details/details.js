@@ -402,7 +402,8 @@ Page({
       const targetCircle = preloadedData.circleData;
       
       // 🔑 使用全局状态管理判断用户关系（使用处理后的参数）
-      const { currentUser } = this.data;
+      // 🔧 修复：直接从 userStore 获取最新用户信息，避免 MobX 绑定延迟
+      const currentUser = userStatus.getCurrentUser();
       const relation = userStatus.getUserCircleRelation(targetCircle, currentUser, finalIsInviteMode);
       
       console.log('✅ 用户关系判断结果 (预加载):', {
@@ -465,7 +466,8 @@ Page({
       });
       
       let targetCircle = null;
-      const { currentUser } = this.data;
+      // 🔧 修复：直接从 userStore 获取最新用户信息，避免 MobX 绑定延迟
+      const currentUser = userStatus.getCurrentUser();
       const isLoggedIn = currentUser && currentUser._id;
       
       // ✅ 优雅方案：API 层会自动判断调用认证API还是公开API

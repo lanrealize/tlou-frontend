@@ -150,7 +150,7 @@
 /* ========== 表单内容区域 - 列表样式 ========== */
 .form-content {
   padding: 0 40rpx;
-  margin-bottom: 40rpx;
+  margin-bottom: 50rpx;
 }
 
 /* 设置项 - 列表行样式 */
