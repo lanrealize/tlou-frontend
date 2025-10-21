@@ -456,8 +456,8 @@ const postStore = observable({
   },
 
   // 🚀 标记临时帖子上传失败
-  markPostUploadFailed(tempId, errorMessage) {
-    console.log('❌ 标记帖子上传失败:', tempId);
+  markPostUploadFailed(tempId, errorMessage, keepMask = false) {
+    console.log('❌ 标记帖子上传失败:', tempId, '保持遮罩:', keepMask);
     
     const postIndex = this.posts.findIndex(p => p._tempId === tempId);
     if (postIndex === -1) return;
@@ -465,7 +465,7 @@ const postStore = observable({
     const updatedPosts = [...this.posts];
     updatedPosts[postIndex] = {
       ...updatedPosts[postIndex],
-      _isUploading: false,
+      _isUploading: keepMask, // 如果是违规图片，保持上传状态（不移除遮罩）
       _uploadFailed: true,
       _errorMessage: errorMessage || '上传失败'
     };

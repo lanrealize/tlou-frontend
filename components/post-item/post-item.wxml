@@ -19,8 +19,8 @@
     <view class="post-content">
     <!-- 🚀 上传状态提示 -->
     <view class="upload-status-bar {{post.content ? 'has-text' : 'no-text'}}" wx:if="{{post._isUploading || post._uploadFailed}}">
-      <!-- 上传中 -->
-      <view class="uploading-indicator" wx:if="{{post._isUploading}}">
+      <!-- 上传中（只在未失败时显示） -->
+      <view class="uploading-indicator" wx:if="{{post._isUploading && !post._uploadFailed}}">
         <view class="uploading-spinner"></view>
         <text class="status-text">正在发布...</text>
       </view>

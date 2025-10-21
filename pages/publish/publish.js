@@ -509,8 +509,8 @@ Page({
       
       // 🔍 检查是否是图片违规错误
       if (error.response?.status === 422 && error.response?.data?.violationDetails) {
-        console.log('⚠️ 检测到图片违规，标记帖子失败');
-        postStore.markPostUploadFailed(tempId, '图片内容不符合规范');
+        console.log('⚠️ 检测到图片违规，标记帖子失败（保持遮罩）');
+        postStore.markPostUploadFailed(tempId, '图片内容不符合规范', true); // keepMask = true
         
         // 显示违规提示
         wx.showModal({
@@ -522,7 +522,7 @@ Page({
       } else {
         // 标记上传失败
         const errorMsg = error.message || '上传失败，请重试';
-        postStore.markPostUploadFailed(tempId, errorMsg);
+        postStore.markPostUploadFailed(tempId, errorMsg, false); // keepMask = false，移除遮罩
         
         // 显示错误提示
         wx.showToast({
