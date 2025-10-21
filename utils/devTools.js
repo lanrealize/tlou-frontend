@@ -95,21 +95,6 @@ function startTestMode() {
     console.log('💡 测试完成后请调用: getApp().devTools.endTestMode()');
     console.log('========================================');
     
-    wx.showModal({
-      title: '✅ 测试模式已开启',
-      content: '现在是全新用户，可以测试注册流程。\n\n测试完成后记得调用 endTestMode() 结束测试。',
-      showCancel: false,
-      confirmText: '开始测试',
-      success: () => {
-        // 刷新当前页面
-        const pages = getCurrentPages();
-        const currentPage = pages[pages.length - 1];
-        if (currentPage && currentPage.onLoad) {
-          currentPage.onLoad(currentPage.options || {});
-        }
-      }
-    });
-    
     return true;
   } catch (error) {
     console.error('❌ 开启测试模式失败:', error);
@@ -139,7 +124,7 @@ async function endTestMode() {
     // 1. 检查是否在测试模式
     const isInTestMode = wx.getStorageSync(STORAGE_KEYS.TEST_MODE);
     if (!isInTestMode) {
-      wx.showToast({ title: '当前不在测试模式', icon: 'none' });
+      console.log('当前不在测试模式');
       return false;
     }
 
@@ -148,53 +133,32 @@ async function endTestMode() {
     const realIdentity = wx.getStorageSync(STORAGE_KEYS.REAL_IDENTITY);
     
     if (!realIdentity || !realIdentity.openid) {
-      wx.showModal({
-        title: '错误',
-        content: '无法找到真实身份备份，请使用 emergencyRestore() 紧急恢复',
-        showCancel: false
-      });
+      console.error('❌ 无法找到真实身份备份');
       return false;
     }
 
-    // 3. 询问是否清理测试数据
-    return new Promise((resolve) => {
-      wx.showModal({
-        title: '结束测试模式',
-        content: '是否清理测试用户数据？\n\n建议清理以保持数据库整洁。',
-        confirmText: '清理',
-        cancelText: '不清理',
-        success: async (res) => {
-          if (res.confirm) {
-            // 清理测试数据
-            const cleanupSuccess = await cleanupTestUser(testOpenid);
-            if (cleanupSuccess) {
-              restoreRealIdentity();
-              resolve(true);
-            } else {
-              // 清理失败，询问是否强制恢复
-              wx.showModal({
-                title: '清理失败',
-                content: '测试数据清理失败，是否仍要恢复真实身份？\n\n选择"是"将保留测试数据。',
-                confirmText: '是',
-                cancelText: '取消',
-                success: (res2) => {
-                  if (res2.confirm) {
-                    restoreRealIdentity();
-                    resolve(true);
-                  } else {
-                    resolve(false);
-                  }
-                }
-              });
-            }
-          } else {
-            // 不清理，直接恢复
-            restoreRealIdentity();
-            resolve(true);
-          }
-        }
-      });
-    });
+    console.log('========================================');
+    console.log('🔄 开始退出测试模式');
+    console.log('========================================');
+
+    // 3. 默认清理测试数据（不询问）
+    console.log('🗑️ 开始清理测试用户数据...');
+    const cleanupSuccess = await cleanupTestUser(testOpenid);
+    
+    if (cleanupSuccess) {
+      console.log('✅ 测试数据清理成功');
+    } else {
+      console.warn('⚠️ 测试数据清理失败（用户可能不存在），继续恢复真实身份');
+    }
+
+    // 4. 恢复真实身份（无论清理是否成功）
+    restoreRealIdentity();
+    
+    console.log('========================================');
+    console.log('✅ 测试模式已结束');
+    console.log('========================================');
+    
+    return true;
 
   } catch (error) {
     console.error('❌ 结束测试模式失败:', error);
@@ -422,18 +386,12 @@ async function cleanupTestUser(testOpenid) {
     if (res.statusCode === 200 && res.data.success) {
       const summary = res.data.data?.summary || {};
       
-      console.log('✅ 清理成功');
-      console.log('清理统计:', summary);
+      console.log('✅ 清理成功，统计:', summary);
+      console.log(`   圈子: ${summary.deletedCircles || 0} 个`);
+      console.log(`   帖子: ${summary.deletedPosts || 0} 个`);
+      console.log(`   评论: ${summary.deletedComments || 0} 个`);
       
-      wx.showModal({
-        title: '✅ 清理成功',
-        content: `已清理测试用户的所有数据：\n\n` +
-                 `圈子: ${summary.deletedCircles || 0} 个\n` +
-                 `帖子: ${summary.deletedPosts || 0} 个\n` +
-                 `评论: ${summary.deletedComments || 0} 个`,
-        showCancel: false
-      });
-      
+      // 不弹窗，只在控制台记录
       return true;
     } else {
       throw new Error(res.data?.message || '清理失败');
@@ -442,13 +400,10 @@ async function cleanupTestUser(testOpenid) {
   } catch (error) {
     wx.hideLoading();
     console.error('❌ 清理测试数据失败:', error);
+    console.error('   原因:', error.message || '未知');
     
-    wx.showModal({
-      title: '清理失败',
-      content: error.message || '请检查网络连接',
-      showCancel: false
-    });
-    
+    // 不弹窗，只在控制台记录错误
+    // 返回 false 表示清理失败，endTestMode 会继续恢复身份
     return false;
   }
 }
