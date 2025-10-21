@@ -33,11 +33,23 @@
           disabled="{{isUploadingAvatar}}">
           <text class="item-label">头像</text>
           <view class="item-right">
-            <image 
-              class="avatar-preview" 
-              src="{{avatarUrl}}" 
-              mode="aspectFill"></image>
-            <image class="arrow-icon" src="/assets/icons/right.svg" mode="aspectFit"></image>
+            <!-- 头像容器 -->
+            <view class="avatar-container">
+              <image 
+                class="avatar-preview {{isUploadingAvatar ? 'uploading' : ''}}" 
+                src="{{avatarUrl}}" 
+                mode="aspectFill"></image>
+              <!-- 毛玻璃遮罩 -->
+              <view class="avatar-blur-mask" wx:if="{{isUploadingAvatar}}"></view>
+            </view>
+            
+            <!-- 上传状态提示 -->
+            <view class="upload-status" wx:if="{{isUploadingAvatar}}">
+              <view class="loading-spinner"></view>
+              <text class="upload-text">上传中</text>
+            </view>
+            
+            <image class="arrow-icon" src="/assets/icons/right.svg" mode="aspectFit" wx:if="{{!isUploadingAvatar}}"></image>
           </view>
         </button>
 

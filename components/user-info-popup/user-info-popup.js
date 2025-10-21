@@ -112,8 +112,6 @@ Component({
       const AvatarUploader = require('../../utils/avatarUploader');
       
       try {
-        util.showLoading('正在上传头像...');
-        
         const openid = await auth.getOpenid();
         const avatarUrl = await AvatarUploader.uploadToQiniu(tempFilePath, openid);
         
@@ -124,11 +122,9 @@ Component({
           this.checkCanSubmit();
         });
         
-        util.hideLoading();
         util.showToast('头像上传成功', 'success');
         
       } catch (error) {
-        util.hideLoading();
         this.setData({ isUploadingAvatar: false });
         AvatarUploader.showErrorMessage(error);
         throw error;
