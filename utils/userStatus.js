@@ -442,6 +442,56 @@ function checkHasApplied(circle, userId) {
   });
 }
 
+// ===== 9. 分享权限管理 =====
+/**
+ * 检查用户是否可以分享朋友圈（邀请新成员）
+ * 
+ * 🔑 权限规则：
+ * - 朋友圈主人可以分享
+ * - 成员在 allowInvite 为 true 时可以分享
+ * - 邀请模式下不能分享（必须先加入）
+ * 
+ * @param {Object} circle - 朋友圈对象
+ * @param {Object} [currentUser] - 当前用户信息（可选，会自动获取）
+ * @param {boolean} [isInviteMode=false] - 是否为邀请模式
+ * @returns {boolean} 是否可以分享
+ */
+function canShareCircle(circle, currentUser, isInviteMode = false) {
+  // 邀请模式下不能分享
+  if (isInviteMode) {
+    return false;
+  }
+  
+  // 检查朋友圈对象是否存在
+  if (!circle) {
+    return false;
+  }
+  
+  // 自动获取最新的用户信息
+  if (!currentUser || !currentUser._id) {
+    currentUser = getCurrentUser();
+  }
+  
+  // 未登录不能分享
+  if (!currentUser || !currentUser._id) {
+    return false;
+  }
+  
+  const userId = currentUser._id;
+  
+  // 情况1：是朋友圈主人
+  if (checkIsOwner(circle, userId)) {
+    return true;
+  }
+  
+  // 情况2：是成员，并且朋友圈允许成员邀请
+  if (checkIsMember(circle, userId) && circle.allowInvite === true) {
+    return true;
+  }
+  
+  return false;
+}
+
 // ===== 8. 导出 =====
 module.exports = {
   getUserLoginStatus,
@@ -454,6 +504,7 @@ module.exports = {
   getUserIntent,
   clearUserIntent,
   getUserCircleRelation,
+  canShareCircle,      // 🔧 检查是否可以分享朋友圈
   ACTION_RULES  // 导出规则供查看
 };
 

@@ -402,8 +402,7 @@ Page({
       const targetCircle = preloadedData.circleData;
       
       // 🔑 使用全局状态管理判断用户关系（使用处理后的参数）
-      // 🔧 修复：直接从 userStore 获取最新用户信息，避免 MobX 绑定延迟
-      const currentUser = userStatus.getCurrentUser();
+      const { currentUser } = this.data;
       const relation = userStatus.getUserCircleRelation(targetCircle, currentUser, finalIsInviteMode);
       
       console.log('✅ 用户关系判断结果 (预加载):', {
@@ -425,6 +424,9 @@ Page({
         showPublishButton: relation.status === 'member',
         userStatus: relation.status // 设置统一状态
       });
+
+      // 🔑 根据权限设置分享菜单
+      this.setupShareMenu(targetCircle, currentUser, finalIsInviteMode);
 
       // 直接通过setData同步设置帖子数据，确保页面切换时立即有数据
       const { postStore } = require('../../store/postStore');
@@ -466,8 +468,7 @@ Page({
       });
       
       let targetCircle = null;
-      // 🔧 修复：直接从 userStore 获取最新用户信息，避免 MobX 绑定延迟
-      const currentUser = userStatus.getCurrentUser();
+      const { currentUser } = this.data;
       const isLoggedIn = currentUser && currentUser._id;
       
       // ✅ 优雅方案：API 层会自动判断调用认证API还是公开API
@@ -525,6 +526,9 @@ Page({
         showPublishButton: relation.status === 'member',
         userStatus: relation.status // 设置统一状态
       });
+
+      // 🔑 根据权限设置分享菜单
+      this.setupShareMenu(targetCircle, currentUser, finalIsInviteMode);
 
       // 帖子查看权限：公开朋友圈所有人可看，私密朋友圈只有成员和被邀请者可看
       const canViewPosts = targetCircle.isPublic || // 公开朋友圈任何人都能看
@@ -616,58 +620,42 @@ Page({
     });
   },
 
-  // 检查当前用户是否为朋友圈主人
-  isCircleOwner() {
-    const { currentUser, circle } = this.data;
+  // 设置分享菜单的显示/隐藏
+  setupShareMenu(circle, currentUser, isInviteMode) {
+    const canShare = userStatus.canShareCircle(circle, currentUser, isInviteMode);
     
-    // 检查必要的数据是否存在
-    if (!currentUser || !circle || !circle.creator) {
-      return false;
+    if (canShare) {
+      // 可以分享：显示分享菜单
+      wx.showShareMenu({
+        withShareTicket: false,
+        menus: ['shareAppMessage']
+      });
+      console.log('✅ 分享菜单已显示');
+    } else {
+      // 不能分享：隐藏分享菜单（彻底阻止分享）
+      wx.hideShareMenu();
+      console.log('🔒 分享菜单已隐藏');
     }
-    
-    // 根据 user._id 进行权限检查
-    const isOwner = currentUser._id === circle.creator._id || currentUser._id === circle.creator;
-    return isOwner;
   },
-
-
-
-
 
   // 微信分享处理
   onShareAppMessage() {
     const { circle, circleId, currentUser, isInviteMode } = this.data;
     
-    // 被邀请访客无法分享
-    if (isInviteMode) {
-      wx.showToast({
-        title: '请先加入朋友圈才能分享',
-        icon: 'none'
-      });
-      return null;
-    }
+    // 🔑 使用统一的权限管理检查分享权限
+    const canShare = userStatus.canShareCircle(circle, currentUser, isInviteMode);
     
-    // 检查数据完整性
-    if (!circle || !circleId || !currentUser) {
-      return {
-        title: '朋友圈分享',
-        path: '/pages/main/main'
-      };
-    }
-    
-    // 只有朋友圈主人可以发出邀请
-    if (this.isCircleOwner()) {
+    if (canShare) {
+      // 可以发出邀请
       return {
         title: `邀请你加入"${circle.name}"朋友圈`,
         path: `/pages/details/details?circleId=${circleId}&type=invite&inviterId=${currentUser._id}`,
       };
-    } else {
-      wx.showToast({
-        title: '目前只有朋友圈主人可以邀请新成员',
-        icon: 'none'
-      });
-      return null;
     }
+    
+    // 其他情况返回 null（不应该发生，因为分享菜单应该已隐藏）
+    console.warn('⚠️ 无权限分享，这不应该发生（分享菜单应该已隐藏）');
+    return null;
   },
 
   // 接受邀请加入朋友圈
@@ -692,9 +680,8 @@ Page({
       
       // 🔧 清除邀请模式状态，确保后续判断正确
       this.setData({ isInviteMode: false, isJoining: false });
-      wx.showShareMenu({ withShareTicket: false, menus: ['shareAppMessage'] });
       
-      // 重新加载朋友圈详情，getUserCircleRelation会自动获取最新用户信息并返回正确状态
+      // 重新加载朋友圈详情，setupShareMenu 会根据用户权限自动设置分享菜单
       await this.loadCircleDetail();
     } catch (error) {
       wx.hideLoading();

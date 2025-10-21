@@ -992,8 +992,6 @@ Page({
           }],
           recommendationsLoaded: true
         });
-        
-        util.showToast('已刷新');
       } else {
         // 暂无可推荐的朋友圈
         this.setData({ 

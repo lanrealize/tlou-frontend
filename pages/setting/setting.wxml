@@ -103,6 +103,20 @@
              color="#1A73E8" />
     </view>
   </view>
+
+  <!-- 成员邀请设置（只有创建者可见） -->
+  <view class="section-card card card-spacing" wx:if="{{isCircleOwner}}">
+    <view class="setting-item">
+      <view class="setting-content">
+        <text class="setting-title">允许成员邀请</text>
+        <text class="setting-desc">开启后成员也可以分享邀请新成员加入</text>
+      </view>
+      <switch class="setting-switch" 
+             checked="{{settingData.allowInvite}}" 
+             bindchange="toggleAllowInvite"
+             color="#1A73E8" />
+    </view>
+  </view>
   
   <!-- 非创建者操作区域 -->
   <view class="section-card card card-spacing" wx:if="{{!isCircleOwner}}">
