@@ -140,7 +140,8 @@
   </discover-circle-card>
 
   <!-- 暂无推荐时的占位 - 允许未登录用户刷新 -->
-  <view class="discover-empty" wx:elif="{{recommendationsLoaded && recommendedCircles.length === 0}}" bindtap="refreshRecommendations">
+  <!-- 移除 recommendationsLoaded 条件，确保空状态始终显示 -->
+  <view class="discover-empty" wx:elif="{{!isLoadingRecommendations && recommendedCircles.length === 0}}" bindtap="refreshRecommendations">
     <text class="card-main-title">暂无可推荐的朋友圈</text>
     <text class="card-sub-title">请稍后再试或者{{isLoggedIn ? '创建一个新的公开朋友圈吧' : '登录后可创建朋友圈'}}</text>
     <view class="refresh-hint">

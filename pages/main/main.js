@@ -915,9 +915,9 @@ Page({
     const isLoggedIn = userStatus.isUserLoggedIn();
     
     if (!isLoggedIn) {
+      // 🔧 未登录时设置空状态，不标记为已加载，保持初始状态
       this.setData({ 
         recommendedCircles: [],
-        recommendationsLoaded: true,
         isLoadingRecommendations: false
       });
       return;
@@ -975,17 +975,21 @@ Page({
           }, 15000); // 15秒后自动重试（比手动刷新间隔更长）
         }
       } else {
+        // 🔧 API返回失败时，确保设置空状态
         this.setData({ 
           recommendedCircles: [],
-          recommendationsLoaded: true  // API调用失败也标记为已加载
+          recommendationsLoaded: true
         });
       }
     } catch (error) {
+      // 🔧 捕获异常时，确保设置空状态
+      console.error('加载推荐朋友圈失败:', error);
       this.setData({ 
         recommendedCircles: [],
-        recommendationsLoaded: true  // 出现异常也标记为已加载
+        recommendationsLoaded: true
       });
     } finally {
+      // 🔧 确保在finally中总是重置加载状态
       this.setData({ isLoadingRecommendations: false });
     }
   },
@@ -997,17 +1001,16 @@ Page({
     }
 
     // ✅ 允许未登录用户刷新发现的公开朋友圈
+    this.setData({ isLoadingRecommendations: true });
+
     try {
-      // 调用随机API并重置访问历史
-      this.setData({ isLoadingRecommendations: true });
-      
       const res = await api.circles.getRandomPublicCircle({
         excludeVisited: 'true',
         resetHistory: 'true'  // 重置访问历史
       });
 
-      if (res.success) {
-        if (res.data.circle) {
+      if (res && res.success) {
+        if (res.data && res.data.circle) {
           // 有新的朋友圈推荐，现在API直接返回latestPost数据
           const circle = res.data.circle;
           
@@ -1032,39 +1035,37 @@ Page({
 
           this.setData({
             recommendedCircles: [formattedCircle],
-            recommendationsLoaded: true  // 手动刷新后也标记为已加载
-          });
-        } else {
-          // 暂无可推荐的朋友圈，增加重试机制
-          this.setData({ 
-            recommendedCircles: [],
-            recommendationsLoaded: true  // 即使没有推荐也标记为已加载
+            recommendationsLoaded: true
           });
           
-          // 在空状态下增加自动重试机制
-          setTimeout(() => {
-            // 只有在仍然是空状态且用户未离开页面时才自动重试
-            if (this.data.recommendedCircles.length === 0 && !this.data.isLoadingRecommendations) {
-              this.loadRecommendations();
-            }
-          }, 10000); // 10秒后自动重试
+          util.showToast('已刷新');
+        } else {
+          // 暂无可推荐的朋友圈
+          this.setData({ 
+            recommendedCircles: [],
+            recommendationsLoaded: true
+          });
           
           util.showToast('暂无可推荐的朋友圈');
         }
       } else {
+        // 🔧 API返回失败时，确保设置空状态
         this.setData({ 
           recommendedCircles: [],
-          recommendationsLoaded: true  // API调用失败也标记为已加载
+          recommendationsLoaded: true
         });
         util.showToast('刷新失败');
       }
     } catch (error) {
+      // 🔧 捕获异常时，确保设置空状态
+      console.error('刷新推荐朋友圈失败:', error);
       this.setData({ 
         recommendedCircles: [],
-        recommendationsLoaded: true  // 出现异常也标记为已加载
+        recommendationsLoaded: true
       });
       util.showToast('刷新失败');
     } finally {
+      // 🔧 确保在finally中总是重置加载状态
       this.setData({ isLoadingRecommendations: false });
     }
   },

@@ -348,7 +348,7 @@ view, text, image {
 .create-btn {
   font-size: 28rpx;
   color: #1A73E8;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 /* 操作行布局 */
