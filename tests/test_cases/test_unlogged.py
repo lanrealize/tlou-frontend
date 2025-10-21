@@ -71,6 +71,8 @@ class TestUnloggedMain:
         """退出测试模式并关闭小程序"""
         if self.mini:
             print('\n🔚 清理测试环境...')
+            # 等待1秒，确保最后一个测试完全结束
+            time.sleep(1.0)
             exit_test_mode(self.mini)
             close_miniprogram(self.mini)
     
