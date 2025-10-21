@@ -23,39 +23,38 @@
         </view>
       </view>
 
-      <!-- 表单内容区域 -->
+      <!-- 表单内容区域 - 列表样式 -->
       <view class="form-content">
-        <!-- 头像选择 -->
-        <view class="form-item">
+        <!-- 头像选择行 -->
+        <button 
+          class="setting-item" 
+          open-type="chooseAvatar" 
+          bind:chooseavatar="onChooseAvatar"
+          disabled="{{isUploadingAvatar}}">
           <text class="item-label">头像</text>
-          <button 
-            class="avatar-picker" 
-            open-type="chooseAvatar" 
-            bind:chooseavatar="onChooseAvatar"
-            disabled="{{isUploadingAvatar}}">
+          <view class="item-right">
             <image 
-              class="avatar-image" 
+              class="avatar-preview" 
               src="{{avatarUrl}}" 
               mode="aspectFill"></image>
-            <view class="avatar-status" wx:if="{{isUploadingAvatar}}">
-              <text class="status-text">上传中...</text>
-            </view>
-          </button>
-        </view>
+            <image class="arrow-icon" src="/assets/icons/right.svg" mode="aspectFit"></image>
+          </view>
+        </button>
 
-        <!-- 昵称输入 -->
-        <view class="form-item">
+        <!-- 昵称输入行 -->
+        <view class="setting-item">
           <text class="item-label">昵称</text>
-          <view class="input-container">
+          <view class="item-right">
             <input 
               type="nickname" 
               class="nickname-input" 
               name="nickname"
-              placeholder="请输入昵称" 
+              placeholder="输入昵称" 
               value="{{nickname}}"
               bindinput="onNicknameInput"
               maxlength="20"
               placeholder-class="input-placeholder"/>
+            <image class="arrow-icon" src="/assets/icons/right.svg" mode="aspectFit"></image>
           </view>
         </view>
       </view>

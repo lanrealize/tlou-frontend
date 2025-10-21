@@ -4,8 +4,8 @@ const util = require('../../utils/util');
 const qiniuUploader = require('../../utils/qiniuUploader');
 const qiniuConfig = require('../../utils/qiniuConfig');
 
-// 默认头像地址
-const defaultAvatarUrl = '/images/default_avatar.png';
+// 默认头像地址 - 使用微信默认头像
+const defaultAvatarUrl = 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0';
 
 Component({
   /**
