@@ -10,6 +10,7 @@ from .test_helper import (
     enter_test_mode,
     exit_test_mode,
     check_circle_status_action,
+    navigate_to_details,
     navigate_to_details_from_share
 )
 
@@ -27,6 +28,7 @@ __all__ = [
     'enter_test_mode',
     'exit_test_mode',
     'check_circle_status_action',
+    'navigate_to_details',
     'navigate_to_details_from_share',
     
     # popup_helper

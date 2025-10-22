@@ -93,20 +93,43 @@ enter_test_mode(mini)  # 自动清理数据、切换到未登录状态
 exit_test_mode(mini)   # 清理测试数据、恢复原身份
 ```
 
-### 模拟从分享进入 details 页面 (test_helper)
+### 导航到 details 页面 (test_helper)
+
+#### navigate_to_details - 普通模式（从discover进入）
+
+```python
+from helpers.test_helper import navigate_to_details
+
+# 进入指定圈子（普通模式，非邀请）
+result = navigate_to_details(mini, circle_id='68f4bf50aa1585d65eef34ce')
+
+# 可指定来源（默认'discover'）
+result = navigate_to_details(mini, circle_id='xxx', source='discover')
+
+# 不带来源参数
+result = navigate_to_details(mini, circle_id='xxx', source=None)
+```
+
+**适用场景：**
+- ✅ 测试特定圈子（如有评论的圈子）
+- ✅ 不需要邀请模式
+- ✅ 模拟从discover进入
+
+#### navigate_to_details_from_share - 邀请模式（从分享进入）
 
 ```python
 from helpers.test_helper import navigate_to_details_from_share
 
-# navigate_to_details_from_share: 专门用于邀请模式（type=invite&inviterId）
-# 用于模拟"从分享链接进入"的场景
-
-# 用法1：模拟从分享链接进入main页面推荐的圈子。测试中，如果不在乎哪个圈子，可以直接调用这种做法。
+# 用法1：自动获取推荐圈子（如果测试不在乎具体哪个圈子）
 result = navigate_to_details_from_share(mini)
 
-# 用法2：模拟从分享链接进入指定圈子
+# 用法2：进入指定圈子的邀请模式
 result = navigate_to_details_from_share(mini, circle_id='xxx', inviter_id='yyy')
 ```
+
+**适用场景：**
+- ✅ 测试邀请模式（type=invite&inviterId）
+- ✅ 验证"你收到了邀请"状态
 
 ### 组件验证 (test_helper)
 #### 验证 circle_status_action 组件状态正确性

@@ -98,6 +98,53 @@ function callEndTestMode() {
         return False
 
 
+def navigate_to_details(mini, circle_id, source='discover'):
+    """
+    导航到 details 页面（普通模式）
+    
+    Args:
+        mini: Minium 实例
+        circle_id: 朋友圈ID（必需）
+        source: 来源标识（可选，默认'discover'）
+        
+    Returns:
+        dict: {
+            'success': bool,  # 是否成功导航
+            'circle_id': str,  # 圈子ID
+            'url': str  # 完整URL
+        }
+    """
+    try:
+        # 构造URL
+        if source:
+            url = f'/pages/details/details?circleId={circle_id}&source={source}'
+        else:
+            url = f'/pages/details/details?circleId={circle_id}'
+        
+        print(f'🔗 导航到 details: {url}')
+        
+        # 导航
+        mini.app.navigate_to(url)
+        time.sleep(1.5)
+        
+        print('✅ 已进入 details 页面')
+        return {
+            'success': True,
+            'circle_id': circle_id,
+            'url': url
+        }
+        
+    except Exception as e:
+        print(f'❌ 导航到 details 失败: {str(e)}')
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'circle_id': '',
+            'url': ''
+        }
+
+
 def navigate_to_details_from_share(mini, circle_id=None, inviter_id=None):
     """
     模拟从分享链接进入 details 页面（邀请模式）

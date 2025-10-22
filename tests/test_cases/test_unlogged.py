@@ -36,6 +36,7 @@ from helpers import (
     close_popup_by_mask,
     ensure_popup_closed,
     check_circle_status_action,
+    navigate_to_details,
     navigate_to_details_from_share
 )
 
@@ -261,7 +262,7 @@ class TestUnloggedMain:
                     # 使用 >>> 选择器穿透组件边界查找刷新图标
                     refresh_element = page.get_element('discover-circle-card>>>.menu-icon')
                     if refresh_element:
-                        print('✅ 找到刷新图标')
+                            print('✅ 找到刷新图标')
             except Exception as e:
                 error_msg = str(e).lower()
                 # 只有"找不到元素"是正常的，其他错误立即失败
@@ -472,7 +473,7 @@ class TestUnloggedMain:
                 else:
                     print(f'❌ 查找卡片时发生异常: {str(e)}')
                     traceback.print_exc()
-                return False
+                    return False
             
             # 点击进入
             try:
@@ -654,8 +655,8 @@ class TestUnloggedMain:
                         return True
                     else:
                         print(f'❌ 发生异常: {str(e)}')
-                        return False
-                
+                return False
+            
                 time.sleep(1.5)
             else:
                 print('✅ 已在details页面，无需跳转')
@@ -722,7 +723,7 @@ class TestUnloggedMain:
             print(f'❌ 测试异常: {str(e)}')
             traceback.print_exc()
             return False
-    
+            
     def test_details_004_settings_popup(self):
         """DETAILS_004: 从discover进入details点击设置检查弹窗"""
         print('\n📝 测试 DETAILS_004: 从discover进入details点击设置检查弹窗')
@@ -859,6 +860,75 @@ class TestUnloggedMain:
                 print(f'❌ circle-status-action组件验证失败')
                 for error in result['errors']:
                     print(f'   {error}')
+                return False
+                
+        except Exception as e:
+            print(f'❌ 测试异常: {str(e)}')
+            traceback.print_exc()
+            return False
+    
+    def test_details_006_reply_comment_popup(self):
+        """DETAILS_006: 进入指定圈子回复评论检查弹窗"""
+        print('\n📝 测试 DETAILS_006: 进入指定圈子回复评论检查弹窗')
+        print('-'*60)
+        
+        try:
+            # 使用新工具函数：导航到指定圈子（该圈子有评论）
+            TEST_CIRCLE_ID = '68f4bf50aa1585d65eef34ce'
+            result = navigate_to_details(self.mini, circle_id=TEST_CIRCLE_ID)
+            
+            if not result['success']:
+                print('❌ 导航失败')
+                return False
+            
+            print(f'✅ 已进入测试圈子: {TEST_CIRCLE_ID}')
+            
+            # 等待页面加载
+            time.sleep(1.0)
+            
+            # 查找评论的回复按钮
+            page = self.mini.app.current_page
+            
+            try:
+                # 查找第一个评论的回复按钮
+                reply_button = page.get_element('post-item>>>.reply-btn')
+                if not reply_button:
+                    print('⚠️  未找到回复按钮（可能该圈子没有评论）')
+                    return True
+                
+                print('✅ 找到回复按钮')
+                
+                # 点击回复按钮
+                reply_button.tap()
+                print('✅ 点击回复按钮')
+                
+                # 等待弹窗出现
+                time.sleep(0.5)
+                
+                # 验证是否弹出登录提示
+                result = check_popup_visible(self.mini, expected_reason='登录后才能发表评论')
+                if result['visible']:
+                    if result['match']:
+                        print(f'✅ 弹窗正确显示且文字验证通过')
+                    else:
+                        print(f'⚠️  弹窗显示但文字不匹配')
+                        print(f'   期望: "登录后才能发表评论"')
+                        print(f'   实际: "{result["reason"]}"')
+                    
+                    close_popup_by_mask(self.mini, wait_visible=0.4)
+                    return result['match']  # 必须文字也匹配才算通过
+                else:
+                    print('❌ 未弹出注册弹窗')
+                    return False
+                    
+            except Exception as e:
+                error_msg = str(e).lower()
+                if 'not found' in error_msg:
+                    print('⚠️  未找到回复按钮（可能没有评论）')
+                    return True
+                else:
+                    print(f'❌ 发生异常: {str(e)}')
+                    traceback.print_exc()
                     return False
                 
         except Exception as e:
@@ -882,6 +952,7 @@ class TestUnloggedMain:
             self.test_details_002_like_popup,
             self.test_details_003_comment_popup,
             self.test_details_004_settings_popup,
+            self.test_details_006_reply_comment_popup,
             self.test_details_005_status_from_share,
         ]
         
