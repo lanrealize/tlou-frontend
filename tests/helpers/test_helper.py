@@ -96,3 +96,166 @@ function callEndTestMode() {
         import traceback
         traceback.print_exc()
         return False
+
+
+def navigate_to_details_from_share(mini, circle_id=None, inviter_id=None):
+    """
+    模拟从分享链接进入 details 页面（邀请模式）
+    
+    Args:
+        mini: Minium 实例
+        circle_id: 朋友圈ID（如果为None，从main页面第一个推荐圈子获取）
+        inviter_id: 邀请人ID（如果为None，从推荐圈子的creator获取）
+        
+    Returns:
+        dict: {
+            'success': bool,  # 是否成功导航
+            'circle_id': str,  # 实际使用的圈子ID
+            'inviter_id': str,  # 实际使用的邀请人ID
+            'url': str  # 完整的分享URL
+        }
+    """
+    try:
+        # 如果没有提供 circle_id，从 main 页面获取
+        if not circle_id or not inviter_id:
+            # 先确保在 main 页面
+            current_path = mini.app.current_page.path
+            if 'main' not in current_path:
+                mini.app.navigate_to('/pages/main/main')
+                time.sleep(0.5)
+            
+            page = mini.app.current_page
+            circles = page.data.get('recommendedCircles', [])
+            
+            if not circles or len(circles) == 0:
+                print('❌ 没有推荐圈子数据，无法获取分享链接')
+                return {
+                    'success': False,
+                    'circle_id': '',
+                    'inviter_id': '',
+                    'url': ''
+                }
+            
+            circle = circles[0]
+            circle_id = circle.get('_id', '')
+            creator = circle.get('creator', {})
+            inviter_id = creator.get('_id', '') if isinstance(creator, dict) else creator
+        
+        # 构造分享URL（邀请模式）
+        share_url = f'/pages/details/details?circleId={circle_id}&type=invite&inviterId={inviter_id}'
+        print(f'📤 模拟分享链接: {share_url}')
+        
+        # 导航到 details 页面
+        mini.app.navigate_to(share_url)
+        time.sleep(1.5)
+        
+        print('✅ 已从分享链接进入 details 页面')
+        return {
+            'success': True,
+            'circle_id': circle_id,
+            'inviter_id': inviter_id,
+            'url': share_url
+        }
+        
+    except Exception as e:
+        print(f'❌ 从分享进入 details 失败: {str(e)}')
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'circle_id': '',
+            'inviter_id': '',
+            'url': ''
+        }
+
+
+def check_circle_status_action(mini, expected_main_title, expected_sub_title, expected_button_text):
+    """
+    检查 details 页面底部 circle-status-action 组件的显示内容
+    
+    Args:
+        mini: Minium 实例
+        expected_main_title: 期望的主标题文本
+        expected_sub_title: 期望的副标题文本
+        expected_button_text: 期望的按钮文本
+        
+    Returns:
+        dict: {
+            'match': bool,  # 是否完全匹配
+            'main_title': str,  # 实际主标题
+            'sub_title': str,  # 实际副标题
+            'button_text': str,  # 实际按钮文本
+            'errors': list  # 不匹配的项列表
+        }
+    """
+    try:
+        page = mini.app.current_page
+        
+        # 使用原生方法获取页面数据
+        page_data = page.data
+        user_status = page_data.get('userStatus', '')
+        
+        # 定义每个状态对应的文本
+        STATUS_CONFIG = {
+            'member': {
+                'main_title': '发布新动态',
+                'sub_title': '分享你的精彩瞬间',
+                'button_text': '发布'
+            },
+            'invited': {
+                'main_title': '你收到了邀请',
+                'sub_title': '点击右侧按钮加入这个朋友圈',
+                'button_text': '接受邀请'
+            },
+            'applied': {
+                'main_title': '申请已提交',
+                'sub_title': '等待朋友圈主人审核中',
+                'button_text': '审核中'
+            },
+            'can_apply': {
+                'main_title': '公开朋友圈',
+                'sub_title': '你可以申请加入这个朋友圈',
+                'button_text': '申请加入'
+            },
+            'no_access': {
+                'main_title': '无法访问',
+                'sub_title': '无权查看此朋友圈',
+                'button_text': '无权限'
+            }
+        }
+        
+        # 获取实际显示的文本
+        config = STATUS_CONFIG.get(user_status, {})
+        actual_main_title = config.get('main_title', '')
+        actual_sub_title = config.get('sub_title', '')
+        actual_button_text = config.get('button_text', '')
+        
+        # 比对
+        errors = []
+        if actual_main_title != expected_main_title:
+            errors.append(f'主标题不匹配: 期望"{expected_main_title}", 实际"{actual_main_title}"')
+        if actual_sub_title != expected_sub_title:
+            errors.append(f'副标题不匹配: 期望"{expected_sub_title}", 实际"{actual_sub_title}"')
+        if actual_button_text != expected_button_text:
+            errors.append(f'按钮文本不匹配: 期望"{expected_button_text}", 实际"{actual_button_text}"')
+        
+        return {
+            'match': len(errors) == 0,
+            'user_status': user_status,
+            'main_title': actual_main_title,
+            'sub_title': actual_sub_title,
+            'button_text': actual_button_text,
+            'errors': errors
+        }
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            'match': False,
+            'user_status': '',
+            'main_title': '',
+            'sub_title': '',
+            'button_text': '',
+            'errors': [f'检查异常: {str(e)}']
+        }

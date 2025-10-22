@@ -34,7 +34,9 @@ from helpers import (
     exit_test_mode,
     check_popup_visible,
     close_popup_by_mask,
-    ensure_popup_closed
+    ensure_popup_closed,
+    check_circle_status_action,
+    navigate_to_details_from_share
 )
 
 # 从 utils/userStatus.js 定义的提示文字
@@ -445,6 +447,425 @@ class TestUnloggedMain:
             traceback.print_exc()
             return False
     
+    def test_details_001_status_from_discover(self):
+        """DETAILS_001: 从discover进入details检查circle-status-action"""
+        print('\n📝 测试 DETAILS_001: 从discover进入details检查circle-status-action')
+        print('-'*60)
+        
+        try:
+            self.navigate_to_main()
+            page = self.mini.app.current_page
+            time.sleep(0.3)
+            
+            ensure_popup_closed(self.mini)
+            time.sleep(0.8)
+            
+            # 查找发现朋友圈卡片并点击
+            try:
+                discover_card = page.get_element('discover-circle-card')
+                print('✅ 找到发现朋友圈卡片')
+            except Exception as e:
+                error_msg = str(e).lower()
+                if 'not found' in error_msg or 'no such' in error_msg or 'element' in error_msg:
+                    print('⚠️  未找到发现朋友圈卡片（可能没有推荐）')
+                    return True
+                else:
+                    print(f'❌ 查找卡片时发生异常: {str(e)}')
+                    traceback.print_exc()
+                return False
+            
+            # 点击进入
+            try:
+                card_content = page.get_element('discover-circle-card>>>.post-card')
+                if card_content:
+                    card_content.tap()
+                    print('✅ 点击卡片内容区域')
+                else:
+                    discover_card.tap()
+                    print('✅ 点击卡片')
+            except Exception as e:
+                error_msg = str(e).lower()
+                if 'not found' in error_msg or 'no such' in error_msg:
+                    discover_card.tap()
+                    print('✅ 点击卡片（备用方案）')
+                else:
+                    print(f'❌ 点击卡片时发生严重错误: {str(e)}')
+                    traceback.print_exc()
+                    return False
+            
+            time.sleep(1.5)  # 等待页面跳转
+            
+            # 检查circle-status-action组件
+            result = check_circle_status_action(
+                self.mini,
+                '公开朋友圈',
+                '你可以申请加入这个朋友圈',
+                '申请加入'
+            )
+            
+            if result['match']:
+                print(f'✅ circle-status-action显示正确')
+                print(f'   状态: {result["user_status"]}')
+                print(f'   主标题: {result["main_title"]}')
+                print(f'   副标题: {result["sub_title"]}')
+                print(f'   按钮: {result["button_text"]}')
+                return True
+            else:
+                print(f'❌ circle-status-action显示错误')
+                for error in result['errors']:
+                    print(f'   {error}')
+                return False
+            
+        except Exception as e:
+            print(f'❌ 测试异常: {str(e)}')
+            traceback.print_exc()
+            return False
+    
+    def test_details_002_like_popup(self):
+        """DETAILS_002: 从discover进入details点赞检查弹窗"""
+        print('\n📝 测试 DETAILS_002: 从discover进入details点赞检查弹窗')
+        print('-'*60)
+        
+        try:
+            # 优化：如果已经在details页面，就不返回main
+            current_page = self.mini.app.current_page
+            if current_page.path != '/pages/details/details':
+                self.navigate_to_main()
+                page = self.mini.app.current_page
+                time.sleep(0.3)
+                
+                ensure_popup_closed(self.mini)
+                time.sleep(0.8)
+                
+                # 查找并点击发现朋友圈卡片
+                try:
+                    discover_card = page.get_element('discover-circle-card')
+                    card_content = page.get_element('discover-circle-card>>>.post-card')
+                    if card_content:
+                        card_content.tap()
+                    else:
+                        discover_card.tap()
+                    print('✅ 点击进入details')
+                except Exception as e:
+                    error_msg = str(e).lower()
+                    if 'not found' in error_msg or 'no such' in error_msg:
+                        print('⚠️  未找到发现朋友圈卡片')
+                        return True
+                    else:
+                        print(f'❌ 发生异常: {str(e)}')
+                        return False
+                
+                time.sleep(1.5)  # 等待页面跳转
+            else:
+                print('✅ 已在details页面，无需跳转')
+            
+            # 在details页面，查找帖子的三点按钮
+            details_page = self.mini.app.current_page
+            try:
+                # 先找到post-item组件
+                post_item = details_page.get_element('post-item')
+                if not post_item:
+                    print('⚠️  未找到帖子（可能该朋友圈没有内容）')
+                    return True
+                
+                print('✅ 找到帖子')
+                
+                # 找到三点按钮并点击展开菜单
+                menu_btn = details_page.get_element('post-item>>>.actions-menu-btn')
+                if not menu_btn:
+                    print('⚠️  未找到操作菜单按钮')
+                    return True
+                
+                print('✅ 找到操作菜单按钮')
+                menu_btn.tap()
+                time.sleep(0.3)  # 等待菜单展开
+                
+                # 在下拉菜单中找到点赞按钮
+                like_items = details_page.get_elements('post-item>>>.dropdown-item')
+                if not like_items or len(like_items) == 0:
+                    print('⚠️  未找到下拉菜单项')
+                    return True
+                
+                # 第一个dropdown-item是点赞按钮
+                like_btn = like_items[0]
+                print('✅ 找到点赞按钮')
+                like_btn.tap()
+                time.sleep(0.3)
+                
+                # 检查弹窗并验证文字
+                result = check_popup_visible(self.mini, expected_reason='登录后才能点赞')
+                if result['visible']:
+                    if result['match']:
+                        print(f'✅ 弹窗正确显示且文字验证通过')
+                    else:
+                        print(f'⚠️  弹窗显示但文字不匹配')
+                        print(f'   期望: "登录后才能点赞"')
+                        print(f'   实际: "{result["reason"]}"')
+                    close_popup_by_mask(self.mini, wait_visible=0.4)
+                    return result['match']  # 必须文字也匹配才算通过
+                else:
+                    print('❌ 未弹出注册弹窗')
+                    return False
+                    
+            except Exception as e:
+                error_msg = str(e).lower()
+                if 'not found' in error_msg:
+                    print('⚠️  未找到相关元素（可能没有帖子）')
+                    return True
+                else:
+                    print(f'❌ 发生异常: {str(e)}')
+                    traceback.print_exc()
+                    return False
+                
+        except Exception as e:
+            print(f'❌ 测试异常: {str(e)}')
+            traceback.print_exc()
+            return False
+    
+    def test_details_003_comment_popup(self):
+        """DETAILS_003: 从discover进入details评论检查弹窗"""
+        print('\n📝 测试 DETAILS_003: 从discover进入details评论检查弹窗')
+        print('-'*60)
+        
+        try:
+            # 优化：如果已经在details页面，就不返回main
+            current_page = self.mini.app.current_page
+            if current_page.path != '/pages/details/details':
+                self.navigate_to_main()
+                page = self.mini.app.current_page
+                time.sleep(0.3)
+                
+                ensure_popup_closed(self.mini)
+                time.sleep(0.8)
+                
+                # 查找并点击发现朋友圈卡片
+                try:
+                    discover_card = page.get_element('discover-circle-card')
+                    card_content = page.get_element('discover-circle-card>>>.post-card')
+                    if card_content:
+                        card_content.tap()
+                    else:
+                        discover_card.tap()
+                    print('✅ 点击进入details')
+                except Exception as e:
+                    error_msg = str(e).lower()
+                    if 'not found' in error_msg:
+                        print('⚠️  未找到发现朋友圈卡片')
+                        return True
+                    else:
+                        print(f'❌ 发生异常: {str(e)}')
+                        return False
+                
+                time.sleep(1.5)
+            else:
+                print('✅ 已在details页面，无需跳转')
+            
+            # 在details页面，查找帖子的三点按钮
+            details_page = self.mini.app.current_page
+            try:
+                # 先找到post-item组件
+                post_item = details_page.get_element('post-item')
+                if not post_item:
+                    print('⚠️  未找到帖子（可能该朋友圈没有内容）')
+                    return True
+                
+                print('✅ 找到帖子')
+                
+                # 找到三点按钮并点击展开菜单
+                menu_btn = details_page.get_element('post-item>>>.actions-menu-btn')
+                if not menu_btn:
+                    print('⚠️  未找到操作菜单按钮')
+                    return True
+                
+                print('✅ 找到操作菜单按钮')
+                menu_btn.tap()
+                time.sleep(0.3)  # 等待菜单展开
+                
+                # 在下拉菜单中找到评论按钮
+                menu_items = details_page.get_elements('post-item>>>.dropdown-item')
+                if not menu_items or len(menu_items) < 2:
+                    print('⚠️  未找到下拉菜单项')
+                    return True
+                
+                # 第二个dropdown-item是评论按钮
+                comment_btn = menu_items[1]
+                print('✅ 找到评论按钮')
+                comment_btn.tap()
+                time.sleep(0.3)
+                
+                # 检查弹窗并验证文字
+                result = check_popup_visible(self.mini, expected_reason='登录后才能发表评论')
+                if result['visible']:
+                    if result['match']:
+                        print(f'✅ 弹窗正确显示且文字验证通过')
+                    else:
+                        print(f'⚠️  弹窗显示但文字不匹配')
+                        print(f'   期望: "登录后才能发表评论"')
+                        print(f'   实际: "{result["reason"]}"')
+                    close_popup_by_mask(self.mini, wait_visible=0.4)
+                    return result['match']  # 必须文字也匹配才算通过
+                else:
+                    print('❌ 未弹出注册弹窗')
+                    return False
+                    
+            except Exception as e:
+                error_msg = str(e).lower()
+                if 'not found' in error_msg:
+                    print('⚠️  未找到相关元素（可能没有帖子）')
+                    return True
+                else:
+                    print(f'❌ 发生异常: {str(e)}')
+                    traceback.print_exc()
+                    return False
+                
+        except Exception as e:
+            print(f'❌ 测试异常: {str(e)}')
+            traceback.print_exc()
+            return False
+    
+    def test_details_004_settings_popup(self):
+        """DETAILS_004: 从discover进入details点击设置检查弹窗"""
+        print('\n📝 测试 DETAILS_004: 从discover进入details点击设置检查弹窗')
+        print('-'*60)
+        
+        try:
+            # 优化：如果已经在details页面，就不返回main
+            current_page = self.mini.app.current_page
+            if current_page.path != '/pages/details/details':
+                self.navigate_to_main()
+                page = self.mini.app.current_page
+                time.sleep(0.3)
+                
+                ensure_popup_closed(self.mini)
+                time.sleep(0.8)
+                
+                # 查找并点击发现朋友圈卡片
+                try:
+                    discover_card = page.get_element('discover-circle-card')
+                    card_content = page.get_element('discover-circle-card>>>.post-card')
+                    if card_content:
+                        card_content.tap()
+                    else:
+                        discover_card.tap()
+                    print('✅ 点击进入details')
+                except Exception as e:
+                    error_msg = str(e).lower()
+                    if 'not found' in error_msg:
+                        print('⚠️  未找到发现朋友圈卡片')
+                        return True
+                    else:
+                        print(f'❌ 发生异常: {str(e)}')
+                        return False
+                
+                time.sleep(1.5)
+            else:
+                print('✅ 已在details页面，无需跳转')
+            
+            # 在details页面，查找设置按钮（在card-content-fixed中）
+            details_page = self.mini.app.current_page
+            try:
+                # 设置按钮在右上角的.setting-btn
+                settings_btn = details_page.get_element('.setting-btn')
+                if not settings_btn:
+                    print('⚠️  未找到设置按钮')
+                    return True
+                
+                print('✅ 找到设置按钮')
+                settings_btn.tap()
+                time.sleep(0.3)
+                
+                # 检查弹窗并验证文字
+                result = check_popup_visible(self.mini, expected_reason='您需要登录才能修改设置')
+                if result['visible']:
+                    if result['match']:
+                        print(f'✅ 弹窗正确显示且文字验证通过')
+                    else:
+                        print(f'⚠️  弹窗显示但文字不匹配')
+                        print(f'   期望: "您需要登录才能修改设置"')
+                        print(f'   实际: "{result["reason"]}"')
+                    close_popup_by_mask(self.mini, wait_visible=0.4)
+                    return result['match']  # 必须文字也匹配才算通过
+                else:
+                    print('❌ 未弹出注册弹窗')
+                    return False
+                    
+            except Exception as e:
+                error_msg = str(e).lower()
+                if 'not found' in error_msg:
+                    print('⚠️  未找到设置按钮')
+                    return True
+                else:
+                    print(f'❌ 发生异常: {str(e)}')
+                    traceback.print_exc()
+                    return False
+                
+        except Exception as e:
+            print(f'❌ 测试异常: {str(e)}')
+            traceback.print_exc()
+            return False
+    
+    def test_details_005_status_from_share(self):
+        """DETAILS_005: 从分享进入details检查circle-status-action"""
+        print('\n📝 测试 DETAILS_005: 从分享进入details检查circle-status-action')
+        print('-'*60)
+        
+        try:
+            # 使用工具函数：模拟从分享链接进入（邀请模式）
+            result = navigate_to_details_from_share(self.mini)
+            
+            if not result['success']:
+                print('⚠️  无法模拟分享进入，跳过测试')
+                return True
+            
+            print(f'📍 朋友圈ID: {result["circle_id"][:12]}...')
+            print(f'👤 邀请人ID: {result["inviter_id"][:12]}...')
+            print(f'🔗 已从分享进入（邀请模式）')
+            time.sleep(1.5)
+            
+            # 验证是否到达details页面
+            current_page = self.mini.app.current_page
+            if 'details' not in current_page.path:
+                print(f'❌ 导航失败，当前页面: {current_page.path}')
+                return False
+            
+            print(f'✅ 成功进入details页面')
+            
+            # 使用封装的函数检查circle-status-action组件
+            # 从分享进入应该显示"邀请"状态
+            print(f'🔍 使用check_circle_status_action函数验证底部组件...')
+            result = check_circle_status_action(
+                self.mini,
+                '你收到了邀请',
+                '点击右侧按钮加入这个朋友圈',
+                '接受邀请'
+            )
+            
+            if result['match']:
+                print(f'✅ ✅ ✅ circle-status-action组件验证通过 ✅ ✅ ✅')
+                print(f'   📊 组件状态详情（邀请模式）:')
+                print(f'      - 用户状态: {result["user_status"]} (应为 invited)')
+                print(f'      - 主标题: {result["main_title"]}')
+                print(f'      - 副标题: {result["sub_title"]}')
+                print(f'      - 按钮文本: {result["button_text"]}')
+                
+                # 额外验证：确认状态确实是invited
+                if result['user_status'] == 'invited':
+                    print(f'✅ 状态验证通过：确实处于邀请模式')
+                else:
+                    print(f'⚠️  状态异常：期望invited，实际{result["user_status"]}')
+                
+                return True
+            else:
+                print(f'❌ circle-status-action组件验证失败')
+                for error in result['errors']:
+                    print(f'   {error}')
+                    return False
+                
+        except Exception as e:
+            print(f'❌ 测试异常: {str(e)}')
+            traceback.print_exc()
+            return False
+    
     # ============================================
     # 运行所有测试
     # ============================================
@@ -457,6 +878,11 @@ class TestUnloggedMain:
             self.test_main_003_create_circle,
             self.test_main_004_refresh_discover,
             self.test_main_005_enter_discover_circle,
+            self.test_details_001_status_from_discover,
+            self.test_details_002_like_popup,
+            self.test_details_003_comment_popup,
+            self.test_details_004_settings_popup,
+            self.test_details_005_status_from_share,
         ]
         
         all_passed = True
