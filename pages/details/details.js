@@ -1072,6 +1072,13 @@ Page({
     const app = getApp();
     app.clearUserInfoPopupConfig();
     
+    // 🎯 方案 A：如果是邀请模式，自动接受邀请
+    if (this.data.isInviteMode) {
+      console.log('✨ 检测到邀请模式，自动接受邀请');
+      await this.acceptInvite();
+      return; // acceptInvite 内部会刷新数据，不需要再次刷新
+    }
+    
     // 如果有待处理的意图，执行相应操作
     if (pendingIntent && circleId) {
       await this.handlePendingIntent(pendingIntent, circleId);
