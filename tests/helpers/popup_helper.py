@@ -160,48 +160,6 @@ function closePopupByMask() {
         return False
 
 
-def wait_popup_closed(mini, timeout=2):
-    """等待弹窗关闭
-    
-    Args:
-        mini: minium实例
-        timeout: 超时时间（秒）
-        
-    Returns:
-        bool: True表示弹窗已关闭，False表示超时
-    """
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        try:
-            js_code = """
-function checkUserInfoPopup() {
-    const pages = getCurrentPages();
-    const currentPage = pages[pages.length - 1];
-    if (currentPage && currentPage.data) {
-        return currentPage.data.userInfoPopupVisible === true;
-    }
-    return false;
-}
-            """
-            eval_result = mini.app.evaluate(js_code.strip())
-            time.sleep(0.1)
-            
-            # 解析结果
-            result = eval_result.get('result', False) if isinstance(eval_result, dict) else eval_result
-            is_visible = result.get('visible', False) if isinstance(result, dict) else result
-            
-            if not is_visible:
-                print('✅ 弹窗已关闭')
-                return True
-                
-        except Exception as e:
-            time.sleep(0.1)
-            continue
-    
-    print('⚠️  等待弹窗关闭超时')
-    return False
-
-
 def ensure_popup_closed(mini):
     """确保弹窗已关闭
     

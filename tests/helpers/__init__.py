@@ -17,7 +17,6 @@ from .test_helper import (
 from .popup_helper import (
     check_popup_visible,
     close_popup_by_mask,
-    wait_popup_closed,
     ensure_popup_closed
 )
 
@@ -34,6 +33,5 @@ __all__ = [
     # popup_helper
     'check_popup_visible',
     'close_popup_by_mask',
-    'wait_popup_closed',
     'ensure_popup_closed',
 ]

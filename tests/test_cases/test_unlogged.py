@@ -93,6 +93,29 @@ class TestUnloggedMain:
         time.sleep(0.3)  # 压缩到极限
         self.page_loaded = True
     
+    def click_discover_card_to_details(self):
+        """点击发现朋友圈卡片进入details页面
+        
+        Returns:
+            bool: True表示成功或卡片不存在（跳过测试），False表示发生错误
+        """
+        try:
+            page = self.mini.app.current_page
+            card_content = page.get_element('discover-circle-card>>>.post-card')
+            card_content.tap()
+            print('✅ 点击进入details')
+            return True
+        except Exception as e:
+            error_msg = str(e).lower()
+            if 'not found' in error_msg or 'no such' in error_msg:
+                print('⚠️  未找到发现朋友圈卡片（可能没有推荐）')
+                return True  # 卡片不存在是正常情况
+            else:
+                print(f'❌ 点击卡片时发生异常: {str(e)}')
+                import traceback
+                traceback.print_exc()
+                return False
+    
     # ============================================
     # 测试用例
     # ============================================
@@ -492,7 +515,7 @@ class TestUnloggedMain:
                 else:
                     print(f'❌ 点击卡片时发生严重错误: {str(e)}')
                     traceback.print_exc()
-                    return False
+                return False
             
             time.sleep(1.5)  # 等待页面跳转
             
@@ -532,29 +555,13 @@ class TestUnloggedMain:
             current_page = self.mini.app.current_page
             if current_page.path != '/pages/details/details':
                 self.navigate_to_main()
-                page = self.mini.app.current_page
                 time.sleep(0.3)
-                
                 ensure_popup_closed(self.mini)
                 time.sleep(0.8)
                 
-                # 查找并点击发现朋友圈卡片
-                try:
-                    discover_card = page.get_element('discover-circle-card')
-                    card_content = page.get_element('discover-circle-card>>>.post-card')
-                    if card_content:
-                        card_content.tap()
-                    else:
-                        discover_card.tap()
-                    print('✅ 点击进入details')
-                except Exception as e:
-                    error_msg = str(e).lower()
-                    if 'not found' in error_msg or 'no such' in error_msg:
-                        print('⚠️  未找到发现朋友圈卡片')
-                        return True
-                    else:
-                        print(f'❌ 发生异常: {str(e)}')
-                        return False
+                # 使用辅助函数点击发现朋友圈卡片
+                if not self.click_discover_card_to_details():
+                    return False
                 
                 time.sleep(1.5)  # 等待页面跳转
             else:
@@ -633,30 +640,14 @@ class TestUnloggedMain:
             current_page = self.mini.app.current_page
             if current_page.path != '/pages/details/details':
                 self.navigate_to_main()
-                page = self.mini.app.current_page
                 time.sleep(0.3)
-                
                 ensure_popup_closed(self.mini)
                 time.sleep(0.8)
                 
-                # 查找并点击发现朋友圈卡片
-                try:
-                    discover_card = page.get_element('discover-circle-card')
-                    card_content = page.get_element('discover-circle-card>>>.post-card')
-                    if card_content:
-                        card_content.tap()
-                    else:
-                        discover_card.tap()
-                    print('✅ 点击进入details')
-                except Exception as e:
-                    error_msg = str(e).lower()
-                    if 'not found' in error_msg:
-                        print('⚠️  未找到发现朋友圈卡片')
-                        return True
-                    else:
-                        print(f'❌ 发生异常: {str(e)}')
-                return False
-            
+                # 使用辅助函数点击发现朋友圈卡片
+                if not self.click_discover_card_to_details():
+                    return False
+                
                 time.sleep(1.5)
             else:
                 print('✅ 已在details页面，无需跳转')
@@ -734,29 +725,13 @@ class TestUnloggedMain:
             current_page = self.mini.app.current_page
             if current_page.path != '/pages/details/details':
                 self.navigate_to_main()
-                page = self.mini.app.current_page
                 time.sleep(0.3)
-                
                 ensure_popup_closed(self.mini)
                 time.sleep(0.8)
                 
-                # 查找并点击发现朋友圈卡片
-                try:
-                    discover_card = page.get_element('discover-circle-card')
-                    card_content = page.get_element('discover-circle-card>>>.post-card')
-                    if card_content:
-                        card_content.tap()
-                    else:
-                        discover_card.tap()
-                    print('✅ 点击进入details')
-                except Exception as e:
-                    error_msg = str(e).lower()
-                    if 'not found' in error_msg:
-                        print('⚠️  未找到发现朋友圈卡片')
-                        return True
-                    else:
-                        print(f'❌ 发生异常: {str(e)}')
-                        return False
+                # 使用辅助函数点击发现朋友圈卡片
+                if not self.click_discover_card_to_details():
+                    return False
                 
                 time.sleep(1.5)
             else:
