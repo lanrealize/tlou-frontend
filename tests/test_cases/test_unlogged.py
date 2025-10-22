@@ -248,100 +248,82 @@ class TestUnloggedMain:
             page = self.mini.app.current_page
             
             ensure_popup_closed(self.mini)
-            time.sleep(0.5)  # 压缩到极限
+            time.sleep(0.5)
             
-            # 检查是否有卡片或空状态
-            has_card = False
-            has_empty = False
+            # 尝试查找卡片中的刷新按钮
             refresh_element = None
-            
             try:
                 card = page.get_element('discover-circle-card')
                 if card:
-                    has_card = True
                     print('✅ 找到发现朋友圈卡片')
-                    # 在卡片模式下，需要点击右上角的刷新图标
-                    # 刷新图标在组件内部，使用 catchtap="onRefreshTap"
-                    # 需要找到 .menu-icon 元素
-                    try:
-                        # 尝试直接查找刷新图标
-                        refresh_icon = page.get_element('.menu-icon')
-                        if refresh_icon:
-                            refresh_element = refresh_icon
-                            print('✅ 找到刷新图标')
-                        else:
-                            print('⚠️  未找到刷新图标，尝试点击卡片内的刷新区域')
-                            # 如果找不到，尝试通过 evaluate 触发刷新
-                    except:
-                        print('⚠️  查找刷新图标失败')
-            except:
-                pass
+                    # 使用 >>> 选择器穿透组件边界查找刷新图标
+                    refresh_element = page.get_element('discover-circle-card>>>.menu-icon')
+                    if refresh_element:
+                        print('✅ 找到刷新图标')
+            except Exception as e:
+                error_msg = str(e).lower()
+                # 只有"找不到元素"是正常的，其他错误立即失败
+                if 'not found' not in error_msg and 'no such' not in error_msg:
+                    print(f'❌ 查找卡片时发生严重错误: {str(e)}')
+                    traceback.print_exc()
+                    return False
             
-            if not has_card:
+            # 如果没有卡片，查找空状态
+            if not refresh_element:
                 try:
-                    empty = page.get_element('.discover-empty')
-                    if empty:
-                        has_empty = True
-                        refresh_element = empty
+                    refresh_element = page.get_element('.discover-empty')
+                    if refresh_element:
                         print('✅ 找到空状态刷新区域')
-                except:
-                    pass
+                except Exception as e:
+                    error_msg = str(e).lower()
+                    # 只有"找不到元素"是正常的，其他错误立即失败
+                    if 'not found' not in error_msg and 'no such' not in error_msg:
+                        print(f'❌ 查找空状态时发生严重错误: {str(e)}')
+                        traceback.print_exc()
+                        return False
             
             if not refresh_element:
-                print('⚠️  未找到刷新元素')
-                # 尝试通过 JS 直接触发刷新方法
-                js_trigger_refresh = """
-function triggerRefresh() {
-    const pages = getCurrentPages();
-    const currentPage = pages[pages.length - 1];
-    if (currentPage && currentPage.refreshRecommendations) {
-        currentPage.refreshRecommendations();
-        return true;
-    }
-    return false;
-}
-                """
-                trigger_result = self.mini.app.evaluate(js_trigger_refresh.strip(), sync=True)
-                triggered = trigger_result.get('result', {}).get('result', False)
-                if triggered:
-                    print('✅ 通过 JS 触发刷新方法')
-                else:
-                    print('❌ 无法触发刷新')
-                    return False
-            else:
-                # 点击刷新元素
+                print('❌ 未找到刷新元素')
+                return False
+            
+            # 获取刷新前的朋友圈ID
+            before_circles = page.data.get('recommendedCircles', [])
+            if not before_circles or len(before_circles) == 0:
+                print('⚠️  刷新前没有朋友圈数据，无法验证')
                 refresh_element.tap()
-                print('✅ 点击刷新元素')
+                time.sleep(1.0)
+                print('✅ 已执行刷新操作（无数据可验证）')
+                return True
             
-            # 立即检查 loading 状态（刷新刚开始）
-            time.sleep(0.1)
-            js_check_loading = """
-function checkLoadingState() {
-    const pages = getCurrentPages();
-    const currentPage = pages[pages.length - 1];
-    if (!currentPage || !currentPage.data) {
-        return { isLoadingRecommendations: false };
-    }
-    return {
-        isLoadingRecommendations: currentPage.data.isLoadingRecommendations || false
-    };
-}
-            """
-            loading_result = self.mini.app.evaluate(js_check_loading.strip(), sync=True)
-            loading_state = loading_result.get('result', {}).get('result', {})
+            before_id = before_circles[0].get('_id', '')
+            print(f'📊 刷新前: ID={before_id[:8]}...')
             
-            if loading_state.get('isLoadingRecommendations'):
-                print('✅ 检测到加载状态：isLoadingRecommendations = true')
-                # 等待加载完成
-                time.sleep(0.8)  # 压缩到极限
-                print('✅ 刷新操作已完成')
+            # 点击刷新
+            refresh_element.tap()
+            print('✅ 点击刷新按钮')
+            
+            # 等待刷新完成
+            time.sleep(1.2)
+            
+            # 获取刷新后的朋友圈ID
+            page = self.mini.app.current_page  # 重新获取页面
+            after_circles = page.data.get('recommendedCircles', [])
+            
+            if not after_circles or len(after_circles) == 0:
+                print('❌ 刷新后没有数据')
+                return False
+            
+            after_id = after_circles[0].get('_id', '')
+            print(f'📊 刷新后: ID={after_id[:8]}...')
+            
+            # 验证：circleId 必须改变
+            if before_id != after_id:
+                print(f'✅ 验证通过：朋友圈已更换')
+                print(f'   {before_id[:12]}... → {after_id[:12]}...')
                 return True
             else:
-                # 可能刷新太快，检查是否有数据变化
-                print('⚠️  未检测到 loading 状态，可能刷新速度太快')
-                time.sleep(0.3)  # 压缩到极限
-                print('✅ 刷新操作已触发（未检测到 loading，可能速度太快）')
-                return True
+                print(f'❌ 验证失败：刷新后仍是同一个朋友圈')
+                return False
                 
         except Exception as e:
             print(f'❌ 测试异常: {str(e)}')
@@ -356,138 +338,107 @@ function checkLoadingState() {
         try:
             self.navigate_to_main()
             page = self.mini.app.current_page
-            time.sleep(0.3)  # 压缩到极限
+            time.sleep(0.3)
             
             ensure_popup_closed(self.mini)
-            time.sleep(0.8)  # 压缩到极限
+            time.sleep(0.8)
             
             # 查找发现朋友圈卡片
-            discover_card = None
             try:
                 discover_card = page.get_element('discover-circle-card')
-            except:
-                pass
-            
-            if not discover_card:
-                print('⚠️  未找到发现朋友圈卡片（可能没有推荐）')
-                return True  # 没有推荐也是正常的
-            
-            print('✅ 找到发现朋友圈卡片')
-            
-            # 记录当前页面路径
-            js_get_current_path = """
-function getCurrentPath() {
-    const pages = getCurrentPages();
-    const currentPage = pages[pages.length - 1];
-    return currentPage ? currentPage.route || currentPage.__route__ : '';
-}
-            """
-            before_result = self.mini.app.evaluate(js_get_current_path.strip(), sync=True)
-            before_path = before_result.get('result', {}).get('result', '')
-            print(f'点击前页面: {before_path}')
-            
-            # 使用 JS 触发点击事件，确保能正确触发
-            js_trigger_click = """
-function triggerCardClick() {
-    const pages = getCurrentPages();
-    const currentPage = pages[pages.length - 1];
-    if (!currentPage) {
-        return { success: false, reason: 'no_page' };
-    }
-    
-    // 查找推荐朋友圈数据
-    const recommendedCircles = currentPage.data.recommendedCircles;
-    if (!recommendedCircles || recommendedCircles.length === 0) {
-        return { success: false, reason: 'no_data' };
-    }
-    
-    const circleId = recommendedCircles[0]._id;
-    if (!circleId) {
-        return { success: false, reason: 'no_id' };
-    }
-    
-    // 直接调用页面的 viewRecommendedCircle 方法
-    if (currentPage.viewRecommendedCircle) {
-        currentPage.viewRecommendedCircle({
-            detail: { circleId: circleId }
-        });
-        return { success: true, circleId: circleId };
-    }
-    
-    return { success: false, reason: 'no_method' };
-}
-            """
-            trigger_result = self.mini.app.evaluate(js_trigger_click.strip(), sync=True)
-            trigger_data = trigger_result.get('result', {}).get('result', {})
-            
-            if not trigger_data.get('success'):
-                reason = trigger_data.get('reason', 'unknown')
-                print(f'❌ 触发点击失败，原因: {reason}')
-                return False
-            
-            print(f'✅ 通过 JS 触发点击，circleId: {trigger_data.get("circleId")}')
-            
-            # 检查预加载状态
-            time.sleep(0.3)  # 压缩到极限
-            js_check_preload = """
-function checkPreloadState() {
-    const pages = getCurrentPages();
-    const currentPage = pages[pages.length - 1];
-    if (!currentPage || !currentPage.data) {
-        return { isPreloading: false };
-    }
-    return {
-        isPreloading: currentPage.data.isPreloadingCircle || false
-    };
-}
-            """
-            preload_result = self.mini.app.evaluate(js_check_preload.strip(), sync=True)
-            preload_state = preload_result.get('result', {}).get('result', {})
-            
-            if preload_state.get('isPreloading'):
-                print('✅ 检测到预加载状态')
-            
-            # 等待页面跳转或预加载完成（压缩到2秒）
-            max_wait = 2.0
-            waited = 0
-            jumped = False
-            
-            while waited < max_wait:
-                time.sleep(0.3)  # 压缩到极限
-                waited += 0.3
-                
-                # 检查页面是否已跳转
-                check_result = self.mini.app.evaluate(js_get_current_path.strip(), sync=True)
-                current_path = check_result.get('result', {}).get('result', '')
-                
-                if current_path != before_path:
-                    jumped = True
-                    print(f'✅ 检测到页面跳转: {before_path} -> {current_path}')
-                    break
-            
-            if jumped:
-                after_result = self.mini.app.evaluate(js_get_current_path.strip(), sync=True)
-                after_path = after_result.get('result', {}).get('result', '')
-                
-                if 'details' in after_path:
-                    print(f'✅ 成功跳转到 details 页面')
-                    self.page_loaded = False  # 标记已离开main页面
+                print('✅ 找到发现朋友圈卡片')
+            except Exception as e:
+                # 区分"找不到元素"和"其他错误"
+                error_msg = str(e).lower()
+                if 'not found' in error_msg or 'no such' in error_msg or 'element' in error_msg:
+                    # 元素不存在是正常的（可能没有推荐）
+                    print('⚠️  未找到发现朋友圈卡片（可能没有推荐）')
                     return True
                 else:
-                    print(f'✅ 跳转到页面: {after_path}')
+                    # 其他异常（页面崩溃、网络错误等）应该让测试失败
+                    print(f'❌ 查找卡片时发生异常: {str(e)}')
+                    traceback.print_exc()
+                    return False
+            
+            # 获取点击前的朋友圈ID
+            before_circles = page.data.get('recommendedCircles', [])
+            if not before_circles or len(before_circles) == 0:
+                print('⚠️  没有朋友圈数据，跳过测试')
+                return True
+            
+            expected_circle_id = before_circles[0].get('_id', '')
+            before_path = page.path
+            print(f'点击前: {before_path}')
+            print(f'目标朋友圈: {expected_circle_id[:12]}...')
+            
+            # 点击卡片（使用组件内部区域点击）
+            try:
+                card_content = page.get_element('discover-circle-card>>>.post-card')
+                if card_content:
+                    card_content.tap()
+                    print('✅ 点击卡片内容区域')
+                else:
+                    discover_card.tap()
+                    print('✅ 点击卡片')
+            except Exception as e:
+                error_msg = str(e).lower()
+                # 只有"找不到内部元素"时才用备用方案，其他错误立即失败
+                if 'not found' in error_msg or 'no such' in error_msg:
+                    # 找不到内部元素，使用外部卡片点击
+                    discover_card.tap()
+                    print('✅ 点击卡片（备用方案）')
+                else:
+                    # 页面崩溃、网络错误等严重问题
+                    print(f'❌ 点击卡片时发生严重错误: {str(e)}')
+                    traceback.print_exc()
+                    return False
+            
+            # 等待页面跳转
+            time.sleep(1.5)
+            
+            # 获取跳转后的页面
+            current_page = self.mini.app.current_page
+            current_path = current_page.path
+            
+            # 验证：是否跳转到 details 页面
+            if 'details' in current_path:
+                print(f'✅ 检测到页面跳转: {before_path} -> {current_path}')
+                
+                # 验证URL参数中的 circleId
+                query = current_page.query
+                url_circle_id = query.get('circleId', '')
+                
+                if url_circle_id == expected_circle_id:
+                    print(f'✅ 验证通过：跳转到正确的朋友圈详情页')
+                    print(f'   circleId: {url_circle_id[:12]}...')
+                    
+                    # 验证source参数
+                    source = query.get('source', '')
+                    if source == 'discover':
+                        print(f'✅ source参数正确: {source}')
+                    
                     self.page_loaded = False
                     return True
-            else:
-                # 没有跳转，检查是否有弹窗
-                print('⚠️  等待 {:.1f} 秒后未检测到页面跳转'.format(waited))
+                else:
+                    print(f'❌ 验证失败：跳转的朋友圈ID不匹配')
+                    print(f'   期望: {expected_circle_id[:12]}...')
+                    print(f'   实际: {url_circle_id[:12] if url_circle_id else "无"}...')
+                    return False
+            
+            # 未跳转到details
+            elif current_path == before_path:
+                print(f'⚠️  未检测到页面跳转')
                 result = check_popup_visible(self.mini)
                 if result['visible']:
-                    print(f'✅ 触发了注册弹窗（也是预期行为），reason: "{result["reason"]}"')
+                    print(f'✅ 触发了注册弹窗（也是预期行为）')
                     close_popup_by_mask(self.mini, wait_visible=0.4)
                     return True
                 else:
-                    print('❌ 既未跳转也未弹窗，测试失败')
+                    print('❌ 既未跳转也未弹窗')
                     return False
+            else:
+                print(f'❌ 跳转到了意外的页面: {current_path}')
+                return False
                 
         except Exception as e:
             print(f'❌ 测试异常: {str(e)}')
