@@ -152,6 +152,7 @@
 
   <!-- 用户信息弹出层 -->
   <user-info-popup
+    id="userInfoPopup"
     visible="{{userInfoPopupVisible}}"
     rejectReason="{{userInfoPopupReason}}"
     pendingIntent="{{userInfoPopupIntent}}"
