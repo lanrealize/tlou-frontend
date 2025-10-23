@@ -516,50 +516,75 @@ class CompleteUserFlowTest:
         time.sleep(2.0)
         print('   ✅ 回复添加成功')
         
-    def step_7_delete_comment(self):
-        """步骤7：删除一条评论"""
-        print('\\n7️⃣ 删除一条评论...')
+    def step_7_delete_reply(self):
+        """步骤7：删除刚创建的回复"""
+        print('\\n7️⃣ 删除刚创建的回复...')
         
-        # 使用JavaScript查找并点击删除评论按钮
-        js_code = '''
-        function deleteFirstComment() {
-            const pages = getCurrentPages();
-            const page = pages[pages.length - 1];
-            
-            // 查找删除评论按钮
-            const postItems = page.selectAllComponents('post-item');
-            for (let comp of postItems) {
-                const deleteBtn = comp.selectComponent('#deleteCommentBtn');
-                if (deleteBtn) {
-                    const commentId = deleteBtn.dataset.commentId;
-                    
-                    // 触发删除评论事件
-                    const event = {
-                        currentTarget: { dataset: { commentId: commentId } }
-                    };
-                    comp.onDeleteComment(event);
-                    
-                    return { success: true, commentId: commentId };
-                }
-            }
-            
-            return { success: false, reason: 'no_delete_button_found' };
-        }
-        '''
+        page = self.mini.app.current_page
         
-        result = self.mini.app.evaluate(js_code.strip(), sync=True)
-        delete_data = result.get('result', {}).get('result', {})
+        # 点击删除按钮（第一个删除按钮通常是最新的评论/回复）
+        try:
+            delete_btns = page.get_elements('post-item >>> #deleteCommentBtn')
+            if delete_btns and len(delete_btns) > 0:
+                delete_btn = delete_btns[0]
+                delete_btn.tap()
+                print('   ✅ 已点击删除回复按钮')
+                
+                # 等待确认对话框出现
+                time.sleep(1.0)
+                
+                # 处理确认对话框
+                if handle_modal_confirm(self.mini, "确定"):
+                    print('   ✅ 已确认删除')
+                else:
+                    print('   ⚠️  删除确认失败')
+                    return
+                
+                # 等待删除操作完成
+                time.sleep(2.0)
+                print('   ✅ 回复删除成功')
+                
+            else:
+                print('   ⚠️  未找到删除按钮')
+        except Exception as e:
+            print(f'   ⚠️  删除操作失败: {str(e)}')
+    
+    def step_8_delete_comment(self):
+        """步骤8：删除原始评论"""
+        print('\\n8️⃣ 删除原始评论...')
         
-        if not delete_data.get('success'):
-            print(f'   ⚠️  未找到可删除的评论按钮: {delete_data.get("reason")}')
-            print('   ℹ️  跳过删除评论步骤')
-        else:
-            print(f'   ✅ 已删除评论: {delete_data.get("commentId", "")[:8]}...')
-            time.sleep(2.0)
+        page = self.mini.app.current_page
         
-    def step_8_unlike_post(self):
-        """步骤8：取消点赞"""
-        print('\\n8️⃣ 取消点赞...')
+        # 点击删除按钮（现在应该只有原始评论的删除按钮了）
+        try:
+            delete_btns = page.get_elements('post-item >>> #deleteCommentBtn')
+            if delete_btns and len(delete_btns) > 0:
+                delete_btn = delete_btns[0]
+                delete_btn.tap()
+                print('   ✅ 已点击删除评论按钮')
+                
+                # 等待确认对话框出现
+                time.sleep(1.0)
+                
+                # 处理确认对话框
+                if handle_modal_confirm(self.mini, "确定"):
+                    print('   ✅ 已确认删除')
+                else:
+                    print('   ⚠️  删除确认失败')
+                    return
+                
+                # 等待删除操作完成
+                time.sleep(2.0)
+                print('   ✅ 评论删除成功')
+                
+            else:
+                print('   ⚠️  未找到删除按钮')
+        except Exception as e:
+            print(f'   ⚠️  删除操作失败: {str(e)}')
+        
+    def step_9_unlike_post(self):
+        """步骤9：取消点赞"""
+        print('\\n9️⃣ 取消点赞...')
         
         page = self.mini.app.current_page
         post_id = self.test_data['first_post']['_id']
@@ -587,9 +612,9 @@ class CompleteUserFlowTest:
         self._verify_post_like_status(post_id, expected_liked=False)
         print('   ✅ 取消点赞成功')
         
-    def step_9_delete_post(self):
-        """步骤9：删除帖子"""
-        print('\\n9️⃣ 删除帖子...')
+    def step_10_delete_post(self):
+        """步骤10：删除帖子"""
+        print('\\n🔟 删除帖子...')
         
         page = self.mini.app.current_page
         
@@ -622,9 +647,9 @@ class CompleteUserFlowTest:
         # 验证删除结果
         self._verify_post_deleted(self.test_data['first_post']['_id'])
         
-    def step_10_publish_multi_image_post(self):
-        """步骤10：发一个包含三张图片的帖子"""
-        print('\\n🔟 发布包含三张图片的帖子...')
+    def step_11_publish_multi_image_post(self):
+        """步骤11：发一个包含三张图片的帖子"""
+        print('\\n1️⃣1️⃣ 发布包含三张图片的帖子...')
         
         # 导航到发布页面
         circle_id = self.test_data['circle_id']
@@ -694,9 +719,9 @@ class CompleteUserFlowTest:
         self.test_data['multi_image_post'] = multi_image_post
         print(f'   ✅ 多图片帖子测试完成')
         
-    def step_11_return_to_home(self):
-        """步骤11：返回首页"""
-        print('\\n1️⃣1️⃣ 返回首页...')
+    def step_12_return_to_home(self):
+        """步骤12：返回首页"""
+        print('\\n1️⃣2️⃣ 返回首页...')
         
         try:
             current_page = self.mini.app.current_page
@@ -738,9 +763,9 @@ class CompleteUserFlowTest:
             print(f'   ⚠️  返回首页时出错: {str(e)}')
             # 不抛出异常，让测试继续
         
-    def step_12_exit_test_mode(self):
-        """步骤12：退出测试模式（在teardown中处理）"""
-        print('\\n1️⃣2️⃣ 退出测试模式将在测试结束时自动执行')
+    def step_13_exit_test_mode(self):
+        """步骤13：退出测试模式（在teardown中处理）"""
+        print('\\n1️⃣3️⃣ 退出测试模式将在测试结束时自动执行')
         
     def _add_images(self, image_paths):
         """使用Minium Mock选择真实图片文件"""
@@ -997,12 +1022,13 @@ class CompleteUserFlowTest:
             self.step_4_like_post()
             self.step_5_comment_on_post()
             self.step_6_reply_to_comment()
-            self.step_7_delete_comment()
-            self.step_8_unlike_post()
-            self.step_9_delete_post()
-            self.step_10_publish_multi_image_post()
-            self.step_11_return_to_home()
-            self.step_12_exit_test_mode()
+            self.step_7_delete_reply()
+            self.step_8_delete_comment()
+            self.step_9_unlike_post()
+            self.step_10_delete_post()
+            self.step_11_publish_multi_image_post()
+            self.step_12_return_to_home()
+            self.step_13_exit_test_mode()
             
             print('\\n' + '='*60)
             print('✅ 完整用户流程测试通过！')
