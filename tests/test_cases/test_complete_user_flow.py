@@ -743,58 +743,86 @@ class CompleteUserFlowTest:
         print('\\n1️⃣2️⃣ 退出测试模式将在测试结束时自动执行')
         
     def _add_images(self, image_paths):
-        """使用JavaScript模拟添加图片"""
-        print(f'   📸 模拟添加 {len(image_paths)} 张图片...')
+        """使用Minium Mock选择真实图片文件"""
+        print(f'   📸 选择 {len(image_paths)} 张真实图片...')
         
-        # 构造图片数据
-        js_images = []
-        for i, path in enumerate(image_paths):
-            # 模拟wx.chooseImages返回的临时文件路径
-            temp_path = f'wxfile://tmp_{int(time.time() * 1000)}_{i}.jpg'
-            js_images.append({
-                'path': temp_path,
-                'size': 102400  # 模拟文件大小
-            })
+        # 1. 检查测试图片是否存在
+        import os
+        real_images = []
+        for path in image_paths:
+            if os.path.exists(path):
+                real_images.append(path)
+                print(f'   📄 找到测试图片: {os.path.basename(path)}')
+            else:
+                print(f'   ⚠️  图片不存在: {path}')
         
-        js_code = f'''
-        function addTestImages() {{
-            const pages = getCurrentPages();
-            const page = pages[pages.length - 1];
+        if not real_images:
+            raise Exception('没有可用的测试图片文件')
+        
+        # 2. 使用JavaScript直接调用chooseMedia的success回调
+        try:
+            print(f'   🎯 设置真实图片选择回调 {len(real_images)} 张图片')
+            for i, path in enumerate(real_images):
+                size_kb = round(os.path.getsize(path) / 1024, 1) if os.path.exists(path) else 100
+                print(f'   📄 图片{i+1}: {os.path.basename(path)} ({size_kb}KB)')
             
-            const mockImages = {js_images};
+            # 构造Mock结果 - chooseMedia的返回格式
+            mock_result = {
+                "errMsg": "chooseMedia:ok", 
+                "tempFiles": [
+                    {
+                        "tempFilePath": path,
+                        "size": os.path.getsize(path) if os.path.exists(path) else 102400,
+                        "type": "image",
+                        "fileType": "image"
+                    }
+                    for path in real_images
+                ]
+            }
             
-            // 模拟chooseImages的回调
-            const res = {{
-                tempFilePaths: mockImages.map(img => img.path),
-                tempFiles: mockImages
-            }};
+            # 使用Minium内置Mock chooseImages - 正确的参数格式
+            import base64
+            import os
             
-            // 调用页面的图片处理方法
-            if (page.handleImageSelection) {{
-                page.handleImageSelection(res);
-            }} else {{
-                // 直接设置数据
-                const currentImages = page.data.tempImages || [];
-                const newImages = [...currentImages, ...mockImages];
-                page.setData({{ tempImages: newImages }});
-            }}
+            mock_images_data = []
             
-            return {{ success: true, imageCount: mockImages.length }};
-        }}
-        '''
+            for path in real_images:
+                # 获取图片文件名
+                image_name = os.path.basename(path)
+                
+                # 读取图片并编码为base64
+                with open(path, 'rb') as img_file:
+                    b64_data = base64.b64encode(img_file.read()).decode('utf-8')
+                
+                mock_images_data.append({
+                    "name": image_name,
+                    "b64data": b64_data
+                })
+            
+            self.mini.app.mock_choose_images(mock_images_data)
+            print('   ✅ Minium Mock设置成功')
+            
+        except Exception as e:
+            print(f'   ❌ Mock设置失败: {str(e)}')
+            raise Exception(f'Mock设置失败: {str(e)}')
         
-        result = self.mini.app.evaluate(js_code.strip(), sync=True)
-        image_data = result.get('result', {}).get('result', {})
+        # 3. 点击添加图片按钮，触发Mock
+        page = self.mini.app.current_page
+        add_btn = page.get_element('#addImagesBtn')
+        if not add_btn:
+            raise Exception('未找到添加图片按钮')
         
-        if not image_data.get('success'):
-            raise Exception('图片添加失败')
+        add_btn.tap()
+        print('   ✅ 已点击添加图片按钮')
         
-        print(f'   ✅ 已添加 {image_data.get("imageCount", 0)} 张图片')
+        # 4. 等待图片选择和处理完成
+        time.sleep(2.0)
         
-        # 验证图片是否确实显示在页面上
-        time.sleep(1.0)  # 等待图片加载
-        self._verify_images_displayed(len(image_paths))
-        time.sleep(1.0)  # 额外等待确保图片完全加载
+        # 5. 验证图片是否成功加载到页面
+        self._verify_images_displayed(len(real_images))
+        
+        print(f'   ✅ 成功选择了 {len(real_images)} 张真实图片，可进行真实上传')
+        time.sleep(1.0)
         
     def _verify_images_displayed(self, expected_count):
         """验证图片是否显示在页面上"""
