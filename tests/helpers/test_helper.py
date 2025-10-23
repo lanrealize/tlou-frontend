@@ -71,17 +71,27 @@ def exit_test_mode(mini):
     try:
         print('🔄 退出测试模式...')
         
-        # 直接调用 endTestMode()，让它处理所有逻辑（清理 + 恢复身份）
+        # 调用 endTestMode() 并获取返回值（包含清理状态）
         js_code = """
 function callEndTestMode() {
     return getApp().devTools.endTestMode();
 }
         """
-        mini.app.evaluate(js_code.strip())
+        result = mini.app.evaluate(js_code.strip(), sync=True)
         print('✅ endTestMode 调用完成')
         
         # 等待一下，避免与测试中的页面跳转冲突
         time.sleep(0.5)
+        
+        # 检查返回值中的清理状态
+        result_data = result.get('result', {}).get('result', {})
+        cleanup_success = result_data.get('cleanupSuccess', False)
+        
+        if not cleanup_success:
+            print('❌ 后端清理测试用户失败')
+            return False
+        
+        print('✅ 后端清理测试用户成功')
         
         # 返回 main 页面结束测试
         print('🔙 返回 main 页面...')

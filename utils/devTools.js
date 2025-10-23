@@ -158,11 +158,12 @@ async function endTestMode() {
     console.log('✅ 测试模式已结束');
     console.log('========================================');
     
-    return true;
+    // 返回清理状态，供测试脚本验证
+    return { success: true, cleanupSuccess };
 
   } catch (error) {
     console.error('❌ 结束测试模式失败:', error);
-    return false;
+    return { success: false, cleanupSuccess: false };
   }
 }
 
