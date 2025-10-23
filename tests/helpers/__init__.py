@@ -11,7 +11,9 @@ from .test_helper import (
     exit_test_mode,
     check_circle_status_action,
     navigate_to_details,
-    navigate_to_details_from_share
+    navigate_to_details_from_share,
+    complete_user_login,
+    verify_login_status
 )
 
 from .popup_helper import (
@@ -29,6 +31,8 @@ __all__ = [
     'check_circle_status_action',
     'navigate_to_details',
     'navigate_to_details_from_share',
+    'complete_user_login',
+    'verify_login_status',
     
     # popup_helper
     'check_popup_visible',
