@@ -35,6 +35,7 @@
       <view class="action-right">
         <!-- 发布按钮 -->
         <button 
+          id="publishBtn"
           class="nav-publish-btn {{(content.length > 0 || tempImages.length > 0) && !showViolationAlert ? 'active' : 'disabled'}}"
           bindtap="publishPost"
           disabled="{{isPublishing || (content.length === 0 && tempImages.length === 0) || showViolationAlert}}"
@@ -54,6 +55,7 @@
   <view class="content-section">
     <view class="content-input-container">
       <textarea
+        id="contentTextarea"
         class="content-textarea"
         placeholder="写点什么..."
         value="{{content}}"
@@ -164,6 +166,7 @@
 
     <!-- 初始添加图片按钮 -->
     <view 
+      id="addImagesBtn"
       class="add-images-btn-initial" 
       bindtap="chooseImages"
       wx:if="{{tempImages.length === 0}}"

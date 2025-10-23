@@ -92,7 +92,7 @@
   <!-- 创建区域和历史记录功能 -->
   <view class="action-row">
     <!-- 创建新朋友圈 -->
-    <view class="create-section" bindtap="createCircleDirectly">
+    <view id="createCircleBtn" class="create-section" bindtap="createCircleDirectly">
       <view class="create-bg"></view>
       <view class="create-content">
         <view class="scan-icon">

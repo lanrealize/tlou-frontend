@@ -132,6 +132,7 @@
         <view class="comment-input-content">
           <view class="input-row">
             <textarea
+              id="commentTextarea"
               class="comment-textarea"
               placeholder="{{replyToUser ? '@' + replyToUser.username + ' ' : '说点什么...'}}"
               value="{{commentText}}"
@@ -145,7 +146,7 @@
               disable-default-padding="{{true}}"
               auto-height="{{false}}"
             ></textarea>
-            <button class="send-btn theme-btn-small" bindtap="sendComment">发送</button>
+            <button id="sendCommentBtn" class="send-btn theme-btn-small" bindtap="sendComment">发送</button>
           </view>
         </view>
       </view>

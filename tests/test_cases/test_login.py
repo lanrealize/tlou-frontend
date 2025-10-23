@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-重构后的用户登录测试 - 使用封装的登录工具函数
+用户登录测试 - 使用封装的登录工具函数
 
 测试流程：
 1. 启动小程序并进入测试模式
@@ -30,13 +30,13 @@ from helpers import (
 
 def test_login_with_refactored_functions():
     """
-    使用重构的工具函数进行登录测试
+    登录测试
     
     Returns:
         bool: 测试是否通过
     """
     try:
-        print('\n📝 开始重构后的登录测试')
+        print('\n📝 开始登录测试')
         print('='*60)
         
         # 1. 点击登录按钮
@@ -59,7 +59,7 @@ def test_login_with_refactored_functions():
         
         login_result = complete_user_login(
             mini, 
-            nickname='重构测试用户',
+            nickname='测试用户',
             avatar_url='https://tlou.images.wltech-service.site/testResources/testAvatar.jpg'
         )
         
@@ -103,7 +103,7 @@ def main():
     
     try:
         print('\n' + '='*60)
-        print('🔐 重构后的用户登录测试')
+        print('🔐 用户登录测试')
         print('='*60)
         
         # 1. 启动小程序
@@ -130,10 +130,10 @@ def main():
         # 5. 显示测试结果
         print('\n' + '='*60)
         if success:
-            print('✅ 重构测试通过！')
+            print('✅ 测试通过！')
             print('🎯 封装的登录工具函数工作正常')
         else:
-            print('❌ 重构测试失败')
+            print('❌ 测试失败')
         print('='*60)
         
     except Exception as e:

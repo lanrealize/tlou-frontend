@@ -13,7 +13,9 @@ from .test_helper import (
     navigate_to_details,
     navigate_to_details_from_share,
     complete_user_login,
-    verify_login_status
+    verify_login_status,
+    handle_modal_confirm,
+    handle_modal_cancel
 )
 
 from .popup_helper import (
@@ -33,6 +35,8 @@ __all__ = [
     'navigate_to_details_from_share',
     'complete_user_login',
     'verify_login_status',
+    'handle_modal_confirm',
+    'handle_modal_cancel',
     
     # popup_helper
     'check_popup_visible',
