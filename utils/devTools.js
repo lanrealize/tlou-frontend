@@ -121,16 +121,24 @@ async function endTestMode() {
   }
 
   try {
-    // 1. 检查是否在测试模式
-    const isInTestMode = wx.getStorageSync(STORAGE_KEYS.TEST_MODE);
-    if (!isInTestMode) {
-      console.log('当前不在测试模式');
-      return false;
-    }
-
-    // 2. 获取测试 openid
+    // 1. 检查是否在测试模式或存在异常测试状态
+    const testModeFlag = wx.getStorageSync(STORAGE_KEYS.TEST_MODE);
     const testOpenid = wx.getStorageSync(STORAGE_KEYS.TEST_OPENID);
     const realIdentity = wx.getStorageSync(STORAGE_KEYS.REAL_IDENTITY);
+    
+    // 严格检查：只有 testModeFlag === true 才是正常测试模式
+    // 但如果有测试相关标记存在，说明可能是异常状态，也需要清理
+    const hasTestState = testModeFlag === true || testOpenid || realIdentity;
+    
+    if (!hasTestState) {
+      console.log('当前不在测试模式，且无测试状态残留');
+      return false;
+    }
+    
+    // 检测异常状态
+    if (testModeFlag !== true && testModeFlag !== undefined) {
+      console.warn(`⚠️ 检测到异常测试状态标记: "${testModeFlag}"，执行清理`);
+    }
 
     console.log('========================================');
     console.log('🔄 开始退出测试模式');
