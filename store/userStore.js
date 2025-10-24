@@ -36,10 +36,7 @@ const userStore = observable({
       case USER_STATUS.LOGGEDIN:
         this.userInfo = data.userInfo;
         this.errorMessage = '';
-        // 只有真实身份才同步到storage
-        if (this.currentIdentityType === IDENTITY_TYPE.REAL) {
-          this._syncToStorage(data.userInfo);
-        }
+        // MobX 状态不写入 storage，storage 只由后端返回数据直接写入
         this._syncToGlobal(status, data.userInfo);
         break;
         
@@ -241,28 +238,6 @@ const userStore = observable({
   },
 
   // 🔧 工具方法
-  
-  _syncToStorage(userInfo) {
-    if (userInfo) {
-      // 使用异步存储避免阻塞UI线程
-      wx.setStorage({
-        key: 'userInfo',
-        data: userInfo,
-        fail: (error) => {
-          // 降级到同步存储
-          try {
-            wx.setStorageSync('userInfo', userInfo);
-          } catch (syncError) {
-            // 静默失败
-          }
-        }
-      });
-    }
-    
-    // 虚拟身份不持久化，无需同步到存储
-  },
-  
-  // 虚拟身份不持久化，删除相关存储方法
   
   // 简化后：不再需要复杂的状态一致性检查
   _checkAndFixStateConsistency() {
