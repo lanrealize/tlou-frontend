@@ -24,6 +24,12 @@ from .popup_helper import (
     ensure_popup_closed
 )
 
+# 新增的辅助模块
+from . import js_helpers
+from . import element_helpers
+from . import validation_helpers
+from . import post_helpers
+
 __all__ = [
     # test_helper
     'launch_miniprogram',
@@ -42,4 +48,10 @@ __all__ = [
     'check_popup_visible',
     'close_popup_by_mask',
     'ensure_popup_closed',
+    
+    # 新增模块
+    'js_helpers',
+    'element_helpers',
+    'validation_helpers',
+    'post_helpers',
 ]

@@ -514,6 +514,7 @@ async function cleanupTestUser(testOpenid) {
     
     wx.hideLoading();
     
+    // ✅ 处理成功的情况
     if (res.statusCode === 200 && res.data.success) {
       const summary = res.data.data?.summary || {};
       
@@ -524,8 +525,17 @@ async function cleanupTestUser(testOpenid) {
       
       // 不弹窗，只在控制台记录
       return true;
-    } else {
-      throw new Error(res.data?.message || '清理失败');
+    } 
+    // ✅ 处理 401 的情况（用户不存在）
+    else if (res.statusCode === 401) {
+      console.log('ℹ️  测试用户不存在（可能未注册），无需清理');
+      console.log('   这是正常情况，例如测试未登录状态时');
+      // 返回 true 表示"清理成功"（因为用户本来就不存在）
+      return true;
+    } 
+    // ❌ 其他错误情况
+    else {
+      throw new Error(res.data?.message || `HTTP ${res.statusCode}: 清理失败`);
     }
     
   } catch (error) {

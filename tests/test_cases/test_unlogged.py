@@ -573,7 +573,24 @@ class TestUnloggedMain:
                 # 先找到post-item组件
                 post_item = details_page.get_element('post-item')
                 if not post_item:
-                    print('⚠️  未找到帖子（可能该朋友圈没有内容）')
+                    # 🔧 需要区分"圈子加载失败"和"圈子没有帖子"
+                    js_code = """
+                    function checkCircleLoaded() {
+                        const pages = getCurrentPages();
+                        const page = pages[pages.length - 1];
+                        return {
+                            hasCircle: !!(page.data.circle && page.data.circle._id)
+                        };
+                    }
+                    """
+                    check_result = self.mini.app.evaluate(js_code.strip(), sync=True)
+                    circle_state = check_result.get('result', {}).get('result', {})
+                    
+                    if not circle_state.get('hasCircle'):
+                        print('❌ 圈子数据未加载成功')
+                        return False
+                    
+                    print('⚠️  圈子存在但没有帖子，跳过测试')
                     return True
                 
                 print('✅ 找到帖子')
@@ -658,7 +675,24 @@ class TestUnloggedMain:
                 # 先找到post-item组件
                 post_item = details_page.get_element('post-item')
                 if not post_item:
-                    print('⚠️  未找到帖子（可能该朋友圈没有内容）')
+                    # 🔧 需要区分"圈子加载失败"和"圈子没有帖子"
+                    js_code = """
+                    function checkCircleLoaded() {
+                        const pages = getCurrentPages();
+                        const page = pages[pages.length - 1];
+                        return {
+                            hasCircle: !!(page.data.circle && page.data.circle._id)
+                        };
+                    }
+                    """
+                    check_result = self.mini.app.evaluate(js_code.strip(), sync=True)
+                    circle_state = check_result.get('result', {}).get('result', {})
+                    
+                    if not circle_state.get('hasCircle'):
+                        print('❌ 圈子数据未加载成功')
+                        return False
+                    
+                    print('⚠️  圈子存在但没有帖子，跳过测试')
                     return True
                 
                 print('✅ 找到帖子')
@@ -743,6 +777,23 @@ class TestUnloggedMain:
                 # 设置按钮在右上角的.setting-btn
                 settings_btn = details_page.get_element('.setting-btn')
                 if not settings_btn:
+                    # 🔧 需要区分"圈子加载失败"和"其他原因"
+                    js_code = """
+                    function checkCircleLoaded() {
+                        const pages = getCurrentPages();
+                        const page = pages[pages.length - 1];
+                        return {
+                            hasCircle: !!(page.data.circle && page.data.circle._id)
+                        };
+                    }
+                    """
+                    check_result = self.mini.app.evaluate(js_code.strip(), sync=True)
+                    circle_state = check_result.get('result', {}).get('result', {})
+                    
+                    if not circle_state.get('hasCircle'):
+                        print('❌ 圈子数据未加载成功')
+                        return False
+                    
                     print('⚠️  未找到设置按钮')
                     return True
                 
@@ -848,13 +899,15 @@ class TestUnloggedMain:
         print('-'*60)
         
         try:
-            # 使用新工具函数：导航到指定圈子（该圈子有评论）
-            TEST_CIRCLE_ID = '68f4bf50aa1585d65eef34ce'
+            # ⚠️ 注意：这个测试需要一个存在且有评论的圈子
+            # 如果圈子不存在，测试应该失败而不是跳过
+            TEST_CIRCLE_ID = '68fad3c50b3028ca31d0b3ca'
             result = navigate_to_details(self.mini, circle_id=TEST_CIRCLE_ID)
             
             if not result['success']:
-                print('❌ 导航失败')
-                return False
+                print(f'❌ 导航失败: {result.get("error", "未知错误")}')
+                print('⚠️  测试圈子可能不存在，请更新TEST_CIRCLE_ID为一个有效的圈子ID')
+                return False  # 🔧 圈子不存在应该是测试失败，而不是跳过
             
             print(f'✅ 已进入测试圈子: {TEST_CIRCLE_ID}')
             
@@ -868,8 +921,60 @@ class TestUnloggedMain:
                 # 查找第一个评论的回复按钮
                 reply_button = page.get_element('post-item>>>.reply-btn')
                 if not reply_button:
-                    print('⚠️  未找到回复按钮（可能该圈子没有评论）')
-                    return True
+                    # 🔧 区分"没有评论"和"圈子加载失败"两种情况
+                    # 详细检查圈子和评论数据
+                    js_code = """
+                    function checkCircleAndComments() {
+                        const pages = getCurrentPages();
+                        const page = pages[pages.length - 1];
+                        
+                        const hasCircle = !!(page.data.circle && page.data.circle._id);
+                        const hasPosts = !!(page.data.posts && page.data.posts.length > 0);
+                        
+                        // 检查是否有评论
+                        let hasComments = false;
+                        let commentCount = 0;
+                        if (hasPosts && page.data.posts) {
+                            for (const post of page.data.posts) {
+                                if (post.comments && post.comments.length > 0) {
+                                    hasComments = true;
+                                    commentCount += post.comments.length;
+                                }
+                            }
+                        }
+                        
+                        return {
+                            hasCircle: hasCircle,
+                            hasPosts: hasPosts,
+                            hasComments: hasComments,
+                            commentCount: commentCount
+                        };
+                    }
+                    """
+                    check_result = self.mini.app.evaluate(js_code.strip(), sync=True)
+                    circle_state = check_result.get('result', {}).get('result', {})
+                    
+                    if not circle_state.get('hasCircle'):
+                        print('❌ 圈子数据未加载成功，可能圈子不存在')
+                        return False
+                    
+                    if not circle_state.get('hasPosts'):
+                        print('❌ 测试失败：圈子存在但没有帖子')
+                        print('⚠️  test_details_006 需要一个有评论的圈子来测试回复功能')
+                        print(f'⚠️  请更新 TEST_CIRCLE_ID 为一个有评论的圈子ID')
+                        return False  # 🔧 没有帖子意味着无法测试，应该失败
+                    
+                    if not circle_state.get('hasComments'):
+                        print('❌ 测试失败：圈子有帖子但没有评论')
+                        print(f'   评论数: {circle_state.get("commentCount", 0)}')
+                        print('⚠️  test_details_006 需要一个有评论的圈子来测试回复功能')
+                        print(f'⚠️  请更新 TEST_CIRCLE_ID 为一个有评论的圈子ID')
+                        return False  # 🔧 没有评论意味着无法测试回复功能，应该失败
+                    
+                    # 如果有评论但找不到回复按钮，可能是UI问题
+                    print(f'❌ 测试失败：找到 {circle_state.get("commentCount", 0)} 条评论，但未找到回复按钮')
+                    print('⚠️  这可能是UI渲染问题或元素选择器错误')
+                    return False
                 
                 print('✅ 找到回复按钮')
                 
@@ -899,8 +1004,8 @@ class TestUnloggedMain:
             except Exception as e:
                 error_msg = str(e).lower()
                 if 'not found' in error_msg:
-                    print('⚠️  未找到回复按钮（可能没有评论）')
-                    return True
+                    print('⚠️  查找元素失败，可能是页面加载问题')
+                    return False  # 🔧 查找失败应该是测试问题，不应该跳过
                 else:
                     print(f'❌ 发生异常: {str(e)}')
                     traceback.print_exc()

@@ -6,6 +6,14 @@
 
 import minium
 import time
+from .js_helpers import (
+    js_get_login_status,
+    js_get_circle_id_from_page,
+    js_mock_avatar_upload,
+    js_check_submit_button_enabled,
+    evaluate_js
+)
+from .element_helpers import find_element_safe, input_text_safe, tap_element_safe
 
 # 配置
 CONFIG = {
@@ -15,6 +23,39 @@ CONFIG = {
     'auto_authorize': True  # 自动确认所有弹窗
 }
 
+# Circle Status Action 组件状态配置
+CIRCLE_STATUS_CONFIG = {
+    'member': {
+        'main_title': '发布新动态',
+        'sub_title': '分享你的精彩瞬间',
+        'button_text': '发布'
+    },
+    'invited': {
+        'main_title': '你收到了邀请',
+        'sub_title': '点击右侧按钮加入这个朋友圈',
+        'button_text': '接受邀请'
+    },
+    'applied': {
+        'main_title': '申请已提交',
+        'sub_title': '等待朋友圈主人审核中',
+        'button_text': '审核中'
+    },
+    'can_apply': {
+        'main_title': '公开朋友圈',
+        'sub_title': '你可以申请加入这个朋友圈',
+        'button_text': '申请加入'
+    },
+    'no_access': {
+        'main_title': '无法访问',
+        'sub_title': '无权查看此朋友圈',
+        'button_text': '无权限'
+    }
+}
+
+
+# ============================================
+# 小程序生命周期
+# ============================================
 
 def launch_miniprogram():
     """启动小程序"""
@@ -22,7 +63,7 @@ def launch_miniprogram():
     print('🚀 启动小程序...')
     print('='*60)
     mini = minium.Minium(CONFIG)
-    time.sleep(0.1)  # 压缩到极限
+    time.sleep(0.1)
     print('✅ 小程序启动成功')
     return mini
 
@@ -30,10 +71,14 @@ def launch_miniprogram():
 def close_miniprogram(mini):
     """关闭小程序"""
     if mini:
-        time.sleep(0.2)  # 压缩等待
+        time.sleep(0.2)
         mini.shutdown()
         print('✅ 小程序已关闭\n')
 
+
+# ============================================
+# 测试模式管理
+# ============================================
 
 def enter_test_mode(mini):
     """进入测试模式 - 调用 getApp().devTools.startTestMode()"""
@@ -108,6 +153,10 @@ function callEndTestMode() {
         return False
 
 
+# ============================================
+# 页面导航
+# ============================================
+
 def navigate_to_details(mini, circle_id, source='discover'):
     """
     导航到 details 页面（普通模式）
@@ -119,9 +168,10 @@ def navigate_to_details(mini, circle_id, source='discover'):
         
     Returns:
         dict: {
-            'success': bool,  # 是否成功导航
-            'circle_id': str,  # 圈子ID
-            'url': str  # 完整URL
+            'success': bool,
+            'circle_id': str,
+            'url': str,
+            'error': str
         }
     """
     try:
@@ -137,11 +187,42 @@ def navigate_to_details(mini, circle_id, source='discover'):
         mini.app.navigate_to(url)
         time.sleep(1.5)
         
+        # 检查是否有错误对话框（404等错误）
+        try:
+            js_check_error = """
+            function checkErrorModal() {
+                const pages = getCurrentPages();
+                const page = pages[pages.length - 1];
+                
+                // 检查circle数据是否加载成功
+                if (!page.data.circle || !page.data.circle._id) {
+                    return { hasError: true, reason: 'circle_data_missing' };
+                }
+                
+                return { hasError: false };
+            }
+            """
+            result = mini.app.evaluate(js_check_error.strip(), sync=True)
+            check_result = result.get('result', {}).get('result', {})
+            
+            if check_result.get('hasError'):
+                error_reason = check_result.get('reason', 'unknown')
+                print(f'❌ Details页面加载失败: {error_reason}')
+                return {
+                    'success': False,
+                    'circle_id': circle_id,
+                    'url': url,
+                    'error': f'页面加载失败: {error_reason}'
+                }
+        except Exception as check_error:
+            print(f'⚠️  检查页面状态时出错: {str(check_error)}')
+        
         print('✅ 已进入 details 页面')
         return {
             'success': True,
             'circle_id': circle_id,
-            'url': url
+            'url': url,
+            'error': ''
         }
         
     except Exception as e:
@@ -151,7 +232,8 @@ def navigate_to_details(mini, circle_id, source='discover'):
         return {
             'success': False,
             'circle_id': '',
-            'url': ''
+            'url': '',
+            'error': str(e)
         }
 
 
@@ -166,10 +248,10 @@ def navigate_to_details_from_share(mini, circle_id=None, inviter_id=None):
         
     Returns:
         dict: {
-            'success': bool,  # 是否成功导航
-            'circle_id': str,  # 实际使用的圈子ID
-            'inviter_id': str,  # 实际使用的邀请人ID
-            'url': str  # 完整的分享URL
+            'success': bool,
+            'circle_id': str,
+            'inviter_id': str,
+            'url': str
         }
     """
     try:
@@ -226,6 +308,10 @@ def navigate_to_details_from_share(mini, circle_id=None, inviter_id=None):
         }
 
 
+# ============================================
+# 组件状态检查
+# ============================================
+
 def check_circle_status_action(mini, expected_main_title, expected_sub_title, expected_button_text):
     """
     检查 details 页面底部 circle-status-action 组件的显示内容
@@ -238,11 +324,12 @@ def check_circle_status_action(mini, expected_main_title, expected_sub_title, ex
         
     Returns:
         dict: {
-            'match': bool,  # 是否完全匹配
-            'main_title': str,  # 实际主标题
-            'sub_title': str,  # 实际副标题
-            'button_text': str,  # 实际按钮文本
-            'errors': list  # 不匹配的项列表
+            'match': bool,
+            'user_status': str,
+            'main_title': str,
+            'sub_title': str,
+            'button_text': str,
+            'errors': list
         }
     """
     try:
@@ -252,37 +339,8 @@ def check_circle_status_action(mini, expected_main_title, expected_sub_title, ex
         page_data = page.data
         user_status = page_data.get('userStatus', '')
         
-        # 定义每个状态对应的文本
-        STATUS_CONFIG = {
-            'member': {
-                'main_title': '发布新动态',
-                'sub_title': '分享你的精彩瞬间',
-                'button_text': '发布'
-            },
-            'invited': {
-                'main_title': '你收到了邀请',
-                'sub_title': '点击右侧按钮加入这个朋友圈',
-                'button_text': '接受邀请'
-            },
-            'applied': {
-                'main_title': '申请已提交',
-                'sub_title': '等待朋友圈主人审核中',
-                'button_text': '审核中'
-            },
-            'can_apply': {
-                'main_title': '公开朋友圈',
-                'sub_title': '你可以申请加入这个朋友圈',
-                'button_text': '申请加入'
-            },
-            'no_access': {
-                'main_title': '无法访问',
-                'sub_title': '无权查看此朋友圈',
-                'button_text': '无权限'
-            }
-        }
-        
         # 获取实际显示的文本
-        config = STATUS_CONFIG.get(user_status, {})
+        config = CIRCLE_STATUS_CONFIG.get(user_status, {})
         actual_main_title = config.get('main_title', '')
         actual_sub_title = config.get('sub_title', '')
         actual_button_text = config.get('button_text', '')
@@ -318,6 +376,10 @@ def check_circle_status_action(mini, expected_main_title, expected_sub_title, ex
         }
 
 
+# ============================================
+# 用户登录
+# ============================================
+
 def complete_user_login(mini, nickname='测试用户', avatar_url='https://tlou.images.wltech-service.site/testResources/testAvatar.jpg'):
     """
     完成用户登录流程（通过 user-info-popup）
@@ -336,10 +398,10 @@ def complete_user_login(mini, nickname='测试用户', avatar_url='https://tlou.
         
     Returns:
         dict: {
-            'success': bool,     # 是否成功登录
-            'message': str,      # 成功/失败消息  
-            'user_info': dict,   # 用户信息（成功时）
-            'login_status': str  # 登录状态
+            'success': bool,
+            'message': str,
+            'user_info': dict,
+            'login_status': str
         }
     """
     try:
@@ -365,19 +427,8 @@ def complete_user_login(mini, nickname='测试用户', avatar_url='https://tlou.
         page = mini.app.current_page
         
         try:
-            nickname_input = page.get_element('user-info-popup >>> .nickname-input')
-            if not nickname_input:
-                return {
-                    'success': False,
-                    'message': '未找到昵称输入框',
-                    'user_info': None,
-                    'login_status': None
-                }
-            
-            nickname_input.input(nickname)
-            time.sleep(0.2)
+            input_text_safe(page, 'user-info-popup >>> .nickname-input', nickname)
             print(f'   ✅ 已输入昵称: {nickname}')
-            
         except Exception as e:
             return {
                 'success': False,
@@ -386,42 +437,10 @@ def complete_user_login(mini, nickname='测试用户', avatar_url='https://tlou.
                 'login_status': None
             }
         
-        # 3. 模拟头像上传成功（绕过官方组件限制）
+        # 3. 模拟头像上传成功
         print('   🖼️ 模拟头像上传成功...')
         
-        js_mock_avatar = f"""
-function mockAvatarSuccess() {{
-    try {{
-        const pages = getCurrentPages();
-        const page = pages[pages.length - 1];
-        const comp = page.selectComponent('#userInfoPopup');
-        
-        if (!comp) {{
-            return {{ success: false, reason: 'component_not_found' }};
-        }}
-        
-        // 直接设置组件状态，模拟上传成功
-        comp.setData({{
-            avatarUrl: '{avatar_url}',
-            isUploadingAvatar: false
-        }}, () => {{
-            // 触发检查提交按钮状态
-            comp.checkCanSubmit();
-        }});
-        
-        return {{ 
-            success: true,
-            canSubmit: comp.data.canSubmit,
-            avatarUrl: comp.data.avatarUrl
-        }};
-    }} catch (e) {{
-        return {{ success: false, reason: e.message }};
-    }}
-}}
-        """
-        
-        result = mini.app.evaluate(js_mock_avatar.strip(), sync=True)
-        mock_data = result.get('result', {}).get('result', {})
+        mock_data = evaluate_js(mini, js_mock_avatar_upload(avatar_url))
         
         if not mock_data.get('success'):
             return {
@@ -432,25 +451,10 @@ function mockAvatarSuccess() {{
             }
         
         print(f'   ✅ 头像已设置')
-        time.sleep(0.5)  # 等待组件状态更新
+        time.sleep(0.5)
         
         # 4. 验证可以提交
-        js_check_submit = """
-function checkCanSubmit() {
-    const pages = getCurrentPages();
-    const page = pages[pages.length - 1];
-    const comp = page.selectComponent('#userInfoPopup');
-    
-    return {
-        canSubmit: comp.data.canSubmit,
-        isUploading: comp.data.isUploadingAvatar,
-        avatarUrl: comp.data.avatarUrl
-    };
-}
-        """
-        
-        result = mini.app.evaluate(js_check_submit.strip(), sync=True)
-        check_data = result.get('result', {}).get('result', {})
+        check_data = evaluate_js(mini, js_check_submit_button_enabled())
         
         if not check_data.get('canSubmit'):
             return {
@@ -466,19 +470,8 @@ function checkCanSubmit() {
         print('   🚀 点击提交按钮（真实注册）...')
         
         try:
-            submit_btn = page.get_element('user-info-popup >>> .action-btn')
-            if not submit_btn:
-                return {
-                    'success': False,
-                    'message': '未找到提交按钮',
-                    'user_info': None,
-                    'login_status': None
-                }
-            
-            submit_btn.tap()
-            time.sleep(0.2)
+            tap_element_safe(page, 'user-info-popup >>> .action-btn', wait_after=0.2)
             print('   ✅ 已点击提交')
-            
         except Exception as e:
             return {
                 'success': False,
@@ -543,31 +536,16 @@ def verify_login_status(mini, check_page_ui=False):
         
     Returns:
         dict: {
-            'success': bool,        # 是否登录成功
-            'message': str,         # 状态信息
-            'login_status': str,    # 登录状态
-            'user_info': dict,      # 用户信息
-            'page_ui_ok': bool      # 页面UI是否正确（如果检查了）
+            'success': bool,
+            'message': str,
+            'login_status': str,
+            'user_info': dict,
+            'page_ui_ok': bool
         }
     """
     try:
         # 1. 检查全局登录状态（适用于所有页面）
-        js_check_login = """
-function checkLoginStatus() {
-    const app = getApp();
-    const userStore = app.getUserStore();
-    return {
-        loginStatus: userStore.loginStatus,
-        isLoggedIn: userStore.loginStatus === 'loggedIn',
-        username: userStore.userInfo?.username || '',
-        userId: userStore.userInfo?._id || '',
-        userInfo: userStore.userInfo
-    };
-}
-        """
-        
-        result = mini.app.evaluate(js_check_login.strip(), sync=True)
-        login_data = result.get('result', {}).get('result', {})
+        login_data = evaluate_js(mini, js_get_login_status())
         
         login_status = login_data.get('loginStatus')
         is_logged_in = login_data.get('isLoggedIn', False)
@@ -595,16 +573,15 @@ function checkLoginStatus() {
                 # main页面：检查是否隐藏了浏览提示卡片
                 try:
                     browse_tip = current_page.get_element('.browse-tip-card')
-                    page_ui_result = browse_tip is None  # 登录后应该隐藏
+                    page_ui_result = browse_tip is None
                 except:
-                    page_ui_result = True  # 找不到元素说明已隐藏，这是正确的
+                    page_ui_result = True
             
             elif page_path == '/pages/details/details':
                 # details页面：可以添加特定的UI检查
-                page_ui_result = True  # 暂时默认为True
+                page_ui_result = True
             
             else:
-                # 其他页面
                 page_ui_result = True
         
         return {
@@ -626,6 +603,10 @@ function checkLoginStatus() {
             'page_ui_ok': None
         }
 
+
+# ============================================
+# Modal 对话框处理
+# ============================================
 
 def handle_modal_confirm(mini, button_text="确定", timeout=3.0):
     """
