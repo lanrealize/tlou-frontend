@@ -31,7 +31,7 @@
 - 管理员手动点击切换回真实身份按钮
 
 **实现逻辑**（`store/userStore.js` 179-185行）：
-- **复用初始化登录函数** `checkLoginStatus()`
+- **复用初始化函数** `initializeFromStorage()`
 - 从 Storage 读取真实用户信息 → 更新 MobX 状态为真实用户
 
 **核心原理**：

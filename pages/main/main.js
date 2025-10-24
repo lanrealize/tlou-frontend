@@ -369,7 +369,7 @@ Page({
             // 重试恢复状态
             const app = getApp();
             const userStore = app.getUserStore();
-            userStore.checkLoginStatus();
+            userStore.initializeFromStorage();
           }
         }
       });

@@ -1,5 +1,5 @@
 const { observable, action } = require('mobx-miniprogram');
-const { checkLoginStatus, registerUser } = require('../utils/auth');
+const { initUserAuthInStorage, registerUser } = require('../utils/auth');
 
 // 🎯 状态常量定义
 const USER_STATUS = {
@@ -62,15 +62,15 @@ const userStore = observable({
 
   // 📋 核心业务方法
   
-  async checkLoginStatus() {
-    this.setLoading(true, '检查登录状态...');
+  async initializeFromStorage() {
+    this.setLoading(true, '初始化用户状态...');
     
     try {
       // 🎭 应用启动时自动切换回真实身份（按照设计，虚拟身份不持久化）
       this.currentIdentityType = IDENTITY_TYPE.REAL;
       
-      // 🔑 检查真实用户登录状态
-      const result = await checkLoginStatus();
+      // 🔑 从 Storage 初始化真实用户认证信息
+      const result = await initUserAuthInStorage();
       
       if (result.status === 'loggedIn') {
         this.setStatus(USER_STATUS.LOGGEDIN, { userInfo: result.userInfo });
@@ -177,9 +177,9 @@ const userStore = observable({
 
   // 切换回真实身份 - 简化版本
   switchToRealIdentity() {
-    // 重新检查登录状态，获取真实用户信息
+    // 重新初始化，从 Storage 恢复真实用户信息
     this.currentIdentityType = IDENTITY_TYPE.REAL;
-    this.checkLoginStatus(); // 这将从本地存储恢复真实用户信息
+    this.initializeFromStorage(); // 从 Storage 恢复真实用户信息到 MobX
     
     wx.showToast({ title: '已切换回真实身份', icon: 'success' });
   },

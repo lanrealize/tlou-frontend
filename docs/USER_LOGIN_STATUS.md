@@ -27,19 +27,19 @@ app.js: onLaunch()
   └─> initializeApp() (107-121行)
       - 应用初始化统一入口
       
-      └─> userStore.checkLoginStatus() (store/userStore.js 68-93行)
-          - 调用底层 auth 模块从 Storage 更新 MobX 状态
+      └─> userStore.initializeFromStorage() (store/userStore.js 65-93行)
+          - 从 Storage 初始化 MobX 用户状态
           
-          └─> auth.checkLoginStatus() (utils/auth.js 70-136行)
-              - 检查本地 Storage 或使用 OpenID 调用后端获取用户信息并存入 Storage
+          └─> auth.initUserAuthInStorage() (utils/auth.js 70-136行)
+              - 确保 Storage 中有用户认证信息：优先读取本地 Storage，没有则用 OpenID 从后端获取并存入
               - 返回登录状态和用户信息
               
               └─> auth.getOpenid() (utils/auth.js 30-68行)
-                  - 获取OpenID（优先本地，否则从后端获取）
-                  - 确保应用中始终有OpenID
+                  - 获取 OpenID（优先本地，否则从后端获取）
+                  - 确保应用中始终有 OpenID
 ```
 
-**检查逻辑（`utils/auth.js` 的 `checkLoginStatus` 函数）：**
+**检查逻辑（`utils/auth.js` 的 `initUserAuthInStorage` 函数）：**
 
 1. **获取 OpenID**（确保缓存）
 
@@ -77,14 +77,14 @@ app.js: onLaunch()
 
 - **状态同步原则**：
   - **后端 → Storage**（唯一写入来源）：
-    - ✅ **初始化检查**：`auth.checkLoginStatus()` 第117行
+    - ✅ **初始化认证**：`auth.initUserAuthInStorage()` 第117行
       - 后端返回用户信息 → 直接写入 storage → 返回给 MobX
     - ✅ **用户注册**：`user-info-popup.js` 第257行
       - 注册成功，后端返回数据 → 直接写入 storage → 更新 MobX
-
+  
   - **Storage → MobX**（初始化时）：
     - 应用启动时，从 storage 读取 `userInfo` → 更新到 MobX
-    - 位置：`userStore.checkLoginStatus()` → `auth.checkLoginStatus()`
+    - 位置：`userStore.initializeFromStorage()` → `auth.initUserAuthInStorage()`
   
   - **MobX 不写入 Storage**：
     - MobX 中的状态变更（如虚拟身份切换、临时更新）**不会**写回 storage

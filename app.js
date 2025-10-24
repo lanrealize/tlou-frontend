@@ -108,8 +108,8 @@ App({
     console.log('🔄 初始化应用');
     
     try {
-      // 检查用户登录状态（获取openid和userInfo）
-      await userStore.checkLoginStatus();
+      // 初始化用户状态（从 Storage 加载到 MobX）
+      await userStore.initializeFromStorage();
       
       this._initCompleted = true;
       console.log('✅ 应用初始化完成');
@@ -147,10 +147,10 @@ App({
     userStore.logout();
   },
 
-  // 重新检查登录状态（便捷方法）
-  recheckLoginStatus() {
-    console.log('🔄 重新检查用户登录状态');
-    userStore.checkLoginStatus();
+  // 重新初始化用户状态（便捷方法）
+  reinitializeUserState() {
+    console.log('🔄 重新初始化用户状态');
+    userStore.initializeFromStorage();
   },
 
   // 触发用户信息弹出层

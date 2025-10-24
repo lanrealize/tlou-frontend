@@ -67,7 +67,7 @@ const getOpenid = async () => {
   return openid;
 };
 
-const checkLoginStatus = async () => {
+const initUserAuthInStorage = async () => {
   try {
     // 1. 获取 openid（确保已缓存）
     const openid = await getOpenid();
@@ -157,6 +157,6 @@ const registerUser = async () => {
 
 module.exports = {
   getOpenid,
-  checkLoginStatus,
+  initUserAuthInStorage,
   registerUser
 };
