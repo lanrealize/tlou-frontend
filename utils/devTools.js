@@ -12,22 +12,25 @@ const DEV_MODE = true; // ⚠️ 生产环境请改为 false
  */
 const STORAGE_KEYS = {
   TEST_MODE: '__test_mode__',           // 是否在测试模式
-  TEST_OPENID: '__test_openid__',       // 测试用的 openid
-  REAL_IDENTITY: '__real_identity__'    // 真实身份备份
+  TEST_OPENID: '__test_openid__'        // 测试用的 openid
 };
 
 // ========================================
-// 核心功能
+// 核心功能 - 优雅简洁的设计
 // ========================================
 
 /**
  * 🎭 开始测试模式
  * 
+ * 设计原则：
+ * - 不保存真实用户数据（避免备份丢失问题）
+ * - 只清理当前状态，生成测试身份
+ * - 结束时触发重新初始化即可
+ * 
  * 功能：
- * 1. 保存真实身份
- * 2. 生成测试 openid
- * 3. 切换到未注册状态
- * 4. 现在可以测试注册流程
+ * 1. 生成测试 openid
+ * 2. 清除 userInfo（切换到未注册状态）
+ * 3. 标记测试模式
  * 
  * 使用场景：
  * - 测试用户注册流程
@@ -42,46 +45,27 @@ function startTestMode() {
 
   try {
     // 1. 检查是否已在测试模式
-    const isInTestMode = wx.getStorageSync(STORAGE_KEYS.TEST_MODE);
-    if (isInTestMode) {
-      wx.showModal({
-        title: '提示',
-        content: '当前已在测试模式，请先结束当前测试',
-        showCancel: false
+    const currentTestMode = wx.getStorageSync(STORAGE_KEYS.TEST_MODE);
+    if (currentTestMode) {
+      console.warn('⚠️ 当前已在测试模式');
+      wx.showToast({
+        title: '已在测试模式',
+        icon: 'none',
+        duration: 2000
       });
       return false;
     }
 
-    // 2. 保存真实身份
-    const realOpenid = wx.getStorageSync('openid');
-    const realUserInfo = wx.getStorageSync('userInfo');
-    
-    if (!realOpenid) {
-      wx.showModal({
-        title: '提示',
-        content: '未找到真实 openid，请先正常登录',
-        showCancel: false
-      });
-      return false;
-    }
-
-    // 3. 生成测试 openid
+    // 2. 生成测试 openid
     const testOpenid = `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    // 4. 保存测试状态
+    // 3. 设置测试状态
     wx.setStorageSync(STORAGE_KEYS.TEST_MODE, true);
     wx.setStorageSync(STORAGE_KEYS.TEST_OPENID, testOpenid);
-    wx.setStorageSync(STORAGE_KEYS.REAL_IDENTITY, {
-      openid: realOpenid,
-      userInfo: realUserInfo,
-      timestamp: Date.now()
-    });
-    
-    // 5. 切换到测试身份
     wx.setStorageSync('openid', testOpenid);
     wx.removeStorageSync('userInfo');
     
-    // 6. 更新 userStore
+    // 4. 更新 userStore
     const app = getApp();
     const userStore = app.getUserStore();
     const { USER_STATUS } = require('../store/userStore');
@@ -105,85 +89,117 @@ function startTestMode() {
 /**
  * 🔙 结束测试模式
  * 
- * 功能：
- * 1. 恢复真实身份
- * 2. 清理测试用户数据（调用后端注销接口）
- * 3. 清除测试标记
+ * 设计原则：
+ * - 不依赖备份恢复（更鲁棒）
+ * - 只清理测试状态
+ * - 触发重新初始化
  * 
- * 注意：
- * - 会调用后端注销接口清理所有测试数据
- * - 如果清理失败，可以使用 emergencyRestore() 强制恢复
+ * 功能：
+ * 1. 清理后端测试用户数据
+ * 2. 清除本地测试状态（openid、userInfo、测试标记）
+ * 3. 触发重新初始化（复用app.onLaunch逻辑）
+ * 
+ * 优势：
+ * - 无需保存真实用户数据
+ * - 状态清理更彻底
+ * - 初始化逻辑统一
  */
 async function endTestMode() {
   if (!DEV_MODE) {
     console.warn('⚠️ 开发者模式未启用');
-    return false;
+    return { success: false, cleanupSuccess: false };
   }
 
   try {
-    // 1. 检查是否在测试模式或存在异常测试状态
-    const testModeFlag = wx.getStorageSync(STORAGE_KEYS.TEST_MODE);
-    const testOpenid = wx.getStorageSync(STORAGE_KEYS.TEST_OPENID);
-    const realIdentity = wx.getStorageSync(STORAGE_KEYS.REAL_IDENTITY);
-    
-    // 严格检查：只有 testModeFlag === true 才是正常测试模式
-    // 但如果有测试相关标记存在，说明可能是异常状态，也需要清理
-    const hasTestState = testModeFlag === true || testOpenid || realIdentity;
-    
-    if (!hasTestState) {
-      console.log('当前不在测试模式，且无测试状态残留');
-      return false;
-    }
-    
-    // 检测异常状态
-    if (testModeFlag !== true && testModeFlag !== undefined) {
-      console.warn(`⚠️ 检测到异常测试状态标记: "${testModeFlag}"，执行清理`);
-    }
-
     console.log('========================================');
     console.log('🔄 开始退出测试模式');
     console.log('========================================');
 
-    // 3. 清理测试数据（无论是否有备份都要清理）
-    let cleanupSuccess = false;
-    if (testOpenid) {
-      console.log('🗑️ 开始清理测试用户数据...');
-      cleanupSuccess = await cleanupTestUser(testOpenid);
-      
-      if (cleanupSuccess) {
-        console.log('✅ 测试数据清理成功');
-      } else {
-        console.warn('⚠️ 测试数据清理失败（用户可能不存在）');
-      }
-    } else {
-      console.log('⚠️ 未找到测试openid，跳过后端数据清理');
+    // 1. 获取测试openid（用于清理后端数据）
+    const testOpenid = wx.getStorageSync(STORAGE_KEYS.TEST_OPENID);
+    const testMode = wx.getStorageSync(STORAGE_KEYS.TEST_MODE);
+    
+    if (!testMode && !testOpenid) {
+      console.log('⚠️ 当前不在测试模式');
+      wx.showToast({
+        title: '未在测试模式',
+        icon: 'none',
+        duration: 2000
+      });
+      return { success: false, cleanupSuccess: false };
     }
 
-    // 4. 恢复真实身份（如果有备份）或执行紧急清理
-    if (realIdentity && realIdentity.openid) {
-      console.log('✅ 找到真实身份备份，正常恢复...');
-      restoreRealIdentity();
-    } else {
-      console.warn('⚠️ 无法找到真实身份备份，执行紧急清理...');
-      emergencyCleanup();
+    // 2. 清理后端测试数据
+    let cleanupSuccess = false;
+    if (testOpenid) {
+      console.log('🗑️ 清理后端测试用户数据...');
+      try {
+        cleanupSuccess = await cleanupTestUser(testOpenid);
+        if (cleanupSuccess) {
+          console.log('✅ 后端测试数据清理成功');
+        } else {
+          console.warn('⚠️ 后端测试数据清理失败（用户可能不存在或已删除）');
+        }
+      } catch (error) {
+        console.warn('⚠️ 后端清理异常:', error);
+        // 继续清理本地状态
+      }
     }
+
+    // 3. 清理本地测试状态
+    console.log('🧹 清理本地测试状态...');
+    wx.removeStorageSync(STORAGE_KEYS.TEST_MODE);
+    wx.removeStorageSync(STORAGE_KEYS.TEST_OPENID);
+    wx.removeStorageSync('openid');
+    wx.removeStorageSync('userInfo');
+    
+    // 清理可能存在的旧版备份数据
+    wx.removeStorageSync(STORAGE_KEYS.REAL_IDENTITY || '__real_identity__');
+    
+    console.log('✅ 本地测试状态已清理');
+
+    // 4. 触发重新初始化（复用app.onLaunch逻辑）
+    console.log('🔄 触发重新初始化...');
+    const app = getApp();
+    
+    // 重置初始化状态
+    app._initCompleted = false;
+    
+    // 重新执行初始化逻辑并保存Promise
+    if (app.initializeApp) {
+      app._initPromise = app.initializeApp();
+      await app._initPromise;
+      console.log('✅ 应用重新初始化完成');
+    } else {
+      console.warn('⚠️ 未找到initializeApp方法，请手动刷新页面');
+    }
+    
+    wx.showToast({
+      title: '已恢复真实身份',
+      icon: 'success',
+      duration: 2000
+    });
     
     console.log('========================================');
     console.log('✅ 测试模式已结束');
+    console.log('💡 应用已恢复到真实用户状态');
     console.log('========================================');
     
-    // 返回清理状态，供测试脚本验证
     return { success: true, cleanupSuccess };
 
   } catch (error) {
     console.error('❌ 结束测试模式失败:', error);
     
-    // 即使出错也要尝试紧急清理，避免状态混乱
+    // 紧急清理：无论如何都要清除测试标记
     try {
-      console.log('🆘 执行错误恢复清理...');
-      emergencyCleanup();
+      console.log('🆘 执行紧急清理...');
+      wx.removeStorageSync(STORAGE_KEYS.TEST_MODE);
+      wx.removeStorageSync(STORAGE_KEYS.TEST_OPENID);
+      wx.removeStorageSync('openid');
+      wx.removeStorageSync('userInfo');
+      console.log('✅ 紧急清理完成，请手动刷新页面');
     } catch (cleanupError) {
-      console.error('❌ 紧急清理也失败:', cleanupError);
+      console.error('❌ 紧急清理失败:', cleanupError);
     }
     
     return { success: false, cleanupSuccess: false };
@@ -198,7 +214,6 @@ async function endTestMode() {
 function getTestStatus() {
   const isInTestMode = wx.getStorageSync(STORAGE_KEYS.TEST_MODE);
   const testOpenid = wx.getStorageSync(STORAGE_KEYS.TEST_OPENID);
-  const realIdentity = wx.getStorageSync(STORAGE_KEYS.REAL_IDENTITY);
   const currentOpenid = wx.getStorageSync('openid');
   
   const app = getApp();
@@ -215,11 +230,6 @@ function getTestStatus() {
     console.log('测试 openid:', testOpenid);
     console.log('当前 openid:', currentOpenid);
     console.log('');
-    console.log('💾 真实身份备份:');
-    console.log('真实 openid:', realIdentity?.openid || '未找到');
-    console.log('真实用户名:', realIdentity?.userInfo?.username || '未找到');
-    console.log('备份时间:', realIdentity?.timestamp ? new Date(realIdentity.timestamp).toLocaleString() : '未知');
-    console.log('');
     console.log('💡 结束测试: getApp().devTools.endTestMode()');
   } else {
     console.log('当前用户状态:');
@@ -234,7 +244,6 @@ function getTestStatus() {
     isInTestMode,
     testOpenid,
     currentOpenid,
-    realIdentity,
     userStore: {
       loginStatus: userStore.loginStatus,
       userInfo: userStore.userInfo
@@ -247,47 +256,48 @@ function getTestStatus() {
 // ========================================
 
 /**
- * 🆘 紧急恢复
+ * 🆘 紧急清理
  * 
- * 不清理测试数据，直接恢复真实身份
- * 使用场景：清理失败或出现错误时
+ * 清除所有测试相关状态，强制退出测试模式
+ * 使用场景：测试状态异常时
  */
-function emergencyRestore() {
+function emergencyCleanup() {
   if (!DEV_MODE) {
     console.warn('⚠️ 开发者模式未启用');
     return false;
   }
 
-  // 检查是否有真实身份备份
-  const realIdentity = wx.getStorageSync(STORAGE_KEYS.REAL_IDENTITY);
-  
-  if (realIdentity && realIdentity.openid) {
-    // 有备份，询问是否恢复（不清理测试数据）
-    wx.showModal({
-      title: '⚠️ 紧急恢复',
-      content: '将不清理测试数据，直接恢复真实身份。\n\n测试数据需要手动清理。',
-      confirmText: '恢复',
-      cancelText: '取消',
-      success: (res) => {
-        if (res.confirm) {
-          restoreRealIdentity();
+  wx.showModal({
+    title: '🆘 紧急清理',
+    content: '将清除所有测试状态\n建议先调用 endTestMode() 正常退出',
+    confirmText: '强制清理',
+    cancelText: '取消',
+    success: (res) => {
+      if (res.confirm) {
+        try {
+          // 清除所有测试相关状态
+          wx.removeStorageSync(STORAGE_KEYS.TEST_MODE);
+          wx.removeStorageSync(STORAGE_KEYS.TEST_OPENID);
+          wx.removeStorageSync('openid');
+          wx.removeStorageSync('userInfo');
+          
+          // 清理可能存在的旧版数据
+          wx.removeStorageSync('__real_identity__');
+          
+          console.log('✅ 紧急清理完成');
+          console.log('💡 请刷新页面重新获取真实身份');
+          
+          wx.showToast({
+            title: '清理完成\n请刷新页面',
+            icon: 'none',
+            duration: 3000
+          });
+        } catch (error) {
+          console.error('❌ 紧急清理失败:', error);
         }
       }
-    });
-  } else {
-    // 无备份，执行紧急清理
-    wx.showModal({
-      title: '⚠️ 紧急清理',
-      content: '未找到真实身份备份，将执行紧急清理测试状态。',
-      confirmText: '清理',
-      cancelText: '取消',
-      success: (res) => {
-        if (res.confirm) {
-          emergencyCleanup();
-        }
-      }
-    });
-  }
+    }
+  });
 }
 
 /**
@@ -326,157 +336,8 @@ async function manualCleanup() {
 }
 
 // ========================================
-// 内部函数
+// 内部函数（已废弃，保留仅用于向后兼容）
 // ========================================
-
-/**
- * 恢复真实身份（内部函数）
- */
-function restoreRealIdentity() {
-  try {
-    const realIdentity = wx.getStorageSync(STORAGE_KEYS.REAL_IDENTITY);
-    
-    if (!realIdentity || !realIdentity.openid) {
-      throw new Error('未找到真实身份备份');
-    }
-
-    // 恢复真实身份
-    wx.setStorageSync('openid', realIdentity.openid);
-    if (realIdentity.userInfo) {
-      wx.setStorageSync('userInfo', realIdentity.userInfo);
-    }
-    
-    // 清除测试标记
-    wx.removeStorageSync(STORAGE_KEYS.TEST_MODE);
-    wx.removeStorageSync(STORAGE_KEYS.TEST_OPENID);
-    wx.removeStorageSync(STORAGE_KEYS.REAL_IDENTITY);
-    
-    // 更新 userStore
-    const app = getApp();
-    const userStore = app.getUserStore();
-    userStore.checkLoginStatus();
-    
-    console.log('========================================');
-    console.log('✅ 已恢复真实身份');
-    console.log('========================================');
-    console.log('真实 openid:', realIdentity.openid);
-    console.log('用户名:', realIdentity.userInfo?.username || '未知');
-    console.log('========================================');
-    
-    wx.showToast({
-      title: '已恢复真实身份',
-      icon: 'success',
-      duration: 2000
-    });
-
-    // 刷新当前页面
-    setTimeout(() => {
-      const pages = getCurrentPages();
-      const currentPage = pages[pages.length - 1];
-      if (currentPage && currentPage.onLoad) {
-        currentPage.onLoad(currentPage.options || {});
-      }
-    }, 500);
-
-    return true;
-  } catch (error) {
-    console.error('❌ 恢复真实身份失败:', error);
-    wx.showModal({
-      title: '恢复失败',
-      content: error.message || '无法恢复真实身份',
-      showCancel: false
-    });
-    return false;
-  }
-}
-
-/**
- * 🆘 紧急清理函数
- * 当找不到真实身份备份时，清理所有测试状态并重置
- */
-function emergencyCleanup() {
-  try {
-    console.log('🆘 开始紧急清理测试状态...');
-    
-    // 1. 清除所有测试相关的存储标记
-    wx.removeStorageSync(STORAGE_KEYS.TEST_MODE);
-    wx.removeStorageSync(STORAGE_KEYS.TEST_OPENID);
-    wx.removeStorageSync(STORAGE_KEYS.REAL_IDENTITY);
-    console.log('   ✅ 已清除测试存储标记');
-    
-    // 2. 检查当前openid是否为测试openid
-    const currentOpenid = wx.getStorageSync('openid');
-    if (currentOpenid && currentOpenid.startsWith('test_')) {
-      console.log('   ⚠️  发现测试openid残留，清除中...');
-      wx.removeStorageSync('openid');
-      wx.removeStorageSync('userInfo');
-      console.log('   ✅ 已清除测试openid和用户信息');
-    } else if (currentOpenid) {
-      console.log('   ℹ️  当前openid为真实openid，保留');
-      // 如果是真实openid但用户信息缺失，清除userInfo让系统重新获取
-      const userInfo = wx.getStorageSync('userInfo');
-      if (!userInfo || !userInfo.username) {
-        console.log('   ⚠️  用户信息不完整，清除以便重新获取');
-        wx.removeStorageSync('userInfo');
-      }
-    } else {
-      console.log('   ⚠️  没有openid，需要重新授权');
-    }
-    
-    // 3. 重置userStore状态
-    const app = getApp();
-    const userStore = app.getUserStore();
-    if (userStore) {
-      userStore.checkLoginStatus();
-      console.log('   ✅ 已重置userStore状态');
-    }
-    
-    // 4. 给用户友好的提示
-    wx.showModal({
-      title: '测试模式已清理',
-      content: '由于测试状态异常，已执行紧急清理。如需使用请重新登录。',
-      showCancel: false,
-      confirmText: '知道了',
-      success: (res) => {
-        if (res.confirm) {
-          // 刷新当前页面
-          setTimeout(() => {
-            const pages = getCurrentPages();
-            const currentPage = pages[pages.length - 1];
-            if (currentPage && currentPage.onLoad) {
-              currentPage.onLoad(currentPage.options || {});
-            }
-          }, 500);
-        }
-      }
-    });
-    
-    console.log('========================================');
-    console.log('✅ 紧急清理完成');
-    console.log('========================================');
-    
-    return true;
-  } catch (error) {
-    console.error('❌ 紧急清理失败:', error);
-    
-    // 最后的手段：完全清理存储
-    try {
-      wx.clearStorageSync();
-      console.log('🆘 已执行完全存储清理');
-      
-      wx.showModal({
-        title: '已完全重置',
-        content: '系统已清除所有本地数据，请重新进入小程序',
-        showCancel: false
-      });
-      
-      return true;
-    } catch (finalError) {
-      console.error('❌ 完全清理也失败:', finalError);
-      return false;
-    }
-  }
-}
 
 /**
  * 清理测试用户（内部函数）
@@ -608,7 +469,7 @@ function installDevTools(appInstance) {
     getTestStatus,
     
     // 🆘 辅助功能
-    emergencyRestore,
+    emergencyCleanup,
     manualCleanup,
     
     // ⚠️ 其他工具
@@ -624,17 +485,17 @@ function installDevTools(appInstance) {
   console.log('  1. 开始测试:');
   console.log('     getApp().devTools.startTestMode()');
   console.log('  2. 测试注册、加入朋友圈等功能...');
-  console.log('  3. 结束测试（自动清理）:');
-  console.log('     getApp().devTools.endTestMode()');
+  console.log('  3. 结束测试（自动清理并恢复真实身份）:');
+  console.log('     await getApp().devTools.endTestMode()');
   console.log('');
   console.log('📊 查看状态：');
   console.log('  getApp().devTools.getTestStatus()');
   console.log('');
-  console.log('🆘 紧急恢复（不清理）：');
-  console.log('  getApp().devTools.emergencyRestore()');
+  console.log('🆘 紧急清理（强制清除测试状态）：');
+  console.log('  getApp().devTools.emergencyCleanup()');
   console.log('');
-  console.log('🗑️ 手动清理测试数据：');
-  console.log('  getApp().devTools.manualCleanup()');
+  console.log('🗑️ 手动清理后端测试数据：');
+  console.log('  await getApp().devTools.manualCleanup()');
   console.log('========================================');
 }
 
@@ -643,7 +504,7 @@ module.exports = {
   startTestMode,
   endTestMode,
   getTestStatus,
-  emergencyRestore,
+  emergencyCleanup,
   manualCleanup,
   clearAllCache,
   installDevTools

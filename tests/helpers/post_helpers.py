@@ -344,41 +344,17 @@ def reply_to_comment(mini, reply_text, comment_index=0, wait_after=2.0):
     Returns:
         dict: {
             'success': bool,
-            'message': str,
-            'method': str  # 使用的方法（'ui' 或 'js'）
+            'message': str
         }
     """
     try:
         page = mini.app.current_page
         
-        # 先尝试使用UI点击回复按钮
-        try:
-            reply_btn = find_element_safe(page, 'post-item >>> .reply-btn', required=False)
-            if reply_btn:
-                reply_btn.tap()
-                print('   ✅ 已通过UI点击回复按钮')
-                time.sleep(1.0)
-                method = 'ui'
-            else:
-                raise Exception('UI方法找不到回复按钮')
-        except Exception as e:
-            print(f'   ⚠️  UI点击失败，尝试JavaScript方式')
-            
-            # 使用JavaScript触发回复
-            from .js_helpers import js_trigger_reply_comment, evaluate_js
-            
-            reply_data = evaluate_js(mini, js_trigger_reply_comment())
-            
-            if not reply_data.get('success'):
-                return {
-                    'success': False,
-                    'message': f'JavaScript触发失败: {reply_data.get("reason")}',
-                    'method': 'none'
-                }
-            
-            print(f'   ✅ 已通过JavaScript触发回复 (方法: {reply_data.get("method")})')
-            time.sleep(1.0)
-            method = 'js'
+        # 使用Minium点击回复按钮
+        reply_btn = find_element_safe(page, 'post-item >>> .reply-btn', required=True)
+        reply_btn.tap()
+        print('   ✅ 已点击回复按钮')
+        time.sleep(1.0)
         
         # 输入回复内容
         input_text_safe(page, '#commentTextarea', reply_text, wait_after=0.3)
@@ -392,8 +368,7 @@ def reply_to_comment(mini, reply_text, comment_index=0, wait_after=2.0):
         
         return {
             'success': True,
-            'message': '回复发送成功',
-            'method': method
+            'message': '回复发送成功'
         }
         
     except Exception as e:
@@ -401,8 +376,7 @@ def reply_to_comment(mini, reply_text, comment_index=0, wait_after=2.0):
         traceback.print_exc()
         return {
             'success': False,
-            'message': f'回复失败: {str(e)}',
-            'method': 'none'
+            'message': f'回复失败: {str(e)}'
         }
 
 

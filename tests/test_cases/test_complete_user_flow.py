@@ -426,74 +426,14 @@ class CompleteUserFlowTest:
         
         page = self.mini.app.current_page
         
-        # 先尝试使用Minium点击回复按钮
-        try:
-            reply_btn = page.get_element('post-item >>> .reply-btn')
-            if reply_btn:
-                reply_btn.tap()
-                print('   ✅ 已通过Minium点击回复按钮')
-                time.sleep(1.0)
-            else:
-                raise Exception('Minium未找到回复按钮')
-        except Exception as e:
-            print(f'   ⚠️  Minium点击失败: {str(e)}，尝试JavaScript方式')
-            
-            # 使用JavaScript触发回复
-            js_code = '''
-            function triggerReply() {
-                try {
-                    const pages = getCurrentPages();
-                    const page = pages[pages.length - 1];
-                    const posts = page.data.posts || [];
-                    
-                    if (posts.length > 0 && posts[0].comments && posts[0].comments.length > 0) {
-                        const firstComment = posts[0].comments[0];
-                        
-                        // 构造回复事件，直接从帖子数据获取信息
-                        const event = {
-                            currentTarget: {
-                                dataset: {
-                                    userId: firstComment.author._id,
-                                    username: firstComment.author.username || firstComment.author.name || '测试用户',
-                                    commentId: firstComment._id
-                                }
-                            }
-                        };
-                        
-                        // 直接调用页面的回复处理方法
-                        if (page.onPostReplyComment) {
-                            page.onPostReplyComment(event);
-                            return { success: true, method: 'js_direct' };
-                        } else {
-                            // 备用方法：查找组件并触发
-                            const postComps = page.selectAllComponents('post-item') || [];
-                            if (postComps.length > 0) {
-                                const comp = postComps[0];
-                                if (comp.onReplyComment) {
-                                    comp.onReplyComment(event);
-                                    return { success: true, method: 'component_direct' };
-                                }
-                            }
-                        }
-                    }
-                    
-                    return { success: false, reason: 'no_comments_or_methods' };
-                } catch (e) {
-                    return { success: false, reason: e.message };
-                }
-            }
-            '''
-            
-            result = self.mini.app.evaluate(js_code.strip(), sync=True)
-            reply_data = result.get('result', {}).get('result', {})
-            
-            if not reply_data.get('success'):
-                # 如果都失败了，跳过这个步骤继续测试
-                print(f'   ⚠️  JavaScript触发也失败: {reply_data.get("reason")}，跳过回复步骤')
-                return
-            
-            print(f'   ✅ 已通过JavaScript触发回复 (方法: {reply_data.get("method")})')
-            time.sleep(1.0)
+        # 使用Minium点击回复按钮
+        reply_btn = page.get_element('post-item >>> .reply-btn')
+        if not reply_btn:
+            raise Exception('未找到回复按钮')
+        
+        reply_btn.tap()
+        print('   ✅ 已点击回复按钮')
+        time.sleep(1.0)
         
         # 输入回复内容
         comment_textarea = page.get_element('#commentTextarea')

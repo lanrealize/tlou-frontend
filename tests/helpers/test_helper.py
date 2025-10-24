@@ -116,17 +116,17 @@ def exit_test_mode(mini):
     try:
         print('🔄 退出测试模式...')
         
-        # 调用 endTestMode() 并获取返回值（包含清理状态）
+        # 调用 endTestMode() 并等待完成（endTestMode 是异步函数）
         js_code = """
-function callEndTestMode() {
-    return getApp().devTools.endTestMode();
+async function callEndTestMode() {
+    return await getApp().devTools.endTestMode();
 }
         """
         result = mini.app.evaluate(js_code.strip(), sync=True)
         print('✅ endTestMode 调用完成')
         
-        # 等待一下，避免与测试中的页面跳转冲突
-        time.sleep(0.5)
+        # 短暂等待以确保状态同步
+        time.sleep(0.3)
         
         # 检查返回值中的清理状态
         result_data = result.get('result', {}).get('result', {})

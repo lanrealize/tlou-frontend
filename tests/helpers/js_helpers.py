@@ -282,54 +282,6 @@ def js_check_submit_button_enabled():
     """
 
 
-def js_trigger_reply_comment():
-    """触发评论回复"""
-    return """
-    function triggerReply() {
-        try {
-            const pages = getCurrentPages();
-            const page = pages[pages.length - 1];
-            const posts = page.data.posts || [];
-            
-            if (posts.length > 0 && posts[0].comments && posts[0].comments.length > 0) {
-                const firstComment = posts[0].comments[0];
-                
-                // 构造回复事件，直接从帖子数据获取信息
-                const event = {
-                    currentTarget: {
-                        dataset: {
-                            userId: firstComment.author._id,
-                            username: firstComment.author.username || firstComment.author.name || '测试用户',
-                            commentId: firstComment._id
-                        }
-                    }
-                };
-                
-                // 直接调用页面的回复处理方法
-                if (page.onPostReplyComment) {
-                    page.onPostReplyComment(event);
-                    return { success: true, method: 'js_direct' };
-                } else {
-                    // 备用方法：查找组件并触发
-                    const postComps = page.selectAllComponents('post-item') || [];
-                    if (postComps.length > 0) {
-                        const comp = postComps[0];
-                        if (comp.onReplyComment) {
-                            comp.onReplyComment(event);
-                            return { success: true, method: 'component_direct' };
-                        }
-                    }
-                }
-            }
-            
-            return { success: false, reason: 'no_comments_or_methods' };
-        } catch (e) {
-            return { success: false, reason: e.message };
-        }
-    }
-    """
-
-
 # ============================================
 # 图片相关
 # ============================================

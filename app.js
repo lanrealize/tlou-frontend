@@ -27,6 +27,10 @@ App({
     }
   },
 
+  // 初始化状态跟踪
+  _initPromise: null,
+  _initCompleted: false,
+
   onLaunch() {
     console.log('🚀 小程序启动');
     
@@ -36,8 +40,8 @@ App({
     // 获取系统信息
     this.getSystemInfo();
     
-    // 检查用户登录状态（使用MobX状态管理）
-    this.initUserState();
+    // 初始化应用（统一入口）- 保存Promise供页面等待
+    this._initPromise = this.initializeApp();
     
     // 🛠️ 启用开发者工具（仅开发环境）
     this.initDevTools();
@@ -96,12 +100,34 @@ App({
     }
   },
 
-  // 初始化用户状态（使用MobX状态管理）
-  async initUserState() {
-    console.log('🔧 初始化用户状态管理');
+  // 初始化应用（统一入口）
+  // 用于：
+  // 1. 小程序首次启动
+  // 2. 测试模式结束后恢复状态
+  async initializeApp() {
+    console.log('🔄 初始化应用');
     
-    // 检查用户登录状态
-    await userStore.checkLoginStatus();
+    try {
+      // 检查用户登录状态（获取openid和userInfo）
+      await userStore.checkLoginStatus();
+      
+      this._initCompleted = true;
+      console.log('✅ 应用初始化完成');
+    } catch (error) {
+      console.error('❌ 应用初始化失败:', error);
+      this._initCompleted = true; // 即使失败也标记完成，避免页面永久等待
+      throw error;
+    }
+  },
+
+  // 等待应用初始化完成（供页面调用）
+  async waitForInit() {
+    if (this._initCompleted) {
+      return;
+    }
+    if (this._initPromise) {
+      await this._initPromise;
+    }
   },
 
   // 获取用户状态管理器（对外接口）

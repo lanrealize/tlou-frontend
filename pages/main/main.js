@@ -278,15 +278,9 @@ Page({
     const app = getApp();
     const userStore = app.getUserStore();
     
-    // 如果用户状态还在加载中，等待加载完成
-    if (userStore.isLoading) {
-      // 最多等待3秒
-      const maxWaitTime = 3000;
-      const startTime = Date.now();
-      
-      while (userStore.isLoading && (Date.now() - startTime) < maxWaitTime) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
+    // 等待应用初始化完成（包括首次登录检查）
+    if (app.waitForInit) {
+      await app.waitForInit();
     }
     
     // 检查登录状态并加载用户朋友圈数据（需要登录）

@@ -82,17 +82,29 @@ def close_popup_by_mask(mini, wait_visible=0.4, verify_closed=True):
             print('ℹ️  弹窗未显示，无需关闭')
             return True  # 已经关闭了，返回成功
         
-        # 使用封装的 JavaScript 函数关闭弹窗
-        actual_result = evaluate_js(mini, js_close_popup())
-        
-        if not actual_result.get('success'):
-            reason = actual_result.get('reason', 'unknown')
-            print(f'⚠️  关闭弹窗失败，原因: {reason}')
-            return False
-        
-        # 等待关闭动画完成
-        time.sleep(0.2)
-        print('✅ 已调用关闭弹窗方法')
+        # 优先使用Minium模拟用户点击遮罩层
+        page = mini.app.current_page
+        try:
+            # 尝试找到遮罩层元素并点击
+            mask = page.get_element('user-info-popup >>> .popup-mask')
+            if mask:
+                mask.tap()
+                print('✅ 已通过Minium点击遮罩层关闭弹窗')
+                time.sleep(0.2)
+            else:
+                raise Exception('未找到遮罩层元素')
+        except Exception as ui_error:
+            # 如果UI点击失败，使用JavaScript方法作为备用方案
+            print(f'⚠️  Minium点击遮罩层失败，尝试JavaScript方式: {str(ui_error)}')
+            actual_result = evaluate_js(mini, js_close_popup())
+            
+            if not actual_result.get('success'):
+                reason = actual_result.get('reason', 'unknown')
+                print(f'⚠️  JavaScript关闭弹窗失败，原因: {reason}')
+                return False
+            
+            print('✅ 已通过JavaScript关闭弹窗')
+            time.sleep(0.2)
         
         # 验证弹窗是否真的消失了
         if verify_closed:
