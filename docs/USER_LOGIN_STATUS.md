@@ -28,11 +28,10 @@ app.js: onLaunch()
       - 应用初始化统一入口
       
       └─> userStore.checkLoginStatus() (store/userStore.js 68-93行)
-          - 调用底层auth模块并更新MobX状态
+          - 调用底层 auth 模块从 Storage 更新 MobX 状态
           
           └─> auth.checkLoginStatus() (utils/auth.js 70-136行)
-              - 核心登录检查逻辑
-              - 检查本地storage或调用后端获取用户信息
+              - 检查本地 Storage 或使用 OpenID 调用后端获取用户信息并存入 Storage
               - 返回登录状态和用户信息
               
               └─> auth.getOpenid() (utils/auth.js 30-68行)
@@ -71,12 +70,10 @@ app.js: onLaunch()
   - 仅在应用初始化时读取一次
   - 只有真实身份状态变更时，才通过 `_syncToStorage()` 写回
 
-- **运行时所有业务逻辑完全使用 MobX 数据**：
-  - `userStore.userInfo`（完整用户信息）
-  - `userStore.displayName`（昵称）
-  - `userStore.avatarUrl`（头像）
-  - `userStore.isLoggedIn`（登录状态）
-  - `userStore.isAdmin`（管理员状态）
+- **运行时所有业务逻辑完全依赖 MobX 数据**：
+  - 所有接口和显示都使用 MobX 数据：
+  - 后端看到的是当前激活身份的 openid
+  - 页面显示的是当前激活身份的昵称和头像
 
 - **状态同步原则**：
   - **后端 → Storage**（唯一写入来源）：
