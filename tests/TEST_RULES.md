@@ -14,7 +14,10 @@ function getData() {
 result = self.mini.app.evaluate(js_code.strip(), sync=True)
 data = result.get('result', {}).get('result', {})
 ```
-**关键：必须 `sync=True` + 函数有 `return`**
+**关键：**
+- ✅ Minium 的 API 设计：期望传入函数定义。Minium 的标准用法是传入函数定义，而不是直接的执行语句。
+- ✅ 函数必须有 `return`
+- ✅ 必须 `sync=True`（异步函数会自动等待 Promise）
 
 ### 穿透 Shadow DOM
 ```python

@@ -91,7 +91,7 @@ function callStartTestMode() {
     return getApp().devTools.startTestMode();
 }
         """
-        mini.app.evaluate(js_code.strip())
+        mini.app.evaluate(js_code.strip(), sync=True)
         print('✅ startTestMode 调用完成')
         
         # 等待状态更新
@@ -116,10 +116,10 @@ def exit_test_mode(mini):
     try:
         print('🔄 退出测试模式...')
         
-        # 调用 endTestMode() 并等待完成（endTestMode 是异步函数）
+        # 调用 endTestMode() 并等待完成（sync=True 会自动等待 Promise）
         js_code = """
-async function callEndTestMode() {
-    return await getApp().devTools.endTestMode();
+function callEndTestMode() {
+    return getApp().devTools.endTestMode();
 }
         """
         result = mini.app.evaluate(js_code.strip(), sync=True)
