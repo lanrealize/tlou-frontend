@@ -154,7 +154,8 @@ const postStore = observable({
       return;
     }
 
-    if (!userInfo || (!userInfo.openid && !userInfo._id)) {
+    // ✅ 后端架构：_id 是用户唯一标识
+    if (!userInfo || !userInfo._id) {
 
       return;
     }
@@ -245,22 +246,22 @@ const postStore = observable({
           if (currentUser) {
             // 获取回复目标用户信息
             let replyToUser = null;
-            if (commentData.replyToUserId) {
+            // ✅ 后端参数名：replyToUserOpenid
+            if (commentData.replyToUserOpenid) {
               // 从当前评论中查找回复目标用户
               const targetPost = this.posts[postIndex];
               const targetComment = targetPost.comments?.find(c => 
-                c.author._id === commentData.replyToUserId
+                c.author._id === commentData.replyToUserOpenid
               );
               if (targetComment) {
                 replyToUser = {
                   _id: targetComment.author._id,
                   username: targetComment.author.username || targetComment.author.name,
-                  name: targetComment.author.name || targetComment.author.username,
-                  openid: targetComment.author.openid
+                  name: targetComment.author.name || targetComment.author.username
                 };
               } else {
                 replyToUser = {
-                  _id: commentData.replyToUserId,
+                  _id: commentData.replyToUserOpenid,
                   username: commentData.replyToUsername || '用户',
                   name: commentData.replyToUsername || '用户'
                 };
@@ -274,7 +275,6 @@ const postStore = observable({
                 _id: currentUser._id,
                 username: currentUser.username,
                 name: currentUser.name,
-                openid: currentUser.openid,
                 avatar: currentUser.avatar
               },
               content: commentData.content,
@@ -396,8 +396,7 @@ const postStore = observable({
         _id: currentUser._id,
         username: currentUser.username,
         name: currentUser.name,
-        avatar: currentUser.avatar,
-        openid: currentUser.openid
+        avatar: currentUser.avatar
       } : {},
       likes: [],
       likedUsers: [],

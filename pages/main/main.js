@@ -777,9 +777,10 @@ Page({
     }
 
     try {
+      // ✅ 后端参数名：replyToUserOpenid
       const data = {
         content: commentText.trim(),
-        replyToUserId: replyToUser ? replyToUser.id : undefined,
+        replyToUserOpenid: replyToUser ? replyToUser.id : undefined,
         replyToUsername: replyToUser ? replyToUser.username : undefined
       };
       
@@ -1267,8 +1268,10 @@ Page({
   
   // 接受邀请并跳转
   async acceptInviteAndNavigate(circleId) {
-    const auth = require('../../utils/auth');
-    const openid = await auth.getOpenid();
+    const app = getApp();
+    const userStore = app?.getUserStore();
+    // ✅ 后端架构：_id 就是 openid 值
+    const openid = userStore?.userInfo?._id;
     
     return new Promise((resolve, reject) => {
       wx.request({
@@ -1296,8 +1299,10 @@ Page({
   
   // 申请加入并跳转
   async applyToJoinAndNavigate(circleId) {
-    const auth = require('../../utils/auth');
-    const openid = await auth.getOpenid();
+    const app = getApp();
+    const userStore = app?.getUserStore();
+    // ✅ 后端架构：_id 就是 openid 值
+    const openid = userStore?.userInfo?._id;
     
     return new Promise((resolve, reject) => {
       wx.request({

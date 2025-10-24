@@ -46,7 +46,7 @@
         bindlongpress="onCircleLongPress"
         data-circle-id="{{item._id}}"
         data-circle-name="{{item.name}}"
-        data-is-creator="{{item.creator._id === app.globalData.openid}}">
+        data-is-creator="{{item.creator._id === currentUser._id}}">
       </discover-circle-card>
     </view>
 

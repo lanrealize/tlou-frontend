@@ -883,9 +883,10 @@ Page({
     }
 
     try {
+      // ✅ 后端参数名：replyToUserOpenid
       const data = {
         content: commentText.trim(),
-        replyToUserId: replyToUser ? replyToUser.id : undefined,
+        replyToUserOpenid: replyToUser ? replyToUser.id : undefined,
         replyToUsername: replyToUser ? replyToUser.username : undefined
       };
 

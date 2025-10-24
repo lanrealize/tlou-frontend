@@ -43,13 +43,14 @@ class API {
           hasUserStore: !!userStore,
           isLoggedIn: userStore?.isLoggedIn,
           hasUserInfo: !!userStore?.userInfo,
-          hasOpenid: !!userStore?.userInfo?.openid,
-          openidValue: userStore?.userInfo?.openid || 'null'
+          hasUserId: !!userStore?.userInfo?._id,
+          userIdValue: userStore?.userInfo?._id || 'null'
         });
       }
       
-      if (userStore && userStore.isLoggedIn && userStore.userInfo?.openid) {
-        header['x-openid'] = userStore.userInfo.openid;
+      if (userStore && userStore.isLoggedIn && userStore.userInfo?._id) {
+        // ✅ 后端架构：_id 就是 openid 值
+        header['x-openid'] = userStore.userInfo._id;
         if (DEBUG_API) {
           console.log('✅ 已添加 x-openid:', header['x-openid']);
         }
@@ -204,18 +205,18 @@ class API {
     // 添加成员
     addMember: (circleId, data) => this.post(`/circles/${circleId}/members`, data),
     
-    // 移除成员
-    removeMember: (circleId, memberId) => this.delete(`/circles/${circleId}/members/${memberId}`),
+    // 移除成员（后端参数名改为 memberOpenid）
+    removeMember: (circleId, memberOpenid) => this.delete(`/circles/${circleId}/members/${memberOpenid}`),
     
     // === 申请加入功能 ===
     // 申请加入朋友圈
     applyToJoin: (circleId) => this.post(`/circles/${circleId}/apply`),
     
-    // 同意申请（朋友圈主人操作）
-    approveApplication: (circleId, userId) => this.post(`/circles/${circleId}/approve/${userId}`),
+    // 同意申请（朋友圈主人操作，后端参数名改为 userOpenid）
+    approveApplication: (circleId, userOpenid) => this.post(`/circles/${circleId}/approve/${userOpenid}`),
     
-    // 拒绝申请（朋友圈主人操作）
-    rejectApplication: (circleId, userId) => this.post(`/circles/${circleId}/reject/${userId}`),
+    // 拒绝申请（朋友圈主人操作，后端参数名改为 userOpenid）
+    rejectApplication: (circleId, userOpenid) => this.post(`/circles/${circleId}/reject/${userOpenid}`),
     
     // 获取申请者列表（朋友圈主人查看）
     getAppliers: (circleId) => this.get(`/circles/${circleId}/appliers`),
@@ -235,11 +236,13 @@ class API {
       const app = getApp();
       const userStore = app?.getUserStore();
       
-      if (!userStore || !userStore.isLoggedIn || !userStore.userInfo?.openid) {
-        throw new Error('未获取到用户openid');
+      // ✅ 后端架构：_id 就是 openid 值
+      if (!userStore || !userStore.isLoggedIn || !userStore.userInfo?._id) {
+        throw new Error('未获取到用户身份信息');
       }
       
-      return this.post(`/circles/${circleId}/join`, { openid: userStore.userInfo.openid });
+      // ✅ 后端架构：_id 就是 openid 值
+      return this.post(`/circles/${circleId}/join`, { openid: userStore.userInfo._id });
     }
   };
 
@@ -289,11 +292,11 @@ class API {
     // 获取虚拟用户列表
     getVirtualUsers: () => this.get('/admin/virtual-users'),
     
-    // 更新虚拟用户信息
-    updateVirtualUser: (userId, data) => this.put(`/admin/virtual-users/${userId}`, data),
+    // 更新虚拟用户信息（后端参数名改为 userOpenid）
+    updateVirtualUser: (userOpenid, data) => this.put(`/admin/virtual-users/${userOpenid}`, data),
     
-    // 删除虚拟用户
-    deleteVirtualUser: (userId) => this.delete(`/admin/virtual-users/${userId}`)
+    // 删除虚拟用户（后端参数名改为 userOpenid）
+    deleteVirtualUser: (userOpenid) => this.delete(`/admin/virtual-users/${userOpenid}`)
   };
 }
 

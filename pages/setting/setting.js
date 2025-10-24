@@ -824,12 +824,14 @@ Page({
       const app = getApp();
       const userStore = app?.getUserStore();
       
-      if (!userStore || !userStore.isLoggedIn || !userStore.userInfo?.openid) {
+      // ✅ 后端架构：_id 就是 openid 值
+      if (!userStore || !userStore.isLoggedIn || !userStore.userInfo?._id) {
         throw new Error('用户身份验证失败');
       }
       
-      const openid = userStore.userInfo.openid;
-      const res = await api.circles.leave(this.data.circleId, openid);
+      // ✅ 后端架构：_id 就是 openid 值
+      const userOpenid = userStore.userInfo._id;
+      const res = await api.circles.leave(this.data.circleId, userOpenid);
       
       wx.hideLoading();
       

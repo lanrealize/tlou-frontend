@@ -76,13 +76,8 @@ const checkLoginStatus = async () => {
     const localUserInfo = wx.getStorageSync(STORAGE_KEYS.USER_INFO) || {};
     
     // 如果本地有完整用户信息，直接返回已登录状态
-    if (localUserInfo.username && localUserInfo.avatar) {
-      // 🔑 确保 userInfo 中包含 openid
-      if (!localUserInfo.openid) {
-        localUserInfo.openid = openid;
-        wx.setStorageSync(STORAGE_KEYS.USER_INFO, localUserInfo);
-      }
-      
+    if (localUserInfo.username && localUserInfo.avatar && localUserInfo._id) {
+      // ✅ 后端架构：_id 就是 openid，无需单独的 openid 字段
       return {
         status: 'loggedIn',
         userInfo: localUserInfo
@@ -117,11 +112,7 @@ const checkLoginStatus = async () => {
     
     // 5. 判断用户是否已注册
     if (serverUserInfo && serverUserInfo.username && serverUserInfo.avatar) {
-      // 🔑 确保 userInfo 中包含 openid（后端可能不返回）
-      if (!serverUserInfo.openid) {
-        serverUserInfo.openid = openid;
-      }
-      
+      // ✅ 后端架构：_id 就是 openid（openid 值），无需额外字段
       // 用户已注册：更新本地缓存并返回用户信息
       wx.setStorageSync(STORAGE_KEYS.USER_INFO, serverUserInfo);
       return {

@@ -48,8 +48,8 @@ function getCurrentUserId() {
   const user = getCurrentUser();
   if (!user) return null;
   
-  // 优先级：_id > openid > id > userId > user_id
-  return user._id || user.openid || user.id || user.userId || user.user_id || null;
+  // ✅ 后端架构：_id 就是用户唯一标识（存储openid值）
+  return user._id || user.id || user.userId || user.user_id || null;
 }
 
 /**

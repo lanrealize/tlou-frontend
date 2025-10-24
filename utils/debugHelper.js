@@ -15,8 +15,7 @@ function checkAuthState() {
       hasUserStore: !!userStore,
       isLoggedIn: userStore?.isLoggedIn || false,
       hasUserInfo: !!userStore?.userInfo,
-      hasOpenid: !!userStore?.userInfo?.openid,
-      openid: userStore?.userInfo?.openid || 'null',
+      hasUserId: !!userStore?.userInfo?._id,
       userId: userStore?.userInfo?._id || 'null',
       username: userStore?.userInfo?.username || 'null',
       loginStatus: userStore?.loginStatus || 'unknown',
@@ -68,16 +67,16 @@ function logBeforeRequest(apiName, url) {
     issues.push('⚠️ userStore.userInfo 为 null');
   }
   
-  if (!state.hasOpenid) {
-    issues.push('❌ 关键问题：userStore.userInfo.openid 不存在');
+  if (!state.hasUserId) {
+    issues.push('❌ 关键问题：userStore.userInfo._id 不存在');
   }
   
   if (issues.length > 0) {
     console.error('🚨 发现问题:');
     issues.forEach(issue => console.error('  ', issue));
     
-    // 检查是否有其他地方有 openid
-    if (!state.hasOpenid) {
+    // 检查是否有其他地方有 openid（用于认证）
+    if (!state.hasUserId) {
       if (state.globalDataOpenid !== 'null') {
         console.warn('💡 globalData.openid 存在:', state.globalDataOpenid);
         console.warn('   建议：可能需要从 globalData 获取');
@@ -88,7 +87,7 @@ function logBeforeRequest(apiName, url) {
       }
     }
   } else {
-    console.log('✅ 认证状态正常，openid:', state.openid);
+    console.log('✅ 认证状态正常，userId (_id):', state.userId);
   }
   
   return state;
@@ -105,8 +104,8 @@ function simulateAPIRequest(url, method = 'GET') {
   const header = { 'Content-Type': 'application/json' };
   
   try {
-    if (userStore && userStore.isLoggedIn && userStore.userInfo?.openid) {
-      header['x-openid'] = userStore.userInfo.openid;
+    if (userStore && userStore.isLoggedIn && userStore.userInfo?._id) {
+      header['x-openid'] = userStore.userInfo._id;
       console.log('✅ header 中会包含 x-openid:', header['x-openid']);
     } else {
       console.error('❌ header 中没有 x-openid！');
@@ -119,8 +118,8 @@ function simulateAPIRequest(url, method = 'GET') {
         console.error('   原因：userStore.isLoggedIn = false');
       } else if (!userStore.userInfo) {
         console.error('   原因：userStore.userInfo 为 null');
-      } else if (!userStore.userInfo.openid) {
-        console.error('   原因：userStore.userInfo.openid 不存在');
+      } else if (!userStore.userInfo._id) {
+        console.error('   原因：userStore.userInfo._id 不存在');
       }
     }
   } catch (error) {
@@ -141,8 +140,8 @@ async function checkCirclesData() {
     
     // 先检查认证状态
     const authState = checkAuthState();
-    if (!authState?.hasOpenid) {
-      console.error('❌ 无法检查数据：openid 不存在');
+    if (!authState?.hasUserId) {
+      console.error('❌ 无法检查数据：userId (_id) 不存在');
       return;
     }
     
@@ -195,8 +194,8 @@ async function testAccessCircle(circleId) {
   
   // 检查认证状态
   const authState = checkAuthState();
-  if (!authState?.hasOpenid) {
-    console.error('❌ 测试失败：openid 不存在');
+  if (!authState?.hasUserId) {
+    console.error('❌ 测试失败：userId (_id) 不存在');
     return;
   }
   
@@ -243,8 +242,8 @@ async function fullDiagnosis() {
   console.log('\n【步骤 1/3】检查认证状态');
   const authState = checkAuthState();
   
-  if (!authState?.hasOpenid) {
-    console.error('\n❌ 诊断中止：openid 不存在');
+  if (!authState?.hasUserId) {
+    console.error('\n❌ 诊断中止：userId (_id) 不存在');
     console.error('   请确保用户已登录');
     return;
   }
