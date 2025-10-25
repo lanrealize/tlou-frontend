@@ -14,17 +14,41 @@ const STATE_CONFIGS = require('../config/actionPermissions');
 // ===== 辅助函数：检查成员资格 =====
 function checkIsMember(circle, userId) {
   if (!circle || !userId) return false;
-  return circle.members && circle.members.includes(userId);
+  
+  if (circle.currentUserStatus) {
+    return circle.currentUserStatus.isMember;
+  }
+  
+  // Fallback: 用于本地更新的临时状态
+  if (!circle.members || !Array.isArray(circle.members)) {
+    return false;
+  }
+  
+  if (circle.members.length > 0 && typeof circle.members[0] === 'object') {
+    return circle.members.some(member => member._id === userId);
+  }
+  
+  return circle.members.includes(userId);
 }
 
 function checkIsOwner(circle, userId) {
   if (!circle || !userId) return false;
+  
+  if (circle.currentUserStatus) {
+    return circle.currentUserStatus.isOwner;
+  }
+  
   return circle.createdBy === userId;
 }
 
 function checkHasApplied(circle, userId) {
   if (!circle || !userId) return false;
-  return circle.appliers && circle.appliers.includes(userId);
+  
+  if (circle.currentUserStatus) {
+    return circle.currentUserStatus.hasApplied;
+  }
+  
+  return false;
 }
 
 // ===== 辅助函数：获取当前用户登录状态 =====
@@ -167,16 +191,54 @@ function checkActionPermission(action, options = {}) {
     return { allowed: false, status: null, message: '参数错误' };
   }
   
-  if (!circle) {
-    console.error('❌ checkActionPermission: circle 参数必需');
-    return { allowed: false, status: null, message: '参数错误' };
-  }
+  // 🔑 判断动作是否需要 circle 参数
+  // createCircle 和 enterListPage 只需要检查登录状态，不需要 circle
+  const actionsWithoutCircle = ['createCircle', 'enterListPage'];
+  const needsCircle = !actionsWithoutCircle.includes(action);
   
   // 获取用户ID（自动或手动）
   let userId = options.userId;
   if (userId === undefined) {
     const loginStatus = getUserLoginStatus();
     userId = loginStatus.userId;
+  }
+  
+  // 对于不需要 circle 的动作，简化处理逻辑
+  if (!needsCircle) {
+    // 检查是否登录
+    const isLoggedIn = userId !== null;
+    
+    if (isLoggedIn) {
+      return {
+        allowed: true,
+        status: 'member',  // 简化状态
+        message: null,
+        rejectAction: null
+      };
+    } else {
+      // 未登录，需要弹出注册框
+      const message = action === 'createCircle' 
+        ? '您需要登录才能创建朋友圈' 
+        : '您需要登录才能查看朋友圈列表';
+      
+      return {
+        allowed: false,
+        status: 'guest_no_access',
+        message,
+        rejectAction: 'showRegisterPopup',
+        saveIntent: false,  // 这些动作不需要保存意图
+        intentAction: action,
+        circleId,
+        postId,
+        customData
+      };
+    }
+  }
+  
+  // 对于需要 circle 的动作，验证 circle 参数
+  if (!circle) {
+    console.error(`❌ checkActionPermission: 动作 "${action}" 需要 circle 参数`);
+    return { allowed: false, status: null, message: '参数错误' };
   }
   
   // 1. 判断状态

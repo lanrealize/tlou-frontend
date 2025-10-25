@@ -405,14 +405,6 @@ Page({
       const { currentUser } = this.data;
       const userId = currentUser?._id || null;
       const relation = getUserStatusWithRole(targetCircle, userId, finalIsInviteMode);
-      
-      console.log('✅ 用户关系判断结果 (预加载):', {
-        状态: relation.status,
-        是否邀请模式: finalIsInviteMode,
-        朋友圈类型: targetCircle.isPublic ? '公开' : '私密',
-        是否成员: relation.status === 'member',
-        是否被邀请: relation.status === 'invited'
-      });
 
       this.setData({
         circle: targetCircle,
@@ -462,12 +454,6 @@ Page({
       const finalIsInviteMode = isInviteMode !== null ? isInviteMode : this.data.isInviteMode;
       const finalInviterId = inviterId !== null ? inviterId : this.data.inviterId;
       
-      console.log('🔍 loadCircleDetail 邀请状态:', {
-        传入参数: isInviteMode,
-        数据中的值: this.data.isInviteMode,
-        最终使用: finalIsInviteMode
-      });
-      
       let targetCircle = null;
       const { currentUser } = this.data;
       const isLoggedIn = currentUser && currentUser._id;
@@ -508,14 +494,6 @@ Page({
       // currentUser 已在上面声明
       const userId = currentUser?._id || null;
       const relation = getUserStatusWithRole(targetCircle, userId, finalIsInviteMode);
-      
-      console.log('✅ 用户关系判断结果:', {
-        状态: relation.status,
-        是否邀请模式: finalIsInviteMode,
-        朋友圈类型: targetCircle.isPublic ? '公开' : '私密',
-        是否成员: relation.status === 'member',
-        是否被邀请: relation.status === 'invited'
-      });
 
       this.setData({
         circle: targetCircle,
@@ -1026,7 +1004,7 @@ Page({
 
   // 申请加入朋友圈
   async applyToJoin() {
-    const { circleId, circle, isInviteMode, isApplying } = this.data;
+    const { circleId, circle, isInviteMode, isApplying, currentUser } = this.data;
     
     // 访问控制：检查是否登录
     if (!checkAndHandle('applyToJoin', { circle, isInviteMode, circleId })) {
@@ -1045,7 +1023,25 @@ Page({
 
       if (res.success) {
         wx.showToast({ title: '申请已提交', icon: 'success' });
-        this.setData({ userStatus: 'applied', isApplying: false });
+        
+        // 更新本地状态（后端已返回 currentUserStatus，重新加载即可获取最新状态）
+        const updatedCircle = { ...circle };
+        if (!updatedCircle.currentUserStatus) {
+          updatedCircle.currentUserStatus = {
+            isMember: false,
+            isOwner: false,
+            hasApplied: true
+          };
+        } else {
+          updatedCircle.currentUserStatus.hasApplied = true;
+        }
+        
+        this.setData({ 
+          userStatus: 'applied', 
+          isApplying: false,
+          circle: updatedCircle,
+          hasApplied: true
+        });
       } else {
         throw new Error(res.message || '申请失败');
       }

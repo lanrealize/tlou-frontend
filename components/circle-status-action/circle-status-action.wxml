@@ -1,6 +1,8 @@
 <!--components/circle-status-action/circle-status-action.wxml-->
 <view class="circle-status-action {{hidden ? 'hidden' : ''}}">
   
+  <!-- ========== 已登录状态 ========== -->
+  
   <!-- 状态1: 成员 - 发布新动态 -->
   <view class="status-card" wx:if="{{status === 'member'}}" bindtap="onPublish">
     <view class="card-layout">
@@ -12,7 +14,33 @@
     </view>
   </view>
 
-  <!-- 状态2: 被邀请（无论是否注册都显示） -->
+  <!-- 状态2: 已申请 -->
+  <view class="status-card" wx:elif="{{status === 'applied'}}">
+    <view class="card-layout">
+      <view class="left-content">
+        <text class="main-title">申请已提交</text>
+        <text class="sub-title">等待朋友圈主人审核中</text>
+      </view>
+      <view class="action-btn static disabled">审核中</view>
+    </view>
+  </view>
+
+  <!-- 状态3: 被邀请且已申请（优先显示邀请） -->
+  <view class="status-card" wx:elif="{{status === 'invited_applied'}}">
+    <view class="card-layout">
+      <view class="left-content">
+        <text class="main-title">你收到了邀请</text>
+        <text class="sub-title">点击右侧按钮可直接加入（无需等待审核）</text>
+      </view>
+      <button class="action-btn {{isJoining ? 'disabled' : ''}}" 
+              bindtap="onAcceptInvite" 
+              disabled="{{isJoining}}">
+        {{isJoining ? '加入中...' : '接受邀请'}}
+      </button>
+    </view>
+  </view>
+
+  <!-- 状态4: 被邀请（已登录） -->
   <view class="status-card" wx:elif="{{status === 'invited'}}">
     <view class="card-layout">
       <view class="left-content">
@@ -27,18 +55,7 @@
     </view>
   </view>
 
-  <!-- 状态3: 已申请 -->
-  <view class="status-card" wx:elif="{{status === 'applied'}}">
-    <view class="card-layout">
-      <view class="left-content">
-        <text class="main-title">申请已提交</text>
-        <text class="sub-title">等待朋友圈主人审核中</text>
-      </view>
-      <view class="action-btn static disabled">审核中</view>
-    </view>
-  </view>
-
-  <!-- 状态4: 可申请加入（无论是否注册都显示） -->
+  <!-- 状态5: 可申请加入（已登录） -->
   <view class="status-card" wx:elif="{{status === 'can_apply'}}">
     <view class="card-layout">
       <view class="left-content">
@@ -53,7 +70,7 @@
     </view>
   </view>
 
-  <!-- 状态5: 无权限（理论上不应该出现） -->
+  <!-- 状态6: 无权限（已登录） -->
   <view class="status-card" wx:elif="{{status === 'no_access'}}">
     <view class="card-layout">
       <view class="left-content">
@@ -63,6 +80,41 @@
       <view class="action-btn static disabled">无权限</view>
     </view>
   </view>
+
+  <!-- ========== 未登录状态 ========== -->
+  
+  <!-- 状态7: 被邀请（未登录） -->
+  <view class="status-card" wx:elif="{{status === 'guest_invited'}}">
+    <view class="card-layout">
+      <view class="left-content">
+        <text class="main-title">你收到了邀请</text>
+        <text class="sub-title">点击右侧按钮加入这个朋友圈</text>
+      </view>
+      <button class="action-btn {{isJoining ? 'disabled' : ''}}" 
+              bindtap="onAcceptInvite" 
+              disabled="{{isJoining}}">
+        {{isJoining ? '加入中...' : '接受邀请'}}
+      </button>
+    </view>
+  </view>
+
+  <!-- 状态8: 可申请加入（未登录） -->
+  <view class="status-card" wx:elif="{{status === 'guest_can_apply'}}">
+    <view class="card-layout">
+      <view class="left-content">
+        <text class="main-title">公开朋友圈</text>
+        <text class="sub-title">你可以申请加入这个朋友圈</text>
+      </view>
+      <button class="action-btn {{isApplying ? 'disabled' : ''}}" 
+              bindtap="onApply" 
+              disabled="{{isApplying}}">
+        {{isApplying ? '申请中...' : '申请加入'}}
+      </button>
+    </view>
+  </view>
+
+  <!-- 状态9: 无权限（未登录，不显示） -->
+  <!-- guest_no_access 状态不显示任何内容 -->
 
 </view>
 
