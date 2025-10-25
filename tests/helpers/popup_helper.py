@@ -2,10 +2,17 @@
 # -*- coding: utf-8 -*-
 """
 弹窗辅助工具 - 检测、关闭、等待弹窗消失
+
+测试规则：
+- ✅ 所有 UI 交互必须使用 Minium 模拟真实用户操作
+- ✅ 点击、输入、滑动等操作都通过 Minium 完成
+- ✅ 只有状态查询允许和确认允许使用js代码完成
+- ❌ 不再使用 JavaScript 直接操作页面数据或调用方法（特殊情况除外）
+- 📖 这样可以确保测试真实反映用户体验
 """
 
 import time
-from .js_helpers import js_check_popup_visible, js_close_popup, evaluate_js
+from .js_helpers import js_check_popup_visible, evaluate_js
 
 
 def check_popup_visible(mini, expected_reason=None):
@@ -82,29 +89,25 @@ def close_popup_by_mask(mini, wait_visible=0.4, verify_closed=True):
             print('ℹ️  弹窗未显示，无需关闭')
             return True  # 已经关闭了，返回成功
         
-        # 优先使用Minium模拟用户点击遮罩层
+        # 使用Minium模拟用户点击遮罩层
         page = mini.app.current_page
         try:
-            # 尝试找到遮罩层元素并点击
-            mask = page.get_element('user-info-popup >>> .popup-mask')
-            if mask:
-                mask.tap()
-                print('✅ 已通过Minium点击遮罩层关闭弹窗')
-                time.sleep(0.2)
-            else:
-                raise Exception('未找到遮罩层元素')
-        except Exception as ui_error:
-            # 如果UI点击失败，使用JavaScript方法作为备用方案
-            print(f'⚠️  Minium点击遮罩层失败，尝试JavaScript方式: {str(ui_error)}')
-            actual_result = evaluate_js(mini, js_close_popup())
-            
-            if not actual_result.get('success'):
-                reason = actual_result.get('reason', 'unknown')
-                print(f'⚠️  JavaScript关闭弹窗失败，原因: {reason}')
+            # 找到遮罩层元素并点击
+            # 注意：user-info-popup 是 Component，需要用 >>> 穿透组件边界
+            mask = page.get_element('user-info-popup >>> .user-info-popup-mask')
+            if not mask:
+                print('❌ 未找到遮罩层元素')
                 return False
             
-            print('✅ 已通过JavaScript关闭弹窗')
+            mask.tap()
+            print('✅ 已通过Minium点击遮罩层关闭弹窗')
             time.sleep(0.2)
+            
+        except Exception as e:
+            print(f'❌ 点击遮罩层失败: {str(e)}')
+            import traceback
+            traceback.print_exc()
+            return False
         
         # 验证弹窗是否真的消失了
         if verify_closed:

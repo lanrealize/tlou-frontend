@@ -24,7 +24,18 @@ CONFIG = {
 }
 
 # Circle Status Action 组件状态配置
+# 
+# ⚠️ 重要：此配置需要与 config/actionPermissions.js 中的 uiConfig 保持同步
+# 
+# 配置来源：config/actionPermissions.js 各状态的 uiConfig 部分
+# - mainTitle -> main_title
+# - subTitle -> sub_title  
+# - button.text -> button_text
+#
+# 如果修改了 actionPermissions.js 中的 UI 文字，请同步更新此处
+#
 CIRCLE_STATUS_CONFIG = {
+    # ========== 已登录状态 ==========
     'member': {
         'main_title': '发布新动态',
         'sub_title': '分享你的精彩瞬间',
@@ -33,6 +44,11 @@ CIRCLE_STATUS_CONFIG = {
     'invited': {
         'main_title': '你收到了邀请',
         'sub_title': '点击右侧按钮加入这个朋友圈',
+        'button_text': '接受邀请'
+    },
+    'invited_applied': {
+        'main_title': '你收到了邀请',
+        'sub_title': '点击右侧按钮可直接加入（无需等待审核）',
         'button_text': '接受邀请'
     },
     'applied': {
@@ -49,7 +65,19 @@ CIRCLE_STATUS_CONFIG = {
         'main_title': '无法访问',
         'sub_title': '无权查看此朋友圈',
         'button_text': '无权限'
-    }
+    },
+    # ========== 未登录状态 ==========
+    'guest_invited': {
+        'main_title': '你收到了邀请',
+        'sub_title': '点击右侧按钮加入这个朋友圈',
+        'button_text': '接受邀请'
+    },
+    'guest_can_apply': {
+        'main_title': '公开朋友圈',
+        'sub_title': '你可以申请加入这个朋友圈',
+        'button_text': '申请加入'
+    },
+    # guest_no_access 不显示任何内容，不需要配置
 }
 
 

@@ -77,37 +77,6 @@ def js_check_popup_visible():
     """
 
 
-def js_close_popup():
-    """关闭弹窗"""
-    return """
-    function closePopupByMask() {
-        const pages = getCurrentPages();
-        const currentPage = pages[pages.length - 1];
-        if (!currentPage || !currentPage.data) {
-            return { success: false, reason: 'no_page' };
-        }
-        
-        if (!currentPage.data.userInfoPopupVisible) {
-            return { success: false, reason: 'not_visible' };
-        }
-        
-        // 方法1：直接调用页面的 onUserInfoClose 方法（最可靠）
-        if (currentPage.onUserInfoClose) {
-            currentPage.onUserInfoClose();
-            console.log('[TEST] 已通过页面方法关闭弹窗');
-            return { success: true, reason: 'closed_by_page_method' };
-        }
-        
-        // 方法2：直接设置 data（备用方案）
-        currentPage.setData({
-            userInfoPopupVisible: false
-        });
-        console.log('[TEST] 已通过 setData 关闭弹窗');
-        return { success: true, reason: 'closed_by_setdata' };
-    }
-    """
-
-
 # ============================================
 # 页面导航相关
 # ============================================
