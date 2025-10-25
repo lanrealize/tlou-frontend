@@ -176,10 +176,15 @@ const userStore = observable({
   },
 
   // 切换回真实身份 - 简化版本
-  switchToRealIdentity() {
+  async switchToRealIdentity() {
     // 重新初始化，从 Storage 恢复真实用户信息
     this.currentIdentityType = IDENTITY_TYPE.REAL;
-    this.initializeFromStorage(); // 从 Storage 恢复真实用户信息到 MobX
+    await this.initializeFromStorage(); // 从 Storage 恢复真实用户信息到 MobX
+    
+    // 重新加载虚拟用户列表
+    if (this.isAdmin) {
+      await this.loadVirtualUsers();
+    }
     
     wx.showToast({ title: '已切换回真实身份', icon: 'success' });
   },

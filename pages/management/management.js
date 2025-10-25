@@ -254,19 +254,17 @@ Page({
   },
 
   // 切换身份
-  switchIdentity(e) {
+  async switchIdentity(e) {
     const { type, user } = e.currentTarget.dataset;
     
     if (type === 'real') {
-      this.switchToRealIdentity();
+      await this.switchToRealIdentity();
+      // userStore 会自动刷新虚拟用户列表
     } else if (type === 'virtual' && user) {
-      this.switchToVirtualIdentity(user);
+      await this.switchToVirtualIdentity(user);
     }
     
-    // 延迟返回主页，让用户看到切换结果
-    setTimeout(() => {
-      wx.navigateBack();
-    }, 1500);
+    // 不再自动返回主页，让用户留在管理页面
   },
 
   // 删除虚拟用户

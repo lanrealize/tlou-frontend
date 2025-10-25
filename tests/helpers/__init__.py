@@ -27,8 +27,19 @@ from .popup_helper import (
 # 新增的辅助模块
 from . import js_helpers
 from . import element_helpers
-from . import validation_helpers
-from . import post_helpers
+from . import virtual_user_helper
+from . import common_helper
+
+# 虚拟用户helper
+from .virtual_user_helper import (
+    navigate_to_management_page,
+    get_current_identity,
+    get_virtual_users_list,
+    create_virtual_user,
+    switch_to_virtual_identity,
+    switch_to_real_identity,
+    delete_virtual_user
+)
 
 __all__ = [
     # test_helper
@@ -49,9 +60,18 @@ __all__ = [
     'close_popup_by_mask',
     'ensure_popup_closed',
     
+    # virtual_user_helper
+    'navigate_to_management_page',
+    'get_current_identity',
+    'get_virtual_users_list',
+    'create_virtual_user',
+    'switch_to_virtual_identity',
+    'switch_to_real_identity',
+    'delete_virtual_user',
+    
     # 新增模块
     'js_helpers',
     'element_helpers',
-    'validation_helpers',
-    'post_helpers',
+    'virtual_user_helper',
+    'common_helper',
 ]

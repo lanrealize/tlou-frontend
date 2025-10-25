@@ -19,7 +19,8 @@
         <text class="identity-name">{{userInfo.username}}</text>
         <text class="identity-type">{{isVirtualIdentity ? '🎭 虚拟身份' : '👑 管理员'}}</text>
       </view>
-      <view class="switch-btn" wx:if="{{isVirtualIdentity}}" 
+      <view id="switch-to-real-btn"
+            class="switch-btn" wx:if="{{isVirtualIdentity}}" 
             bindtap="switchIdentity" data-type="real">
         <image class="switch-avatar" src="{{defaultAvatar}}" mode="aspectFill"></image>
         <text class="switch-text">切回管理员</text>
@@ -34,7 +35,8 @@
       <!-- 用户名输入 -->
       <view class="form-item">
         <text class="form-label">用户名</text>
-        <input class="form-input" 
+        <input id="virtual-username-input"
+               class="form-input" 
                value="{{newVirtualUser.username}}"
                placeholder="请输入虚拟用户名"
                bindinput="onUsernameInput"
@@ -52,7 +54,8 @@
                    mode="aspectFill"></image>
           </view>
           <!-- 上传按钮 -->
-          <button class="upload-btn {{isUploadingAvatar ? 'uploading' : ''}}"
+          <button id="virtual-avatar-upload-btn"
+                  class="upload-btn {{isUploadingAvatar ? 'uploading' : ''}}"
                   bindtap="uploadAvatar"
                   disabled="{{isUploadingAvatar}}">
             <text class="upload-icon">{{isUploadingAvatar ? '⏳' : '📷'}}</text>
@@ -63,7 +66,8 @@
       </view>
       
       <!-- 创建按钮 -->
-      <button class="create-btn theme-btn {{!canCreateUser ? 'disabled' : ''}}"
+      <button id="create-virtual-user-btn"
+              class="create-btn theme-btn {{!canCreateUser ? 'disabled' : ''}}"
               bindtap="createVirtualUserHandler"
               disabled="{{!canCreateUser}}">
         {{isCreating ? '创建中...' : '创建虚拟用户'}}
@@ -76,20 +80,20 @@
     <view class="section-title">虚拟用户列表 ({{virtualUsers.length}})</view>
     
     <view class="users-list" wx:if="{{virtualUsers.length > 0}}">
-      <view class="user-item" wx:for="{{virtualUsers}}" wx:key="_id">
+      <view class="user-item" wx:for="{{virtualUsers}}" wx:key="_id" data-user-id="{{item._id}}">
         <image class="user-avatar" src="{{item.avatar}}" mode="aspectFill"></image>
         <view class="user-info">
           <text class="user-name">{{item.username}}</text>
           <text class="user-meta">创建于 {{item.createdAt}}</text>
         </view>
         <view class="user-actions">
-          <button class="action-btn switch-btn-small"
+          <button class="action-btn switch-btn-small switch-to-virtual-btn"
                   bindtap="switchIdentity" 
                   data-type="virtual" 
                   data-user="{{item}}">
             切换
           </button>
-          <button class="action-btn delete-btn-small"
+          <button class="action-btn delete-btn-small delete-virtual-user-btn"
                   bindtap="deleteVirtualUserHandler"
                   data-user="{{item}}">
             删除
