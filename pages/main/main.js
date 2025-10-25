@@ -4,7 +4,7 @@ const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const api = require('../../utils/api');
 const util = require('../../utils/util');
 const navigationHelper = require('../../utils/navigationHelper');
-const userStatus = require('../../utils/userStatus');
+const { checkAndHandle } = require('../../utils/checkUserActionPermission');
 
 Page({
   // 使用MobX状态管理行为
@@ -384,7 +384,7 @@ Page({
   // 直接创建朋友圈（无对话框，使用默认设置）
   async createCircleDirectly() {
     // 使用全局访问控制
-    if (!userStatus.checkAccess('createCircle')) {
+    if (!checkAndHandle('createCircle')) {
       return;
     }
 
@@ -429,7 +429,7 @@ Page({
   // 进入最新活动朋友圈详情页面
   goToRecentCircle() {
     // 使用全局访问控制
-    if (!userStatus.checkAccess('enterListPage')) {
+    if (!checkAndHandle('enterListPage')) {
       return;
     }
 
@@ -445,7 +445,7 @@ Page({
   // 刷新数据
   refreshData() {
     // 使用全局访问控制
-    if (!userStatus.checkAccess('enterListPage')) {
+    if (!checkAndHandle('enterListPage')) {
       return;
     }
 
@@ -464,7 +464,7 @@ Page({
     const { id } = e.currentTarget.dataset;
     
     // 使用全局访问控制
-    if (!userStatus.checkAccess('enterListPage')) {
+    if (!checkAndHandle('enterListPage')) {
       return;
     }
 
@@ -663,7 +663,7 @@ Page({
     const { postId, index } = e.currentTarget.dataset;
     
     // 使用全局访问控制
-    if (!userStatus.checkAccess('likePost')) {
+    if (!checkAndHandle('likePost')) {
       return;
     }
 
@@ -722,7 +722,7 @@ Page({
     const { postId } = e.currentTarget.dataset;
     
     // 使用全局访问控制
-    if (!userStatus.checkAccess('commentPost')) {
+    if (!checkAndHandle('commentPost')) {
       return;
     }
 
@@ -739,7 +739,7 @@ Page({
     const { postId, userId, username } = e.currentTarget.dataset;
     
     // 使用全局访问控制
-    if (!userStatus.checkAccess('commentPost')) {
+    if (!checkAndHandle('commentPost')) {
       return;
     }
 
@@ -816,8 +816,8 @@ Page({
   // 跳转到朋友圈管理（需要登录）
   goToCircleList() {
     // 使用全局访问控制
-    if (!userStatus.checkAccess('enterListPage')) {
-      return; // checkAccess 会自动处理跳转到登录页
+    if (!checkAndHandle('enterListPage')) {
+      return; // checkAndHandle 会自动处理跳转到登录页
     }
     
     wx.switchTab({
@@ -828,7 +828,7 @@ Page({
   // 跳转到历史记录页面（需要登录）
   goToHistory() {
     // 使用全局访问控制
-    if (!userStatus.checkAccess('enterListPage')) {
+    if (!checkAndHandle('enterListPage')) {
       return;
     }
 
@@ -875,7 +875,7 @@ Page({
     const { postId, index } = e.currentTarget.dataset;
     
     // 使用全局访问控制
-    if (!userStatus.checkAccess('enterPublishPage')) {
+    if (!checkAndHandle('enterPublishPage')) {
       return;
     }
 

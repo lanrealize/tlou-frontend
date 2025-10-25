@@ -371,6 +371,110 @@ function getUIConfig(circle, userId = null, isInviteMode = false) {
   return config.uiConfig;
 }
 
+/**
+ * 检查用户是否可以分享朋友圈（邀请新成员）
+ * 
+ * 权限规则：
+ * - 朋友圈主人可以分享
+ * - 成员在 allowInvite 为 true 时可以分享
+ * - 邀请模式下不能分享（必须先加入）
+ * - 未登录不能分享
+ * 
+ * @param {Object} circle - 朋友圈对象
+ * @param {Object|null} currentUser - 当前用户信息（可选，会自动获取）
+ * @param {boolean} isInviteMode - 是否为邀请模式
+ * @returns {boolean} 是否可以分享
+ */
+function canShareCircle(circle, currentUser = null, isInviteMode = false) {
+  // 邀请模式下不能分享
+  if (isInviteMode) {
+    return false;
+  }
+  
+  // 检查朋友圈对象是否存在
+  if (!circle) {
+    return false;
+  }
+  
+  // 获取用户登录状态
+  const loginStatus = getUserLoginStatus();
+  const userId = currentUser?._id || loginStatus.userId;
+  
+  // 未登录不能分享
+  if (!userId) {
+    return false;
+  }
+  
+  // 情况1：是朋友圈主人
+  if (checkIsOwner(circle, userId)) {
+    return true;
+  }
+  
+  // 情况2：是成员，并且朋友圈允许成员邀请
+  if (checkIsMember(circle, userId) && circle.allowInvite === true) {
+    return true;
+  }
+  
+  return false;
+}
+
+// ===== 辅助函数（兼容旧 API） =====
+
+/**
+ * 获取当前用户信息
+ * 直接从 userStore 获取，避免 MobX 绑定延迟
+ * 
+ * @returns {Object|null} 当前用户信息，如果未登录则返回 null
+ */
+function getCurrentUser() {
+  try {
+    const app = getApp();
+    const userStore = app?.getUserStore();
+    
+    if (userStore && userStore.isLoggedIn && userStore.userInfo && userStore.userInfo._id) {
+      return userStore.userInfo;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('❌ 获取当前用户信息失败:', error);
+    return null;
+  }
+}
+
+/**
+ * 获取当前用户ID（支持多种ID字段格式）
+ * 
+ * @returns {string|null} 用户ID，如果未登录则返回 null
+ */
+function getCurrentUserId() {
+  const user = getCurrentUser();
+  if (!user) return null;
+  
+  // ✅ 后端架构：_id 就是用户唯一标识（存储openid值）
+  return user._id || user.id || user.userId || user.user_id || null;
+}
+
+/**
+ * 检查当前用户是否为管理员
+ * 
+ * @returns {boolean} 是否为管理员
+ */
+function isCurrentUserAdmin() {
+  const user = getCurrentUser();
+  return user?.isAdmin === true;
+}
+
+/**
+ * 检查当前用户是否已登录
+ * 
+ * @returns {boolean} 是否已登录
+ */
+function isUserLoggedIn() {
+  const user = getCurrentUser();
+  return user !== null && user._id !== undefined;
+}
+
 // ===== 导出 =====
 module.exports = {
   // 核心函数
@@ -379,11 +483,18 @@ module.exports = {
   getUIConfig,              // 获取 UI 配置
   checkActionPermission,    // 检查权限（返回详细结果）
   checkAndHandle,           // 检查权限并自动处理拒绝
+  canShareCircle,           // 检查是否可以分享朋友圈
   
   // 辅助函数
   checkIsMember,
   checkIsOwner,
   checkHasApplied,
-  getUserLoginStatus
+  getUserLoginStatus,
+  
+  // 兼容旧 API 的辅助函数
+  getCurrentUser,           // 获取当前用户信息
+  getCurrentUserId,         // 获取当前用户ID
+  isCurrentUserAdmin,       // 检查是否为管理员
+  isUserLoggedIn            // 检查是否已登录
 };
 

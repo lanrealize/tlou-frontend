@@ -2,7 +2,7 @@
 const api = require('../../utils/api');
 const util = require('../../utils/util');
 const auth = require('../../utils/auth');
-const userStatus = require('../../utils/userStatus');
+const { getUserStatusWithRole } = require('../../utils/checkUserActionPermission');
 
 // 状态常量
 const STATUS_CONSTANTS = {
@@ -223,7 +223,8 @@ Page({
       }
 
       // 权限检查：只有成员才能访问设置页面
-      const relation = userStatus.getUserCircleRelation(circle, currentUser, false);
+      const userId = currentUser?._id || null;
+      const relation = getUserStatusWithRole(circle, userId, false);
       if (relation.status !== 'member') {
         wx.showModal({
           title: '权限不足',

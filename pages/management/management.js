@@ -2,6 +2,7 @@
 const { storeBindingsBehavior } = require('mobx-miniprogram-bindings');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const navigationHelper = require('../../utils/navigationHelper');
+const { isCurrentUserAdmin, getCurrentUser } = require('../../utils/checkUserActionPermission');
 
 Page({
   behaviors: [storeBindingsBehavior],
@@ -41,8 +42,7 @@ Page({
   // 权限检查和加载逻辑
   checkPermissionAndLoad() {
     // ✅ 修复：使用统一的权限检查函数
-    const userStatus = require('../../utils/userStatus');
-    const hasAdminPermission = userStatus.isCurrentUserAdmin();
+    const hasAdminPermission = isCurrentUserAdmin();
     const pageIsAdmin = this.data.isAdmin;
     
     if (!hasAdminPermission) {
@@ -59,7 +59,7 @@ Page({
     
     // 如果UserStore有权限但页面状态没同步，手动同步
     if (hasAdminPermission && pageIsAdmin !== hasAdminPermission) {
-      const currentUser = userStatus.getCurrentUser();
+      const currentUser = getCurrentUser();
       const app = getApp();
       const userStore = app?.getUserStore();
       

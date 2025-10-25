@@ -4,7 +4,7 @@ const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const api = require('../../utils/api');
 const util = require('../../utils/util');
 const navigationHelper = require('../../utils/navigationHelper');
-const userStatus = require('../../utils/userStatus');
+const { getUserStatusWithRole, checkAndHandle, canShareCircle } = require('../../utils/checkUserActionPermission');
 
 Page({
   // 使用MobX状态管理行为
@@ -403,7 +403,8 @@ Page({
       
       // 🔑 使用全局状态管理判断用户关系（使用处理后的参数）
       const { currentUser } = this.data;
-      const relation = userStatus.getUserCircleRelation(targetCircle, currentUser, finalIsInviteMode);
+      const userId = currentUser?._id || null;
+      const relation = getUserStatusWithRole(targetCircle, userId, finalIsInviteMode);
       
       console.log('✅ 用户关系判断结果 (预加载):', {
         状态: relation.status,
@@ -505,7 +506,8 @@ Page({
 
       // 🔑 使用全局状态管理判断用户关系（使用处理后的参数）
       // currentUser 已在上面声明
-      const relation = userStatus.getUserCircleRelation(targetCircle, currentUser, finalIsInviteMode);
+      const userId = currentUser?._id || null;
+      const relation = getUserStatusWithRole(targetCircle, userId, finalIsInviteMode);
       
       console.log('✅ 用户关系判断结果:', {
         状态: relation.status,
@@ -593,7 +595,7 @@ Page({
 
   // 打开设置
   openSettings() {
-    const { circleId, circle, currentUser, isInviteMode } = this.data;
+    const { circleId, circle, isInviteMode } = this.data;
     
     if (!circleId) {
       wx.showToast({
@@ -604,8 +606,8 @@ Page({
     }
     
     // 使用统一的权限检查：只有朋友圈成员才能进入设置页面
-    if (!userStatus.checkAccess('enterSettingsPage', { circle, currentUser, isInviteMode })) {
-      return; // checkAccess 会自动处理未登录（跳转）或非成员（Toast）
+    if (!checkAndHandle('enterSettingsPage', { circle, isInviteMode })) {
+      return; // checkAndHandle 会自动处理未登录（弹窗）或非成员（Toast）
     }
     
     // 导航到朋友圈设置页面，传递朋友圈ID
@@ -622,7 +624,7 @@ Page({
 
   // 设置分享菜单的显示/隐藏
   setupShareMenu(circle, currentUser, isInviteMode) {
-    const canShare = userStatus.canShareCircle(circle, currentUser, isInviteMode);
+    const canShare = canShareCircle(circle, currentUser, isInviteMode);
     
     if (canShare) {
       // 可以分享：显示分享菜单
@@ -643,7 +645,7 @@ Page({
     const { circle, circleId, currentUser, isInviteMode } = this.data;
     
     // 🔑 使用统一的权限管理检查分享权限
-    const canShare = userStatus.canShareCircle(circle, currentUser, isInviteMode);
+    const canShare = canShareCircle(circle, currentUser, isInviteMode);
     
     if (canShare) {
       // 可以发出邀请
@@ -660,11 +662,11 @@ Page({
 
   // 接受邀请加入朋友圈
   async acceptInvite() {
-    const { circleId, isJoining } = this.data;
+    const { circleId, circle, isInviteMode, isJoining } = this.data;
     
     // 访问控制：检查是否登录
-    if (!userStatus.checkAccess('acceptInvite', { circleId })) {
-      return; // checkAccess 会自动处理跳转和意图保存
+    if (!checkAndHandle('acceptInvite', { circle, isInviteMode, circleId })) {
+      return; // checkAndHandle 会自动处理跳转和意图保存
     }
     
     if (isJoining) return;
@@ -727,8 +729,8 @@ Page({
     const { postId } = e.detail;
 
     // 使用统一的权限检查：登录 + 成员资格
-    const { circle, currentUser, isInviteMode } = this.data;
-    if (!userStatus.checkAccess('likePost', { circle, currentUser, isInviteMode })) {
+    const { circle, isInviteMode } = this.data;
+    if (!checkAndHandle('likePost', { circle, isInviteMode })) {
       return;
     }
 
@@ -745,8 +747,8 @@ Page({
     const { postId } = e.detail;
 
     // 使用统一的权限检查：登录 + 成员资格
-    const { circle, currentUser, isInviteMode } = this.data;
-    if (!userStatus.checkAccess('commentPost', { circle, currentUser, isInviteMode })) {
+    const { circle, isInviteMode } = this.data;
+    if (!checkAndHandle('commentPost', { circle, isInviteMode })) {
       return;
     }
 
@@ -765,8 +767,8 @@ Page({
     const { postId, replyToUser } = e.detail;
 
     // 使用统一的权限检查：登录 + 成员资格
-    const { circle, currentUser, isInviteMode } = this.data;
-    if (!userStatus.checkAccess('commentPost', { circle, currentUser, isInviteMode })) {
+    const { circle, isInviteMode } = this.data;
+    if (!checkAndHandle('commentPost', { circle, isInviteMode })) {
       return;
     }
 
@@ -830,8 +832,8 @@ Page({
   // 导航到发布页面
   navigateToPublish() {
     // 使用统一的权限检查：登录 + 成员资格
-    const { circle, currentUser, isInviteMode } = this.data;
-    if (!userStatus.checkAccess('publishPost', { circle, currentUser, isInviteMode })) {
+    const { circle, isInviteMode } = this.data;
+    if (!checkAndHandle('publishPost', { circle, isInviteMode })) {
       return;
     }
 
@@ -845,8 +847,8 @@ Page({
   // 回复评论
   replyComment(e) {
     // 使用统一的权限检查：登录 + 成员资格
-    const { circle, currentUser, isInviteMode } = this.data;
-    if (!userStatus.checkAccess('commentPost', { circle, currentUser, isInviteMode })) {
+    const { circle, isInviteMode } = this.data;
+    if (!checkAndHandle('commentPost', { circle, isInviteMode })) {
       return;
     }
 
@@ -1024,11 +1026,11 @@ Page({
 
   // 申请加入朋友圈
   async applyToJoin() {
-    const { circleId, isApplying } = this.data;
+    const { circleId, circle, isInviteMode, isApplying } = this.data;
     
     // 访问控制：检查是否登录
-    if (!userStatus.checkAccess('applyToJoin', { circleId })) {
-      return; // checkAccess 会自动处理跳转和意图保存
+    if (!checkAndHandle('applyToJoin', { circle, isInviteMode, circleId })) {
+      return; // checkAndHandle 会自动处理跳转和意图保存
     }
     
     if (isApplying) return;

@@ -3,6 +3,7 @@ const { storeBindingsBehavior } = require('mobx-miniprogram-bindings');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const api = require('../../utils/api');
 const util = require('../../utils/util');
+const { getCurrentUser, isUserLoggedIn, getCurrentUserId } = require('../../utils/checkUserActionPermission');
 
 Page({
   // 使用MobX状态管理行为
@@ -46,9 +47,8 @@ Page({
     }
 
     // ✅ 修复：使用统一的用户状态获取函数，无需setTimeout
-    const userStatus = require('../../utils/userStatus');
-    const currentUser = userStatus.getCurrentUser();
-    const isLoggedIn = userStatus.isUserLoggedIn();
+    const currentUser = getCurrentUser();
+    const isLoggedIn = isUserLoggedIn();
     
     this.setData({
       userInfo: currentUser,
@@ -59,9 +59,8 @@ Page({
   onShow() {
     
     // ✅ 修复：使用统一的用户状态获取函数
-    const userStatus = require('../../utils/userStatus');
-    const currentUser = userStatus.getCurrentUser();
-    const isLoggedIn = userStatus.isUserLoggedIn();
+    const currentUser = getCurrentUser();
+    const isLoggedIn = isUserLoggedIn();
     
     // 更新当前用户信息（可能在其他页面发生了变化）
     this.setData({
@@ -288,8 +287,7 @@ Page({
       }
       
       // ✅ 修复：使用统一的用户ID获取函数，替换多重fallback
-      const userStatus = require('../../utils/userStatus');
-      const userId = userStatus.getCurrentUserId();
+      const userId = getCurrentUserId();
       
       // 如果没有获取到用户ID，说明用户未登录
       if (!userId) {
@@ -399,8 +397,7 @@ Page({
     }
 
     // ✅ 修复：使用统一的登录状态检查函数
-    const userStatus = require('../../utils/userStatus');
-    const isLoggedIn = userStatus.isUserLoggedIn();
+    const isLoggedIn = isUserLoggedIn();
 
     console.log('🔍 登录状态检查:', {
       isLoggedIn: isLoggedIn
