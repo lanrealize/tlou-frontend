@@ -29,7 +29,7 @@
   </view>
 
   <!-- 创建虚拟用户 -->
-  <view class="create-section">
+  <view class="create-section" wx:if="{{!isVirtualIdentity}}">
     <view class="section-title">创建虚拟用户</view>
     <view class="create-form">
       <!-- 用户名输入 -->
@@ -76,7 +76,7 @@
   </view>
 
   <!-- 虚拟用户列表 -->
-  <view class="virtual-users-section">
+  <view class="virtual-users-section" wx:if="{{!isVirtualIdentity}}">
     <view class="section-title">虚拟用户列表 ({{virtualUsers.length}})</view>
     
     <view class="users-list" wx:if="{{virtualUsers.length > 0}}">

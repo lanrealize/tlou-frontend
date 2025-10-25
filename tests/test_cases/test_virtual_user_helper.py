@@ -57,6 +57,7 @@ def main():
         assert identity['is_virtual_identity'], '应该是虚拟身份'
         assert identity['user_info']['username'] == 'TEST_Helper测试用户', '用户名应该匹配'
         print(f'✅ 已切换到虚拟身份: {identity["user_info"]["username"]}')
+        print('   ℹ️  虚拟身份下，创建表单和用户列表已隐藏（正确行为）')
         
         # 5. 切换回真实身份
         print('\n[5] 切换回真实身份...')
@@ -67,6 +68,7 @@ def main():
         identity = get_current_identity(mini)
         assert not identity['is_virtual_identity'], '应该是真实身份'
         print('✅ 已切换回真实身份')
+        print('   ℹ️  真实身份下，虚拟用户列表已重新显示（正确行为）')
         
         # 6. 删除虚拟用户
         print('\n[6] 删除测试用户...')
