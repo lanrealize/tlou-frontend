@@ -38,7 +38,9 @@ function checkIsOwner(circle, userId) {
     return circle.currentUserStatus.isOwner;
   }
   
-  return circle.createdBy === userId;
+  // 支持 creator 字段（对象或字符串ID）
+  const creatorId = typeof circle.creator === 'object' ? circle.creator._id : circle.creator;
+  return creatorId === userId;
 }
 
 function checkHasApplied(circle, userId) {
