@@ -109,9 +109,16 @@ def close_miniprogram(mini):
 # ============================================
 
 def enter_test_mode(mini):
-    """进入测试模式 - 调用 getApp().devTools.startTestMode()"""
+    """进入测试模式 - 调用 getApp().devTools.startTestMode()
+    
+    自动清理残留的测试模式和测试用户，确保测试环境干净
+    """
     try:
-        print('🎭 进入测试模式...')
+        # 先清理可能存在的残留状态
+        print('🎭 进入测试模式（先清理残留状态）...')
+        exit_test_mode(mini)
+        
+        print('🎭 启动新的测试模式...')
         
         # 直接调用 startTestMode()，让它处理所有逻辑
         js_code = """

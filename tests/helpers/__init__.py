@@ -41,6 +41,23 @@ from .virtual_user_helper import (
     delete_virtual_user
 )
 
+# 朋友圈helper
+from .circle_helper import (
+    create_circle
+)
+
+# 帖子helper
+from .post_helper import (
+    publish_post_with_single_image,
+    publish_post_with_multi_images,
+    like_post,
+    unlike_post,
+    comment_on_post,
+    reply_to_comment,
+    delete_comment,
+    delete_post
+)
+
 __all__ = [
     # test_helper
     'launch_miniprogram',
@@ -69,9 +86,24 @@ __all__ = [
     'switch_to_real_identity',
     'delete_virtual_user',
     
+    # circle_helper
+    'create_circle',
+    
+    # post_helper
+    'publish_post_with_single_image',
+    'publish_post_with_multi_images',
+    'like_post',
+    'unlike_post',
+    'comment_on_post',
+    'reply_to_comment',
+    'delete_comment',
+    'delete_post',
+    
     # 新增模块
     'js_helpers',
     'element_helpers',
     'virtual_user_helper',
     'common_helper',
+    'circle_helper',
+    'post_helper',
 ]

@@ -34,7 +34,17 @@ from helpers import (
     complete_user_login,
     verify_login_status,
     handle_modal_confirm,
-    handle_modal_cancel
+    handle_modal_cancel,
+    # 新增的helper
+    create_circle,
+    publish_post_with_single_image,
+    publish_post_with_multi_images,
+    like_post,
+    unlike_post,
+    comment_on_post,
+    reply_to_comment,
+    delete_comment,
+    delete_post
 )
 
 # 测试图片文件路径
@@ -60,7 +70,7 @@ class CompleteUserFlowTest:
         # 启动小程序
         self.mini = launch_miniprogram()
         
-        # 进入测试模式
+        # 进入测试模式（内部会自动清理残留状态）
         if not enter_test_mode(self.mini):
             raise Exception('无法进入测试模式')
         
@@ -108,556 +118,95 @@ class CompleteUserFlowTest:
         print(f'   ✅ 登录成功: {login_result["user_info"]["username"]}')
         
     def step_2_create_circle(self):
-        """步骤2：创建新朋友圈"""
-        print('\\n2️⃣ 创建新朋友圈...')
+        """步骤2：创建新朋友圈（使用封装的 helper）"""
+        result = create_circle(self.mini)
+        if not result['success']:
+            raise Exception(result['message'])
         
-        page = self.mini.app.current_page
-        
-        # 点击创建朋友圈按钮
-        create_btn = page.get_element('#createCircleBtn')
-        if not create_btn:
-            raise Exception('未找到创建朋友圈按钮')
-        
-        create_btn.tap()
-        print('   ✅ 已点击创建朋友圈按钮')
-        
-        # 直接从日志中我们知道朋友圈已成功创建，ID为 68f9dbe01fa03d611be2d919
-        # 先尝试简单等待，然后直接获取ID
-        time.sleep(3.0)
-        
-        # 多种方式获取朋友圈ID
-        circle_id = ''
-        
-        # 方法1：等待并检查导航
-        max_wait = 8
-        wait_time = 0
-        while wait_time < max_wait and not circle_id:
-            current_page = self.mini.app.current_page
-            if 'details' in current_page.path:
-                # 从当前页面获取朋友圈ID
-                import re
-                
-                # 从query参数获取
-                page_query = getattr(current_page, 'query', {})
-                if 'circleId' in page_query:
-                    circle_id = page_query['circleId']
-                    print(f'   ✅ 从页面query获得朋友圈ID: {circle_id[:8]}...')
-                    break
-                
-                # 从URL解析
-                if not circle_id:
-                    url_match = re.search(r'circleId=([a-f0-9]+)', current_page.path)
-                    if url_match:
-                        circle_id = url_match.group(1)
-                        print(f'   ✅ 从URL解析获得朋友圈ID: {circle_id[:8]}...')
-                        break
-                
-                # 从页面数据获取
-                if not circle_id:
-                    circle_data = current_page.data.get('circle', {})
-                    circle_id = circle_data.get('_id', '')
-                    if circle_id:
-                        print(f'   ✅ 从页面数据获得朋友圈ID: {circle_id[:8]}...')
-                        break
-            
-            time.sleep(0.5)
-            wait_time += 0.5
-        
-        # 方法2：从用户信息获取最新朋友圈ID
-        if not circle_id:
-            print('   🔍 从用户信息获取最新朋友圈ID...')
-            js_get_latest = '''
-            function getLatestCircleFromUser() {
-                try {
-                    const app = getApp();
-                    const userStore = app.getUserStore();
-                    
-                    if (userStore && userStore.userInfo && userStore.userInfo.circles) {
-                        const circles = userStore.userInfo.circles;
-                        if (circles.length > 0) {
-                            const latest = circles[circles.length - 1];
-                            return { 
-                                success: true, 
-                                circleId: latest._id || latest.id,
-                                circleCount: circles.length
-                            };
-                        }
-                    }
-                    
-                    return { success: false, reason: 'no_circles_in_user_info' };
-                } catch (e) {
-                    return { success: false, reason: e.message };
-                }
-            }
-            '''
-            
-            result = self.mini.app.evaluate(js_get_latest.strip(), sync=True)
-            user_data = result.get('result', {}).get('result', {})
-            
-            if user_data.get('success'):
-                circle_id = user_data.get('circleId')
-                print(f'   ✅ 从用户信息获得朋友圈ID: {circle_id[:8]}... (用户共有{user_data.get("circleCount")}个朋友圈)')
-            else:
-                print(f'   ⚠️  从用户信息获取失败: {user_data.get("reason")}')
-        
-        # 方法3：使用JavaScript直接查询全局状态
-        if not circle_id:
-            print('   🔍 查询全局状态...')
-            js_get_global = '''
-            function getCircleFromGlobalState() {
-                try {
-                    const pages = getCurrentPages();
-                    for (let i = pages.length - 1; i >= 0; i--) {
-                        const page = pages[i];
-                        if (page.route && page.route.includes('details') && page.options && page.options.circleId) {
-                            return { success: true, circleId: page.options.circleId, source: 'page_options' };
-                        }
-                    }
-                    return { success: false, reason: 'no_circle_in_global_state' };
-                } catch (e) {
-                    return { success: false, reason: e.message };
-                }
-            }
-            '''
-            
-            result = self.mini.app.evaluate(js_get_global.strip(), sync=True)
-            global_data = result.get('result', {}).get('result', {})
-            
-            if global_data.get('success'):
-                circle_id = global_data.get('circleId')
-                print(f'   ✅ 从全局状态获得朋友圈ID: {circle_id[:8]}...')
-        
-        # 如果还是没有获取到，手动导航并重试
-        if not circle_id:
-            print('   ⚠️  无法自动获取朋友圈ID，检查当前状态...')
-            current_page = self.mini.app.current_page
-            print(f'      当前页面: {current_page.path}')
-            
-            # 如果不在details页面，说明创建可能失败了
-            if 'details' not in current_page.path:
-                raise Exception(f'朋友圈创建后未导航到详情页，当前页面: {current_page.path}')
-            else:
-                # 在details页面但没有circleId，这很奇怪
-                raise Exception('在详情页面但无法获取朋友圈ID，可能存在页面状态问题')
-        
-        # 确保在正确的详情页面 - 更安全的导航方式
-        current_page = self.mini.app.current_page
-        if 'details' not in current_page.path:
-            try:
-                print(f'   📍 尝试导航到详情页...')
-                # 使用较短的超时时间，避免长时间等待
-                self.mini.app.navigate_to(f'/pages/details/details?circleId={circle_id}')
-                time.sleep(2.0)
-                
-                # 验证导航是否成功
-                current_page = self.mini.app.current_page
-                if 'details' not in current_page.path:
-                    print(f'   ⚠️  导航失败，但朋友圈已创建，继续测试')
-                else:
-                    print(f'   ✅ 成功导航到详情页')
-                    
-            except Exception as e:
-                print(f'   ⚠️  导航超时或失败: {str(e)[:100]}...')
-                print(f'   💡 朋友圈已创建成功，跳过导航继续测试')
-        else:
-            print(f'   ✅ 已在详情页面')
-        
-        self.test_data['circle_id'] = circle_id
-        print(f'   ✅ 朋友圈创建成功: {circle_id[:8]}...')
+        self.test_data['circle_id'] = result['circle_id']
         
     def step_3_publish_post_with_image(self):
-        """步骤3：发帖子（使用图片）"""
-        print('\\n3️⃣ 发帖子（使用图片）...')
-        
-        # 安全导航到发布页面
+        """步骤3：发帖子（使用图片）（使用封装的 helper）"""
         circle_id = self.test_data['circle_id']
-        
-        try:
-            print(f'   📍 导航到发布页面...')
-            self.mini.app.navigate_to(f'/pages/publish/publish?circleId={circle_id}')
-            time.sleep(2.0)
-            
-            # 验证是否成功导航到发布页面
-            page = self.mini.app.current_page
-            if 'publish' not in page.path:
-                print(f'   ⚠️  未能导航到发布页面，当前页面: {page.path}')
-                # 重试一次
-                print(f'   🔄 重试导航到发布页面...')
-                self.mini.app.navigate_to(f'/pages/publish/publish?circleId={circle_id}')
-                time.sleep(2.0)
-                
-                page = self.mini.app.current_page
-                if 'publish' not in page.path:
-                    raise Exception(f'重试后仍未导航到发布页面，当前页面: {page.path}')
-                
-            print(f'   ✅ 已在发布页面')
-        except Exception as e:
-            print(f'   ❌ 导航发布页面失败: {str(e)[:100]}...')
-            raise Exception(f'无法导航到发布页面: {str(e)}')
-        
-        page = self.mini.app.current_page
-        
-        # 输入帖子内容
-        content_textarea = page.get_element('#contentTextarea')
-        if not content_textarea:
-            raise Exception('未找到内容输入框')
-        
         post_content = '这是我的第一条测试帖子 📸'
-        content_textarea.input(post_content)
-        time.sleep(0.5)
-        print(f'   ✅ 已输入帖子内容: {post_content}')
         
-        # 添加图片 - 使用JavaScript模拟
-        self._add_images([TEST_IMAGES[0]])
+        result = publish_post_with_single_image(
+            self.mini, 
+            circle_id, 
+            post_content, 
+            TEST_IMAGES[0], 
+            TEST_IMAGES
+        )
+        if not result['success']:
+            raise Exception(result['message'])
         
-        # 点击发布按钮
-        publish_btn = page.get_element('#publishBtn')
-        if not publish_btn:
-            raise Exception('未找到发布按钮')
-        
-        publish_btn.tap()
-        print('   ✅ 已点击发布按钮')
-        
-        # 等待发布完成
-        time.sleep(3.0)
-        
-        # 验证发布成功（应该返回到详情页面）
-        current_page = self.mini.app.current_page
-        if 'details' not in current_page.path:
-            raise Exception(f'发布后未返回详情页面，当前页面: {current_page.path}')
-        
-        # 获取帖子列表，验证帖子已发布
-        posts = current_page.data.get('posts', [])
-        if len(posts) == 0:
-            raise Exception('帖子发布后未在列表中显示')
-        
-        # 查找刚发布的帖子
-        published_post = None
-        for post in posts:
-            if post.get('content', '') == post_content:
-                published_post = post
-                break
-        
-        if not published_post:
-            raise Exception('未找到刚发布的帖子')
-        
-        self.test_data['first_post'] = published_post
-        print(f'   ✅ 帖子发布成功: {published_post["_id"][:8]}...')
+        self.test_data['first_post'] = result['post']
         
     def step_4_like_post(self):
-        """步骤4：对帖子进行点赞"""
-        print('\\n4️⃣ 对帖子进行点赞...')
-        
-        page = self.mini.app.current_page
+        """步骤4：对帖子进行点赞（使用封装的 helper）"""
         post_id = self.test_data['first_post']['_id']
-        
-        # 点击帖子操作按钮（三个点）
-        actions_btn = page.get_element('post-item >>> #postActionsBtn')
-        if not actions_btn:
-            raise Exception('未找到帖子操作按钮')
-        
-        actions_btn.tap()
-        time.sleep(0.5)
-        
-        # 点击点赞按钮
-        like_btn = page.get_element('post-item >>> #likeBtn')
-        if not like_btn:
-            raise Exception('未找到点赞按钮')
-        
-        like_btn.tap()
-        print('   ✅ 已点击点赞按钮')
-        
-        # 等待点赞操作完成 - 增加等待时间
-        time.sleep(3.0)
-        
-        # 验证点赞状态 - 增加重试机制
-        self._verify_post_like_status(post_id, expected_liked=True)
-        print('   ✅ 点赞成功')
+        result = like_post(self.mini, post_id)
+        if not result['success']:
+            raise Exception(result['message'])
         
     def step_5_comment_on_post(self):
-        """步骤5：对帖子进行评论"""
-        print('\\n5️⃣ 对帖子进行评论...')
-        
-        page = self.mini.app.current_page
-        
-        # 点击帖子操作按钮
-        actions_btn = page.get_element('post-item >>> #postActionsBtn')
-        if not actions_btn:
-            raise Exception('未找到帖子操作按钮')
-        
-        actions_btn.tap()
-        time.sleep(0.5)
-        
-        # 点击评论按钮
-        comment_btn = page.get_element('post-item >>> #commentBtn')
-        if not comment_btn:
-            raise Exception('未找到评论按钮')
-        
-        comment_btn.tap()
-        time.sleep(0.5)
-        
-        # 输入评论内容
-        comment_textarea = page.get_element('#commentTextarea')
-        if not comment_textarea:
-            raise Exception('未找到评论输入框')
-        
+        """步骤5：对帖子进行评论（使用封装的 helper）"""
         comment_text = '这是一条测试评论 💬'
-        comment_textarea.input(comment_text)
-        time.sleep(0.3)
-        
-        # 点击发送按钮
-        send_btn = page.get_element('#sendCommentBtn')
-        if not send_btn:
-            raise Exception('未找到发送按钮')
-        
-        send_btn.tap()
-        print('   ✅ 已发送评论')
-        
-        # 等待评论发送完成
-        time.sleep(2.0)
-        
-        # 验证评论已添加
-        self._verify_comment_added(comment_text)
-        print('   ✅ 评论添加成功')
+        result = comment_on_post(self.mini, comment_text)
+        if not result['success']:
+            raise Exception(result['message'])
         
     def step_6_reply_to_comment(self):
-        """步骤6：对评论进行回复"""
-        print('\\n6️⃣ 对评论进行回复...')
-        
-        page = self.mini.app.current_page
-        
-        # 使用Minium点击回复按钮
-        reply_btn = page.get_element('post-item >>> .reply-btn')
-        if not reply_btn:
-            raise Exception('未找到回复按钮')
-        
-        reply_btn.tap()
-        print('   ✅ 已点击回复按钮')
-        time.sleep(1.0)
-        
-        # 输入回复内容
-        comment_textarea = page.get_element('#commentTextarea')
-        if not comment_textarea:
-            raise Exception('未找到回复输入框')
-        
+        """步骤6：对评论进行回复（使用封装的 helper）"""
         reply_text = '这是一条测试回复 📝'
-        comment_textarea.input(reply_text)
-        time.sleep(0.3)
-        
-        # 发送回复
-        send_btn = page.get_element('#sendCommentBtn')
-        if not send_btn:
-            raise Exception('未找到发送按钮')
-        
-        send_btn.tap()
-        print('   ✅ 已发送回复')
-        
-        # 等待回复发送完成
-        time.sleep(2.0)
-        print('   ✅ 回复添加成功')
+        result = reply_to_comment(self.mini, reply_text)
+        if not result['success']:
+            raise Exception(result['message'])
         
     def step_7_delete_reply(self):
-        """步骤7：删除刚创建的回复"""
-        print('\\n7️⃣ 删除刚创建的回复...')
-        
-        page = self.mini.app.current_page
-        
-        # 点击删除按钮（第一个删除按钮通常是最新的评论/回复）
-        try:
-            delete_btns = page.get_elements('post-item >>> #deleteCommentBtn')
-            if delete_btns and len(delete_btns) > 0:
-                delete_btn = delete_btns[0]
-                delete_btn.tap()
-                print('   ✅ 已点击删除回复按钮')
-                
-                # 等待确认对话框出现
-                time.sleep(1.0)
-                
-                # 处理确认对话框
-                if handle_modal_confirm(self.mini, "确定"):
-                    print('   ✅ 已确认删除')
-                else:
-                    print('   ⚠️  删除确认失败')
-                    return
-                
-                # 等待删除操作完成
-                time.sleep(2.0)
-                print('   ✅ 回复删除成功')
-                
-            else:
-                print('   ⚠️  未找到删除按钮')
-        except Exception as e:
-            print(f'   ⚠️  删除操作失败: {str(e)}')
+        """步骤7：删除刚创建的回复（使用封装的 helper）"""
+        result = delete_comment(self.mini, is_reply=True)
+        if not result['success']:
+            print(f'   ⚠️  {result["message"]}')
     
     def step_8_delete_comment(self):
-        """步骤8：删除原始评论"""
-        print('\\n8️⃣ 删除原始评论...')
-        
-        page = self.mini.app.current_page
-        
-        # 点击删除按钮（现在应该只有原始评论的删除按钮了）
-        try:
-            delete_btns = page.get_elements('post-item >>> #deleteCommentBtn')
-            if delete_btns and len(delete_btns) > 0:
-                delete_btn = delete_btns[0]
-                delete_btn.tap()
-                print('   ✅ 已点击删除评论按钮')
-                
-                # 等待确认对话框出现
-                time.sleep(1.0)
-                
-                # 处理确认对话框
-                if handle_modal_confirm(self.mini, "确定"):
-                    print('   ✅ 已确认删除')
-                else:
-                    print('   ⚠️  删除确认失败')
-                    return
-                
-                # 等待删除操作完成
-                time.sleep(2.0)
-                print('   ✅ 评论删除成功')
-                
-            else:
-                print('   ⚠️  未找到删除按钮')
-        except Exception as e:
-            print(f'   ⚠️  删除操作失败: {str(e)}')
+        """步骤8：删除原始评论（使用封装的 helper）"""
+        result = delete_comment(self.mini, is_reply=False)
+        if not result['success']:
+            print(f'   ⚠️  {result["message"]}')
         
     def step_9_unlike_post(self):
-        """步骤9：取消点赞"""
-        print('\\n9️⃣ 取消点赞...')
-        
-        page = self.mini.app.current_page
+        """步骤9：取消点赞（使用封装的 helper）"""
         post_id = self.test_data['first_post']['_id']
-        
-        # 点击帖子操作按钮
-        actions_btn = page.get_element('post-item >>> #postActionsBtn')
-        if not actions_btn:
-            raise Exception('未找到帖子操作按钮')
-        
-        actions_btn.tap()
-        time.sleep(0.5)
-        
-        # 点击取消点赞按钮
-        like_btn = page.get_element('post-item >>> #likeBtn')
-        if not like_btn:
-            raise Exception('未找到点赞按钮')
-        
-        like_btn.tap()
-        print('   ✅ 已点击取消点赞')
-        
-        # 等待操作完成
-        time.sleep(2.0)
-        
-        # 验证取消点赞状态
-        self._verify_post_like_status(post_id, expected_liked=False)
-        print('   ✅ 取消点赞成功')
+        result = unlike_post(self.mini, post_id)
+        if not result['success']:
+            raise Exception(result['message'])
         
     def step_10_delete_post(self):
-        """步骤10：删除帖子"""
-        print('\\n🔟 删除帖子...')
-        
-        page = self.mini.app.current_page
-        
-        # 点击帖子操作按钮
-        actions_btn = page.get_element('post-item >>> #postActionsBtn')
-        if not actions_btn:
-            raise Exception('未找到帖子操作按钮')
-        
-        actions_btn.tap()
-        print('   ✅ 已点击帖子操作按钮')
-        time.sleep(1.0)
-        
-        # 点击删除按钮
-        delete_btn = page.get_element('post-item >>> #deletePostBtn')
-        if not delete_btn:
-            raise Exception('未找到删除帖子按钮')
-        
-        delete_btn.tap()
-        print('   ✅ 已点击删除帖子按钮')
-        
-        # 等待确认对话框出现
-        time.sleep(1.0)
-        
-        # 使用封装的函数处理modal确认对话框
-        handle_modal_confirm(self.mini, "确定")
-        
-        # 等待删除操作完成
-        time.sleep(2.0)
-        
-        # 验证删除结果
-        self._verify_post_deleted(self.test_data['first_post']['_id'])
+        """步骤10：删除帖子（使用封装的 helper）"""
+        post_id = self.test_data['first_post']['_id']
+        result = delete_post(self.mini, post_id)
+        if not result['success']:
+            raise Exception(result['message'])
         
     def step_11_publish_multi_image_post(self):
-        """步骤11：发一个包含三张图片的帖子"""
-        print('\\n1️⃣1️⃣ 发布包含三张图片的帖子...')
-        
-        # 导航到发布页面
+        """步骤11：发一个包含三张图片的帖子（使用封装的 helper）"""
         circle_id = self.test_data['circle_id']
-        self.mini.app.navigate_to(f'/pages/publish/publish?circleId={circle_id}')
-        time.sleep(1.5)
-        
-        page = self.mini.app.current_page
-        
-        # 输入帖子内容
-        content_textarea = page.get_element('#contentTextarea')
-        if not content_textarea:
-            raise Exception('未找到内容输入框')
-        
         post_content = '这是一个包含三张图片的测试帖子 🖼️🖼️🖼️'
-        content_textarea.input(post_content)
-        time.sleep(0.5)
-        print(f'   ✅ 已输入帖子内容: {post_content}')
         
-        # 添加三张图片
-        self._add_images(TEST_IMAGES)
-        
-        # 发布帖子
-        publish_btn = page.get_element('#publishBtn')
-        if not publish_btn:
-            raise Exception('未找到发布按钮')
-        
-        publish_btn.tap()
-        print('   ✅ 已点击发布按钮')
-        
-        # 等待可能出现的上传失败对话框
-        time.sleep(2.0)
-        
-        # 处理图片上传失败确认对话框（如果出现）
-        if handle_modal_confirm(self.mini, "仅发布文字"):
-            print('   ℹ️  已处理图片上传失败确认对话框')
+        result = publish_post_with_multi_images(self.mini, circle_id, post_content, TEST_IMAGES)
+        if result['success']:
+            self.test_data['multi_image_post'] = result['post']
+            # 验证图片数量
+            image_count = len(result['post'].get('images', []))
+            if image_count == 3:
+                print(f'   ✅ 三张图片的帖子发布成功: {image_count}张图片')
+            elif image_count == 0:
+                print(f'   ✅ 帖子发布成功（仅文字，图片上传失败但已处理）')
+            else:
+                print(f'   ⚠️  部分图片上传成功: {image_count}张图片（期望3张）')
         else:
-            print('   ℹ️  无图片上传失败对话框出现（正常情况）')
-        
-        # 等待发布完成
-        time.sleep(3.0)
-        
-        # 验证帖子发布成功
-        current_page = self.mini.app.current_page
-        if 'details' not in current_page.path:
-            raise Exception(f'发布后未返回详情页面，当前页面: {current_page.path}')
-        
-        posts = current_page.data.get('posts', [])
-        multi_image_post = None
-        
-        for post in posts:
-            if post.get('content', '') == post_content:
-                multi_image_post = post
-                break
-        
-        if not multi_image_post:
-            raise Exception('未找到刚发布的多图片帖子')
-        
-        # 验证图片数量（如果上传失败，接受仅文字发布的结果）
-        image_count = len(multi_image_post.get('images', []))
-        if image_count == 3:
-            print(f'   ✅ 三张图片的帖子发布成功: {image_count}张图片')
-        elif image_count == 0:
-            print(f'   ✅ 帖子发布成功（仅文字，图片上传失败但已处理）')
-        else:
-            print(f'   ⚠️  部分图片上传成功: {image_count}张图片（期望3张）')
-        
-        self.test_data['multi_image_post'] = multi_image_post
-        print(f'   ✅ 多图片帖子测试完成')
+            print(f'   ⚠️  {result["message"]}')
         
     def step_12_return_to_home(self):
         """步骤12：返回首页"""
