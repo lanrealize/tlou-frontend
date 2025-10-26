@@ -11,7 +11,8 @@ const USER_STATUS = {
 // 🎭 身份类型常量
 const IDENTITY_TYPE = {
   REAL: 'real',        // 真实身份
-  VIRTUAL: 'virtual'   // 虚拟身份
+  VIRTUAL: 'virtual',  // 虚拟身份
+  TEST: 'test'         // 测试身份
 };
 
 // 用户状态管理Store
@@ -135,6 +136,36 @@ const userStore = observable({
 
   // 🎭 虚拟身份管理方法
 
+  // 🔄 通用临时身份切换方法（适用于虚拟用户、测试用户等）
+  switchToTemporaryIdentity(userInfo, identityType) {
+    if (!userInfo || !userInfo._id) {
+      console.error('❌ 无效的用户信息:', userInfo);
+      return false;
+    }
+
+    if (!identityType) {
+      console.error('❌ 必须指定身份类型 (identityType)');
+      return false;
+    }
+
+    // 切换到临时身份：只更新MobX状态，不修改Storage
+    this.currentIdentityType = identityType;
+    this.setStatus(USER_STATUS.LOGGEDIN, { userInfo: userInfo });
+    
+    console.log('✅ 身份切换成功:', {
+      currentUser: userInfo.username,
+      identityType: identityType,
+      userId: userInfo._id
+    });
+    
+    wx.showToast({ 
+      title: `已切换为 ${userInfo.username}`, 
+      icon: 'success' 
+    });
+    
+    return true;
+  },
+
   // 加载虚拟用户列表
   async loadVirtualUsers() {
     if (!this.isAdmin) {
@@ -156,23 +187,14 @@ const userStore = observable({
     }
   },
 
-  // 切换到虚拟身份 - 简化版本
+  // 切换到虚拟身份（复用通用方法）
   switchToVirtualIdentity(virtualUser) {
     if (!this.isAdmin) {
-
+      console.warn('⚠️ 需要管理员权限');
       return;
     }
 
-    // 切换到虚拟身份：只更新mobx状态，不污染本地存储
-    this.currentIdentityType = IDENTITY_TYPE.VIRTUAL;
-    this.setStatus(USER_STATUS.LOGGEDIN, { userInfo: virtualUser });
-    
-    console.log('✅ 虚拟身份切换成功:', {
-      currentUser: virtualUser.username,
-      currentIdentityType: this.currentIdentityType
-    });
-    
-    wx.showToast({ title: `已切换为 ${virtualUser.username}`, icon: 'success' });
+    return this.switchToTemporaryIdentity(virtualUser, IDENTITY_TYPE.VIRTUAL);
   },
 
   // 切换回真实身份 - 简化版本

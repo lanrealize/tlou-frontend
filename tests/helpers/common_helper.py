@@ -11,6 +11,39 @@ import time
 import base64
 
 
+# ============================================
+# JavaScript 执行工具
+# ============================================
+
+def evaluate_js(mini, js_code):
+    """执行 JavaScript 代码并返回结果
+    
+    自动包装为立即执行函数，只需要写核心逻辑。
+    
+    Args:
+        mini: Minium 实例
+        js_code: JavaScript 代码（字符串）
+    
+    Returns:
+        dict: JavaScript 执行的返回值
+    
+    示例:
+        js_code = '''
+            const app = getApp();
+            return app.getUserStore().userInfo;
+        '''
+        result = evaluate_js(mini, js_code)
+    """
+    code = f"""
+    (function() {{
+        {js_code.strip()}
+    }})()
+    """
+    
+    result = mini.app.evaluate(code, sync=True)
+    return result.get('result', {}).get('result', {})
+
+
 def mock_image_selection(mini, image_paths):
     """
     使用 Minium Mock 选择真实图片文件

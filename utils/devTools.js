@@ -93,13 +93,14 @@ function startTestMode() {
  * 
  * 功能：
  * 1. 清理后端测试用户数据
- * 2. 清除本地测试状态（openid、userInfo、测试标记）
+ * 2. 清除本地测试状态（openid、userInfo）
  * 3. 触发重新初始化（复用app.onLaunch逻辑）
  * 
  * 优势：
  * - 无需保存真实用户数据
  * - 状态清理更彻底
  * - 初始化逻辑统一
+ * - 职责单一：专注于清理
  */
 async function endTestMode() {
   if (!DEV_MODE) {

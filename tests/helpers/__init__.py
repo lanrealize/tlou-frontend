@@ -16,6 +16,7 @@ from .system_helper import (
 from .auth_helper import (
     get_user_state,
     verify_identity,
+    switch_to_identity,
     complete_user_login,
     verify_login_status,
     check_register_popup_visible,
@@ -47,8 +48,9 @@ from .post_helper import (
     delete_post
 )
 
-# common_helper (modal functions)
+# common_helper (modal functions and JS utilities)
 from .common_helper import (
+    evaluate_js,
     handle_modal_confirm,
     handle_modal_cancel
 )
@@ -77,6 +79,7 @@ __all__ = [
     # auth_helper
     'get_user_state',
     'verify_identity',
+    'switch_to_identity',
     'complete_user_login',
     'verify_login_status',
     'check_register_popup_visible',
@@ -101,7 +104,8 @@ __all__ = [
     'delete_comment',
     'delete_post',
     
-    # common_helper (modal)
+    # common_helper (modal and JS utilities)
+    'evaluate_js',
     'handle_modal_confirm',
     'handle_modal_cancel',
     

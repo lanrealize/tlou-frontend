@@ -3,17 +3,7 @@
 """虚拟用户操作Helper - 简洁版"""
 
 import time
-from .common_helper import upload_single_image_with_button
-
-
-# ============================================
-# 内部 JavaScript 辅助函数
-# ============================================
-
-def _evaluate_js(mini, js_function):
-    """执行 JavaScript 代码并返回结果（内部工具函数）"""
-    result = mini.app.evaluate(js_function.strip(), sync=True)
-    return result.get('result', {}).get('result', {})
+from .common_helper import upload_single_image_with_button, evaluate_js
 
 
 # ============================================
@@ -22,7 +12,6 @@ def _evaluate_js(mini, js_function):
 
 def js_get_virtual_users_list():
     return """
-    function getVirtualUsersList() {
         const app = getApp();
         const userStore = app.getUserStore();
         const virtualUsers = userStore.virtualUsers || [];
@@ -35,7 +24,6 @@ def js_get_virtual_users_list():
                 avatar: user.avatar
             }))
         };
-    }
     """
 
 
@@ -69,7 +57,7 @@ def navigate_to_management_page(mini, force=False):
 
 def get_virtual_users_list(mini):
     """获取虚拟用户列表"""
-    result = _evaluate_js(mini, js_get_virtual_users_list())
+    result = evaluate_js(mini, js_get_virtual_users_list())
     return result
 
 

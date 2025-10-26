@@ -5,6 +5,7 @@
 """
 
 import time
+from .common_helper import evaluate_js
 
 
 # ============================================
@@ -14,7 +15,6 @@ import time
 def _js_get_user_state():
     """获取用户完整状态（内部使用）"""
     return """
-    function getUserState() {
         const app = getApp();
         const userStore = app.getUserStore();
         return {
@@ -29,14 +29,12 @@ def _js_get_user_state():
                 circles: userStore.userInfo?.circles || []
             }
         };
-    }
     """
 
 
 def _js_mock_avatar_upload(avatar_url):
     """模拟头像上传成功（内部使用）"""
     return f"""
-    function mockAvatarSuccess() {{
         try {{
             const pages = getCurrentPages();
             const page = pages[pages.length - 1];
@@ -63,14 +61,12 @@ def _js_mock_avatar_upload(avatar_url):
         }} catch (e) {{
             return {{ success: false, reason: e.message }};
         }}
-    }}
     """
 
 
 def _js_check_submit_button_enabled():
     """检查提交按钮是否启用（内部使用）"""
     return """
-    function checkCanSubmit() {
         const pages = getCurrentPages();
         const page = pages[pages.length - 1];
         const comp = page.selectComponent('#userInfoPopup');
@@ -80,14 +76,16 @@ def _js_check_submit_button_enabled():
             isUploading: comp.data.isUploadingAvatar,
             avatarUrl: comp.data.avatarUrl
         };
-    }
     """
 
 
-def _evaluate_js(mini, js_function):
-    """执行 JavaScript 代码并返回结果（内部工具函数）"""
-    result = mini.app.evaluate(js_function.strip(), sync=True)
-    return result.get('result', {}).get('result', {})
+def _js_switch_to_identity(user_info_json, identity_type='test'):
+    """切换到指定身份（内部使用）"""
+    return f"""
+        const userStore = getApp().getUserStore();
+        const userInfo = {user_info_json};
+        return userStore.switchToTemporaryIdentity(userInfo, '{identity_type}');
+    """
 
 
 # ============================================
@@ -111,7 +109,7 @@ def get_user_state(mini):
             }
         }
     """
-    result = _evaluate_js(mini, _js_get_user_state())
+    result = evaluate_js(mini, _js_get_user_state())
     return {
         'login_status': result.get('loginStatus', ''),
         'is_logged_in': result.get('isLoggedIn', False),
@@ -151,6 +149,75 @@ def verify_identity(mini, expected_username=None, is_virtual=None):
         'success': len(errors) == 0,
         'errors': errors
     }
+
+
+# ============================================
+# 身份切换
+# ============================================
+
+def switch_to_identity(mini, user_info, identity_type='test'):
+    """切换到指定身份（通用方法）
+    
+    使用场景：
+    - 切换到测试用户身份
+    - 切换到虚拟用户身份
+    
+    Args:
+        mini: Minium 实例
+        user_info: 用户信息字典（从 complete_user_login 或其他地方获取）
+        identity_type: 身份类型，'test' | 'virtual'
+    
+    Returns:
+        dict: {
+            'success': bool,
+            'message': str,
+            'identity': dict  # 切换后的身份信息
+        }
+    
+    示例:
+        # 保存测试用户信息
+        login_result = complete_user_login(mini, nickname='测试用户')
+        test_user_info = login_result['user_info']
+        
+        # 切换到其他身份...
+        
+        # 切换回测试身份
+        switch_to_identity(mini, test_user_info, 'test')
+    """
+    try:
+        import json
+        
+        # 将 user_info 转换为 JSON 字符串
+        user_info_json = json.dumps(user_info, ensure_ascii=False)
+        
+        # 调用 JS 切换身份
+        js_code = _js_switch_to_identity(user_info_json, identity_type)
+        result = evaluate_js(mini, js_code)
+        
+        time.sleep(0.5)  # 等待状态更新
+        
+        # 验证切换成功
+        identity = get_user_state(mini)
+        
+        if identity['user_info']['_id'] == user_info['_id']:
+            return {
+                'success': True,
+                'message': f'成功切换到: {user_info["username"]}',
+                'identity': identity
+            }
+        else:
+            return {
+                'success': False,
+                'message': '切换后身份不匹配',
+                'identity': identity
+            }
+            
+    except Exception as e:
+        return {
+            'success': False,
+            'message': f'切换失败: {str(e)}',
+            'identity': None
+        }
 
 
 # ============================================
@@ -218,7 +285,7 @@ def complete_user_login(mini, nickname='测试用户', avatar_url='https://tlou.
         # 3. 模拟头像上传成功
         print('   🖼️ 模拟头像上传成功...')
         
-        mock_data = _evaluate_js(mini, _js_mock_avatar_upload(avatar_url))
+        mock_data = evaluate_js(mini, _js_mock_avatar_upload(avatar_url))
         
         if not mock_data.get('success'):
             return {
@@ -232,7 +299,7 @@ def complete_user_login(mini, nickname='测试用户', avatar_url='https://tlou.
         time.sleep(0.5)
         
         # 4. 验证可以提交
-        check_data = _evaluate_js(mini, _js_check_submit_button_enabled())
+        check_data = evaluate_js(mini, _js_check_submit_button_enabled())
         
         if not check_data.get('canSubmit'):
             return {
@@ -429,7 +496,7 @@ def check_register_popup_visible(mini, expected_reason=None):
         }
         """
         
-        actual_result = _evaluate_js(mini, js_check)
+        actual_result = evaluate_js(mini, js_check)
         visible = actual_result.get('visible', False)
         reason = actual_result.get('reason', '')
         
