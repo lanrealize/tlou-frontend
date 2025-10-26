@@ -20,25 +20,6 @@ def _evaluate_js(mini, js_function):
 # JS 代码
 # ============================================
 
-def js_get_current_identity():
-    return """
-    function getCurrentIdentity() {
-        const app = getApp();
-        const userStore = app.getUserStore();
-        return {
-            success: true,
-            isAdmin: userStore.isAdmin || false,
-            isVirtualIdentity: userStore.isVirtualIdentity || false,
-            userInfo: {
-                _id: userStore.userInfo?._id || '',
-                username: userStore.userInfo?.username || '',
-                avatar: userStore.userInfo?.avatar || ''
-            }
-        };
-    }
-    """
-
-
 def js_get_virtual_users_list():
     return """
     function getVirtualUsersList() {
@@ -65,9 +46,10 @@ def js_get_virtual_users_list():
 def navigate_to_management_page(mini, force=False):
     """导航到管理页面"""
     try:
-        identity_data = _evaluate_js(mini, js_get_current_identity())
+        from .auth_helper import get_user_state
         
-        if not identity_data.get('isAdmin'):
+        state = get_user_state(mini)
+        if not state['is_admin']:
             return {'success': False, 'message': '当前用户不是管理员'}
         
         current_page = mini.app.current_page
@@ -87,12 +69,14 @@ def navigate_to_management_page(mini, force=False):
 
 def get_current_identity(mini):
     """获取当前身份"""
-    result = _evaluate_js(mini, js_get_current_identity())
+    from .auth_helper import get_user_state
+    
+    state = get_user_state(mini)
     return {
         'success': True,
-        'is_admin': result.get('isAdmin', False),
-        'is_virtual_identity': result.get('isVirtualIdentity', False),
-        'user_info': result.get('userInfo', {})
+        'is_admin': state['is_admin'],
+        'is_virtual_identity': state['is_virtual_identity'],
+        'user_info': state['user_info']
     }
 
 

@@ -14,6 +14,8 @@ from .system_helper import (
 
 # auth_helper
 from .auth_helper import (
+    get_user_state,
+    verify_identity,
     complete_user_login,
     verify_login_status
 )
@@ -79,6 +81,8 @@ __all__ = [
     'exit_test_mode',
     
     # auth_helper
+    'get_user_state',
+    'verify_identity',
     'complete_user_login',
     'verify_login_status',
     

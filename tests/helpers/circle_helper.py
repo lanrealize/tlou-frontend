@@ -91,39 +91,21 @@ def create_circle(mini):
         # 方法2：从用户信息获取最新朋友圈ID
         if not circle_id:
             print('   🔍 从用户信息获取最新朋友圈ID...')
-            js_get_latest = '''
-            function getLatestCircleFromUser() {
-                try {
-                    const app = getApp();
-                    const userStore = app.getUserStore();
-                    
-                    if (userStore && userStore.userInfo && userStore.userInfo.circles) {
-                        const circles = userStore.userInfo.circles;
-                        if (circles.length > 0) {
-                            const latest = circles[circles.length - 1];
-                            return { 
-                                success: true, 
-                                circleId: latest._id || latest.id,
-                                circleCount: circles.length
-                            };
-                        }
-                    }
-                    
-                    return { success: false, reason: 'no_circles_in_user_info' };
-                } catch (e) {
-                    return { success: false, reason: e.message };
-                }
-            }
-            '''
+            from .auth_helper import get_user_state
             
-            result = mini.app.evaluate(js_get_latest.strip(), sync=True)
-            user_data = result.get('result', {}).get('result', {})
-            
-            if user_data.get('success'):
-                circle_id = user_data.get('circleId')
-                print(f'   ✅ 从用户信息获得朋友圈ID: {circle_id[:8]}... (用户共有{user_data.get("circleCount")}个朋友圈)')
-            else:
-                print(f'   ⚠️  从用户信息获取失败: {user_data.get("reason")}')
+            try:
+                state = get_user_state(mini)
+                circles = state['user_info'].get('circles', [])
+                
+                if circles and len(circles) > 0:
+                    latest = circles[-1]
+                    circle_id = latest.get('_id') or latest.get('id', '')
+                    if circle_id:
+                        print(f'   ✅ 从用户信息获得朋友圈ID: {circle_id[:8]}... (用户共有{len(circles)}个朋友圈)')
+                else:
+                    print(f'   ⚠️  从用户信息获取失败: 用户没有朋友圈')
+            except Exception as e:
+                print(f'   ⚠️  从用户信息获取失败: {str(e)}')
         
         # 方法3：使用JavaScript直接查询全局状态
         if not circle_id:

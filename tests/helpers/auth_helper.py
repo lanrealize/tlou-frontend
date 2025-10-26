@@ -12,18 +12,23 @@ from .element_helpers import input_text_safe, tap_element_safe
 # 内部 JavaScript 辅助函数
 # ============================================
 
-def _js_get_login_status():
-    """获取用户登录状态（内部使用）"""
+def _js_get_user_state():
+    """获取用户完整状态（内部使用）"""
     return """
-    function checkLoginStatus() {
+    function getUserState() {
         const app = getApp();
         const userStore = app.getUserStore();
         return {
             loginStatus: userStore.loginStatus,
             isLoggedIn: userStore.loginStatus === 'loggedIn',
-            username: userStore.userInfo?.username || '',
-            userId: userStore.userInfo?._id || '',
-            userInfo: userStore.userInfo
+            isAdmin: userStore.isAdmin || false,
+            isVirtualIdentity: userStore.isVirtualIdentity || false,
+            userInfo: {
+                _id: userStore.userInfo?._id || '',
+                username: userStore.userInfo?.username || '',
+                avatar: userStore.userInfo?.avatar || '',
+                circles: userStore.userInfo?.circles || []
+            }
         };
     }
     """
@@ -84,6 +89,69 @@ def _evaluate_js(mini, js_function):
     """执行 JavaScript 代码并返回结果（内部工具函数）"""
     result = mini.app.evaluate(js_function.strip(), sync=True)
     return result.get('result', {}).get('result', {})
+
+
+# ============================================
+# 用户状态查询
+# ============================================
+
+def get_user_state(mini):
+    """获取用户完整状态 - 唯一真相来源
+    
+    Returns:
+        dict: {
+            'login_status': str,         # 'loggedIn' | 'unregistered'
+            'is_logged_in': bool,
+            'is_admin': bool,
+            'is_virtual_identity': bool,
+            'user_info': {
+                '_id': str,
+                'username': str,
+                'avatar': str,
+                'circles': list
+            }
+        }
+    """
+    result = _evaluate_js(mini, _js_get_user_state())
+    return {
+        'login_status': result.get('loginStatus', ''),
+        'is_logged_in': result.get('isLoggedIn', False),
+        'is_admin': result.get('isAdmin', False),
+        'is_virtual_identity': result.get('isVirtualIdentity', False),
+        'user_info': result.get('userInfo', {})
+    }
+
+
+def verify_identity(mini, expected_username=None, is_virtual=None):
+    """验证身份（可选检查用户名和身份类型）
+    
+    Args:
+        expected_username: 期望的用户名（None=不检查）
+        is_virtual: 期望是否虚拟身份（None=不检查）
+    
+    Returns:
+        dict: {
+            'success': bool,
+            'errors': list
+        }
+    """
+    state = get_user_state(mini)
+    errors = []
+    
+    if expected_username is not None:
+        actual = state['user_info']['username']
+        if actual != expected_username:
+            errors.append(f'用户名不匹配: 期望"{expected_username}", 实际"{actual}"')
+    
+    if is_virtual is not None:
+        actual = state['is_virtual_identity']
+        if actual != is_virtual:
+            errors.append(f'身份类型不匹配: 期望虚拟={is_virtual}, 实际={actual}')
+    
+    return {
+        'success': len(errors) == 0,
+        'errors': errors
+    }
 
 
 # ============================================
@@ -255,7 +323,14 @@ def verify_login_status(mini, check_page_ui=False):
     """
     try:
         # 1. 检查全局登录状态（适用于所有页面）
-        login_data = _evaluate_js(mini, _js_get_login_status())
+        state = get_user_state(mini)
+        login_data = {
+            'loginStatus': state['login_status'],
+            'isLoggedIn': state['is_logged_in'],
+            'username': state['user_info']['username'],
+            'userId': state['user_info']['_id'],
+            'userInfo': state['user_info']
+        }
         
         login_status = login_data.get('loginStatus')
         is_logged_in = login_data.get('isLoggedIn', False)

@@ -76,28 +76,40 @@ def publish_post_with_single_image(mini, circle_id, content, image_path, test_im
         publish_btn.tap()
         print('   ✅ 已点击发布按钮')
         
-        # 等待发布完成
-        time.sleep(3.0)
+        # 等待发布完成并返回详情页
+        time.sleep(2.0)
         
-        # 验证发布成功（应该返回到详情页面）
+        # 验证返回到详情页面
         current_page = mini.app.current_page
         if 'details' not in current_page.path:
             raise Exception(f'发布后未返回详情页面，当前页面: {current_page.path}')
         
-        # 获取帖子列表，验证帖子已发布
-        posts = current_page.data.get('posts', [])
-        if len(posts) == 0:
-            raise Exception('帖子发布后未在列表中显示')
-        
-        # 查找刚发布的帖子
+        # 轮询等待帖子出现（支持图片安全验证等异步操作）
+        max_retries = 5
         published_post = None
-        for post in posts:
-            if post.get('content', '') == content:
-                published_post = post
+        
+        for attempt in range(max_retries):
+            print(f'   🔍 验证帖子发布 (尝试 {attempt + 1}/{max_retries})...')
+            
+            # 每次重新获取最新的帖子列表
+            current_page = mini.app.current_page
+            posts = current_page.data.get('posts', [])
+            
+            # 查找刚发布的帖子
+            for post in posts:
+                if post.get('content', '') == content:
+                    published_post = post
+                    break
+            
+            if published_post:
                 break
+            
+            if attempt < max_retries - 1:
+                print(f'   ⏳ 帖子尚未出现，等待后重试...')
+                time.sleep(2.0)
         
         if not published_post:
-            raise Exception('未找到刚发布的帖子')
+            raise Exception(f'发布失败: 等待{max_retries * 2}秒后仍未找到帖子（可能图片验证失败）')
         
         print(f'   ✅ 帖子发布成功: {published_post["_id"][:8]}...')
         
@@ -161,24 +173,40 @@ def publish_post_with_multi_images(mini, circle_id, content, image_paths):
         publish_btn.tap()
         print('   ✅ 已点击发布按钮')
         
-        # 等待发布完成
-        time.sleep(3.0)
+        # 等待发布完成并返回详情页
+        time.sleep(2.0)
         
-        # 验证发布成功
+        # 验证返回到详情页面
         current_page = mini.app.current_page
         if 'details' not in current_page.path:
             raise Exception(f'发布后未返回详情页面，当前页面: {current_page.path}')
         
-        # 查找刚发布的帖子
-        posts = current_page.data.get('posts', [])
+        # 轮询等待帖子出现（支持图片安全验证等异步操作）
+        max_retries = 5
         published_post = None
-        for post in posts:
-            if post.get('content', '') == content:
-                published_post = post
+        
+        for attempt in range(max_retries):
+            print(f'   🔍 验证帖子发布 (尝试 {attempt + 1}/{max_retries})...')
+            
+            # 每次重新获取最新的帖子列表
+            current_page = mini.app.current_page
+            posts = current_page.data.get('posts', [])
+            
+            # 查找刚发布的帖子
+            for post in posts:
+                if post.get('content', '') == content:
+                    published_post = post
+                    break
+            
+            if published_post:
                 break
+            
+            if attempt < max_retries - 1:
+                print(f'   ⏳ 帖子尚未出现，等待后重试...')
+                time.sleep(2.0)
         
         if not published_post:
-            raise Exception('未找到刚发布的帖子')
+            raise Exception(f'发布失败: 等待{max_retries * 2}秒后仍未找到帖子（可能图片验证失败）')
         
         print(f'   ✅ 多图帖子发布成功: {published_post["_id"][:8]}...')
         
