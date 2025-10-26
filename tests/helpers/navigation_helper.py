@@ -160,3 +160,51 @@ def navigate_to_details(mini, circle_id, source='discover'):
             'url': '',
             'error': str(e)
         }
+
+
+def navigate_to_main(mini, use_relaunch=False):
+    """导航到 main 页面
+    
+    Args:
+        mini: Minium 实例
+        use_relaunch: 是否使用 reLaunch（清空页面栈），默认 False
+        
+    Returns:
+        dict: {
+            'success': bool,
+            'message': str
+        }
+    """
+    try:
+        if use_relaunch:
+            print('🏠 导航到 main 页面（清空页面栈）...')
+            mini.app.relaunch('/pages/main/main')
+        else:
+            print('🏠 导航到 main 页面...')
+            mini.app.navigate_to('/pages/main/main')
+        
+        time.sleep(1.0)
+        
+        page = mini.app.current_page
+        if 'main' not in page.path:
+            return {
+                'success': False,
+                'message': f'导航失败，当前在: {page.path}'
+            }
+        
+        if use_relaunch:
+            print('✅ 已进入 main 页面（页面栈已清空）')
+        else:
+            print('✅ 已进入 main 页面')
+        
+        return {
+            'success': True,
+            'message': '导航成功'
+        }
+        
+    except Exception as e:
+        print(f'❌ 导航到 main 失败: {str(e)}')
+        return {
+            'success': False,
+            'message': str(e)
+        }

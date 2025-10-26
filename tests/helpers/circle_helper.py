@@ -260,6 +260,198 @@ def check_circle_status_action(mini, expected_user_status):
         }
 
 
+def set_circle_public(mini, circle_id=None):
+    """设置朋友圈为公开
+    
+    前提条件：
+    - 当前用户是朋友圈创建者
+    - 朋友圈尚未设置为公开
+    
+    执行步骤：
+    1. 确保在 details 页面（或导航过去）
+    2. 点击设置按钮进入 settings 页面
+    3. 点击公开设置 switch
+    4. 验证设置成功
+    
+    Args:
+        mini: Minium 实例
+        circle_id: 可选的朋友圈 ID
+        
+    Returns:
+        dict: {
+            'success': bool,
+            'message': str
+        }
+    """
+    try:
+        print('\n🌐 设置朋友圈为公开...')
+        
+        # 步骤1：确保在 details 页面
+        page = mini.app.current_page
+        if 'details' not in page.path:
+            if not circle_id:
+                return {
+                    'success': False,
+                    'message': f'当前不在 details 页面（{page.path}），且未提供 circle_id'
+                }
+            
+            from .navigation_helper import navigate_to_details
+            nav_result = navigate_to_details(mini, circle_id)
+            if not nav_result['success']:
+                return {
+                    'success': False,
+                    'message': f'导航到 details 失败: {nav_result["error"]}'
+                }
+            page = mini.app.current_page
+        
+        print('   ✅ 当前在 details 页面')
+        
+        # 获取朋友圈 ID
+        if not circle_id:
+            circle_id = page.data.get('circle', {}).get('_id', '')
+            if not circle_id:
+                page_query = getattr(page, 'query', {})
+                circle_id = page_query.get('circleId', '')
+        
+        # 步骤2：点击设置按钮进入 settings 页面
+        setting_btn_wrapper = page.get_element('#setting-btn-wrapper')
+        if not setting_btn_wrapper:
+            return {
+                'success': False,
+                'message': '未找到设置按钮'
+            }
+        
+        setting_btn_wrapper.tap()
+        print('   ✅ 已点击设置按钮')
+        time.sleep(1.0)
+        
+        settings_page = mini.app.current_page
+        if 'setting' not in settings_page.path:
+            return {
+                'success': False,
+                'message': f'未能进入 settings 页面，当前在: {settings_page.path}'
+            }
+        print('   ✅ 已进入 settings 页面')
+        
+        time.sleep(0.5)
+        
+        # 检查当前是否已经是公开状态
+        is_public_before = settings_page.data.get('settingData', {}).get('isPublic', False)
+        print(f'   ℹ️  当前公开状态: {is_public_before}')
+        
+        if is_public_before:
+            print('   ⚠️  朋友圈已经是公开状态')
+            return {
+                'success': True,
+                'message': '朋友圈已经是公开状态',
+                'was_already_public': True
+            }
+        
+        # 步骤3：点击公开设置 switch
+        public_switch = settings_page.get_element('#public-switch')
+        if not public_switch:
+            return {
+                'success': False,
+                'message': '未找到公开设置 switch'
+            }
+        
+        public_switch.tap()
+        print('   ✅ 已点击公开设置 switch')
+        time.sleep(1.0)
+        
+        # 步骤4：验证设置成功
+        settings_page = mini.app.current_page
+        is_public_after = settings_page.data.get('settingData', {}).get('isPublic', False)
+        print(f'   ℹ️  设置后公开状态: {is_public_after}')
+        
+        if not is_public_after:
+            return {
+                'success': False,
+                'message': '设置后仍未变为公开状态'
+            }
+        
+        print('   ✅ 朋友圈已设置为公开')
+        
+        return {
+            'success': True,
+            'message': '朋友圈已成功设置为公开',
+            'was_already_public': False
+        }
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'message': f'设置公开时发生异常: {str(e)}'
+        }
+
+
+def apply_to_join_circle(mini):
+    """点击申请加入朋友圈按钮
+    
+    前提条件：
+    - 当前在 details 页面
+    - 用户状态为 can_apply 或 guest_can_apply
+    
+    Args:
+        mini: Minium 实例
+        
+    Returns:
+        dict: {
+            'success': bool,
+            'message': str
+        }
+    """
+    try:
+        print('\n📝 申请加入朋友圈...')
+        
+        page = mini.app.current_page
+        if 'details' not in page.path:
+            return {
+                'success': False,
+                'message': f'当前不在 details 页面: {page.path}'
+            }
+        
+        # 点击申请加入按钮
+        action_btn = page.get_element('circle-status-action >>> #actionBtn')
+        if not action_btn:
+            return {
+                'success': False,
+                'message': '未找到申请加入按钮'
+            }
+        
+        action_btn.tap()
+        print('   ✅ 已点击申请加入按钮')
+        
+        # 等待请求完成
+        time.sleep(1.5)
+        
+        # 验证状态变化（应该变为 applied）
+        page = mini.app.current_page
+        user_status = page.data.get('userStatus', '')
+        
+        if user_status == 'applied':
+            print('   ✅ 申请已提交，状态变为 applied')
+            return {
+                'success': True,
+                'message': '申请加入成功'
+            }
+        else:
+            return {
+                'success': False,
+                'message': f'申请提交后状态异常: {user_status}'
+            }
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'message': f'申请加入异常: {str(e)}'
+        }
+
+
 def process_unique_join_application(mini, circle_id=None, action='approve'):
     """处理朋友圈中唯一的加入申请
     
@@ -462,11 +654,16 @@ def process_unique_join_application(mini, circle_id=None, action='approve'):
         action_btn.tap()
         print(f'   ✅ 已点击{action_text}按钮')
         
-        # 等待确认对话框并自动确认（Minium auto_authorize 会自动处理）
-        time.sleep(0.5)
+        # 处理确认对话框
+        from .common_helper import handle_modal_confirm
+        if not handle_modal_confirm(mini, button_text="确定"):
+            return {
+                'success': False,
+                'message': f'处理确认对话框失败'
+            }
         
         # 等待操作完成和 toast 显示
-        time.sleep(0.5)
+        time.sleep(1.0)
         
         print(f'   ✅ 已确认{action_text}操作')
         

@@ -97,7 +97,7 @@
         <text class="setting-title">设为公开朋友圈</text>
         <text class="setting-desc">开启后朋友圈会被其他用户看到</text>
       </view>
-      <switch class="setting-switch" 
+      <switch id="public-switch" class="setting-switch" 
              checked="{{settingData.isPublic}}" 
              bindchange="togglePublicStatus"
              color="#1A73E8" />

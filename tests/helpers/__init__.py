@@ -27,13 +27,17 @@ from .auth_helper import (
 # navigation_helper
 from .navigation_helper import (
     navigate_to_details_from_share,
-    navigate_to_details
+    navigate_to_details,
+    navigate_to_main
 )
 
 # circle_helper
 from .circle_helper import (
     create_circle,
-    check_circle_status_action
+    check_circle_status_action,
+    set_circle_public,
+    apply_to_join_circle,
+    process_unique_join_application
 )
 
 # post_helper
@@ -89,10 +93,14 @@ __all__ = [
     # navigation_helper
     'navigate_to_details_from_share',
     'navigate_to_details',
+    'navigate_to_main',
     
     # circle_helper
     'create_circle',
     'check_circle_status_action',
+    'set_circle_public',
+    'apply_to_join_circle',
+    'process_unique_join_application',
     
     # post_helper
     'publish_post_with_single_image',
