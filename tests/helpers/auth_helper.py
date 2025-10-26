@@ -182,12 +182,10 @@ def complete_user_login(mini, nickname='测试用户', avatar_url='https://tlou.
         }
     """
     try:
-        from .popup_helper import check_popup_visible
-        
         print('🔐 开始用户登录流程...')
         
         # 1. 验证弹窗已显示
-        popup_result = check_popup_visible(mini)
+        popup_result = check_register_popup_visible(mini)
         if not popup_result['visible']:
             return {
                 'success': False,
@@ -268,7 +266,7 @@ def complete_user_login(mini, nickname='测试用户', avatar_url='https://tlou.
         time.sleep(3.0)
         
         # 7. 验证弹窗关闭
-        verify_popup = check_popup_visible(mini)
+        verify_popup = check_register_popup_visible(mini)
         if verify_popup['visible']:
             return {
                 'success': False,
@@ -392,4 +390,157 @@ def verify_login_status(mini, check_page_ui=False):
             'user_info': None,
             'page_ui_ok': None
         }
+
+
+# ============================================
+# 注册弹窗操作（user-info-popup 组件）
+# ============================================
+
+def check_register_popup_visible(mini, expected_reason=None):
+    """检查注册弹窗是否显示，并可选地验证弹窗文字
+    
+    Args:
+        mini: Minium 实例
+        expected_reason: 期望的弹窗提示文字（可选，用于验证文字是否正确）
+        
+    Returns:
+        dict: {
+            'visible': bool,  # 弹窗是否显示
+            'reason': str,    # 实际的提示文字（副标题）
+            'match': bool     # 文字是否匹配（如果提供了expected_reason）
+        }
+    """
+    try:
+        time.sleep(0.15)
+        
+        js_check = """
+        function checkUserInfoPopup() {
+            const pages = getCurrentPages();
+            const currentPage = pages[pages.length - 1];
+            
+            if (!currentPage || !currentPage.data) {
+                return { visible: false, reason: '' };
+            }
+            
+            const visible = currentPage.data.userInfoPopupVisible === true;
+            const reason = currentPage.data.userInfoPopupReason || '';
+            
+            return { visible: visible, reason: reason };
+        }
+        """
+        
+        actual_result = _evaluate_js(mini, js_check)
+        visible = actual_result.get('visible', False)
+        reason = actual_result.get('reason', '')
+        
+        # 如果提供了期望文字，进行验证
+        match = None
+        if expected_reason is not None:
+            match = (reason == expected_reason)
+            if match:
+                print(f'✅ 弹窗文字验证通过: "{reason}"')
+            else:
+                print(f'⚠️  弹窗文字不匹配!')
+                print(f'   期望: "{expected_reason}"')
+                print(f'   实际: "{reason}"')
+        
+        return {
+            'visible': visible,
+            'reason': reason,
+            'match': match
+        }
+        
+    except Exception as e:
+        print(f'❌ 检查弹窗失败: {e}')
+        import traceback
+        traceback.print_exc()
+        return {
+            'visible': False,
+            'reason': '',
+            'match': False if expected_reason is not None else None
+        }
+
+
+def close_register_popup_by_mask(mini, wait_visible=0.4, verify_closed=True):
+    """通过点击遮罩层关闭注册弹窗
+    
+    Args:
+        mini: Minium 实例
+        wait_visible: 关闭前等待时间，让用户能看到弹窗（秒）
+        verify_closed: 是否验证弹窗已关闭
+    
+    Returns:
+        bool: True表示成功关闭，False表示失败
+    """
+    try:
+        if wait_visible > 0:
+            time.sleep(wait_visible)
+        
+        # 先检查弹窗是否真的存在
+        check_result = check_register_popup_visible(mini)
+        if not check_result['visible']:
+            print('ℹ️  弹窗未显示，无需关闭')
+            return True
+        
+        # 使用Minium模拟用户点击遮罩层
+        page = mini.app.current_page
+        try:
+            # 注意：user-info-popup 是 Component，需要用 >>> 穿透组件边界
+            mask = page.get_element('user-info-popup >>> .user-info-popup-mask')
+            if not mask:
+                print('❌ 未找到遮罩层元素')
+                return False
+            
+            mask.tap()
+            print('✅ 已通过Minium点击遮罩层关闭弹窗')
+            time.sleep(0.2)
+            
+        except Exception as e:
+            print(f'❌ 点击遮罩层失败: {str(e)}')
+            import traceback
+            traceback.print_exc()
+            return False
+        
+        # 验证弹窗是否真的消失了
+        if verify_closed:
+            verify_result = check_register_popup_visible(mini)
+            if verify_result['visible']:
+                print('❌ 验证失败：弹窗仍然可见！')
+                return False
+            else:
+                print('✅ 已验证：弹窗已消失')
+                return True
+        
+        return True
+        
+    except Exception as e:
+        print(f'⚠️  关闭弹窗失败: {e}')
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def ensure_register_popup_closed(mini):
+    """确保注册弹窗已关闭
+    
+    这是一个便捷方法，会检测弹窗是否显示，如果显示则关闭并等待消失
+    
+    Args:
+        mini: Minium 实例
+    
+    Returns:
+        bool: True表示成功确保弹窗关闭，False表示失败
+    """
+    try:
+        result = check_register_popup_visible(mini)
+        
+        if result['visible']:
+            close_register_popup_by_mask(mini, wait_visible=0)
+            time.sleep(0.1)
+        
+        return True
+        
+    except Exception as e:
+        print(f'⚠️  确保弹窗关闭失败: {e}')
+        return False
 

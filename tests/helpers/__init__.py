@@ -17,19 +17,15 @@ from .auth_helper import (
     get_user_state,
     verify_identity,
     complete_user_login,
-    verify_login_status
+    verify_login_status,
+    check_register_popup_visible,
+    close_register_popup_by_mask,
+    ensure_register_popup_closed
 )
 
 # share_helper
 from .share_helper import (
     navigate_to_details_from_share
-)
-
-# popup_helper
-from .popup_helper import (
-    check_popup_visible,
-    close_popup_by_mask,
-    ensure_popup_closed
 )
 
 # circle_helper
@@ -83,14 +79,12 @@ __all__ = [
     'verify_identity',
     'complete_user_login',
     'verify_login_status',
+    'check_register_popup_visible',
+    'close_register_popup_by_mask',
+    'ensure_register_popup_closed',
     
     # share_helper
     'navigate_to_details_from_share',
-    
-    # popup_helper
-    'check_popup_visible',
-    'close_popup_by_mask',
-    'ensure_popup_closed',
     
     # circle_helper
     'create_circle',

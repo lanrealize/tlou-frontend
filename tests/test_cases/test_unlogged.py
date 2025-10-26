@@ -32,9 +32,9 @@ from helpers import (
     close_miniprogram,
     enter_test_mode,
     exit_test_mode,
-    check_popup_visible,
-    close_popup_by_mask,
-    ensure_popup_closed,
+    check_register_popup_visible,
+    close_register_popup_by_mask,
+    ensure_register_popup_closed,
     check_circle_status_action,
     navigate_to_details_from_share
 )
@@ -84,7 +84,7 @@ class TestUnloggedMain:
         current_page = self.mini.app.current_page
         if current_page.path == '/pages/main/main' and self.page_loaded:
             # 已经在main页面，只需确保弹窗关闭
-            ensure_popup_closed(self.mini)
+            ensure_register_popup_closed(self.mini)
             return
         
         # 需要导航到main页面
@@ -147,7 +147,7 @@ class TestUnloggedMain:
             time.sleep(0.2)  # 压缩到极限
             
             # 检查弹窗和文字
-            result = check_popup_visible(self.mini, EXPECTED_MESSAGES['loginButton'])
+            result = check_register_popup_visible(self.mini, EXPECTED_MESSAGES['loginButton'])
             
             if not result['visible']:
                 print('❌ 未弹出注册弹窗')
@@ -165,7 +165,7 @@ class TestUnloggedMain:
             print(f'✅ 弹窗文字验证通过: "{result["reason"]}"')
             
             # 关闭弹窗（等待0.4秒让用户看到）
-            close_popup_by_mask(self.mini, wait_visible=0.4)
+            close_register_popup_by_mask(self.mini, wait_visible=0.4)
             return True
                 
         except Exception as e:
@@ -193,7 +193,7 @@ class TestUnloggedMain:
             time.sleep(0.2)  # 压缩到极限
             
             # 检查弹窗和文字
-            result = check_popup_visible(self.mini, EXPECTED_MESSAGES['enterListPage'])
+            result = check_register_popup_visible(self.mini, EXPECTED_MESSAGES['enterListPage'])
             
             if not result['visible']:
                 print('❌ 未弹出注册弹窗')
@@ -210,7 +210,7 @@ class TestUnloggedMain:
             
             print(f'✅ 弹窗文字验证通过: "{result["reason"]}"')
             
-            close_popup_by_mask(self.mini, wait_visible=0.4)
+            close_register_popup_by_mask(self.mini, wait_visible=0.4)
             return True
                 
         except Exception as e:
@@ -238,7 +238,7 @@ class TestUnloggedMain:
             time.sleep(0.2)  # 压缩到极限
             
             # 检查弹窗和文字
-            result = check_popup_visible(self.mini, EXPECTED_MESSAGES['createCircle'])
+            result = check_register_popup_visible(self.mini, EXPECTED_MESSAGES['createCircle'])
             
             if not result['visible']:
                 print('❌ 未弹出注册弹窗')
@@ -255,7 +255,7 @@ class TestUnloggedMain:
             
             print(f'✅ 弹窗文字验证通过: "{result["reason"]}"')
             
-            close_popup_by_mask(self.mini, wait_visible=0.4)
+            close_register_popup_by_mask(self.mini, wait_visible=0.4)
             return True
                 
         except Exception as e:
@@ -272,7 +272,7 @@ class TestUnloggedMain:
             self.navigate_to_main()
             page = self.mini.app.current_page
             
-            ensure_popup_closed(self.mini)
+            ensure_register_popup_closed(self.mini)
             time.sleep(0.5)
             
             # 尝试查找卡片中的刷新按钮
@@ -365,7 +365,7 @@ class TestUnloggedMain:
             page = self.mini.app.current_page
             time.sleep(0.3)
             
-            ensure_popup_closed(self.mini)
+            ensure_register_popup_closed(self.mini)
             time.sleep(0.8)
             
             # 查找发现朋友圈卡片
@@ -453,10 +453,10 @@ class TestUnloggedMain:
             # 未跳转到details
             elif current_path == before_path:
                 print(f'⚠️  未检测到页面跳转')
-                result = check_popup_visible(self.mini)
+                result = check_register_popup_visible(self.mini)
                 if result['visible']:
                     print(f'✅ 触发了注册弹窗（也是预期行为）')
-                    close_popup_by_mask(self.mini, wait_visible=0.4)
+                    close_register_popup_by_mask(self.mini, wait_visible=0.4)
                     return True
                 else:
                     print('❌ 既未跳转也未弹窗')
@@ -480,7 +480,7 @@ class TestUnloggedMain:
             page = self.mini.app.current_page
             time.sleep(0.3)
             
-            ensure_popup_closed(self.mini)
+            ensure_register_popup_closed(self.mini)
             time.sleep(0.8)
             
             # 查找发现朋友圈卡片并点击
@@ -550,7 +550,7 @@ class TestUnloggedMain:
             if current_page.path != '/pages/details/details':
                 self.navigate_to_main()
                 time.sleep(0.3)
-                ensure_popup_closed(self.mini)
+                ensure_register_popup_closed(self.mini)
                 time.sleep(0.8)
                 
                 # 使用辅助函数点击发现朋友圈卡片
@@ -612,7 +612,7 @@ class TestUnloggedMain:
                 time.sleep(0.3)
                 
                 # 检查弹窗并验证文字
-                result = check_popup_visible(self.mini, expected_reason='登录后才能点赞')
+                result = check_register_popup_visible(self.mini, expected_reason='登录后才能点赞')
                 if result['visible']:
                     if result['match']:
                         print(f'✅ 弹窗正确显示且文字验证通过')
@@ -620,7 +620,7 @@ class TestUnloggedMain:
                         print(f'⚠️  弹窗显示但文字不匹配')
                         print(f'   期望: "登录后才能点赞"')
                         print(f'   实际: "{result["reason"]}"')
-                    close_popup_by_mask(self.mini, wait_visible=0.4)
+                    close_register_popup_by_mask(self.mini, wait_visible=0.4)
                     return result['match']  # 必须文字也匹配才算通过
                 else:
                     print('❌ 未弹出注册弹窗')
@@ -652,7 +652,7 @@ class TestUnloggedMain:
             if current_page.path != '/pages/details/details':
                 self.navigate_to_main()
                 time.sleep(0.3)
-                ensure_popup_closed(self.mini)
+                ensure_register_popup_closed(self.mini)
                 time.sleep(0.8)
                 
                 # 使用辅助函数点击发现朋友圈卡片
@@ -714,7 +714,7 @@ class TestUnloggedMain:
                 time.sleep(0.3)
                 
                 # 检查弹窗并验证文字
-                result = check_popup_visible(self.mini, expected_reason='登录后才能发表评论')
+                result = check_register_popup_visible(self.mini, expected_reason='登录后才能发表评论')
                 if result['visible']:
                     if result['match']:
                         print(f'✅ 弹窗正确显示且文字验证通过')
@@ -722,7 +722,7 @@ class TestUnloggedMain:
                         print(f'⚠️  弹窗显示但文字不匹配')
                         print(f'   期望: "登录后才能发表评论"')
                         print(f'   实际: "{result["reason"]}"')
-                    close_popup_by_mask(self.mini, wait_visible=0.4)
+                    close_register_popup_by_mask(self.mini, wait_visible=0.4)
                     return result['match']  # 必须文字也匹配才算通过
                 else:
                     print('❌ 未弹出注册弹窗')
@@ -754,7 +754,7 @@ class TestUnloggedMain:
             if current_page.path != '/pages/details/details':
                 self.navigate_to_main()
                 time.sleep(0.3)
-                ensure_popup_closed(self.mini)
+                ensure_register_popup_closed(self.mini)
                 time.sleep(0.8)
                 
                 # 使用辅助函数点击发现朋友圈卡片
@@ -796,7 +796,7 @@ class TestUnloggedMain:
                 time.sleep(0.3)
                 
                 # 检查弹窗并验证文字
-                result = check_popup_visible(self.mini, expected_reason='您需要登录才能修改设置')
+                result = check_register_popup_visible(self.mini, expected_reason='您需要登录才能修改设置')
                 if result['visible']:
                     if result['match']:
                         print(f'✅ 弹窗正确显示且文字验证通过')
@@ -804,7 +804,7 @@ class TestUnloggedMain:
                         print(f'⚠️  弹窗显示但文字不匹配')
                         print(f'   期望: "您需要登录才能修改设置"')
                         print(f'   实际: "{result["reason"]}"')
-                    close_popup_by_mask(self.mini, wait_visible=0.4)
+                    close_register_popup_by_mask(self.mini, wait_visible=0.4)
                     return result['match']  # 必须文字也匹配才算通过
                 else:
                     print('❌ 未弹出注册弹窗')
@@ -974,7 +974,7 @@ class TestUnloggedMain:
                 time.sleep(0.5)
                 
                 # 验证是否弹出登录提示
-                result = check_popup_visible(self.mini, expected_reason='登录后才能发表评论')
+                result = check_register_popup_visible(self.mini, expected_reason='登录后才能发表评论')
                 if result['visible']:
                     if result['match']:
                         print(f'✅ 弹窗正确显示且文字验证通过')
@@ -983,7 +983,7 @@ class TestUnloggedMain:
                         print(f'   期望: "登录后才能发表评论"')
                         print(f'   实际: "{result["reason"]}"')
                     
-                    close_popup_by_mask(self.mini, wait_visible=0.4)
+                    close_register_popup_by_mask(self.mini, wait_visible=0.4)
                     return result['match']  # 必须文字也匹配才算通过
                 else:
                     print('❌ 未弹出注册弹窗')
