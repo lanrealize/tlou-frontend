@@ -5,7 +5,6 @@
 """
 
 import time
-from .element_helpers import input_text_safe, tap_element_safe
 
 
 # ============================================
@@ -205,7 +204,10 @@ def complete_user_login(mini, nickname='测试用户', avatar_url='https://tlou.
         page = mini.app.current_page
         
         try:
-            input_text_safe(page, 'user-info-popup >>> .nickname-input', nickname)
+            time.sleep(0.2)
+            nickname_input = page.get_element('user-info-popup >>> .nickname-input')
+            nickname_input.input(nickname)
+            time.sleep(0.3)
             print(f'   ✅ 已输入昵称: {nickname}')
         except Exception as e:
             return {
@@ -248,7 +250,10 @@ def complete_user_login(mini, nickname='测试用户', avatar_url='https://tlou.
         print('   🚀 点击提交按钮（真实注册）...')
         
         try:
-            tap_element_safe(page, 'user-info-popup >>> .action-btn', wait_after=0.2)
+            time.sleep(0.3)
+            submit_btn = page.get_element('user-info-popup >>> .action-btn')
+            submit_btn.tap()
+            time.sleep(0.2)
             print('   ✅ 已点击提交')
         except Exception as e:
             return {

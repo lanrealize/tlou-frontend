@@ -33,8 +33,6 @@ from helpers import (
     exit_test_mode,
     complete_user_login,
     verify_login_status,
-    handle_modal_confirm,
-    handle_modal_cancel,
     # 新增的helper
     create_circle,
     publish_post_with_single_image,

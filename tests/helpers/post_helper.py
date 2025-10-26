@@ -476,7 +476,7 @@ def delete_comment(mini, is_reply=True):
         print(f'\n🗑️ 删除{target_type}...')
         
         page = mini.app.current_page
-        from .element_helpers import handle_modal_confirm
+        from .common_helper import handle_modal_confirm
         
         # 点击删除按钮（第一个删除按钮通常是最新的评论/回复）
         try:
@@ -544,7 +544,7 @@ def delete_post(mini, post_id):
         print(f'\n🗑️ 删除帖子...')
         
         page = mini.app.current_page
-        from .element_helpers import handle_modal_confirm
+        from .common_helper import handle_modal_confirm
         
         # 点击帖子操作按钮
         actions_btn = page.get_element('post-item >>> #postActionsBtn')

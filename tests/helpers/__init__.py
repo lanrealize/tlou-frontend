@@ -20,9 +20,8 @@ from .auth_helper import (
     verify_login_status
 )
 
-# navigation_helper
-from .navigation_helper import (
-    navigate_to_details,
+# share_helper
+from .share_helper import (
     navigate_to_details_from_share
 )
 
@@ -51,8 +50,8 @@ from .post_helper import (
     delete_post
 )
 
-# element_helpers
-from .element_helpers import (
+# common_helper (modal functions)
+from .common_helper import (
     handle_modal_confirm,
     handle_modal_cancel
 )
@@ -69,7 +68,6 @@ from .virtual_user_helper import (
 )
 
 # 新增的辅助模块
-from . import element_helpers
 from . import virtual_user_helper
 from . import common_helper
 
@@ -86,8 +84,7 @@ __all__ = [
     'complete_user_login',
     'verify_login_status',
     
-    # navigation_helper
-    'navigate_to_details',
+    # share_helper
     'navigate_to_details_from_share',
     
     # popup_helper
@@ -109,7 +106,7 @@ __all__ = [
     'delete_comment',
     'delete_post',
     
-    # element_helpers
+    # common_helper (modal)
     'handle_modal_confirm',
     'handle_modal_cancel',
     
