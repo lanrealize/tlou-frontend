@@ -23,7 +23,7 @@
 ## auth_helper.py - 用户认证
 
 ### `get_user_state(mini)`
-获取用户完整状态（登录状态、身份类型、用户信息等）。
+获取用户完整状态（唯一真相来源）。返回：`login_status`（登录状态：'loggedIn'/'unregistered'），`is_logged_in`（是否已登录），`is_admin`（是否管理员），`is_virtual_identity`（是否虚拟身份），`user_info`（用户信息：_id/username/avatar/circles）。
 
 ### `verify_identity(mini, expected_username=None, is_virtual=None)`
 验证当前身份是否符合预期（可选检查用户名和虚拟身份标识）。
@@ -123,9 +123,6 @@
 
 ### `navigate_to_management_page(mini, force=False)`
 导航到管理页面（仅管理员可用）。
-
-### `get_current_identity(mini)`
-获取当前身份信息（真实/虚拟身份标识）。
 
 ### `get_virtual_users_list(mini)`
 获取虚拟用户列表。
