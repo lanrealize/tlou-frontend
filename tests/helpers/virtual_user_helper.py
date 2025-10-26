@@ -286,7 +286,7 @@ def delete_virtual_user(mini, username=None, user_id=None, auto_navigate=True):
         time.sleep(0.5)
         
         # 确认删除
-        from .test_helper import handle_modal_confirm
+        from .element_helpers import handle_modal_confirm
         handle_modal_confirm(mini, "确定")
         time.sleep(2.0)
         

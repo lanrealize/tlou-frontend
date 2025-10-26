@@ -7,10 +7,10 @@
   <view class="status-card" wx:if="{{status === 'member'}}" bindtap="onPublish">
     <view class="card-layout">
       <view class="left-content">
-        <text class="main-title">发布新动态</text>
-        <text class="sub-title">分享你的精彩瞬间</text>
+        <text id="mainTitle" class="main-title">发布新动态</text>
+        <text id="subTitle" class="sub-title">分享你的精彩瞬间</text>
       </view>
-      <view class="action-btn static">发布</view>
+      <view id="actionBtn" class="action-btn static">发布</view>
     </view>
   </view>
 
@@ -18,10 +18,10 @@
   <view class="status-card" wx:elif="{{status === 'applied'}}">
     <view class="card-layout">
       <view class="left-content">
-        <text class="main-title">申请已提交</text>
-        <text class="sub-title">等待朋友圈主人审核中</text>
+        <text id="mainTitle" class="main-title">申请已提交</text>
+        <text id="subTitle" class="sub-title">等待朋友圈主人审核中</text>
       </view>
-      <view class="action-btn static disabled">审核中</view>
+      <view id="actionBtn" class="action-btn static disabled">审核中</view>
     </view>
   </view>
 
@@ -29,10 +29,10 @@
   <view class="status-card" wx:elif="{{status === 'invited_applied'}}">
     <view class="card-layout">
       <view class="left-content">
-        <text class="main-title">你收到了邀请</text>
-        <text class="sub-title">点击右侧按钮可直接加入（无需等待审核）</text>
+        <text id="mainTitle" class="main-title">你收到了邀请</text>
+        <text id="subTitle" class="sub-title">点击右侧按钮可直接加入（无需等待审核）</text>
       </view>
-      <button class="action-btn {{isJoining ? 'disabled' : ''}}" 
+      <button id="actionBtn" class="action-btn {{isJoining ? 'disabled' : ''}}" 
               bindtap="onAcceptInvite" 
               disabled="{{isJoining}}">
         {{isJoining ? '加入中...' : '接受邀请'}}
@@ -44,10 +44,10 @@
   <view class="status-card" wx:elif="{{status === 'invited'}}">
     <view class="card-layout">
       <view class="left-content">
-        <text class="main-title">你收到了邀请</text>
-        <text class="sub-title">点击右侧按钮加入这个朋友圈</text>
+        <text id="mainTitle" class="main-title">你收到了邀请</text>
+        <text id="subTitle" class="sub-title">点击右侧按钮加入这个朋友圈</text>
       </view>
-      <button class="action-btn {{isJoining ? 'disabled' : ''}}" 
+      <button id="actionBtn" class="action-btn {{isJoining ? 'disabled' : ''}}" 
               bindtap="onAcceptInvite" 
               disabled="{{isJoining}}">
         {{isJoining ? '加入中...' : '接受邀请'}}
@@ -59,10 +59,10 @@
   <view class="status-card" wx:elif="{{status === 'can_apply'}}">
     <view class="card-layout">
       <view class="left-content">
-        <text class="main-title">公开朋友圈</text>
-        <text class="sub-title">你可以申请加入这个朋友圈</text>
+        <text id="mainTitle" class="main-title">公开朋友圈</text>
+        <text id="subTitle" class="sub-title">你可以申请加入这个朋友圈</text>
       </view>
-      <button class="action-btn {{isApplying ? 'disabled' : ''}}" 
+      <button id="actionBtn" class="action-btn {{isApplying ? 'disabled' : ''}}" 
               bindtap="onApply" 
               disabled="{{isApplying}}">
         {{isApplying ? '申请中...' : '申请加入'}}
@@ -74,10 +74,10 @@
   <view class="status-card" wx:elif="{{status === 'no_access'}}">
     <view class="card-layout">
       <view class="left-content">
-        <text class="main-title">无法访问</text>
-        <text class="sub-title">无权查看此朋友圈</text>
+        <text id="mainTitle" class="main-title">无法访问</text>
+        <text id="subTitle" class="sub-title">无权查看此朋友圈</text>
       </view>
-      <view class="action-btn static disabled">无权限</view>
+      <view id="actionBtn" class="action-btn static disabled">无权限</view>
     </view>
   </view>
 
@@ -87,10 +87,10 @@
   <view class="status-card" wx:elif="{{status === 'guest_invited'}}">
     <view class="card-layout">
       <view class="left-content">
-        <text class="main-title">你收到了邀请</text>
-        <text class="sub-title">点击右侧按钮加入这个朋友圈</text>
+        <text id="mainTitle" class="main-title">你收到了邀请</text>
+        <text id="subTitle" class="sub-title">点击右侧按钮加入这个朋友圈</text>
       </view>
-      <button class="action-btn {{isJoining ? 'disabled' : ''}}" 
+      <button id="actionBtn" class="action-btn {{isJoining ? 'disabled' : ''}}" 
               bindtap="onAcceptInvite" 
               disabled="{{isJoining}}">
         {{isJoining ? '加入中...' : '接受邀请'}}
@@ -102,10 +102,10 @@
   <view class="status-card" wx:elif="{{status === 'guest_can_apply'}}">
     <view class="card-layout">
       <view class="left-content">
-        <text class="main-title">公开朋友圈</text>
-        <text class="sub-title">你可以申请加入这个朋友圈</text>
+        <text id="mainTitle" class="main-title">公开朋友圈</text>
+        <text id="subTitle" class="sub-title">你可以申请加入这个朋友圈</text>
       </view>
-      <button class="action-btn {{isApplying ? 'disabled' : ''}}" 
+      <button id="actionBtn" class="action-btn {{isApplying ? 'disabled' : ''}}" 
               bindtap="onApply" 
               disabled="{{isApplying}}">
         {{isApplying ? '申请中...' : '申请加入'}}

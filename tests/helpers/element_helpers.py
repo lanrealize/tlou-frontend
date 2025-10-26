@@ -340,3 +340,66 @@ def get_element_attribute(page, selector, attribute):
             return None
     return None
 
+
+# ============================================
+# Modal 对话框处理
+# ============================================
+
+def handle_modal_confirm(mini, button_text="确定", timeout=3.0):
+    """
+    处理微信小程序原生Modal确认对话框
+    
+    Args:
+        mini: Minium 实例
+        button_text: 要点击的按钮文字，默认"确定"
+        timeout: 超时时间（秒），默认3秒
+        
+    Returns:
+        bool: 是否成功处理
+    """
+    try:
+        import time
+        # 短暂等待确保modal已显示
+        time.sleep(0.5)
+        
+        # 使用Minium内置方法处理modal
+        result = mini.native.handle_modal(button_text)
+        
+        if result:
+            print(f'   ✅ Modal确认成功: "{button_text}"')
+        else:
+            print(f'   ⚠️  Modal处理失败: "{button_text}"')
+            
+        return result
+    except Exception as e:
+        print(f'   ❌ Modal处理异常: {str(e)}')
+        return False
+
+
+def handle_modal_cancel(mini, timeout=3.0):
+    """
+    处理微信小程序原生Modal取消操作
+    
+    Args:
+        mini: Minium 实例
+        timeout: 超时时间（秒），默认3秒
+        
+    Returns:
+        bool: 是否成功处理
+    """
+    try:
+        import time
+        time.sleep(0.5)
+        
+        # 使用Minium内置方法，传入"取消"
+        result = mini.native.handle_modal("取消")
+        
+        if result:
+            print('   ✅ Modal取消成功')
+        else:
+            print('   ⚠️  Modal取消失败')
+            
+        return result
+    except Exception as e:
+        print(f'   ❌ Modal取消异常: {str(e)}')
+        return False

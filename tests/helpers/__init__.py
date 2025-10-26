@@ -4,48 +4,40 @@
 测试辅助工具包
 """
 
-from .test_helper import (
+# system_helper
+from .system_helper import (
     launch_miniprogram,
     close_miniprogram,
     enter_test_mode,
-    exit_test_mode,
-    check_circle_status_action,
-    navigate_to_details,
-    navigate_to_details_from_share,
-    complete_user_login,
-    verify_login_status,
-    handle_modal_confirm,
-    handle_modal_cancel
+    exit_test_mode
 )
 
+# auth_helper
+from .auth_helper import (
+    complete_user_login,
+    verify_login_status
+)
+
+# navigation_helper
+from .navigation_helper import (
+    navigate_to_details,
+    navigate_to_details_from_share
+)
+
+# popup_helper
 from .popup_helper import (
     check_popup_visible,
     close_popup_by_mask,
     ensure_popup_closed
 )
 
-# 新增的辅助模块
-from . import element_helpers
-from . import virtual_user_helper
-from . import common_helper
-
-# 虚拟用户helper
-from .virtual_user_helper import (
-    navigate_to_management_page,
-    get_current_identity,
-    get_virtual_users_list,
-    create_virtual_user,
-    switch_to_virtual_identity,
-    switch_to_real_identity,
-    delete_virtual_user
-)
-
-# 朋友圈helper
+# circle_helper
 from .circle_helper import (
-    create_circle
+    create_circle,
+    check_circle_status_action
 )
 
-# 帖子helper
+# post_helper
 from .post_helper import (
     publish_post_with_single_image,
     publish_post_with_multi_images,
@@ -57,36 +49,51 @@ from .post_helper import (
     delete_post
 )
 
+# element_helpers
+from .element_helpers import (
+    handle_modal_confirm,
+    handle_modal_cancel
+)
+
+# virtual_user_helper
+from .virtual_user_helper import (
+    navigate_to_management_page,
+    get_current_identity,
+    get_virtual_users_list,
+    create_virtual_user,
+    switch_to_virtual_identity,
+    switch_to_real_identity,
+    delete_virtual_user
+)
+
+# 新增的辅助模块
+from . import element_helpers
+from . import virtual_user_helper
+from . import common_helper
+
 __all__ = [
-    # test_helper
+    # system_helper
     'launch_miniprogram',
     'close_miniprogram',
     'enter_test_mode',
     'exit_test_mode',
-    'check_circle_status_action',
-    'navigate_to_details',
-    'navigate_to_details_from_share',
+    
+    # auth_helper
     'complete_user_login',
     'verify_login_status',
-    'handle_modal_confirm',
-    'handle_modal_cancel',
+    
+    # navigation_helper
+    'navigate_to_details',
+    'navigate_to_details_from_share',
     
     # popup_helper
     'check_popup_visible',
     'close_popup_by_mask',
     'ensure_popup_closed',
     
-    # virtual_user_helper
-    'navigate_to_management_page',
-    'get_current_identity',
-    'get_virtual_users_list',
-    'create_virtual_user',
-    'switch_to_virtual_identity',
-    'switch_to_real_identity',
-    'delete_virtual_user',
-    
     # circle_helper
     'create_circle',
+    'check_circle_status_action',
     
     # post_helper
     'publish_post_with_single_image',
@@ -98,10 +105,26 @@ __all__ = [
     'delete_comment',
     'delete_post',
     
+    # element_helpers
+    'handle_modal_confirm',
+    'handle_modal_cancel',
+    
+    # virtual_user_helper
+    'navigate_to_management_page',
+    'get_current_identity',
+    'get_virtual_users_list',
+    'create_virtual_user',
+    'switch_to_virtual_identity',
+    'switch_to_real_identity',
+    'delete_virtual_user',
+    
     # 新增模块
     'element_helpers',
     'virtual_user_helper',
     'common_helper',
+    'system_helper',
+    'auth_helper',
+    'navigation_helper',
     'circle_helper',
     'post_helper',
 ]

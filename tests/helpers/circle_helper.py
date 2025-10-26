@@ -8,6 +8,18 @@
 import time
 import re
 
+# Circle Status Action 组件状态配置
+CIRCLE_STATUS_CONFIG = {
+    'member': {'main_title': '发布新动态', 'sub_title': '分享你的精彩瞬间', 'button_text': '发布'},
+    'applied': {'main_title': '申请已提交', 'sub_title': '等待朋友圈主人审核中', 'button_text': '审核中'},
+    'invited_applied': {'main_title': '你收到了邀请', 'sub_title': '点击右侧按钮可直接加入（无需等待审核）', 'button_text': '接受邀请'},
+    'invited': {'main_title': '你收到了邀请', 'sub_title': '点击右侧按钮加入这个朋友圈', 'button_text': '接受邀请'},
+    'can_apply': {'main_title': '公开朋友圈', 'sub_title': '你可以申请加入这个朋友圈', 'button_text': '申请加入'},
+    'no_access': {'main_title': '无法访问', 'sub_title': '无权查看此朋友圈', 'button_text': '无权限'},
+    'guest_invited': {'main_title': '你收到了邀请', 'sub_title': '点击右侧按钮加入这个朋友圈', 'button_text': '接受邀请'},
+    'guest_can_apply': {'main_title': '公开朋友圈', 'sub_title': '你可以申请加入这个朋友圈', 'button_text': '申请加入'},
+}
+
 
 def create_circle(mini):
     """创建新朋友圈（从 step_2 完整抽取，保留所有获取ID的方法）
@@ -187,5 +199,81 @@ def create_circle(mini):
         return {
             'success': False,
             'message': f'创建失败: {str(e)}'
+        }
+
+
+def check_circle_status_action(mini, expected_user_status):
+    """检查 details 页面底部 circle-status-action 组件的 UI 显示内容
+    
+    Args:
+        mini: Minium 实例
+        expected_user_status: 期望的用户状态 (如 'guest_can_apply', 'member' 等)
+    """
+    try:
+        page = mini.app.current_page
+        actual_user_status = page.data.get('userStatus', '')
+        
+        # 验证 userStatus 是否正确
+        if actual_user_status != expected_user_status:
+            return {
+                'match': False,
+                'user_status': actual_user_status,
+                'errors': [f'userStatus不匹配: 期望"{expected_user_status}", 实际"{actual_user_status}"']
+            }
+        
+        # 从配置读取期望值
+        expected_config = CIRCLE_STATUS_CONFIG.get(expected_user_status, {})
+        if not expected_config:
+            return {
+                'match': False,
+                'user_status': actual_user_status,
+                'errors': [f'配置中不存在状态: {expected_user_status}']
+            }
+        
+        expected_main_title = expected_config['main_title']
+        expected_sub_title = expected_config['sub_title']
+        expected_button_text = expected_config['button_text']
+        
+        # 从 UI 真正读取显示的文本
+        try:
+            main_title_elem = page.get_element('circle-status-action >>> #mainTitle')
+            sub_title_elem = page.get_element('circle-status-action >>> #subTitle')
+            action_btn_elem = page.get_element('circle-status-action >>> #actionBtn')
+            
+            actual_main_title = main_title_elem.text if main_title_elem else ''
+            actual_sub_title = sub_title_elem.text if sub_title_elem else ''
+            actual_button_text = action_btn_elem.text if action_btn_elem else ''
+        except Exception as e:
+            return {
+                'match': False,
+                'user_status': actual_user_status,
+                'errors': [f'无法读取UI元素: {str(e)}']
+            }
+        
+        # 比对
+        errors = []
+        if actual_main_title != expected_main_title:
+            errors.append(f'主标题不匹配: 期望"{expected_main_title}", 实际"{actual_main_title}"')
+        if actual_sub_title != expected_sub_title:
+            errors.append(f'副标题不匹配: 期望"{expected_sub_title}", 实际"{actual_sub_title}"')
+        if actual_button_text != expected_button_text:
+            errors.append(f'按钮文本不匹配: 期望"{expected_button_text}", 实际"{actual_button_text}"')
+        
+        return {
+            'match': len(errors) == 0,
+            'user_status': actual_user_status,
+            'main_title': actual_main_title,
+            'sub_title': actual_sub_title,
+            'button_text': actual_button_text,
+            'errors': errors
+        }
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            'match': False,
+            'user_status': '',
+            'errors': [f'检查异常: {str(e)}']
         }
 

@@ -520,12 +520,7 @@ class TestUnloggedMain:
             time.sleep(1.5)  # 等待页面跳转
             
             # 检查circle-status-action组件
-            result = check_circle_status_action(
-                self.mini,
-                '公开朋友圈',
-                '你可以申请加入这个朋友圈',
-                '申请加入'
-            )
+            result = check_circle_status_action(self.mini, 'guest_can_apply')
             
             if result['match']:
                 print(f'✅ circle-status-action显示正确')
@@ -860,12 +855,7 @@ class TestUnloggedMain:
             # 使用封装的函数检查circle-status-action组件
             # 从分享进入应该显示"邀请"状态
             print(f'🔍 使用check_circle_status_action函数验证底部组件...')
-            result = check_circle_status_action(
-                self.mini,
-                '你收到了邀请',
-                '点击右侧按钮加入这个朋友圈',
-                '接受邀请'
-            )
+            result = check_circle_status_action(self.mini, 'guest_invited')
             
             if result['match']:
                 print(f'✅ ✅ ✅ circle-status-action组件验证通过 ✅ ✅ ✅')
