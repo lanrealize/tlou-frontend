@@ -67,19 +67,6 @@ def navigate_to_management_page(mini, force=False):
         return {'success': False, 'message': f'导航异常: {str(e)}'}
 
 
-def get_current_identity(mini):
-    """获取当前身份"""
-    from .auth_helper import get_user_state
-    
-    state = get_user_state(mini)
-    return {
-        'success': True,
-        'is_admin': state['is_admin'],
-        'is_virtual_identity': state['is_virtual_identity'],
-        'user_info': state['user_info']
-    }
-
-
 def get_virtual_users_list(mini):
     """获取虚拟用户列表"""
     result = _evaluate_js(mini, js_get_virtual_users_list())
@@ -182,7 +169,8 @@ def switch_to_virtual_identity(mini, username=None, user_id=None, auto_navigate=
         time.sleep(1.5)
         
         # 验证切换成功
-        identity = get_current_identity(mini)
+        from .auth_helper import get_user_state
+        identity = get_user_state(mini)
         if identity['user_info']['username'] != target_user['username']:
             return {'success': False, 'message': '切换后用户名不匹配'}
         
@@ -212,7 +200,8 @@ def switch_to_real_identity(mini, auto_navigate=True):
         time.sleep(0.5)  # 等待切换完成和列表刷新（需要更多时间）
         
         # 验证切换成功
-        identity = get_current_identity(mini)
+        from .auth_helper import get_user_state
+        identity = get_user_state(mini)
         if identity['is_virtual_identity']:
             return {'success': False, 'message': '切换后仍是虚拟身份'}
         

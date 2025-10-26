@@ -18,7 +18,7 @@ from tests.helpers import (
     switch_to_virtual_identity,
     switch_to_real_identity,
     delete_virtual_user,
-    get_current_identity
+    get_user_state
 )
 
 
@@ -53,7 +53,7 @@ def main():
         result = switch_to_virtual_identity(mini, username='TEST_Helper测试用户', auto_navigate=False)
         assert result['success'], f'切换失败: {result["message"]}'
         
-        identity = get_current_identity(mini)
+        identity = get_user_state(mini)
         assert identity['is_virtual_identity'], '应该是虚拟身份'
         assert identity['user_info']['username'] == 'TEST_Helper测试用户', '用户名应该匹配'
         print(f'✅ 已切换到虚拟身份: {identity["user_info"]["username"]}')
@@ -65,7 +65,7 @@ def main():
         result = switch_to_real_identity(mini, auto_navigate=False)
         assert result['success'], f'切换失败: {result["message"]}'
         
-        identity = get_current_identity(mini)
+        identity = get_user_state(mini)
         assert not identity['is_virtual_identity'], '应该是真实身份'
         print('✅ 已切换回真实身份')
         print('   ℹ️  真实身份下，虚拟用户列表已重新显示（正确行为）')

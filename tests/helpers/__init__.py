@@ -55,7 +55,6 @@ from .common_helper import (
 # virtual_user_helper
 from .virtual_user_helper import (
     navigate_to_management_page,
-    get_current_identity,
     get_virtual_users_list,
     create_virtual_user,
     switch_to_virtual_identity,
@@ -106,7 +105,6 @@ __all__ = [
     
     # virtual_user_helper
     'navigate_to_management_page',
-    'get_current_identity',
     'get_virtual_users_list',
     'create_virtual_user',
     'switch_to_virtual_identity',
