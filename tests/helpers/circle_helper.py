@@ -259,3 +259,313 @@ def check_circle_status_action(mini, expected_user_status):
             'errors': [f'检查异常: {str(e)}']
         }
 
+
+def process_unique_join_application(mini, circle_id=None, action='approve'):
+    """处理朋友圈中唯一的加入申请
+    
+    前提条件：
+    - 朋友圈中有且仅有一个待处理的加入申请
+    - 当前用户是朋友圈的管理员（admin）
+    
+    执行步骤：
+    1. 确保当前在 details 页面
+    2. 验证当前用户是 admin
+    3. 确认设置按钮后面显示有申请数量（pendingApplicationsCount > 0）
+    4. 点击设置按钮进入 settings 页面
+    5. 点击接受/拒绝申请按钮
+    6. 验证处理结果
+    
+    Args:
+        mini: Minium 实例
+        circle_id: 可选的朋友圈 ID，如果不提供则从当前页面获取
+        action: 'approve' 或 'reject'，默认为 'approve'
+        
+    Returns:
+        dict: {
+            'success': bool,
+            'applicant_id': str,           # 申请者 ID
+            'applicant_username': str,     # 申请者用户名
+            'action': str,                 # 'approve' 或 'reject'
+            'message': str
+        }
+    """
+    try:
+        from .auth_helper import get_user_state
+        
+        if action not in ['approve', 'reject']:
+            return {
+                'success': False,
+                'message': f'无效的操作类型: {action}，必须是 "approve" 或 "reject"'
+            }
+        
+        action_text = '接受' if action == 'approve' else '拒绝'
+        print(f'\n🔄 处理唯一的加入申请 ({action_text})...')
+        
+        # 步骤1：确保在 details 页面
+        page = mini.app.current_page
+        if 'details' not in page.path:
+            # 如果不在 details 页面，尝试导航过去（需要有 circle_id）
+            if not circle_id:
+                # 尝试从当前页面获取 circle_id
+                circle_id = page.data.get('circle', {}).get('_id', '')
+                if not circle_id:
+                    page_query = getattr(page, 'query', {})
+                    circle_id = page_query.get('circleId', '')
+                
+                if not circle_id:
+                    return {
+                        'success': False,
+                        'message': f'当前不在 details 页面（{page.path}），且无法获取朋友圈 ID 进行导航'
+                    }
+            
+            # 使用 navigate_to_details 导航
+            print(f'   ⚠️  当前在 {page.path}，尝试导航到 details 页面...')
+            from .navigation_helper import navigate_to_details
+            
+            nav_result = navigate_to_details(mini, circle_id)
+            if not nav_result['success']:
+                return {
+                    'success': False,
+                    'message': f'导航到 details 页面失败: {nav_result["error"]}'
+                }
+            
+            print('   ✅ 已导航到 details 页面')
+            page = mini.app.current_page
+        else:
+            print('   ✅ 当前在 details 页面')
+        
+        # 获取朋友圈 ID
+        if not circle_id:
+            circle_id = page.data.get('circle', {}).get('_id', '')
+            if not circle_id:
+                page_query = getattr(page, 'query', {})
+                circle_id = page_query.get('circleId', '')
+            
+            if not circle_id:
+                return {
+                    'success': False,
+                    'message': '无法获取朋友圈 ID'
+                }
+        
+        print(f'   ℹ️  朋友圈 ID: {circle_id[:8]}...')
+        
+        # 步骤2：验证当前用户是 admin
+        user_state = get_user_state(mini)
+        if not user_state['is_admin']:
+            return {
+                'success': False,
+                'message': f'当前用户不是管理员，无法处理申请。isAdmin: {user_state["is_admin"]}'
+            }
+        print(f'   ✅ 当前用户是管理员: {user_state["user_info"]["username"]}')
+        
+        # 步骤3：确认有待处理的申请
+        pending_count = page.data.get('pendingApplicationsCount', 0)
+        if pending_count == 0:
+            return {
+                'success': False,
+                'message': '没有待处理的申请'
+            }
+        elif pending_count > 1:
+            return {
+                'success': False,
+                'message': f'有 {pending_count} 个待处理申请，但此方法只处理唯一申请的情况'
+            }
+        
+        print(f'   ℹ️  页面数据中待处理申请数: {pending_count}')
+        
+        # 验证申请数量显示在 UI 上
+        pending_count_elem = page.get_element('#pending-count')
+        if not pending_count_elem:
+            return {
+                'success': False,
+                'message': '未找到申请数量显示元素'
+            }
+        
+        pending_count_text = pending_count_elem.text.strip()
+        print(f'   ℹ️  UI 显示的申请数量: {pending_count_text}')
+        
+        # 验证 UI 显示的数量与页面数据是否一致
+        try:
+            # 提取数字（去掉括号等）
+            ui_count = int(pending_count_text.strip('()'))
+            if ui_count != pending_count:
+                return {
+                    'success': False,
+                    'message': f'申请数量不一致：页面数据为 {pending_count}，UI 显示为 {ui_count}'
+                }
+            print(f'   ✅ 申请数量验证通过: {pending_count}')
+        except ValueError:
+            return {
+                'success': False,
+                'message': f'无法解析 UI 显示的申请数量: "{pending_count_text}"'
+            }
+        
+        # 步骤4：点击设置按钮进入 settings 页面
+        setting_btn_wrapper = page.get_element('#setting-btn-wrapper')
+        if not setting_btn_wrapper:
+            return {
+                'success': False,
+                'message': '未找到设置按钮'
+            }
+        
+        setting_btn_wrapper.tap()
+        print('   ✅ 已点击设置按钮')
+        
+        # 等待进入 settings 页面
+        time.sleep(1.0)
+        
+        settings_page = mini.app.current_page
+        if 'setting' not in settings_page.path:
+            return {
+                'success': False,
+                'message': f'未能进入 settings 页面，当前在: {settings_page.path}'
+            }
+        print('   ✅ 已进入 settings 页面')
+        
+        # 等待申请列表加载
+        time.sleep(0.5)
+        
+        # 获取申请者列表
+        appliers = settings_page.data.get('appliers', [])
+        if len(appliers) == 0:
+            return {
+                'success': False,
+                'message': 'settings 页面中没有申请者'
+            }
+        elif len(appliers) > 1:
+            return {
+                'success': False,
+                'message': f'settings 页面中有 {len(appliers)} 个申请者，但此方法只处理唯一申请的情况'
+            }
+        
+        applicant = appliers[0]
+        applicant_id = applicant.get('_id', '')
+        applicant_username = applicant.get('username', '未知用户')
+        
+        print(f'   ℹ️  申请者: {applicant_username} (ID: {applicant_id[:8]}...)')
+        
+        # 记录处理前的成员列表
+        members_before = settings_page.data.get('circleMembers', [])
+        member_ids_before = {m.get('_id') or m.get('id') for m in members_before}
+        print(f'   ℹ️  处理前成员数: {len(members_before)}')
+        
+        # 步骤5：点击对应的按钮
+        btn_id = f'#approve-btn-{applicant_id}' if action == 'approve' else f'#reject-btn-{applicant_id}'
+        action_btn = settings_page.get_element(btn_id)
+        
+        if not action_btn:
+            return {
+                'success': False,
+                'message': f'未找到{action_text}按钮: {btn_id}'
+            }
+        
+        action_btn.tap()
+        print(f'   ✅ 已点击{action_text}按钮')
+        
+        # 等待确认对话框并自动确认（Minium auto_authorize 会自动处理）
+        time.sleep(0.5)
+        
+        # 等待操作完成和 toast 显示
+        time.sleep(0.5)
+        
+        print(f'   ✅ 已确认{action_text}操作')
+        
+        # 步骤6：验证结果
+        time.sleep(0.5)
+        
+        # 刷新页面数据
+        settings_page = mini.app.current_page
+        
+        if action == 'approve':
+            # 验证申请者是否出现在成员列表中
+            members_after = settings_page.data.get('circleMembers', [])
+            member_ids_after = {m.get('_id') or m.get('id') for m in members_after}
+            
+            print(f'   ℹ️  处理后成员数: {len(members_after)}')
+            
+            if applicant_id in member_ids_after:
+                print(f'   ✅ {applicant_username} 已出现在成员数据中')
+                
+                # 步骤6：从 UI 上验证该成员是否显示在页面上
+                member_elem = settings_page.get_element(f'.member-item-{applicant_id}')
+                if not member_elem:
+                    return {
+                        'success': False,
+                        'applicant_id': applicant_id,
+                        'applicant_username': applicant_username,
+                        'action': action,
+                        'message': f'{applicant_username} 已加入成员数据，但未在 UI 中显示'
+                    }
+                
+                print(f'   ✅ 在 UI 中找到了成员元素')
+                
+                # 验证成员元素中的用户名
+                member_name_elem = member_elem.get_element('.member-name')
+                if member_name_elem:
+                    ui_username = member_name_elem.text.strip()
+                    if ui_username == applicant_username:
+                        print(f'   ✅ UI 显示的用户名正确: {ui_username}')
+                    else:
+                        print(f'   ⚠️  UI 显示的用户名({ui_username})与预期({applicant_username})不一致')
+                
+                return {
+                    'success': True,
+                    'applicant_id': applicant_id,
+                    'applicant_username': applicant_username,
+                    'action': action,
+                    'members_before': len(members_before),
+                    'members_after': len(members_after),
+                    'message': f'成功{action_text}申请，{applicant_username} 已加入朋友圈并显示在 UI 中'
+                }
+            else:
+                return {
+                    'success': False,
+                    'applicant_id': applicant_id,
+                    'applicant_username': applicant_username,
+                    'action': action,
+                    'message': f'{action_text}操作完成，但 {applicant_username} 未出现在成员列表中'
+                }
+        else:
+            # 验证申请者是否已从申请列表中移除
+            appliers_after = settings_page.data.get('appliers', [])
+            
+            if len(appliers_after) == 0:
+                print(f'   ✅ 申请列表已清空')
+                
+                # 验证成员列表中没有该用户
+                members_after = settings_page.data.get('circleMembers', [])
+                member_ids_after = {m.get('_id') or m.get('id') for m in members_after}
+                
+                if applicant_id not in member_ids_after:
+                    print(f'   ✅ {applicant_username} 未出现在成员列表中')
+                    return {
+                        'success': True,
+                        'applicant_id': applicant_id,
+                        'applicant_username': applicant_username,
+                        'action': action,
+                        'message': f'成功{action_text}申请，{applicant_username} 未加入朋友圈'
+                    }
+                else:
+                    return {
+                        'success': False,
+                        'applicant_id': applicant_id,
+                        'applicant_username': applicant_username,
+                        'action': action,
+                        'message': f'{action_text}操作完成，但 {applicant_username} 意外出现在成员列表中'
+                    }
+            else:
+                return {
+                    'success': False,
+                    'applicant_id': applicant_id,
+                    'applicant_username': applicant_username,
+                    'action': action,
+                    'message': f'{action_text}操作完成，但申请列表仍有 {len(appliers_after)} 个申请'
+                }
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'message': f'处理申请时发生异常: {str(e)}'
+        }

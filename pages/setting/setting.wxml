@@ -24,8 +24,8 @@
         <text class="add-btn-text" bindtap="addMember" wx:if="{{isCircleOwner}}">添加</text>
       </view>
     
-    <view class="member-list">
-      <view class="member-item" wx:for="{{circleMembers}}" wx:key="_id">
+    <view id="member-list" class="member-list">
+      <view class="member-item member-item-{{item._id || item.id}}" wx:for="{{circleMembers}}" wx:key="_id" data-member-id="{{item._id || item.id}}">
         <image class="member-avatar" 
                src="{{item.avatar || item.avatarUrl || '/images/default_avatar.png'}}" 
                mode="aspectFill" />
@@ -57,8 +57,8 @@
     </view>
     
     <!-- 申请者列表 -->
-    <view class="applier-list" wx:else>
-      <view class="applier-item" wx:for="{{appliers}}" wx:key="_id">
+    <view id="applier-list" class="applier-list" wx:else>
+      <view class="applier-item applier-item-{{item._id}}" wx:for="{{appliers}}" wx:key="_id" data-user-id="{{item._id}}">
         <image class="applier-avatar" 
                src="{{item.avatar || '/images/default_avatar.png'}}" 
                mode="aspectFill" />
@@ -67,14 +67,14 @@
           <text class="applier-time">申请时间：刚刚</text>
         </view>
         <view class="applier-actions">
-          <button class="action-btn approve-btn {{isProcessingApplication ? 'disabled' : ''}}" 
+          <button id="approve-btn-{{item._id}}" class="action-btn approve-btn {{isProcessingApplication ? 'disabled' : ''}}" 
                   bindtap="approveApplication" 
                   data-user-id="{{item._id}}"
                   data-username="{{item.username}}"
                   disabled="{{isProcessingApplication}}">
             同意
           </button>
-          <button class="action-btn reject-btn {{isProcessingApplication ? 'disabled' : ''}}" 
+          <button id="reject-btn-{{item._id}}" class="action-btn reject-btn {{isProcessingApplication ? 'disabled' : ''}}" 
                   bindtap="rejectApplication" 
                   data-user-id="{{item._id}}"
                   data-username="{{item.username}}"
