@@ -116,11 +116,6 @@ async function endTestMode() {
     // 1. 检查是否在测试模式
     if (!isTestMode()) {
       console.log('⚠️ 当前不在测试模式');
-      wx.showToast({
-        title: '未在测试模式',
-        icon: 'none',
-        duration: 2000
-      });
       return { success: false, cleanupSuccess: false };
     }
     

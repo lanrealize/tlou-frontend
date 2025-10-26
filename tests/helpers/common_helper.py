@@ -18,7 +18,7 @@ import base64
 def evaluate_js(mini, js_code):
     """执行 JavaScript 代码并返回结果
     
-    自动包装为立即执行函数，只需要写核心逻辑。
+    自动包装为命名函数，只需要写核心逻辑。
     
     Args:
         mini: Minium 实例
@@ -34,13 +34,23 @@ def evaluate_js(mini, js_code):
         '''
         result = evaluate_js(mini, js_code)
     """
-    code = f"""
-    (function() {{
-        {js_code.strip()}
-    }})()
-    """
+    import time
+    # 生成唯一函数名
+    func_name = f"evalFunc{int(time.time() * 1000000) % 1000000000}"
     
-    result = mini.app.evaluate(code, sync=True)
+    # 对每一行添加适当的缩进（4个空格）
+    lines = js_code.strip().split('\n')
+    indented_lines = ['    ' + line if line.strip() else '' for line in lines]
+    indented_code = '\n'.join(indented_lines)
+    
+    # 按照项目中其他地方的格式：三引号后换行，函数定义，最后strip
+    code = f"""
+function {func_name}() {{
+{indented_code}
+}}
+"""
+    
+    result = mini.app.evaluate(code.strip(), sync=True)
     return result.get('result', {}).get('result', {})
 
 

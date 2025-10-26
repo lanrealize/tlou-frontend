@@ -481,7 +481,6 @@ def check_register_popup_visible(mini, expected_reason=None):
         time.sleep(0.15)
         
         js_check = """
-        function checkUserInfoPopup() {
             const pages = getCurrentPages();
             const currentPage = pages[pages.length - 1];
             
@@ -493,7 +492,6 @@ def check_register_popup_visible(mini, expected_reason=None):
             const reason = currentPage.data.userInfoPopupReason || '';
             
             return { visible: visible, reason: reason };
-        }
         """
         
         actual_result = evaluate_js(mini, js_check)

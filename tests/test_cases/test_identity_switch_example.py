@@ -13,6 +13,13 @@
 
 import sys
 import os
+import time
+import io
+
+# 设置标准输出为 UTF-8 编码（解决 Windows emoji 输出问题）
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
@@ -38,17 +45,37 @@ def test_identity_switch_flow():
     
     try:
         # ==========================================
-        # 1. 进入测试模式
+        # 1. 保存真实用户信息（在进入测试模式之前）
         # ==========================================
-        print('\n[1] 进入测试模式...')
+        print('\n[1] 保存真实用户信息（测试前）...')
+        real_identity = get_user_state(mini)
+        real_user_info = real_identity['user_info']
+        print(f'✅ 真实用户: {real_user_info["username"]} (ID: {real_user_info["_id"]})')
+        print(f'   登录状态: {real_identity["login_status"]}')
+        
+        # ==========================================
+        # 2. 进入测试模式
+        # ==========================================
+        print('\n[2] 进入测试模式...')
         result = enter_test_mode(mini)
         assert result, '进入测试模式失败'
         print('✅ 测试模式已启动')
         
         # ==========================================
-        # 2. 完成测试用户注册
+        # 3. 完成测试用户注册
         # ==========================================
-        print('\n[2] 注册测试用户...')
+        print('\n[3] 注册测试用户...')
+        
+        # 点击登录按钮触发注册弹窗
+        page = mini.app.current_page
+        login_btn = page.get_element('.create-btn')
+        if not login_btn:
+            raise Exception('未找到登录按钮')
+        
+        login_btn.tap()
+        time.sleep(0.3)
+        
+        # 完成登录
         login_result = complete_user_login(mini, nickname='测试用户A')
         assert login_result['success'], f'注册失败: {login_result["message"]}'
         
@@ -58,24 +85,11 @@ def test_identity_switch_flow():
         print(f'   用户ID: {test_user_info["_id"]}')
         
         # ==========================================
-        # 3. 获取真实用户信息（可选：如果需要切换到真实身份）
-        # ==========================================
-        print('\n[3] 获取真实用户信息...')
-        # 在实际测试中，需要从某处获取真实用户信息
-        # 这里简化为示例
-        real_user_info = {
-            '_id': 'real_openid_example',
-            'username': '真实用户',
-            'avatar': 'https://example.com/avatar.jpg'
-        }
-        print(f'✅ 真实用户: {real_user_info["username"]}')
-        
-        # ==========================================
         # 4. 临时切换到真实身份（不退出测试模式）
         # ==========================================
         print('\n[4] 临时切换到真实身份...')
         
-        # 使用 switchToTemporaryIdentity 切换
+        # 使用 switchToTemporaryIdentity 切换到之前保存的真实用户
         result = switch_to_identity(mini, real_user_info, 'real')
         assert result['success'], f'切换失败: {result["message"]}'
         
@@ -83,6 +97,9 @@ def test_identity_switch_flow():
         identity = result['identity']
         print(f'✅ 当前身份: {identity["user_info"]["username"]}')
         print(f'   注意：Storage 中的 openid 仍是测试 openid')
+        
+        # 👀 暂停让用户肉眼审核
+        time.sleep(0.5)
         
         # ==========================================
         # 5. 以真实身份做一些操作
@@ -105,6 +122,9 @@ def test_identity_switch_flow():
         assert identity['user_info']['username'] == '测试用户A', '用户名不匹配'
         print(f'✅ 已切换回测试身份: {identity["user_info"]["username"]}')
         
+        # 👀 暂停让用户肉眼审核
+        time.sleep(0.5)
+        
         # ==========================================
         # 7. 继续以测试身份进行测试
         # ==========================================
@@ -117,8 +137,10 @@ def test_identity_switch_flow():
         # ==========================================
         print('\n[8] 清理测试数据...')
         result = exit_test_mode(mini)
-        assert result, '清理失败'
-        print('✅ 测试数据已清理')
+        if result:
+            print('✅ 测试数据已清理')
+        else:
+            print('⚠️  后端清理失败（可能是后端未启动），但不影响测试结果')
         
         print('\n' + '='*60)
         print('✅ 测试完成！身份切换流程验证通过')

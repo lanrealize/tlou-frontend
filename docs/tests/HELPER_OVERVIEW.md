@@ -28,6 +28,9 @@
 ### `verify_identity(mini, expected_username=None, is_virtual=None)`
 验证当前身份是否符合预期（可选检查用户名和虚拟身份标识）。
 
+### `switch_to_identity(mini, user_info, identity_type='test')`
+切换到指定身份（test/virtual/real）。只修改 MobX，不修改 Storage。适用于测试模式下的临时身份切换。
+
 ### `complete_user_login(mini, nickname='测试用户', avatar_url='...')`
 完成用户登录流程，包括填写昵称、上传头像、提交注册。
 
@@ -95,6 +98,11 @@
 
 ## common_helper.py - 通用工具
 
+### JavaScript 执行
+
+#### `evaluate_js(mini, js_code)`
+执行 JavaScript 代码并返回结果。自动包装为立即执行函数，只需写核心逻辑。
+
 ### 图片上传
 
 #### `mock_image_selection(mini, image_paths)`
@@ -148,8 +156,9 @@
 
 1. **系统初始化**：先调用 `launch_miniprogram()` 和 `enter_test_mode()`
 2. **用户认证**：使用 `complete_user_login()` 完成登录
-3. **核心功能**：根据测试场景调用相应的 helper 函数
-4. **清理环境**：测试结束调用 `exit_test_mode()` 和 `close_miniprogram()`
+3. **身份切换**：测试模式下可用 `switch_to_identity()` 在测试/真实/虚拟身份间切换
+4. **核心功能**：根据测试场景调用相应的 helper 函数
+5. **清理环境**：测试结束调用 `exit_test_mode()` 和 `close_miniprogram()`
 
 所有 helper 函数均返回统一格式的结果字典，包含 `success` 字段和 `message` 字段。
 
