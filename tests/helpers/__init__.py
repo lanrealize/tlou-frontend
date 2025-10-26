@@ -23,9 +23,10 @@ from .auth_helper import (
     ensure_register_popup_closed
 )
 
-# share_helper
-from .share_helper import (
-    navigate_to_details_from_share
+# navigation_helper
+from .navigation_helper import (
+    navigate_to_details_from_share,
+    navigate_to_details
 )
 
 # circle_helper
@@ -82,8 +83,9 @@ __all__ = [
     'close_register_popup_by_mask',
     'ensure_register_popup_closed',
     
-    # share_helper
+    # navigation_helper
     'navigate_to_details_from_share',
+    'navigate_to_details',
     
     # circle_helper
     'create_circle',

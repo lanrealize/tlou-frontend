@@ -45,10 +45,13 @@
 
 ---
 
-## share_helper.py - 分享功能
+## navigation_helper.py - 页面导航
 
 ### `navigate_to_details_from_share(mini, circle_id=None, inviter_id=None)`
 模拟从分享链接进入朋友圈详情页（邀请模式）。
+
+### `navigate_to_details(mini, circle_id, source='discover')`
+导航到朋友圈详情页（普通模式）。支持指定来源标识（如 'discover', 'list' 等），会验证页面是否成功加载 circle 数据。
 
 ---
 
