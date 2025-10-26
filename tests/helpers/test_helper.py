@@ -6,13 +6,6 @@
 
 import minium
 import time
-from .js_helpers import (
-    js_get_login_status,
-    js_get_circle_id_from_page,
-    js_mock_avatar_upload,
-    js_check_submit_button_enabled,
-    evaluate_js
-)
 from .element_helpers import find_element_safe, input_text_safe, tap_element_safe
 
 # 配置
@@ -79,6 +72,84 @@ CIRCLE_STATUS_CONFIG = {
     },
     # guest_no_access 不显示任何内容，不需要配置
 }
+
+
+# ============================================
+# 内部 JavaScript 辅助函数
+# ============================================
+
+def _js_get_login_status():
+    """获取用户登录状态（内部使用）"""
+    return """
+    function checkLoginStatus() {
+        const app = getApp();
+        const userStore = app.getUserStore();
+        return {
+            loginStatus: userStore.loginStatus,
+            isLoggedIn: userStore.loginStatus === 'loggedIn',
+            username: userStore.userInfo?.username || '',
+            userId: userStore.userInfo?._id || '',
+            userInfo: userStore.userInfo
+        };
+    }
+    """
+
+
+def _js_mock_avatar_upload(avatar_url):
+    """模拟头像上传成功（内部使用）"""
+    return f"""
+    function mockAvatarSuccess() {{
+        try {{
+            const pages = getCurrentPages();
+            const page = pages[pages.length - 1];
+            const comp = page.selectComponent('#userInfoPopup');
+            
+            if (!comp) {{
+                return {{ success: false, reason: 'component_not_found' }};
+            }}
+            
+            // 直接设置组件状态，模拟上传成功
+            comp.setData({{
+                avatarUrl: '{avatar_url}',
+                isUploadingAvatar: false
+            }}, () => {{
+                // 触发检查提交按钮状态
+                comp.checkCanSubmit();
+            }});
+            
+            return {{ 
+                success: true,
+                canSubmit: comp.data.canSubmit,
+                avatarUrl: comp.data.avatarUrl
+            }};
+        }} catch (e) {{
+            return {{ success: false, reason: e.message }};
+        }}
+    }}
+    """
+
+
+def _js_check_submit_button_enabled():
+    """检查提交按钮是否启用（内部使用）"""
+    return """
+    function checkCanSubmit() {
+        const pages = getCurrentPages();
+        const page = pages[pages.length - 1];
+        const comp = page.selectComponent('#userInfoPopup');
+        
+        return {
+            canSubmit: comp.data.canSubmit,
+            isUploading: comp.data.isUploadingAvatar,
+            avatarUrl: comp.data.avatarUrl
+        };
+    }
+    """
+
+
+def _evaluate_js(mini, js_function):
+    """执行 JavaScript 代码并返回结果（内部工具函数）"""
+    result = mini.app.evaluate(js_function.strip(), sync=True)
+    return result.get('result', {}).get('result', {})
 
 
 # ============================================
@@ -475,7 +546,7 @@ def complete_user_login(mini, nickname='测试用户', avatar_url='https://tlou.
         # 3. 模拟头像上传成功
         print('   🖼️ 模拟头像上传成功...')
         
-        mock_data = evaluate_js(mini, js_mock_avatar_upload(avatar_url))
+        mock_data = _evaluate_js(mini, _js_mock_avatar_upload(avatar_url))
         
         if not mock_data.get('success'):
             return {
@@ -489,7 +560,7 @@ def complete_user_login(mini, nickname='测试用户', avatar_url='https://tlou.
         time.sleep(0.5)
         
         # 4. 验证可以提交
-        check_data = evaluate_js(mini, js_check_submit_button_enabled())
+        check_data = _evaluate_js(mini, _js_check_submit_button_enabled())
         
         if not check_data.get('canSubmit'):
             return {
@@ -580,7 +651,7 @@ def verify_login_status(mini, check_page_ui=False):
     """
     try:
         # 1. 检查全局登录状态（适用于所有页面）
-        login_data = evaluate_js(mini, js_get_login_status())
+        login_data = _evaluate_js(mini, _js_get_login_status())
         
         login_status = login_data.get('loginStatus')
         is_logged_in = login_data.get('isLoggedIn', False)

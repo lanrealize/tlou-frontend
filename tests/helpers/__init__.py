@@ -25,7 +25,6 @@ from .popup_helper import (
 )
 
 # 新增的辅助模块
-from . import js_helpers
 from . import element_helpers
 from . import virtual_user_helper
 from . import common_helper
@@ -100,7 +99,6 @@ __all__ = [
     'delete_post',
     
     # 新增模块
-    'js_helpers',
     'element_helpers',
     'virtual_user_helper',
     'common_helper',

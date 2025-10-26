@@ -12,7 +12,35 @@
 """
 
 import time
-from .js_helpers import js_check_popup_visible, evaluate_js
+
+
+# ============================================
+# 内部 JavaScript 辅助函数
+# ============================================
+
+def _js_check_popup_visible():
+    """检查 user-info-popup 是否显示（内部使用）"""
+    return """
+    function checkUserInfoPopup() {
+        const pages = getCurrentPages();
+        const currentPage = pages[pages.length - 1];
+        
+        if (!currentPage || !currentPage.data) {
+            return { visible: false, reason: '' };
+        }
+        
+        const visible = currentPage.data.userInfoPopupVisible === true;
+        const reason = currentPage.data.userInfoPopupReason || '';
+        
+        return { visible: visible, reason: reason };
+    }
+    """
+
+
+def _evaluate_js(mini, js_function):
+    """执行 JavaScript 代码并返回结果（内部工具函数）"""
+    result = mini.app.evaluate(js_function.strip(), sync=True)
+    return result.get('result', {}).get('result', {})
 
 
 def check_popup_visible(mini, expected_reason=None):
@@ -34,7 +62,7 @@ def check_popup_visible(mini, expected_reason=None):
         time.sleep(0.15)
         
         # 使用封装的 JavaScript 函数
-        actual_result = evaluate_js(mini, js_check_popup_visible())
+        actual_result = _evaluate_js(mini, _js_check_popup_visible())
         
         visible = actual_result.get('visible', False)
         reason = actual_result.get('reason', '')

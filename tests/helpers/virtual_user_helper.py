@@ -3,8 +3,17 @@
 """虚拟用户操作Helper - 简洁版"""
 
 import time
-from .js_helpers import evaluate_js
 from .common_helper import upload_single_image_with_button
+
+
+# ============================================
+# 内部 JavaScript 辅助函数
+# ============================================
+
+def _evaluate_js(mini, js_function):
+    """执行 JavaScript 代码并返回结果（内部工具函数）"""
+    result = mini.app.evaluate(js_function.strip(), sync=True)
+    return result.get('result', {}).get('result', {})
 
 
 # ============================================
@@ -56,7 +65,7 @@ def js_get_virtual_users_list():
 def navigate_to_management_page(mini, force=False):
     """导航到管理页面"""
     try:
-        identity_data = evaluate_js(mini, js_get_current_identity())
+        identity_data = _evaluate_js(mini, js_get_current_identity())
         
         if not identity_data.get('isAdmin'):
             return {'success': False, 'message': '当前用户不是管理员'}
@@ -78,7 +87,7 @@ def navigate_to_management_page(mini, force=False):
 
 def get_current_identity(mini):
     """获取当前身份"""
-    result = evaluate_js(mini, js_get_current_identity())
+    result = _evaluate_js(mini, js_get_current_identity())
     return {
         'success': True,
         'is_admin': result.get('isAdmin', False),
@@ -89,7 +98,7 @@ def get_current_identity(mini):
 
 def get_virtual_users_list(mini):
     """获取虚拟用户列表"""
-    result = evaluate_js(mini, js_get_virtual_users_list())
+    result = _evaluate_js(mini, js_get_virtual_users_list())
     return result
 
 
