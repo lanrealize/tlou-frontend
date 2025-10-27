@@ -101,10 +101,24 @@ function callEndTestMode() {
         # 检查返回值中的清理状态
         result_data = result.get('result', {}).get('result', {})
         cleanup_success = result_data.get('cleanupSuccess', False)
+        error_message = result_data.get('error', '')
+        status_code = result_data.get('statusCode', 0)
         
         if not cleanup_success:
             print('❌ 后端清理测试用户失败')
-            return False
+            print(f'   状态码: {status_code}')
+            print(f'   错误信息: {error_message}')
+            
+            # 允许测试通过的情况：
+            # 1. 401错误（用户不存在）
+            # 2. 状态码为0且错误是"当前不在测试模式"（没有测试数据需要清理）
+            if status_code == 401:
+                print('   ℹ️  401错误（用户不存在），允许测试通过')
+            elif status_code == 0 and '当前不在测试模式' in error_message:
+                print('   ℹ️  当前不在测试模式（无测试数据需要清理），允许测试通过')
+            else:
+                # 其他错误（如500等后端错误）应该让测试失败
+                raise Exception(f'后端清理测试用户失败（状态码: {status_code}），测试数据未正确清理: {error_message}')
         
         print('✅ 后端清理测试用户成功')
         
@@ -120,5 +134,6 @@ function callEndTestMode() {
         print(f'⚠️  退出测试模式失败: {str(e)}')
         import traceback
         traceback.print_exc()
-        return False
+        # 重新抛出异常，让测试失败
+        raise
 

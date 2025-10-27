@@ -76,7 +76,8 @@ from .virtual_user_helper import (
 # workflow_helper
 from .workflow_helper import (
     check_actions_unregistered_main,
-    check_actions_unregistered_details
+    check_actions_unregistered_details,
+    check_actions_member_main
 )
 
 # 新增的辅助模块
@@ -143,6 +144,7 @@ __all__ = [
     # workflow_helper
     'check_actions_unregistered_main',
     'check_actions_unregistered_details',
+    'check_actions_member_main',
     
     # 新增模块
     'element_helpers',

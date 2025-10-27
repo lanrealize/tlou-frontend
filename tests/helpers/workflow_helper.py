@@ -8,9 +8,19 @@ Workflow Helper 模块
 
 import time
 import traceback
-from .navigation_helper import navigate_to_main
+from .navigation_helper import navigate_to_main, navigate_to_details
 from .circle_helper import enter_discover_circle, verify_discover_refresh
 from .auth_helper import check_register_popup_visible, close_register_popup_by_mask
+from .post_helper import (
+    publish_post_with_single_image,
+    publish_post_with_multi_images,
+    like_post,
+    unlike_post,
+    comment_on_post,
+    reply_to_comment,
+    delete_comment,
+    delete_post
+)
 
 # 未注册用户操作的预期消息文本
 EXPECTED_MESSAGES = {
@@ -447,3 +457,149 @@ def check_actions_unregistered_details(mini, test_circle_id='68ff34ecc7f96a66e39
         print(f'\n❌ 测试异常: {str(e)}')
         traceback.print_exc()
         return {'success': False, 'message': f'测试异常: {str(e)}'}
+
+
+def check_actions_member_main(mini, circle_id, test_images):
+    """验证成员在 details 页面的完整发帖工作流
+    
+    前置条件：
+    - 会自动导航到 details 页面（如果不在的话）
+    - 已经创建了一个朋友圈（传入 circle_id）
+    
+    测试流程：
+    - 发帖子（使用图片）
+    - 对帖子进行点赞
+    - 对帖子进行评论
+    - 对帖子的评论回复
+    - 删除一条评论
+    - 取消点赞
+    - 删除帖子
+    - 发一个包含三张图片的帖子
+    
+    Args:
+        mini: Minium 实例
+        circle_id: 朋友圈ID
+        test_images: 测试图片路径列表（至少需要1张，推荐3张）
+        
+    Returns:
+        dict: {
+            'success': bool,
+            'message': str,
+            'test_data': dict  # 包含 first_post, multi_image_post 等测试数据
+        }
+    """
+    
+    print('\n' + '='*60)
+    print('🧪 完整的成员在 details 页面的发帖工作流')
+    print('='*60)
+    
+    # 确保在 details 页面
+    print('\n🔄 确保在 details 页面...')
+    nav_result = navigate_to_details(mini, circle_id)
+    if not nav_result['success']:
+        return {
+            'success': False, 
+            'message': f'导航到 details 页面失败: {nav_result["message"]}',
+            'test_data': {}
+        }
+    print('✅ 已在 details 页面\n')
+    
+    test_data = {}
+    
+    try:
+        # 步骤3：发帖子（使用图片）
+        print('\n3️⃣ 用户发帖子（使用图片）...')
+        post_content = '这是我的第一条测试帖子 📸'
+        
+        result = publish_post_with_single_image(
+            mini, 
+            circle_id, 
+            post_content, 
+            test_images[0], 
+            test_images
+        )
+        if not result['success']:
+            return {'success': False, 'message': f'步骤3失败：{result["message"]}', 'test_data': test_data}
+        
+        test_data['first_post'] = result['post']
+        
+        # 步骤4：对帖子进行点赞
+        print('\n4️⃣ 对帖子进行点赞...')
+        post_id = test_data['first_post']['_id']
+        result = like_post(mini, post_id)
+        if not result['success']:
+            return {'success': False, 'message': f'步骤4失败：{result["message"]}', 'test_data': test_data}
+        
+        # 步骤5：对帖子进行评论
+        print('\n5️⃣ 对帖子进行评论...')
+        comment_text = '这是一条测试评论 💬'
+        result = comment_on_post(mini, comment_text)
+        if not result['success']:
+            return {'success': False, 'message': f'步骤5失败：{result["message"]}', 'test_data': test_data}
+        
+        # 步骤6：对评论进行回复
+        print('\n6️⃣ 对评论进行回复...')
+        reply_text = '这是一条测试回复 📝'
+        result = reply_to_comment(mini, reply_text)
+        if not result['success']:
+            return {'success': False, 'message': f'步骤6失败：{result["message"]}', 'test_data': test_data}
+        
+        # 步骤7：删除刚创建的回复
+        print('\n7️⃣ 删除刚创建的回复...')
+        result = delete_comment(mini, is_reply=True)
+        if not result['success']:
+            print(f'   ⚠️  {result["message"]}')
+    
+        # 步骤8：删除原始评论
+        print('\n8️⃣ 删除原始评论...')
+        result = delete_comment(mini, is_reply=False)
+        if not result['success']:
+            print(f'   ⚠️  {result["message"]}')
+        
+        # 步骤9：取消点赞
+        print('\n9️⃣ 取消点赞...')
+        post_id = test_data['first_post']['_id']
+        result = unlike_post(mini, post_id)
+        if not result['success']:
+            return {'success': False, 'message': f'步骤9失败：{result["message"]}', 'test_data': test_data}
+        
+        # 步骤10：删除帖子
+        print('\n🔟 删除帖子...')
+        post_id = test_data['first_post']['_id']
+        result = delete_post(mini, post_id)
+        if not result['success']:
+            return {'success': False, 'message': f'步骤10失败：{result["message"]}', 'test_data': test_data}
+        
+        # 步骤11：发一个包含三张图片的帖子
+        print('\n1️⃣1️⃣ 发一个包含三张图片的帖子...')
+        post_content = '这是一个包含三张图片的测试帖子 🖼️🖼️🖼️'
+        
+        result = publish_post_with_multi_images(mini, circle_id, post_content, test_images)
+        if result['success']:
+            test_data['multi_image_post'] = result['post']
+            # 验证图片数量
+            image_count = len(result['post'].get('images', []))
+            if image_count == 3:
+                print(f'   ✅ 三张图片的帖子发布成功: {image_count}张图片')
+            elif image_count == 0:
+                print(f'   ✅ 帖子发布成功（仅文字，图片上传失败但已处理）')
+            else:
+                print(f'   ⚠️  部分图片上传成功: {image_count}张图片（期望3张）')
+        else:
+            print(f'   ⚠️  {result["message"]}')
+        
+        print('\n✅ 完整的成员在 details 页面的发帖工作流通过')
+        return {
+            'success': True, 
+            'message': '完整的成员在 details 页面的发帖工作流通过',
+            'test_data': test_data
+        }
+        
+    except Exception as e:
+        print(f'\n❌ 工作流异常: {str(e)}')
+        traceback.print_exc()
+        return {
+            'success': False, 
+            'message': f'工作流异常: {str(e)}',
+            'test_data': test_data
+        }

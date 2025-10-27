@@ -100,6 +100,9 @@
 ### workflow_helper.py → `check_actions_unregistered_details(mini, test_circle_id)`
 验证未注册用户在 details 页面的所有动作是否有正确反馈。包括：点赞弹窗、评论弹窗、设置弹窗、回复评论弹窗。
 
+### workflow_helper.py → `check_actions_member_main(mini, circle_id, test_images)`
+验证成员在 details 页面的完整发帖工作流。包括：发帖（单图）、点赞、评论、回复、删除评论、取消点赞、删除帖子、发帖（多图）。
+
 ---
 
 ## post_helper.py - 帖子操作

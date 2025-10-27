@@ -105,7 +105,7 @@ function startTestMode() {
 async function endTestMode() {
   if (!DEV_MODE) {
     console.warn('⚠️ 开发者模式未启用');
-    return { success: false, cleanupSuccess: false };
+    return { success: false, cleanupSuccess: false, statusCode: 0, error: '开发者模式未启用' };
   }
 
   try {
@@ -116,24 +116,27 @@ async function endTestMode() {
     // 1. 检查是否在测试模式
     if (!isTestMode()) {
       console.log('⚠️ 当前不在测试模式');
-      return { success: false, cleanupSuccess: false };
+      return { success: false, cleanupSuccess: false, statusCode: 0, error: '当前不在测试模式' };
     }
     
     // 2. 获取测试 openid（用于清理后端数据）
     const testOpenid = wx.getStorageSync('openid');
 
     // 3. 清理后端测试数据
-    let cleanupSuccess = false;
+    let cleanupResult = { success: false, statusCode: 0, error: '' };
     console.log('🗑️ 清理后端测试用户数据...');
     try {
-      cleanupSuccess = await cleanupTestUser(testOpenid);
-      if (cleanupSuccess) {
+      cleanupResult = await cleanupTestUser(testOpenid);
+      if (cleanupResult.success) {
         console.log('✅ 后端测试数据清理成功');
       } else {
-        console.warn('⚠️ 后端测试数据清理失败（用户可能不存在或已删除）');
+        console.warn('⚠️ 后端测试数据清理失败');
+        console.warn(`   状态码: ${cleanupResult.statusCode}`);
+        console.warn(`   错误: ${cleanupResult.error}`);
       }
     } catch (error) {
       console.warn('⚠️ 后端清理异常:', error);
+      cleanupResult = { success: false, statusCode: 0, error: error.message || '未知异常' };
       // 继续清理本地状态
     }
 
@@ -170,7 +173,12 @@ async function endTestMode() {
     console.log('💡 应用已恢复到真实用户状态');
     console.log('========================================');
     
-    return { success: true, cleanupSuccess };
+    return { 
+      success: true, 
+      cleanupSuccess: cleanupResult.success,
+      statusCode: cleanupResult.statusCode,
+      error: cleanupResult.error
+    };
 
   } catch (error) {
     console.error('❌ 结束测试模式失败:', error);
@@ -185,7 +193,7 @@ async function endTestMode() {
       console.error('❌ 紧急清理失败:', cleanupError);
     }
     
-    return { success: false, cleanupSuccess: false };
+    return { success: false, cleanupSuccess: false, statusCode: 0, error: error.message || '未知错误' };
   }
 }
 
@@ -321,7 +329,7 @@ async function manualCleanup() {
 async function cleanupTestUser(testOpenid) {
   if (!testOpenid || !testOpenid.startsWith('test_')) {
     console.error('❌ 无效的测试 openid:', testOpenid);
-    return false;
+    return { success: false, statusCode: 0, error: '无效的测试 openid' };
   }
 
   try {
@@ -360,18 +368,22 @@ async function cleanupTestUser(testOpenid) {
       console.log(`   评论: ${summary.deletedComments || 0} 个`);
       
       // 不弹窗，只在控制台记录
-      return true;
+      return { success: true, statusCode: 200, error: '' };
     } 
     // ✅ 处理 401 的情况（用户不存在）
     else if (res.statusCode === 401) {
       console.log('ℹ️  测试用户不存在（可能未注册），无需清理');
       console.log('   这是正常情况，例如测试未登录状态时');
       // 返回 true 表示"清理成功"（因为用户本来就不存在）
-      return true;
+      return { success: true, statusCode: 401, error: '用户不存在' };
     } 
     // ❌ 其他错误情况
     else {
-      throw new Error(res.data?.message || `HTTP ${res.statusCode}: 清理失败`);
+      const errorMsg = res.data?.message || `HTTP ${res.statusCode}: 清理失败`;
+      console.error('❌ 后端返回错误:', errorMsg);
+      console.error('   状态码:', res.statusCode);
+      console.error('   响应数据:', res.data);
+      return { success: false, statusCode: res.statusCode, error: errorMsg };
     }
     
   } catch (error) {
@@ -380,8 +392,8 @@ async function cleanupTestUser(testOpenid) {
     console.error('   原因:', error.message || '未知');
     
     // 不弹窗，只在控制台记录错误
-    // 返回 false 表示清理失败，endTestMode 会继续恢复身份
-    return false;
+    // 返回详细错误信息
+    return { success: false, statusCode: 0, error: error.message || '网络请求失败' };
   }
 }
 

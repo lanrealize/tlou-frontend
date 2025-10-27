@@ -30,29 +30,28 @@ def publish_post_with_single_image(mini, circle_id, content, image_path, test_im
     try:
         print(f'\n📝 发布带单张图片的帖子...')
         
-        # 安全导航到发布页面
+        # 点击发布按钮进入发布页面
         try:
-            print(f'   📍 导航到发布页面...')
-            mini.app.navigate_to(f'/pages/publish/publish?circleId={circle_id}')
+            print(f'   📍 点击发布按钮...')
+            page = mini.app.current_page
+            
+            # 查找 circle-status-action 组件中的发布按钮
+            action_btn = page.get_element('circle-status-action>>>#actionBtn')
+            if not action_btn:
+                raise Exception('未找到发布按钮')
+            
+            action_btn.tap()
             time.sleep(2.0)
             
-            # 验证是否成功导航到发布页面
+            # 验证是否成功进入发布页面
             page = mini.app.current_page
             if 'publish' not in page.path:
-                print(f'   ⚠️  未能导航到发布页面，当前页面: {page.path}')
-                # 重试一次
-                print(f'   🔄 重试导航到发布页面...')
-                mini.app.navigate_to(f'/pages/publish/publish?circleId={circle_id}')
-                time.sleep(2.0)
+                raise Exception(f'点击后未进入发布页面，当前页面: {page.path}')
                 
-                page = mini.app.current_page
-                if 'publish' not in page.path:
-                    raise Exception(f'重试后仍未导航到发布页面，当前页面: {page.path}')
-                
-            print(f'   ✅ 已在发布页面')
+            print(f'   ✅ 已进入发布页面')
         except Exception as e:
-            print(f'   ❌ 导航发布页面失败: {str(e)[:100]}...')
-            raise Exception(f'无法导航到发布页面: {str(e)}')
+            print(f'   ❌ 进入发布页面失败: {str(e)[:100]}...')
+            raise Exception(f'无法进入发布页面: {str(e)}')
         
         page = mini.app.current_page
         
@@ -147,9 +146,24 @@ def publish_post_with_multi_images(mini, circle_id, content, image_paths):
     try:
         print(f'\n📝 发布包含{len(image_paths)}张图片的帖子...')
         
-        # 导航到发布页面
-        mini.app.navigate_to(f'/pages/publish/publish?circleId={circle_id}')
+        # 点击发布按钮进入发布页面
+        print(f'   📍 点击发布按钮...')
+        page = mini.app.current_page
+        
+        # 查找 circle-status-action 组件中的发布按钮
+        action_btn = page.get_element('circle-status-action>>>#actionBtn')
+        if not action_btn:
+            raise Exception('未找到发布按钮')
+        
+        action_btn.tap()
         time.sleep(1.5)
+        
+        # 验证是否成功进入发布页面
+        page = mini.app.current_page
+        if 'publish' not in page.path:
+            raise Exception(f'点击后未进入发布页面，当前页面: {page.path}')
+            
+        print(f'   ✅ 已进入发布页面')
         
         page = mini.app.current_page
         
@@ -258,8 +272,8 @@ def like_post(mini, post_id):
         like_btn.tap()
         print('   ✅ 已点击点赞按钮')
         
-        # 等待点赞操作完成 - 增加等待时间
-        time.sleep(3.0)
+        # 等待点赞操作完成
+        time.sleep(0.75)  # 缩短为原来的 1/4
         
         # 验证点赞状态 - 增加重试机制
         _verify_post_like_status(mini, post_id, expected_liked=True)
@@ -606,7 +620,7 @@ def _add_images(mini, image_paths):
         mini, 
         image_paths, 
         button_selector='#addImagesBtn',
-        wait_after=2.0
+        wait_after=0.5  # 缩短为原来的 1/4
     )
     
     if not result['success']:
@@ -616,7 +630,7 @@ def _add_images(mini, image_paths):
     _verify_images_displayed(mini, result['image_count'])
     
     print(f'   ✅ 成功选择了 {result["image_count"]} 张真实图片，可进行真实上传')
-    time.sleep(1.0)
+    time.sleep(0.25)  # 缩短为原来的 1/4
 
 
 def _verify_images_displayed(mini, expected_count):

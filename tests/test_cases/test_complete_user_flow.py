@@ -6,22 +6,19 @@
 测试流程：
 1. 用户登录
 2. 用户创建新朋友圈
-3. 用户发帖子（使用图片）
-4. 对帖子进行点赞
-5. 对帖子进行评论
-6. 对帖子的评论回复
-7. 删除一条评论
-8. 取消点赞
-9. 删除帖子
-10. 发一个包含三张图片的帖子
-11. 返回首页
-12. 退出测试模式
+3-11. 完整的发帖工作流（使用 workflow helper）
+12. 返回首页
+13. 退出测试模式
 """
 
 import sys
+import io
 import os
 import time
 import traceback
+
+# 设置标准输出为 UTF-8 编码以支持 emoji
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 # 添加项目根目录到 Python 路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -35,14 +32,8 @@ from helpers import (
     verify_login_status,
     # 新增的helper
     create_circle,
-    publish_post_with_single_image,
-    publish_post_with_multi_images,
-    like_post,
-    unlike_post,
-    comment_on_post,
-    reply_to_comment,
-    delete_comment,
-    delete_post
+    # workflow helper
+    check_actions_member_main
 )
 
 # 测试图片文件路径
@@ -123,88 +114,27 @@ class CompleteUserFlowTest:
         
         self.test_data['circle_id'] = result['circle_id']
         
-    def step_3_publish_post_with_image(self):
-        """步骤3：发帖子（使用图片）（使用封装的 helper）"""
+    def step_3_to_11_post_workflow(self):
+        """步骤3-11：完整的发帖工作流（使用封装的 workflow helper）
+        
+        包含：
+        - 发帖子（使用图片）
+        - 对帖子进行点赞
+        - 对帖子进行评论
+        - 对帖子的评论回复
+        - 删除一条评论
+        - 取消点赞
+        - 删除帖子
+        - 发一个包含三张图片的帖子
+        """
         circle_id = self.test_data['circle_id']
-        post_content = '这是我的第一条测试帖子 📸'
         
-        result = publish_post_with_single_image(
-            self.mini, 
-            circle_id, 
-            post_content, 
-            TEST_IMAGES[0], 
-            TEST_IMAGES
-        )
+        result = check_actions_member_main(self.mini, circle_id, TEST_IMAGES)
         if not result['success']:
             raise Exception(result['message'])
         
-        self.test_data['first_post'] = result['post']
-        
-    def step_4_like_post(self):
-        """步骤4：对帖子进行点赞（使用封装的 helper）"""
-        post_id = self.test_data['first_post']['_id']
-        result = like_post(self.mini, post_id)
-        if not result['success']:
-            raise Exception(result['message'])
-        
-    def step_5_comment_on_post(self):
-        """步骤5：对帖子进行评论（使用封装的 helper）"""
-        comment_text = '这是一条测试评论 💬'
-        result = comment_on_post(self.mini, comment_text)
-        if not result['success']:
-            raise Exception(result['message'])
-        
-    def step_6_reply_to_comment(self):
-        """步骤6：对评论进行回复（使用封装的 helper）"""
-        reply_text = '这是一条测试回复 📝'
-        result = reply_to_comment(self.mini, reply_text)
-        if not result['success']:
-            raise Exception(result['message'])
-        
-    def step_7_delete_reply(self):
-        """步骤7：删除刚创建的回复（使用封装的 helper）"""
-        result = delete_comment(self.mini, is_reply=True)
-        if not result['success']:
-            print(f'   ⚠️  {result["message"]}')
-    
-    def step_8_delete_comment(self):
-        """步骤8：删除原始评论（使用封装的 helper）"""
-        result = delete_comment(self.mini, is_reply=False)
-        if not result['success']:
-            print(f'   ⚠️  {result["message"]}')
-        
-    def step_9_unlike_post(self):
-        """步骤9：取消点赞（使用封装的 helper）"""
-        post_id = self.test_data['first_post']['_id']
-        result = unlike_post(self.mini, post_id)
-        if not result['success']:
-            raise Exception(result['message'])
-        
-    def step_10_delete_post(self):
-        """步骤10：删除帖子（使用封装的 helper）"""
-        post_id = self.test_data['first_post']['_id']
-        result = delete_post(self.mini, post_id)
-        if not result['success']:
-            raise Exception(result['message'])
-        
-    def step_11_publish_multi_image_post(self):
-        """步骤11：发一个包含三张图片的帖子（使用封装的 helper）"""
-        circle_id = self.test_data['circle_id']
-        post_content = '这是一个包含三张图片的测试帖子 🖼️🖼️🖼️'
-        
-        result = publish_post_with_multi_images(self.mini, circle_id, post_content, TEST_IMAGES)
-        if result['success']:
-            self.test_data['multi_image_post'] = result['post']
-            # 验证图片数量
-            image_count = len(result['post'].get('images', []))
-            if image_count == 3:
-                print(f'   ✅ 三张图片的帖子发布成功: {image_count}张图片')
-            elif image_count == 0:
-                print(f'   ✅ 帖子发布成功（仅文字，图片上传失败但已处理）')
-            else:
-                print(f'   ⚠️  部分图片上传成功: {image_count}张图片（期望3张）')
-        else:
-            print(f'   ⚠️  {result["message"]}')
+        # 保存测试数据
+        self.test_data.update(result['test_data'])
         
     def step_12_return_to_home(self):
         """步骤12：返回首页"""
@@ -500,20 +430,13 @@ class CompleteUserFlowTest:
         
     def run_test(self):
         """运行完整测试流程"""
+        test_success = False
         try:
             self.setup()
             
             self.step_1_user_login()
             self.step_2_create_circle()
-            self.step_3_publish_post_with_image()
-            self.step_4_like_post()
-            self.step_5_comment_on_post()
-            self.step_6_reply_to_comment()
-            self.step_7_delete_reply()
-            self.step_8_delete_comment()
-            self.step_9_unlike_post()
-            self.step_10_delete_post()
-            self.step_11_publish_multi_image_post()
+            self.step_3_to_11_post_workflow()  # 使用封装的 workflow helper
             self.step_12_return_to_home()
             self.step_13_exit_test_mode()
             
@@ -522,15 +445,22 @@ class CompleteUserFlowTest:
             print('🎯 所有功能验证成功')
             print('='*60)
             
-            return True
+            test_success = True
             
         except Exception as e:
             print(f'\\n❌ 测试失败: {str(e)}')
             traceback.print_exc()
-            return False
+            test_success = False
             
         finally:
-            self.teardown()
+            try:
+                self.teardown()
+            except Exception as e:
+                print(f'\\n❌ 清理失败: {str(e)}')
+                traceback.print_exc()
+                test_success = False
+        
+        return test_success
 
 
 def main():
@@ -540,8 +470,10 @@ def main():
     
     if success:
         print('\\n🎉 测试完成！所有功能正常运行')
+        exit(0)
     else:
         print('\\n💥 测试失败！请检查错误信息')
+        exit(1)
 
 
 if __name__ == '__main__':
