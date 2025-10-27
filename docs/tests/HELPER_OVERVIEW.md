@@ -87,6 +87,19 @@
 ### circle_helper.py → `enter_discover_circle(mini)`
 从 main 页面点击发现朋友圈卡片进入 details 页面，并验证图片一致性。通过 UI 元素获取信息，模拟真实用户操作。
 
+### circle_helper.py → `verify_discover_refresh(mini)`
+验证发现朋友圈的刷新功能。通过检查 UI 元素的 `data-refresh-timestamp` 属性验证刷新动作，不依赖朋友圈 ID 是否改变。
+
+---
+
+## workflow_helper.py - 工作流测试
+
+### workflow_helper.py → `check_actions_unregistered_main(mini)`
+验证未注册用户在 main 页面的所有动作是否有正确反馈。包括：登录按钮、历史记录、创建朋友圈、刷新推荐、进入发现朋友圈。
+
+### workflow_helper.py → `check_actions_unregistered_details(mini, test_circle_id)`
+验证未注册用户在 details 页面的所有动作是否有正确反馈。包括：点赞弹窗、评论弹窗、设置弹窗、回复评论弹窗。
+
 ---
 
 ## post_helper.py - 帖子操作

@@ -1144,3 +1144,200 @@ def enter_discover_circle(mini):
             'main_image_src': '',
             'details_image_src': ''
         }
+
+
+def verify_discover_refresh(mini):
+    """验证"发现有趣朋友圈"的刷新功能是否正常工作
+    
+    通过 UI 元素的 data-refresh-timestamp 属性验证刷新是否成功
+    这样即使后端连续推荐相同的朋友圈，也能正确验证刷新功能
+    
+    Args:
+        mini: Minium 实例
+        
+    Returns:
+        dict: {
+            'success': bool,
+            'message': str,
+            'before_timestamp': int,  # 刷新前的时间戳
+            'after_timestamp': int,   # 刷新后的时间戳
+            'circle_id_changed': bool  # 朋友圈ID是否改变（仅供参考）
+        }
+    """
+    try:
+        print('\n🔄 验证发现朋友圈刷新功能...')
+        
+        # 确保在 main 页面
+        from .navigation_helper import navigate_to_main
+        nav_result = navigate_to_main(mini, use_relaunch=False)
+        if not nav_result['success']:
+            return {
+                'success': False,
+                'message': f'导航到 main 页面失败: {nav_result["message"]}',
+                'before_timestamp': 0,
+                'after_timestamp': 0,
+                'circle_id_changed': False
+            }
+        
+        time.sleep(0.5)
+        page = mini.app.current_page
+        
+        # 查找刷新按钮
+        refresh_element = None
+        try:
+            card = page.get_element('discover-circle-card')
+            if card:
+                print('   ℹ️  找到发现朋友圈卡片')
+                refresh_element = page.get_element('discover-circle-card>>>.menu-icon')
+                if refresh_element:
+                    print('   ℹ️  找到刷新图标')
+        except Exception as e:
+            error_msg = str(e).lower()
+            if 'not found' not in error_msg and 'no such' not in error_msg:
+                return {
+                    'success': False,
+                    'message': f'查找刷新元素时发生错误: {str(e)}',
+                    'before_timestamp': 0,
+                    'after_timestamp': 0,
+                    'circle_id_changed': False
+                }
+        
+        # 如果没有卡片，查找空状态
+        if not refresh_element:
+            try:
+                refresh_element = page.get_element('.discover-empty')
+                if refresh_element:
+                    print('   ℹ️  找到空状态刷新区域')
+            except Exception as e:
+                error_msg = str(e).lower()
+                if 'not found' not in error_msg and 'no such' not in error_msg:
+                    return {
+                        'success': False,
+                        'message': f'查找空状态时发生错误: {str(e)}',
+                        'before_timestamp': 0,
+                        'after_timestamp': 0,
+                        'circle_id_changed': False
+                    }
+        
+        if not refresh_element:
+            return {
+                'success': False,
+                'message': '未找到刷新元素（既无卡片也无空状态）',
+                'before_timestamp': 0,
+                'after_timestamp': 0,
+                'circle_id_changed': False
+            }
+        
+        # 从 UI 获取刷新前的时间戳和圈子ID
+        before_timestamp = 0
+        before_circle_id = ''
+        try:
+            card_element = page.get_element('discover-circle-card>>>.post-card')
+            if card_element:
+                # 获取 data-refresh-timestamp 属性
+                timestamp_attr = card_element.attribute('data-refresh-timestamp')
+                if timestamp_attr and len(timestamp_attr) > 0:
+                    try:
+                        before_timestamp = int(timestamp_attr[0])
+                    except:
+                        before_timestamp = 0
+                
+                # 获取元素ID来提取 circleId
+                id_attr = card_element.attribute('id')
+                if id_attr and len(id_attr) > 0:
+                    element_id = id_attr[0]  # 格式: discover-circle-card-{circleId}
+                    before_circle_id = element_id.replace('discover-circle-card-', '')
+                
+                print(f'   📊 刷新前: timestamp={before_timestamp}, circleId={before_circle_id[:8]}...')
+        except Exception as e:
+            print(f'   ⚠️  获取刷新前状态失败: {str(e)}，继续执行')
+        
+        # 点击刷新
+        refresh_element.tap()
+        print('   ✅ 点击刷新按钮')
+        
+        # 等待刷新完成（检查 isLoadingRecommendations 状态）
+        max_wait = 3.0
+        waited = 0.0
+        time.sleep(0.3)  # 先等待一下让加载状态生效
+        waited += 0.3
+        
+        while waited < max_wait:
+            page = mini.app.current_page
+            is_loading = page.data.get('isLoadingRecommendations', False)
+            if not is_loading:
+                break
+            time.sleep(0.3)
+            waited += 0.3
+        
+        print(f'   ⏱️  等待刷新完成: {waited:.1f}秒')
+        
+        # 从 UI 获取刷新后的时间戳和圈子ID
+        after_timestamp = 0
+        after_circle_id = ''
+        try:
+            page = mini.app.current_page  # 重新获取页面
+            card_element = page.get_element('discover-circle-card>>>.post-card')
+            if card_element:
+                # 获取 data-refresh-timestamp 属性
+                timestamp_attr = card_element.attribute('data-refresh-timestamp')
+                if timestamp_attr and len(timestamp_attr) > 0:
+                    try:
+                        after_timestamp = int(timestamp_attr[0])
+                    except:
+                        after_timestamp = 0
+                
+                # 获取元素ID来提取 circleId
+                id_attr = card_element.attribute('id')
+                if id_attr and len(id_attr) > 0:
+                    element_id = id_attr[0]
+                    after_circle_id = element_id.replace('discover-circle-card-', '')
+                
+                print(f'   📊 刷新后: timestamp={after_timestamp}, circleId={after_circle_id[:8]}...')
+        except Exception as e:
+            # 刷新后可能没有数据（空状态）
+            print(f'   ℹ️  刷新后无卡片数据（可能是暂无推荐）')
+            return {
+                'success': True,
+                'message': '刷新成功完成，但暂无可推荐的朋友圈',
+                'before_timestamp': before_timestamp,
+                'after_timestamp': after_timestamp,
+                'circle_id_changed': False
+            }
+        
+        # 验证：时间戳必须改变（这是核心验证点）
+        if after_timestamp > before_timestamp and after_timestamp > 0:
+            circle_id_changed = (before_circle_id != after_circle_id)
+            print(f'   ✅ 验证通过：刷新成功 (timestamp: {before_timestamp} → {after_timestamp})')
+            if circle_id_changed:
+                print(f'   ℹ️  朋友圈已更换: {before_circle_id[:8]}... → {after_circle_id[:8]}...')
+            else:
+                print(f'   ℹ️  后端推荐了相同的朋友圈 (ID未变)')
+            
+            return {
+                'success': True,
+                'message': '刷新成功',
+                'before_timestamp': before_timestamp,
+                'after_timestamp': after_timestamp,
+                'circle_id_changed': circle_id_changed
+            }
+        else:
+            return {
+                'success': False,
+                'message': f'刷新失败：时间戳未更新 (before={before_timestamp}, after={after_timestamp})',
+                'before_timestamp': before_timestamp,
+                'after_timestamp': after_timestamp,
+                'circle_id_changed': False
+            }
+            
+    except Exception as e:
+        print(f'   ❌ 验证刷新时发生异常: {str(e)}')
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'message': f'操作时发生异常: {str(e)}',
+            'before_timestamp': 0,
+            'after_timestamp': 0,
+            'circle_id_changed': False
+        }

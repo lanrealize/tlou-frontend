@@ -918,7 +918,8 @@ Page({
             formattedTime: util.formatRelativeTime(circle.createdAt),
             memberCount: circle.members ? circle.members.length : 0,
             hasLatestPost: !!(circle.latestPost && circle.latestPost.content),
-            postImageUrl: postImageUrl
+            postImageUrl: postImageUrl,
+            refreshTimestamp: Date.now()  // 添加刷新时间戳，用于测试验证
           }],
           recommendationsLoaded: true
         });
@@ -971,7 +972,8 @@ Page({
             formattedTime: util.formatRelativeTime(circle.createdAt),
             memberCount: circle.members ? circle.members.length : 0,
             hasLatestPost: !!(circle.latestPost && circle.latestPost.content),
-            postImageUrl: postImageUrl
+            postImageUrl: postImageUrl,
+            refreshTimestamp: Date.now()  // 添加刷新时间戳，用于测试验证
           }],
           recommendationsLoaded: true
         });

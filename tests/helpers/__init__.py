@@ -40,7 +40,8 @@ from .circle_helper import (
     apply_to_join_circle,
     process_unique_join_application,
     delete_circle,
-    enter_discover_circle
+    enter_discover_circle,
+    verify_discover_refresh
 )
 
 # post_helper
@@ -72,9 +73,16 @@ from .virtual_user_helper import (
     delete_virtual_user
 )
 
+# workflow_helper
+from .workflow_helper import (
+    check_actions_unregistered_main,
+    check_actions_unregistered_details
+)
+
 # 新增的辅助模块
 from . import virtual_user_helper
 from . import common_helper
+from . import workflow_helper
 
 __all__ = [
     # system_helper
@@ -107,6 +115,7 @@ __all__ = [
     'process_unique_join_application',
     'delete_circle',
     'enter_discover_circle',
+    'verify_discover_refresh',
     
     # post_helper
     'publish_post_with_single_image',
@@ -131,10 +140,15 @@ __all__ = [
     'switch_to_real_identity',
     'delete_virtual_user',
     
+    # workflow_helper
+    'check_actions_unregistered_main',
+    'check_actions_unregistered_details',
+    
     # 新增模块
     'element_helpers',
     'virtual_user_helper',
     'common_helper',
+    'workflow_helper',
     'system_helper',
     'auth_helper',
     'navigation_helper',

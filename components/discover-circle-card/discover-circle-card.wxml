@@ -1,6 +1,6 @@
 <!-- discover-circle-card 组件模板 -->
 <view class="card-wrapper">
-  <view id="discover-circle-card-{{circleId}}" class="post-card {{mode === 'discover' ? 'discover-fade-in' : 'history-mode'}}" bindtap="onCardTap">
+  <view id="discover-circle-card-{{circleId}}" class="post-card {{mode === 'discover' ? 'discover-fade-in' : 'history-mode'}}" data-refresh-timestamp="{{circleData.refreshTimestamp}}" bindtap="onCardTap">
     <view class="post-bg"></view>
     
     <!-- 卡片标题 -->
