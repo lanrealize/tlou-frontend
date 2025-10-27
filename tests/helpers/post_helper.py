@@ -238,12 +238,15 @@ def publish_post_with_multi_images(mini, circle_id, content, image_paths):
         }
 
 
-def like_post(mini, post_id):
+def like_post(mini, post_id, expect_success=True):
     """对帖子进行点赞（从 step_4 完整抽取）
     
     Args:
         mini: Minium 实例
         post_id: 帖子ID
+        expect_success: 是否期望点赞成功（默认 True）
+            - True: 验证点赞成功，如果失败则抛出异常
+            - False: 不验证点赞状态，用于测试无权限点赞等场景
         
     Returns:
         dict: {
@@ -275,13 +278,18 @@ def like_post(mini, post_id):
         # 等待点赞操作完成
         time.sleep(0.75)  # 缩短为原来的 1/4
         
-        # 验证点赞状态 - 增加重试机制
-        _verify_post_like_status(mini, post_id, expected_liked=True)
-        print('   ✅ 点赞成功')
+        # 根据 expect_success 决定是否验证点赞状态
+        if expect_success:
+            # 验证点赞状态 - 增加重试机制
+            _verify_post_like_status(mini, post_id, expected_liked=True)
+            print('   ✅ 点赞成功')
+        else:
+            # 不期望成功（如无权限），跳过验证
+            print('   ⚠️  跳过点赞状态验证（expect_success=False）')
         
         return {
             'success': True,
-            'message': '点赞成功'
+            'message': '点赞操作已执行' if not expect_success else '点赞成功'
         }
         
     except Exception as e:

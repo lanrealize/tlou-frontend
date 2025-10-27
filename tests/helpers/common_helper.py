@@ -388,3 +388,93 @@ def handle_modal_cancel(mini, timeout=3.0):
         print(f'   ❌ Modal取消异常: {str(e)}')
         return False
 
+
+# ============================================
+# Toast 提示框处理
+# ============================================
+
+def check_toast(mini, expected_text=None, since=None):
+    """检查微信小程序Toast提示框
+    
+    使用 mini.app.get_modals() 获取 toast 信息
+    Minium 会自动 hook showToast，无需额外等待
+    
+    Args:
+        mini: Minium 实例
+        expected_text: 期望的Toast文字（可选）。如果提供，会验证Toast内容是否匹配
+        since: 时间戳，只获取此时间之后的toast（可选）
+        
+    Returns:
+        dict: {
+            'success': bool,    # 是否成功获取到Toast
+            'text': str,        # Toast的文字内容（最新的一个）
+            'match': bool,      # 如果提供了expected_text，表示是否匹配
+            'all_toasts': list  # 所有获取到的toast列表
+        }
+        
+    示例:
+        # 获取最新的Toast
+        result = check_toast(mini)
+        if result['success']:
+            print(f"Toast内容: {result['text']}")
+        
+        # 检查Toast内容是否匹配
+        result = check_toast(mini, "发布成功")
+        if result['success'] and result['match']:
+            print("Toast内容符合预期")
+    """
+    try:
+        # 使用 app.get_modals() 获取所有弹窗信息（包括 toast）
+        modals = mini.app.get_modals(since=since)
+        
+        # 过滤出 toast
+        toasts = [m for m in modals if m.get('type') == 'toast']
+        
+        if toasts:
+            # 获取最新的 toast（最后一个）
+            latest_toast = toasts[-1]
+            toast_text = latest_toast.get('title', '')
+            
+            print(f'   💬 Toast内容: "{toast_text}"')
+            print(f'   📋 共获取到 {len(toasts)} 个Toast')
+            
+            # 如果提供了期望文字，进行匹配检查
+            if expected_text is not None:
+                match = (toast_text == expected_text) or (expected_text in toast_text)
+                if match:
+                    print(f'   ✅ Toast内容匹配: "{expected_text}"')
+                else:
+                    print(f'   ⚠️  Toast内容不匹配 - 期望: "{expected_text}", 实际: "{toast_text}"')
+                
+                return {
+                    'success': True,
+                    'text': toast_text,
+                    'match': match,
+                    'all_toasts': toasts
+                }
+            
+            return {
+                'success': True,
+                'text': toast_text,
+                'match': None,
+                'all_toasts': toasts
+            }
+        else:
+            print('   ⚠️  未检测到Toast')
+            return {
+                'success': False,
+                'text': '',
+                'match': False if expected_text is not None else None,
+                'all_toasts': []
+            }
+            
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print(f'   ❌ Toast检查异常: {str(e)}')
+        return {
+            'success': False,
+            'text': '',
+            'match': False if expected_text is not None else None,
+            'all_toasts': []
+        }
