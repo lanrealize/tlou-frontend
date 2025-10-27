@@ -5,18 +5,6 @@
   
   <!-- 内容区域 -->
   <view class="page-content" style="padding-top: {{navigationData.totalNavigationHeight || 88}}px;">
-  
-  <!-- 顶部操作栏 (仅在非历史模式显示) -->
-  <view class="toolbar-actions" wx:if="{{!isHistoryMode}}">
-    <button class="btn btn-primary btn-small" bindtap="showCreateDialog">
-      <text class="icon">+</text>
-      <text>创建</text>
-    </button>
-    <button class="btn btn-secondary btn-small" bindtap="showJoinDialog">
-      <text class="icon">👥</text>
-      <text>加入</text>
-    </button>
-  </view>
 
   <!-- 加载状态 -->
   <view class="loading" wx:if="{{loading && circles.length === 0}}">
@@ -37,7 +25,7 @@
         content="{{item.latestPost ? (item.latestPost.content || '图片动态') : '还没有动态'}}"
         has-content="{{!!item.latestPost}}"
         post-image="{{item.postImageUrl || ''}}"
-        last-update-time="{{isHistoryMode ? item.lastUpdateFormatted : item.formattedTime}}"
+        last-update-time="{{item.lastUpdateFormatted}}"
         members="{{item.members || []}}"
         member-count="{{item.memberCount || 0}}"
         has-delete-permission="{{item.hasDeletePermission}}"
@@ -59,90 +47,11 @@
 
     <!-- 空状态 -->
     <view class="empty-state" wx:if="{{circles.length === 0 && !loading}}">
-      <view class="empty-icon">{{isHistoryMode ? '📋' : '🌟'}}</view>
-      <view class="empty-text">{{isHistoryMode ? '暂无历史记录' : '还没有朋友圈'}}</view>
-      <view class="empty-desc">{{isHistoryMode ? '当你参与朋友圈后，记录会显示在这里' : '创建一个朋友圈，开始分享生活吧'}}</view>
-      <view class="empty-actions" wx:if="{{!isHistoryMode}}">
-        <button class="btn btn-primary" bindtap="showCreateDialog">创建朋友圈</button>
-        <button class="btn btn-secondary" bindtap="showJoinDialog">加入朋友圈</button>
-      </view>
+      <view class="empty-icon">📋</view>
+      <view class="empty-text">还没有朋友圈</view>
+      <view class="empty-desc">创建或加入一个朋友圈，开始分享生活吧</view>
     </view>
   </scroll-view>
-
-  <!-- 创建朋友圈对话框 -->
-  <view class="modal-overlay" wx:if="{{showCreateDialog && !isHistoryMode}}" bindtap="hideCreateDialog">
-    <view class="modal-content" catchtap="true">
-      <view class="modal-header">
-        <text class="modal-title">创建朋友圈</text>
-        <text class="modal-close" bindtap="hideCreateDialog">✕</text>
-      </view>
-      
-      <view class="modal-body">
-        <view class="form-group">
-          <text class="form-label">朋友圈名称</text>
-          <input class="form-input" 
-                 placeholder="请输入朋友圈名称" 
-                 value="{{newCircleName}}" 
-                 bindinput="onCircleNameInput"
-                 maxlength="20" />
-        </view>
-        
-        <view class="form-group">
-          <view class="form-switch">
-            <text class="form-label">公开朋友圈</text>
-            <switch checked="{{newCircleIsPublic}}" 
-                    bindchange="onPublicSwitchChange" 
-                    color="#07c160" />
-          </view>
-          <view class="form-desc">
-            <text>公开的朋友圈任何人都可以查看，私密朋友圈只有成员可以查看</text>
-          </view>
-        </view>
-      </view>
-      
-      <view class="modal-footer">
-        <button class="btn btn-secondary" bindtap="hideCreateDialog">取消</button>
-        <button class="btn btn-primary {{newCircleName ? '' : 'disabled'}}" 
-                bindtap="createCircle" 
-                disabled="{{!newCircleName}}">
-          创建
-        </button>
-      </view>
-    </view>
-  </view>
-
-  <!-- 加入朋友圈对话框 -->
-  <view class="modal-overlay" wx:if="{{showJoinDialog && !isHistoryMode}}" bindtap="hideJoinDialog">
-    <view class="modal-content" catchtap="true">
-      <view class="modal-header">
-        <text class="modal-title">加入朋友圈</text>
-        <text class="modal-close" bindtap="hideJoinDialog">✕</text>
-      </view>
-      
-      <view class="modal-body">
-        <view class="form-group">
-          <text class="form-label">朋友圈ID</text>
-          <input class="form-input" 
-                 placeholder="请输入朋友圈ID" 
-                 value="{{joinCircleId}}" 
-                 bindinput="onJoinIdInput" />
-        </view>
-        
-        <view class="form-desc">
-          <text>请向朋友圈创建者或成员获取朋友圈ID</text>
-        </view>
-      </view>
-      
-      <view class="modal-footer">
-        <button class="btn btn-secondary" bindtap="hideJoinDialog">取消</button>
-        <button class="btn btn-primary {{joinCircleId ? '' : 'disabled'}}" 
-                bindtap="joinCircle" 
-                disabled="{{!joinCircleId}}">
-          加入
-        </button>
-      </view>
-    </view>
-  </view>
   
   </view> <!-- 内容区域结束 -->
 </view>

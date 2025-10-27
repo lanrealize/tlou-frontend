@@ -766,3 +766,176 @@ def process_unique_join_application(mini, circle_id=None, action='approve'):
             'success': False,
             'message': f'处理申请时发生异常: {str(e)}'
         }
+
+
+def delete_circle(mini, circle_id):
+    """在 list 页面删除指定朋友圈
+    
+    执行步骤：
+    1. 确保在 list 页面（如果不在则自动导航）
+    2. 查找目标朋友圈卡片
+    3. 验证有删除权限
+    4. 点击三点菜单按钮
+    5. 点击删除按钮
+    6. 确认删除（Minium auto_authorize 自动处理）
+    7. 验证朋友圈已从列表中移除
+    
+    Args:
+        mini: Minium 实例
+        circle_id: 要删除的朋友圈 ID
+        
+    Returns:
+        dict: {
+            'success': bool,
+            'circle_id': str,
+            'circle_name': str,
+            'message': str
+        }
+    """
+    try:
+        print(f'\n🗑️  删除朋友圈: {circle_id[:8]}...')
+        
+        # 步骤1: 确保在 list 页面
+        page = mini.app.current_page
+        if 'list' not in page.path:
+            print('   ⚠️  不在 list 页面，尝试导航...')
+            from .navigation_helper import navigate_to_list
+            
+            nav_result = navigate_to_list(mini)
+            if not nav_result['success']:
+                return {
+                    'success': False,
+                    'circle_id': circle_id,
+                    'circle_name': '',
+                    'message': f'导航到 list 页面失败: {nav_result["message"]}'
+                }
+            
+            page = mini.app.current_page
+        
+        print('   ✅ 当前在 list 页面')
+        
+        # 步骤2: 查找目标朋友圈卡片
+        circles = page.data.get('circles', [])
+        target_circle = None
+        
+        for circle in circles:
+            if circle.get('_id') == circle_id or circle.get('id') == circle_id:
+                target_circle = circle
+                break
+        
+        if not target_circle:
+            return {
+                'success': False,
+                'circle_id': circle_id,
+                'circle_name': '',
+                'message': f'在页面数据中未找到朋友圈 {circle_id[:8]}...'
+            }
+        
+        circle_name = target_circle.get('name', '未知朋友圈')
+        print(f'   ℹ️  找到目标朋友圈: {circle_name}')
+        
+        # 步骤3: 验证有删除权限
+        has_permission = target_circle.get('hasDeletePermission', False)
+        if not has_permission:
+            return {
+                'success': False,
+                'circle_id': circle_id,
+                'circle_name': circle_name,
+                'message': f'当前用户没有删除权限'
+            }
+        
+        print('   ✅ 已确认有删除权限')
+        
+        # 记录删除前的朋友圈数量
+        circles_before = len(circles)
+        print(f'   ℹ️  删除前朋友圈数: {circles_before}')
+        
+        # 步骤4: 点击三点菜单按钮
+        more_menu_selector = f'discover-circle-card >>> #more-menu-{circle_id}'
+        more_menu = page.get_element(more_menu_selector)
+        
+        if not more_menu:
+            return {
+                'success': False,
+                'circle_id': circle_id,
+                'circle_name': circle_name,
+                'message': f'未找到三点菜单按钮: {more_menu_selector}'
+            }
+        
+        more_menu.tap()
+        print('   ✅ 已点击三点菜单')
+        
+        # 等待下拉菜单显示
+        time.sleep(0.5)
+        
+        # 步骤5: 点击删除按钮
+        delete_btn_selector = f'discover-circle-card >>> #delete-btn-{circle_id}'
+        delete_btn = page.get_element(delete_btn_selector)
+        
+        if not delete_btn:
+            return {
+                'success': False,
+                'circle_id': circle_id,
+                'circle_name': circle_name,
+                'message': f'未找到删除按钮: {delete_btn_selector}'
+            }
+        
+        delete_btn.tap()
+        print('   ✅ 已点击删除按钮')
+        
+        # 处理确认删除对话框
+        time.sleep(0.5)
+        from .common_helper import handle_modal_confirm
+        handle_modal_confirm(mini, "删除")
+        print('   ✅ 已确认删除')
+        
+        # 等待删除操作完成
+        time.sleep(1.5)
+        
+        # 步骤6: 验证删除成功 - 朋友圈已从列表中移除
+        page = mini.app.current_page
+        circles_after = page.data.get('circles', [])
+        circles_after_count = len(circles_after)
+        
+        print(f'   ℹ️  删除后朋友圈数: {circles_after_count}')
+        
+        # 验证数量是否减少1
+        if circles_after_count != circles_before - 1:
+            return {
+                'success': False,
+                'circle_id': circle_id,
+                'circle_name': circle_name,
+                'message': f'删除后朋友圈数量异常: 预期 {circles_before - 1}，实际 {circles_after_count}'
+            }
+        
+        # 验证目标朋友圈是否已不存在
+        for circle in circles_after:
+            cid = circle.get('_id') or circle.get('id')
+            if cid == circle_id:
+                return {
+                    'success': False,
+                    'circle_id': circle_id,
+                    'circle_name': circle_name,
+                    'message': f'删除后朋友圈 {circle_name} 仍在列表中'
+                }
+        
+        print(f'   ✅ 朋友圈已从列表中移除')
+        print(f'   ✅ 删除成功: {circle_name} ({circle_id[:8]}...)')
+        
+        return {
+            'success': True,
+            'circle_id': circle_id,
+            'circle_name': circle_name,
+            'message': f'成功删除朋友圈: {circle_name}'
+        }
+        
+    except Exception as e:
+        print(f'❌ 删除朋友圈失败: {str(e)}')
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'circle_id': circle_id,
+            'circle_name': '',
+            'message': f'删除时发生异常: {str(e)}'
+        }

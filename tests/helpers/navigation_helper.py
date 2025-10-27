@@ -208,3 +208,54 @@ def navigate_to_main(mini, use_relaunch=False):
             'success': False,
             'message': str(e)
         }
+
+
+def navigate_to_list(mini):
+    """导航到朋友圈列表页面
+    
+    Args:
+        mini: Minium 实例
+        
+    Returns:
+        dict: {
+            'success': bool,
+            'message': str,
+            'page_title': str
+        }
+    """
+    try:
+        print('📋 导航到朋友圈列表页面...')
+        
+        # 导航
+        mini.app.navigate_to('/pages/list/list')
+        time.sleep(0.3)
+        
+        # 验证是否成功进入 list 页面
+        page = mini.app.current_page
+        if 'list' not in page.path:
+            return {
+                'success': False,
+                'message': f'导航失败，当前在: {page.path}',
+                'page_title': ''
+            }
+        
+        # 获取页面标题
+        page_title = page.data.get('pageTitle', '')
+        
+        print(f'✅ 已进入 list 页面: {page_title}')
+        
+        return {
+            'success': True,
+            'message': '导航成功',
+            'page_title': page_title
+        }
+        
+    except Exception as e:
+        print(f'❌ 导航到 list 失败: {str(e)}')
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'message': str(e),
+            'page_title': ''
+        }

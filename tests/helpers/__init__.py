@@ -28,7 +28,8 @@ from .auth_helper import (
 from .navigation_helper import (
     navigate_to_details_from_share,
     navigate_to_details,
-    navigate_to_main
+    navigate_to_main,
+    navigate_to_list
 )
 
 # circle_helper
@@ -37,7 +38,8 @@ from .circle_helper import (
     check_circle_status_action,
     set_circle_public,
     apply_to_join_circle,
-    process_unique_join_application
+    process_unique_join_application,
+    delete_circle
 )
 
 # post_helper
@@ -94,6 +96,7 @@ __all__ = [
     'navigate_to_details_from_share',
     'navigate_to_details',
     'navigate_to_main',
+    'navigate_to_list',
     
     # circle_helper
     'create_circle',
@@ -101,6 +104,7 @@ __all__ = [
     'set_circle_public',
     'apply_to_join_circle',
     'process_unique_join_application',
+    'delete_circle',
     
     # post_helper
     'publish_post_with_single_image',

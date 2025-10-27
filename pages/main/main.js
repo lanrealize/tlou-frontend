@@ -813,19 +813,7 @@ Page({
 
 
 
-  // 跳转到朋友圈管理（需要登录）
-  goToCircleList() {
-    // 使用全局访问控制
-    if (!checkAndHandle('enterListPage')) {
-      return; // checkAndHandle 会自动处理跳转到登录页
-    }
-    
-    wx.switchTab({
-      url: '/pages/list/list'
-    });
-  },
-
-  // 跳转到历史记录页面（需要登录）
+  // 跳转到朋友圈列表页面（需要登录）
   goToHistory() {
     // 使用全局访问控制
     if (!checkAndHandle('enterListPage')) {
@@ -833,7 +821,7 @@ Page({
     }
 
     wx.navigateTo({
-      url: '/pages/list/list?mode=history'
+      url: '/pages/list/list'
     });
   },
 

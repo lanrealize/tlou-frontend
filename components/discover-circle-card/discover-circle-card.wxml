@@ -21,7 +21,7 @@
       <!-- 分隔线和三点菜单 - 仅在有权限时显示 -->
       <view class="menu-section" wx:if="{{hasDeletePermission}}">
         <view class="separator-line"></view>
-        <view class="more-menu" catchtap="onMoreMenuTap">
+        <view id="more-menu-{{circleId}}" class="more-menu" catchtap="onMoreMenuTap">
           <image class="more-image" src="/assets/icons/more.svg" mode="aspectFit"></image>
         </view>
       </view>
@@ -74,7 +74,7 @@
     
     <!-- 下拉菜单 - 仅在history模式且有权限时显示 -->
     <view class="dropdown-menu {{mode === 'history' && hasDeletePermission && showDropdown ? 'show' : 'hide'}}">
-      <view class="dropdown-item" catchtap="onDeleteTap">
+      <view id="delete-btn-{{circleId}}" class="dropdown-item" catchtap="onDeleteTap">
         <image class="dropdown-icon" src="/assets/icons/delete.svg" mode="aspectFit"></image>
         <text class="dropdown-text">删除朋友圈</text>
       </view>
