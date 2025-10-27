@@ -1443,3 +1443,58 @@ def verify_discover_refresh(mini):
             'after_timestamp': 0,
             'circle_id_changed': False
         }
+
+
+def accept_to_join_circle(mini):
+    """接受邀请加入朋友圈
+    
+    前提条件：
+    - 当前在 details 页面
+    - 底部显示接受邀请按钮
+    
+    Args:
+        mini: Minium 实例
+        
+    Returns:
+        dict: {
+            'success': bool,
+            'message': str
+        }
+    """
+    try:
+        print('\n✅ 接受邀请加入朋友圈...')
+        
+        page = mini.app.current_page
+        if 'details' not in page.path:
+            return {
+                'success': False,
+                'message': f'当前不在 details 页面: {page.path}'
+            }
+        
+        # 点击接受邀请按钮
+        action_btn = page.get_element('circle-status-action >>> #actionBtn')
+        if not action_btn:
+            return {
+                'success': False,
+                'message': '未找到接受邀请按钮'
+            }
+        
+        action_btn.tap()
+        print('   ✅ 已点击接受邀请按钮')
+        
+        # 等待操作完成
+        time.sleep(0.5)
+        
+        return {
+            'success': True,
+            'message': '已点击接受邀请按钮'
+        }
+        
+    except Exception as e:
+        print(f'❌ 接受邀请失败: {str(e)}')
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'message': f'操作时发生异常: {str(e)}'
+        }

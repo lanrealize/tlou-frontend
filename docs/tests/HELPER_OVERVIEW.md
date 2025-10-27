@@ -93,6 +93,9 @@
 ### circle_helper.py → `verify_discover_refresh(mini)`
 验证发现朋友圈的刷新功能。通过检查 UI 元素的 `data-refresh-timestamp` 属性验证刷新动作，不依赖朋友圈 ID 是否改变。
 
+### circle_helper.py → `accept_to_join_circle(mini)`
+接受邀请加入朋友圈。点击接受邀请按钮。
+
 ---
 
 ## workflow_helper.py - 工作流测试
