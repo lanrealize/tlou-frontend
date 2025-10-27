@@ -113,8 +113,8 @@
 ### post_helper.py → `publish_post_with_multi_images(mini, circle_id, content, image_paths)`
 发布包含多张图片的帖子。
 
-### post_helper.py → `like_post(mini, post_id)`
-对帖子进行点赞。
+### post_helper.py → `like_post(mini, post_id, expect_success=True)`
+对帖子进行点赞。`expect_success=False` 可跳过验证，用于测试无权限点赞等失败场景。
 
 ### post_helper.py → `unlike_post(mini, post_id)`
 取消帖子点赞。
@@ -164,6 +164,11 @@
 
 #### common_helper.py → `handle_modal_cancel(mini, timeout=3.0)`
 处理微信小程序原生Modal取消操作。
+
+### Toast 提示框
+
+#### common_helper.py → `check_toast(mini, expected_text=None, since=None)`
+检查微信小程序Toast提示框。
 
 ---
 
