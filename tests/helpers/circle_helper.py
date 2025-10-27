@@ -260,7 +260,7 @@ def check_circle_status_action(mini, expected_user_status):
         }
 
 
-def enter_circle_settings(mini, circle_id=None):
+def enter_circle_settings(mini, circle_id=None, expect_success=True):
     """从 details 页面进入 settings 页面
     
     前提条件：
@@ -274,6 +274,9 @@ def enter_circle_settings(mini, circle_id=None):
     Args:
         mini: Minium 实例
         circle_id: 可选的朋友圈 ID，用于导航到 details 页面
+        expect_success: 是否期望进入设置成功（默认 True）
+            - True: 验证成功进入 settings 页面
+            - False: 不验证页面跳转，用于测试无权限进入设置等场景
         
     Returns:
         dict: {
@@ -327,16 +330,21 @@ def enter_circle_settings(mini, circle_id=None):
         print('   ✅ 已点击设置按钮')
         time.sleep(1.0)
         
-        # 步骤3：验证进入 settings 页面
-        settings_page = mini.app.current_page
-        if 'setting' not in settings_page.path:
-            return {
-                'success': False,
-                'message': f'未能进入 settings 页面，当前在: {settings_page.path}',
-                'circle_id': circle_id
-            }
-        
-        print('   ✅ 已进入 settings 页面')
+        # 根据 expect_success 决定是否验证页面跳转
+        if expect_success:
+            # 步骤3：验证进入 settings 页面
+            settings_page = mini.app.current_page
+            if 'setting' not in settings_page.path:
+                return {
+                    'success': False,
+                    'message': f'未能进入 settings 页面，当前在: {settings_page.path}',
+                    'circle_id': circle_id
+                }
+            
+            print('   ✅ 已进入 settings 页面')
+        else:
+            # 不期望成功（如无权限），跳过验证
+            print('   ⚠️  跳过页面跳转验证（expect_success=False）')
         
         return {
             'success': True,

@@ -72,8 +72,8 @@
 ### circle_helper.py → `check_circle_status_action(mini, expected_user_status)`
 检查 details 页面底部 circle-status-action 组件的UI显示内容。
 
-### circle_helper.py → `enter_circle_settings(mini, circle_id=None)`
-从 details 页面进入 settings 页面。如果当前不在 details 页面，可提供 circle_id 自动导航。点击设置按钮并验证成功进入设置页面。
+### circle_helper.py → `enter_circle_settings(mini, circle_id=None, expect_success=True)`
+从 details 页面进入 settings 页面。
 
 ### circle_helper.py → `set_circle_public(mini, circle_id=None)`
 设置朋友圈为公开。自动导航到 details 页面，进入设置页面并开启公开开关。
@@ -106,6 +106,9 @@
 ### workflow_helper.py → `check_actions_member_main(mini, circle_id, test_images)`
 验证成员在 details 页面的完整发帖工作流。包括：发帖（单图）、点赞、评论、回复、删除评论、取消点赞、删除帖子、发帖（多图）。
 
+### workflow_helper.py → `check_actions_noaccess_main(mini, circle_id, toast_text)`
+验证无权限用户在 details 页面的所有动作是否显示正确的 Toast 提示。包括：点赞、评论、回复、进入设置，均预期失败并验证 Toast 内容。
+
 ---
 
 ## post_helper.py - 帖子操作
@@ -122,11 +125,11 @@
 ### post_helper.py → `unlike_post(mini, post_id)`
 取消帖子点赞。
 
-### post_helper.py → `comment_on_post(mini, comment_text)`
-对帖子进行评论。
+### post_helper.py → `comment_on_post(mini, comment_text, expect_success=True)`
+对帖子进行评论。`expect_success=False` 可跳过验证，用于测试无权限评论等失败场景。
 
-### post_helper.py → `reply_to_comment(mini, reply_text)`
-对评论进行回复。
+### post_helper.py → `reply_to_comment(mini, reply_text, expect_success=True)`
+对评论进行回复。`expect_success=False` 可跳过验证，用于测试无权限回复等失败场景。
 
 ### post_helper.py → `delete_comment(mini, is_reply=True)`
 删除评论或回复。

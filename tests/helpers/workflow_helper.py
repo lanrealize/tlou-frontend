@@ -9,8 +9,9 @@ Workflow Helper 模块
 import time
 import traceback
 from .navigation_helper import navigate_to_main, navigate_to_details
-from .circle_helper import enter_discover_circle, verify_discover_refresh
+from .circle_helper import enter_discover_circle, verify_discover_refresh, enter_circle_settings
 from .auth_helper import check_register_popup_visible, close_register_popup_by_mask
+from .common_helper import check_toast
 from .post_helper import (
     publish_post_with_single_image,
     publish_post_with_multi_images,
@@ -602,4 +603,178 @@ def check_actions_member_main(mini, circle_id, test_images):
             'success': False, 
             'message': f'工作流异常: {str(e)}',
             'test_data': test_data
+        }
+
+
+def check_actions_noaccess_main(mini, circle_id, toast_text):
+    """验证无权限用户在 details 页面的所有动作是否显示正确的 Toast 提示
+    
+    前置条件：
+    - 会自动导航到 details 页面（如果不在的话）
+    - 用户无权限操作该朋友圈（如未加入、未申请等）
+    - 朋友圈中至少有一个帖子和一条评论
+    
+    测试流程：
+    - 尝试对帖子进行点赞（预期失败，显示 Toast）
+    - 尝试对帖子进行评论（预期失败，显示 Toast）
+    - 尝试对评论进行回复（预期失败，显示 Toast）
+    - 尝试进入设置页面（预期失败，显示 Toast）
+    
+    Args:
+        mini: Minium 实例
+        circle_id: 朋友圈ID
+        toast_text: 预期的 Toast 提示文字（如 "请先申请加入"）
+        
+    Returns:
+        dict: {
+            'success': bool,
+            'message': str,
+            'failed_checks': list  # 失败的检查项列表
+        }
+    """
+    
+    print('\n' + '='*60)
+    print('🧪 验证无权限用户在 details 页面的 Toast 提示')
+    print('='*60)
+    
+    # 确保在 details 页面
+    print('\n🔄 确保在 details 页面...')
+    nav_result = navigate_to_details(mini, circle_id)
+    if not nav_result['success']:
+        return {
+            'success': False, 
+            'message': f'导航到 details 页面失败: {nav_result.get("error", "未知错误")}',
+            'failed_checks': []
+        }
+    print('✅ 已在 details 页面\n')
+    
+    # 获取帖子信息
+    page = mini.app.current_page
+    posts = page.data.get('posts', [])
+    
+    if not posts or len(posts) == 0:
+        return {
+            'success': False,
+            'message': '朋友圈没有帖子，无法进行测试',
+            'failed_checks': []
+        }
+    
+    first_post = posts[0]
+    post_id = first_post.get('_id') or first_post.get('id')
+    print(f'📝 找到帖子，ID: {post_id}\n')
+    
+    failed_checks = []
+    
+    try:
+        # 步骤1：尝试点赞
+        print('1️⃣ 尝试对帖子进行点赞（预期失败）...')
+        before_action_time = time.time()
+        
+        like_result = like_post(mini, post_id, expect_success=False)
+        if not like_result['success']:
+            print(f'   ❌ 点赞操作失败: {like_result["message"]}')
+            failed_checks.append('点赞操作异常')
+        else:
+            # 等待并检查 Toast
+            time.sleep(0.5)
+            toast_result = check_toast(mini, expected_text=toast_text, since=before_action_time)
+            
+            if toast_result['success'] and toast_result['match']:
+                print(f'   ✅ Toast 验证通过: "{toast_result["text"]}"')
+            else:
+                print(f'   ❌ Toast 验证失败')
+                failed_checks.append(f'点赞 Toast 不匹配（期望: {toast_text}, 实际: {toast_result.get("text", "无")}）')
+        
+        # 等待下一个操作（Toast 显示 0.5 秒 + 0.5 秒缓冲）
+        time.sleep(1.0)
+        
+        # 步骤2：尝试评论
+        print('\n2️⃣ 尝试对帖子进行评论（预期失败）...')
+        before_action_time = time.time()
+        
+        comment_result = comment_on_post(mini, '测试评论', expect_success=False)
+        if not comment_result['success']:
+            print(f'   ❌ 评论操作失败: {comment_result["message"]}')
+            failed_checks.append('评论操作异常')
+        else:
+            # 等待并检查 Toast
+            time.sleep(0.5)
+            toast_result = check_toast(mini, expected_text=toast_text, since=before_action_time)
+            
+            if toast_result['success'] and toast_result['match']:
+                print(f'   ✅ Toast 验证通过: "{toast_result["text"]}"')
+            else:
+                print(f'   ❌ Toast 验证失败')
+                failed_checks.append(f'评论 Toast 不匹配（期望: {toast_text}, 实际: {toast_result.get("text", "无")}）')
+        
+        # 等待下一个操作
+        time.sleep(1.0)
+        
+        # 步骤3：尝试回复
+        print('\n3️⃣ 尝试对评论进行回复（预期失败）...')
+        before_action_time = time.time()
+        
+        reply_result = reply_to_comment(mini, '测试回复', expect_success=False)
+        if not reply_result['success']:
+            print(f'   ❌ 回复操作失败: {reply_result["message"]}')
+            failed_checks.append('回复操作异常')
+        else:
+            # 等待并检查 Toast
+            time.sleep(0.5)
+            toast_result = check_toast(mini, expected_text=toast_text, since=before_action_time)
+            
+            if toast_result['success'] and toast_result['match']:
+                print(f'   ✅ Toast 验证通过: "{toast_result["text"]}"')
+            else:
+                print(f'   ❌ Toast 验证失败')
+                failed_checks.append(f'回复 Toast 不匹配（期望: {toast_text}, 实际: {toast_result.get("text", "无")}）')
+        
+        # 等待下一个操作
+        time.sleep(1.0)
+        
+        # 步骤4：尝试进入设置
+        print('\n4️⃣ 尝试进入设置页面（预期失败）...')
+        before_action_time = time.time()
+        
+        settings_result = enter_circle_settings(mini, circle_id, expect_success=False)
+        if not settings_result['success']:
+            print(f'   ❌ 进入设置操作失败: {settings_result["message"]}')
+            failed_checks.append('进入设置操作异常')
+        else:
+            # 等待并检查 Toast
+            time.sleep(0.5)
+            toast_result = check_toast(mini, expected_text=toast_text, since=before_action_time)
+            
+            if toast_result['success'] and toast_result['match']:
+                print(f'   ✅ Toast 验证通过: "{toast_result["text"]}"')
+            else:
+                print(f'   ❌ Toast 验证失败')
+                failed_checks.append(f'设置 Toast 不匹配（期望: {toast_text}, 实际: {toast_result.get("text", "无")}）')
+        
+        # 总结
+        print('\n' + '='*60)
+        if len(failed_checks) == 0:
+            print('✅ 所有 Toast 验证通过！')
+            return {
+                'success': True,
+                'message': '所有无权限操作的 Toast 提示正确',
+                'failed_checks': []
+            }
+        else:
+            print(f'❌ 有 {len(failed_checks)} 项检查失败:')
+            for check in failed_checks:
+                print(f'   - {check}')
+            return {
+                'success': False,
+                'message': f'{len(failed_checks)} 项检查失败',
+                'failed_checks': failed_checks
+            }
+        
+    except Exception as e:
+        print(f'\n❌ 工作流异常: {str(e)}')
+        traceback.print_exc()
+        return {
+            'success': False, 
+            'message': f'工作流异常: {str(e)}',
+            'failed_checks': failed_checks
         }

@@ -352,12 +352,15 @@ def unlike_post(mini, post_id):
         }
 
 
-def comment_on_post(mini, comment_text):
+def comment_on_post(mini, comment_text, expect_success=True):
     """对帖子进行评论（从 step_5 完整抽取）
     
     Args:
         mini: Minium 实例
         comment_text: 评论内容
+        expect_success: 是否期望评论成功（默认 True）
+            - True: 验证评论成功，如果失败则抛出异常
+            - False: 不验证评论状态，用于测试无权限评论等场景（只点击按钮，不输入内容）
         
     Returns:
         dict: {
@@ -384,8 +387,18 @@ def comment_on_post(mini, comment_text):
             raise Exception('未找到评论按钮')
         
         comment_btn.tap()
+        print('   ✅ 已点击评论按钮')
         time.sleep(0.5)
         
+        # 如果不期望成功（无权限场景），点击后直接返回，不尝试输入
+        if not expect_success:
+            print('   ⚠️  无权限场景，跳过输入评论内容')
+            return {
+                'success': True,
+                'message': '评论操作已执行（点击按钮）'
+            }
+        
+        # 期望成功的情况下，继续输入评论内容
         # 输入评论内容
         comment_textarea = page.get_element('#commentTextarea')
         if not comment_textarea:
@@ -421,12 +434,15 @@ def comment_on_post(mini, comment_text):
         }
 
 
-def reply_to_comment(mini, reply_text):
+def reply_to_comment(mini, reply_text, expect_success=True):
     """对评论进行回复（从 step_6 完整抽取）
     
     Args:
         mini: Minium 实例
         reply_text: 回复内容
+        expect_success: 是否期望回复成功（默认 True）
+            - True: 正常执行并验证回复成功
+            - False: 不验证回复状态，用于测试无权限回复等场景（只点击按钮，不输入内容）
         
     Returns:
         dict: {
@@ -448,6 +464,15 @@ def reply_to_comment(mini, reply_text):
         print('   ✅ 已点击回复按钮')
         time.sleep(1.0)
         
+        # 如果不期望成功（无权限场景），点击后直接返回，不尝试输入
+        if not expect_success:
+            print('   ⚠️  无权限场景，跳过输入回复内容')
+            return {
+                'success': True,
+                'message': '回复操作已执行（点击按钮）'
+            }
+        
+        # 期望成功的情况下，继续输入回复内容
         # 输入回复内容
         comment_textarea = page.get_element('#commentTextarea')
         if not comment_textarea:
