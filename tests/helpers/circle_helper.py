@@ -260,6 +260,100 @@ def check_circle_status_action(mini, expected_user_status):
         }
 
 
+def enter_circle_settings(mini, circle_id=None):
+    """从 details 页面进入 settings 页面
+    
+    前提条件：
+    - 当前在 details 页面，或提供 circle_id 以自动导航
+    
+    执行步骤：
+    1. 确保在 details 页面（如需要则导航）
+    2. 点击设置按钮
+    3. 验证成功进入 settings 页面
+    
+    Args:
+        mini: Minium 实例
+        circle_id: 可选的朋友圈 ID，用于导航到 details 页面
+        
+    Returns:
+        dict: {
+            'success': bool,
+            'message': str,
+            'circle_id': str
+        }
+    """
+    try:
+        print('\n⚙️  进入朋友圈设置页面...')
+        
+        # 步骤1：确保在 details 页面
+        page = mini.app.current_page
+        if 'details' not in page.path:
+            if not circle_id:
+                return {
+                    'success': False,
+                    'message': f'当前不在 details 页面（{page.path}），且未提供 circle_id',
+                    'circle_id': ''
+                }
+            
+            from .navigation_helper import navigate_to_details
+            nav_result = navigate_to_details(mini, circle_id)
+            if not nav_result['success']:
+                return {
+                    'success': False,
+                    'message': f'导航到 details 失败: {nav_result["error"]}',
+                    'circle_id': circle_id
+                }
+            page = mini.app.current_page
+        
+        print('   ✅ 当前在 details 页面')
+        
+        # 获取朋友圈 ID
+        if not circle_id:
+            circle_id = page.data.get('circle', {}).get('_id', '')
+            if not circle_id:
+                page_query = getattr(page, 'query', {})
+                circle_id = page_query.get('circleId', '')
+        
+        # 步骤2：点击设置按钮
+        setting_btn_wrapper = page.get_element('#setting-btn-wrapper')
+        if not setting_btn_wrapper:
+            return {
+                'success': False,
+                'message': '未找到设置按钮',
+                'circle_id': circle_id
+            }
+        
+        setting_btn_wrapper.tap()
+        print('   ✅ 已点击设置按钮')
+        time.sleep(1.0)
+        
+        # 步骤3：验证进入 settings 页面
+        settings_page = mini.app.current_page
+        if 'setting' not in settings_page.path:
+            return {
+                'success': False,
+                'message': f'未能进入 settings 页面，当前在: {settings_page.path}',
+                'circle_id': circle_id
+            }
+        
+        print('   ✅ 已进入 settings 页面')
+        
+        return {
+            'success': True,
+            'message': '成功进入设置页面',
+            'circle_id': circle_id
+        }
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'message': f'进入设置页面时发生异常: {str(e)}',
+            'circle_id': circle_id if circle_id else ''
+        }
+
+
 def set_circle_public(mini, circle_id=None):
     """设置朋友圈为公开
     

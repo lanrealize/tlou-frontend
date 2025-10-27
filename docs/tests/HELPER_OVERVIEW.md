@@ -72,6 +72,9 @@
 ### circle_helper.py → `check_circle_status_action(mini, expected_user_status)`
 检查 details 页面底部 circle-status-action 组件的UI显示内容。
 
+### circle_helper.py → `enter_circle_settings(mini, circle_id=None)`
+从 details 页面进入 settings 页面。如果当前不在 details 页面，可提供 circle_id 自动导航。点击设置按钮并验证成功进入设置页面。
+
 ### circle_helper.py → `set_circle_public(mini, circle_id=None)`
 设置朋友圈为公开。自动导航到 details 页面，进入设置页面并开启公开开关。
 
