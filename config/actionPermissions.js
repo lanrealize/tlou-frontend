@@ -85,10 +85,10 @@ module.exports = {
     },
     
     rejectMessages: {
-      enterSettingsPage: '只有朋友圈成员可以修改设置',
-      likePost: '请先加入朋友圈才能点赞',
-      commentPost: '请先加入朋友圈才能评论',
-      publishPost: '请先加入朋友圈才能发布动态',
+      enterSettingsPage: '请等待审核通过',
+      likePost: '请等待审核通过',
+      commentPost: '请等待审核通过',
+      publishPost: '请等待审核通过',
       acceptInvite: '您已申请，请等待审核',
       applyToJoin: '您已申请，请等待审核'
     },
@@ -123,10 +123,10 @@ module.exports = {
     },
     
     rejectMessages: {
-      enterSettingsPage: '只有朋友圈成员可以修改设置',
-      likePost: '请先加入朋友圈才能点赞',
-      commentPost: '请先加入朋友圈才能评论',
-      publishPost: '请先加入朋友圈才能发布动态',
+      enterSettingsPage: '请先接受邀请',
+      likePost: '请先接受邀请',
+      commentPost: '请先接受邀请',
+      publishPost: '请先接受邀请',
       applyToJoin: '您已有邀请，可直接接受'
     },
     
@@ -160,10 +160,10 @@ module.exports = {
     },
     
     rejectMessages: {
-      enterSettingsPage: '只有朋友圈成员可以修改设置',
-      likePost: '请先加入朋友圈才能点赞',
-      commentPost: '请先加入朋友圈才能评论',
-      publishPost: '请先加入朋友圈才能发布动态',
+      enterSettingsPage: '请先接受邀请',
+      likePost: '请先接受邀请',
+      commentPost: '请先接受邀请',
+      publishPost: '请先接受邀请',
       applyToJoin: '您已有邀请，可直接接受'
     },
     
@@ -197,10 +197,10 @@ module.exports = {
     },
     
     rejectMessages: {
-      enterSettingsPage: '只有朋友圈成员可以修改设置',
-      likePost: '请先加入朋友圈才能点赞',
-      commentPost: '请先加入朋友圈才能评论',
-      publishPost: '请先加入朋友圈才能发布动态',
+      enterSettingsPage: '请先申请加入',
+      likePost: '请先申请加入',
+      commentPost: '请先申请加入',
+      publishPost: '请先申请加入',
       acceptInvite: '这不是邀请链接'
     },
     
@@ -234,10 +234,10 @@ module.exports = {
     },
     
     rejectMessages: {
-      enterSettingsPage: '只有朋友圈成员可以修改设置',
-      likePost: '请先加入朋友圈才能点赞',
-      commentPost: '请先加入朋友圈才能评论',
-      publishPost: '请先加入朋友圈才能发布动态',
+      enterSettingsPage: '无法访问',
+      likePost: '请先申请加入',
+      commentPost: '请先申请加入',
+      publishPost: '请先申请加入',
       acceptInvite: '这不是邀请链接',
       applyToJoin: '这是私密朋友圈'
     },
