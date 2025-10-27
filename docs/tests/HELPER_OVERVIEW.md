@@ -56,6 +56,9 @@
 ### `navigate_to_details(mini, circle_id, source='discover')`
 导航到朋友圈详情页（普通模式）。支持指定来源标识（如 'discover', 'list' 等），会验证页面是否成功加载 circle 数据。
 
+### `navigate_to_main(mini, use_relaunch=False)`
+导航到 main 页面。可选使用 `reLaunch` 清空页面栈。
+
 ---
 
 ## circle_helper.py - 朋友圈操作
@@ -65,6 +68,15 @@
 
 ### `check_circle_status_action(mini, expected_user_status)`
 检查 details 页面底部 circle-status-action 组件的UI显示内容。
+
+### `set_circle_public(mini, circle_id=None)`
+设置朋友圈为公开。自动导航到 details 页面，进入设置页面并开启公开开关。
+
+### `apply_to_join_circle(mini)`
+申请加入朋友圈。点击申请加入按钮提交申请。
+
+### `process_unique_join_application(mini, circle_id=None, action='approve')`
+处理朋友圈中唯一的加入申请。支持接受（approve）或拒绝（reject）申请。
 
 ---
 
