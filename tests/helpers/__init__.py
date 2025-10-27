@@ -39,7 +39,8 @@ from .circle_helper import (
     set_circle_public,
     apply_to_join_circle,
     process_unique_join_application,
-    delete_circle
+    delete_circle,
+    enter_discover_circle
 )
 
 # post_helper
@@ -105,6 +106,7 @@ __all__ = [
     'apply_to_join_circle',
     'process_unique_join_application',
     'delete_circle',
+    'enter_discover_circle',
     
     # post_helper
     'publish_post_with_single_image',

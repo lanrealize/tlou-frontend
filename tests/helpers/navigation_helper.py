@@ -176,6 +176,16 @@ def navigate_to_main(mini, use_relaunch=False):
         }
     """
     try:
+        # 检查是否已经在 main 页面
+        current_page = mini.app.current_page
+        if 'main' in current_page.path:
+            print('✅ 已在 main 页面，无需导航')
+            return {
+                'success': True,
+                'message': '已在 main 页面'
+            }
+        
+        # 需要导航到 main 页面
         if use_relaunch:
             print('🏠 导航到 main 页面（清空页面栈）...')
             mini.app.relaunch('/pages/main/main')

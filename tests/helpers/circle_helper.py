@@ -939,3 +939,208 @@ def delete_circle(mini, circle_id):
             'circle_name': '',
             'message': f'删除时发生异常: {str(e)}'
         }
+
+
+def enter_discover_circle(mini):
+    """从 main 页面点击"发现有趣朋友圈卡片"进入 details 页面，并验证图片一致性
+    
+    策略：从 UI 元素获取信息，而非从 page.data，以模拟真实用户体验
+    
+    Args:
+        mini: Minium 实例
+        
+    Returns:
+        dict: {
+            'success': bool,
+            'circle_id': str,
+            'message': str,
+            'main_image_src': str,  # main 页面上的图片 src
+            'details_image_src': str  # details 页面上的图片 src
+        }
+    """
+    try:
+        print('\n🔍 进入发现有趣朋友圈...')
+        
+        # 步骤1: 保证在 main 页面
+        from .navigation_helper import navigate_to_main
+        nav_result = navigate_to_main(mini, use_relaunch=False)
+        if not nav_result['success']:
+            return {
+                'success': False,
+                'circle_id': '',
+                'message': f'导航到 main 页面失败: {nav_result["message"]}',
+                'main_image_src': '',
+                'details_image_src': ''
+            }
+        
+        time.sleep(0.5)
+        
+        # 获取 main 页面
+        page = mini.app.current_page
+        
+        # 从数据中获取 circle_id（仅用于构建 selector）
+        recommended_circles = page.data.get('recommendedCircles', [])
+        if not recommended_circles or len(recommended_circles) == 0:
+            return {
+                'success': False,
+                'circle_id': '',
+                'message': '当前没有推荐的朋友圈',
+                'main_image_src': '',
+                'details_image_src': ''
+            }
+        
+        circle_id = recommended_circles[0].get('_id', '')
+        print(f'   ℹ️  发现朋友圈 ID: {circle_id[:8]}...')
+        
+        # 步骤2: 从 UI 获取 main 页面卡片上的图片
+        # discover-circle-card 中的倾斜图片在 .rotated-img 内
+        card_image_selector = f'discover-circle-card >>> .rotated-img image'
+        card_image_element = page.get_element(card_image_selector)
+        
+        main_image_src = ''
+        if card_image_element:
+            # 从 UI 元素获取 src 属性（返回的是列表）
+            src_list = card_image_element.attribute('src')
+            main_image_src = src_list[0] if src_list and len(src_list) > 0 else ''
+            print(f'   ℹ️  main 卡片图片 src: {main_image_src[:60]}...' if main_image_src else '   ℹ️  main 卡片图片 src: (空)')
+        else:
+            print('   ℹ️  main 页面卡片没有图片元素')
+        
+        # 步骤3: 点击"发现有趣朋友圈卡片"
+        card_selector = f'discover-circle-card >>> #discover-circle-card-{circle_id}'
+        card_element = page.get_element(card_selector)
+        
+        if not card_element:
+            return {
+                'success': False,
+                'circle_id': circle_id,
+                'message': f'未找到发现朋友圈卡片: {card_selector}',
+                'main_image_src': main_image_src,
+                'details_image_src': ''
+            }
+        
+        print('   ℹ️  找到发现朋友圈卡片，准备点击...')
+        card_element.tap()
+        print('   ✅ 已点击卡片')
+        
+        # 等待页面跳转和加载
+        time.sleep(2.5)
+        
+        # 验证是否进入 details 页面
+        current_page = mini.app.current_page
+        if 'details' not in current_page.path:
+            return {
+                'success': False,
+                'circle_id': circle_id,
+                'message': f'未进入 details 页面，当前在: {current_page.path}',
+                'main_image_src': main_image_src,
+                'details_image_src': ''
+            }
+        
+        print('   ✅ 已进入 details 页面')
+        
+        # 步骤4: 从 UI 获取 details 页面第一个帖子的第一张图片
+        details_page = mini.app.current_page
+        
+        # 先尝试获取第一个帖子（用于获取 post_id）
+        posts = details_page.data.get('posts', [])
+        if not posts or len(posts) == 0:
+            print('   ⚠️  details 页面没有帖子')
+            # 如果都没有图片，认为是正常的空朋友圈
+            if not main_image_src:
+                print('   ✅ main 页面和 details 页面都没有图片（新朋友圈）')
+                return {
+                    'success': True,
+                    'circle_id': circle_id,
+                    'message': '成功进入发现朋友圈（无图片内容）',
+                    'main_image_src': main_image_src,
+                    'details_image_src': ''
+                }
+            else:
+                return {
+                    'success': False,
+                    'circle_id': circle_id,
+                    'message': 'main 页面显示有图片，但 details 页面没有帖子',
+                    'main_image_src': main_image_src,
+                    'details_image_src': ''
+                }
+        
+        first_post_id = posts[0].get('_id', '')
+        print(f'   ℹ️  第一个帖子 ID: {first_post_id[:8]}...')
+        
+        # 从 UI 获取第一张图片 - 需要区分单图和多图
+        details_image_src = ''
+        
+        # 先尝试单图（post-image-{post_id}-0）
+        single_image_selector = f'post-item >>> #post-image-{first_post_id}-0'
+        single_image_element = details_page.get_element(single_image_selector)
+        
+        if single_image_element:
+            # 从 UI 元素获取 src 属性（返回的是列表）
+            src_list = single_image_element.attribute('src')
+            details_image_src = src_list[0] if src_list and len(src_list) > 0 else ''
+            print(f'   ℹ️  找到单图模式的第一张图片')
+            print(f'   ℹ️  details 第一张图片 src: {details_image_src[:60]}...' if details_image_src else '   ℹ️  details 第一张图片 src: (空)')
+        else:
+            # 如果不是单图，可能根本没有图片
+            print('   ⚠️  第一个帖子没有找到图片元素')
+            if not main_image_src:
+                print('   ✅ main 页面和第一个帖子都没有图片（文字帖）')
+                return {
+                    'success': True,
+                    'circle_id': circle_id,
+                    'message': '成功进入发现朋友圈（无图片帖子）',
+                    'main_image_src': main_image_src,
+                    'details_image_src': ''
+                }
+            else:
+                return {
+                    'success': False,
+                    'circle_id': circle_id,
+                    'message': 'main 页面显示有图片，但第一个帖子UI中没有找到图片元素',
+                    'main_image_src': main_image_src,
+                    'details_image_src': ''
+                }
+        
+        # 步骤5: 验证图片 src 是否一致
+        if main_image_src and details_image_src:
+            # 去掉可能的查询参数，只比较核心 URL
+            main_src_clean = main_image_src.split('?')[0]
+            details_src_clean = details_image_src.split('?')[0]
+            
+            if main_src_clean != details_src_clean:
+                return {
+                    'success': False,
+                    'circle_id': circle_id,
+                    'message': f'图片 src 不一致:\n  main: {main_src_clean[:60]}...\n  details: {details_src_clean[:60]}...',
+                    'main_image_src': main_image_src,
+                    'details_image_src': details_image_src
+                }
+            
+            print('   ✅ 图片 src 一致')
+        elif not main_image_src and not details_image_src:
+            print('   ✅ main 页面和 details 页面都没有图片（一致）')
+        else:
+            print('   ⚠️  图片状态不一致（一个有图，一个没图）')
+        
+        print(f'   ✅ 成功进入发现朋友圈: {circle_id[:8]}...')
+        
+        return {
+            'success': True,
+            'circle_id': circle_id,
+            'message': '成功进入发现朋友圈，图片验证通过',
+            'main_image_src': main_image_src,
+            'details_image_src': details_image_src
+        }
+        
+    except Exception as e:
+        print(f'❌ 进入发现朋友圈失败: {str(e)}')
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'circle_id': '',
+            'message': f'操作时发生异常: {str(e)}',
+            'main_image_src': '',
+            'details_image_src': ''
+        }

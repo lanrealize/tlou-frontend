@@ -84,6 +84,9 @@
 ### circle_helper.py → `delete_circle(mini, circle_id)`
 删除指定朋友圈。自动导航到列表页面，点击删除按钮并处理确认对话框，验证删除成功。
 
+### circle_helper.py → `enter_discover_circle(mini)`
+从 main 页面点击发现朋友圈卡片进入 details 页面，并验证图片一致性。通过 UI 元素获取信息，模拟真实用户操作。
+
 ---
 
 ## post_helper.py - 帖子操作
