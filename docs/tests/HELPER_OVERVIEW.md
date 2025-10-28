@@ -69,6 +69,12 @@
 ### circle_helper.py → `create_circle(mini)`
 创建新朋友圈并返回朋友圈ID。
 
+### circle_helper.py → `verify_create_circle(mini)`
+验证可以从首页成功创建朋友圈。点击创建按钮，验证进入 details 页面，返回 main，自动清理。返回创建的 circle_id。
+
+### circle_helper.py → `delete_circle_by_api(mini, circle_id)`
+通过 API 快速删除朋友圈，不使用 UI 操作。直接调用后端 DELETE /circles/:id 接口删除。
+
 ### circle_helper.py → `check_circle_status_action(mini, expected_user_status)`
 检查 details 页面底部 circle-status-action 组件的UI显示内容。
 

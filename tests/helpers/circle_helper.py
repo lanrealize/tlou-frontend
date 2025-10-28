@@ -1647,6 +1647,207 @@ def check_latest_circle(mini, circle_id=None, expect_empty=False):
         }
 
 
+def verify_create_circle(mini):
+    """验证可以从首页成功创建朋友圈
+    
+    这是 create_circle 的简化版本，用于测试创建流程是否正常。
+    返回创建的 circle_id，便于后续清理。
+    
+    Args:
+        mini: Minium 实例
+        
+    Returns:
+        dict: {
+            'success': bool,
+            'message': str,
+            'circle_id': str  # 创建的朋友圈 ID
+        }
+    """
+    try:
+        print('\n🆕 验证创建朋友圈功能...')
+        
+        # 步骤1: 保证在 main 页面
+        from .navigation_helper import navigate_to_main
+        nav_result = navigate_to_main(mini, use_relaunch=False)
+        if not nav_result['success']:
+            return {
+                'success': False,
+                'message': f'导航到 main 页面失败: {nav_result["message"]}',
+                'circle_id': ''
+            }
+        
+        print('   ✅ 当前在 main 页面')
+        time.sleep(0.5)
+        
+        # 步骤2: 点击创建朋友圈卡片
+        page = mini.app.current_page
+        create_btn = page.get_element('#createCircleBtn')
+        
+        if not create_btn:
+            return {
+                'success': False,
+                'message': '未找到创建朋友圈按钮',
+                'circle_id': ''
+            }
+        
+        create_btn.tap()
+        print('   ✅ 已点击创建朋友圈按钮')
+        
+        # 等待创建和页面跳转
+        time.sleep(2.5)
+        
+        # 步骤3: 验证创建成功（检查是否进入 details 页面）
+        current_page = mini.app.current_page
+        if 'details' not in current_page.path:
+            return {
+                'success': False,
+                'message': f'创建后未进入 details 页面，当前在: {current_page.path}',
+                'circle_id': ''
+            }
+        
+        print('   ✅ 已进入 details 页面，创建成功')
+        
+        # 获取创建的朋友圈 ID
+        circle_id = current_page.data.get('circleId', '')
+        if not circle_id:
+            circle = current_page.data.get('circle', {})
+            circle_id = circle.get('_id', '')
+        
+        if not circle_id:
+            return {
+                'success': False,
+                'message': '无法获取创建的朋友圈 ID',
+                'circle_id': ''
+            }
+        
+        print(f'   ℹ️  创建的朋友圈 ID: {circle_id[:8]}...')
+        
+        # 步骤4: 返回 main
+        from .navigation_helper import navigate_to_main
+        nav_back = navigate_to_main(mini, use_relaunch=False)
+        if not nav_back['success']:
+            return {
+                'success': False,
+                'message': f'返回 main 页面失败: {nav_back["message"]}',
+                'circle_id': circle_id
+            }
+        
+        print('   ✅ 已返回 main 页面')
+        
+        # 步骤5: 清理创建的朋友圈
+        delete_result = delete_circle_by_api(mini, circle_id)
+        if not delete_result['success']:
+            return {
+                'success': False,
+                'message': f'清理失败: {delete_result["message"]}',
+                'circle_id': circle_id
+            }
+        
+        return {
+            'success': True,
+            'message': '创建朋友圈功能验证成功（已清理）',
+            'circle_id': circle_id
+        }
+        
+    except Exception as e:
+        print(f'❌ 验证创建朋友圈失败: {str(e)}')
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'message': f'操作时发生异常: {str(e)}',
+            'circle_id': ''
+        }
+
+
+def delete_circle_by_api(mini, circle_id):
+    """通过 API 快速删除朋友圈（不使用 UI 操作）
+    
+    用于测试后快速清理，不需要导航和点击 UI。
+    删除失败会让测试 fail。
+    
+    Args:
+        mini: Minium 实例
+        circle_id: 要删除的朋友圈 ID
+        
+    Returns:
+        dict: {
+            'success': bool,
+            'message': str
+        }
+    """
+    try:
+        print(f'\n🗑️  通过 API 删除朋友圈: {circle_id[:8]}...')
+        
+        from .common_helper import evaluate_js
+        
+        # JavaScript 代码：直接使用 wx.request 删除朋友圈
+        # 简化版本：内联获取 baseUrl 和 openid
+        js_code = f'''
+        return (async function() {{
+            try {{
+                const app = getApp();
+                const result = await new Promise((resolve) => {{
+                    wx.request({{
+                        url: app.globalData.baseUrl + '/circles/{circle_id}',
+                        method: 'DELETE',
+                        header: {{
+                            'Content-Type': 'application/json',
+                            'x-openid': app.getUserStore().userInfo._id
+                        }},
+                        success: (res) => {{
+                            if (res.statusCode >= 200 && res.statusCode < 300) {{
+                                wx.showToast({{ title: '删除成功', icon: 'success', duration: 1500 }});
+                                resolve({{ success: true, statusCode: res.statusCode, data: res.data }});
+                            }} else {{
+                                resolve({{ success: false, statusCode: res.statusCode, error: res.data.message || '删除失败' }});
+                            }}
+                        }},
+                        fail: (err) => resolve({{ success: false, error: err.errMsg, statusCode: 0 }})
+                    }});
+                }});
+                return result;
+            }} catch (error) {{
+                return {{ success: false, error: String(error), statusCode: 0 }};
+            }}
+        }})();
+        '''
+        
+        result = evaluate_js(mini, js_code)
+        
+        if not result:
+            return {
+                'success': False,
+                'message': 'JavaScript 执行返回空结果'
+            }
+        
+        # 检查 API 调用是否成功
+        if result.get('success'):
+            status_code = result.get('statusCode', 200)
+            print(f'   ✅ 删除成功，状态码: {status_code}')
+            return {
+                'success': True,
+                'message': f'成功删除朋友圈: {circle_id[:8]}...'
+            }
+        else:
+            error_msg = result.get('error', '未知错误')
+            status_code = result.get('statusCode', 'N/A')
+            print(f'   ❌ 删除失败: {error_msg} (状态码: {status_code})')
+            return {
+                'success': False,
+                'message': f'删除失败: {error_msg}'
+            }
+        
+    except Exception as e:
+        print(f'❌ 删除朋友圈时发生异常: {str(e)}')
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'message': f'操作时发生异常: {str(e)}'
+        }
+
+
 def enter_latest_circle(mini):
     """从 main 页面点击最近朋友圈卡片进入 details 页面
     
