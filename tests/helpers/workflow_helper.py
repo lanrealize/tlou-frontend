@@ -16,7 +16,8 @@ from .circle_helper import (
     enter_latest_circle,
     check_latest_circle,
     verify_create_circle,
-    verify_enter_list
+    verify_enter_list,
+    check_circle_status_action
 )
 from .auth_helper import check_register_popup_visible, close_register_popup_by_mask
 from .common_helper import check_toast
@@ -53,7 +54,7 @@ def check_actions_unregistered_main(mini):
     - 点击历史记录
     - 点击创建新朋友圈
     - 刷新"发现有趣朋友圈"
-    - 进入有趣朋友圈（浏览模式）
+    - 进入有趣朋友圈（浏览模式）并验证状态
     
     Args:
         mini: Minium 实例
@@ -61,7 +62,8 @@ def check_actions_unregistered_main(mini):
     Returns:
         dict: {
             'success': bool,
-            'message': str
+            'message': str,
+            'circle_id': str  # 进入的发现朋友圈ID（如果成功进入）
         }
     """
     try:
@@ -185,14 +187,25 @@ def check_actions_unregistered_main(mini):
             print(f'❌ 验证失败：{result["message"]}')
             return {'success': False, 'message': f'MAIN_004失败：{result["message"]}'}
         
-        # MAIN_005: 进入有趣朋友圈（浏览模式）
-        print('\n📝 测试 MAIN_005: 进入有趣朋友圈（浏览模式）')
+        # MAIN_005: 进入有趣朋友圈（浏览模式）并验证状态
+        print('\n📝 测试 MAIN_005: 进入有趣朋友圈（浏览模式）并验证状态')
         print('-'*60)
         
         result = enter_discover_circle(mini)
+        discover_circle_id = None
         if result['success']:
+            discover_circle_id = result['circle_id']
             print(f'✅ 验证通过：成功进入发现朋友圈')
-            print(f'   朋友圈ID: {result["circle_id"][:12]}...')
+            print(f'   朋友圈ID: {discover_circle_id[:12]}...')
+            
+            # 验证未注册用户的状态为 guest_can_apply
+            status_result = check_circle_status_action(mini, expected_user_status='guest_can_apply')
+            if not status_result['match']:
+                print(f'❌ 状态验证失败')
+                for error in status_result.get('errors', []):
+                    print(f'   {error}')
+                return {'success': False, 'message': 'MAIN_005失败：状态验证失败'}
+            print('✅ 状态验证通过：用户状态为 guest_can_apply')
         else:
             if '没有推荐' in result['message']:
                 print(f'⚠️  {result["message"]}（跳过测试）')
@@ -201,7 +214,11 @@ def check_actions_unregistered_main(mini):
                 return {'success': False, 'message': f'MAIN_005失败：{result["message"]}'}
         
         print('\n✅ Main 页面所有验证通过')
-        return {'success': True, 'message': 'Main 页面验证通过'}
+        return {
+            'success': True, 
+            'message': 'Main 页面验证通过',
+            'circle_id': discover_circle_id
+        }
         
     except Exception as e:
         print(f'\n❌ 测试异常: {str(e)}')
