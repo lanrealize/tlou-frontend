@@ -41,7 +41,8 @@ from .circle_helper import (
     process_unique_join_application,
     delete_circle,
     enter_discover_circle,
-    verify_discover_refresh
+    verify_discover_refresh,
+    wait_and_get_created_circle_id
 )
 
 # post_helper
@@ -54,6 +55,11 @@ from .post_helper import (
     reply_to_comment,
     delete_comment,
     delete_post
+)
+
+# element_helper
+from .element_helper import (
+    click_create_circle_button
 )
 
 # common_helper (modal functions and JS utilities)
@@ -83,6 +89,7 @@ from .workflow_helper import (
 )
 
 # 新增的辅助模块
+from . import element_helper
 from . import virtual_user_helper
 from . import common_helper
 from . import workflow_helper
@@ -119,6 +126,7 @@ __all__ = [
     'delete_circle',
     'enter_discover_circle',
     'verify_discover_refresh',
+    'wait_and_get_created_circle_id',
     
     # post_helper
     'publish_post_with_single_image',
@@ -129,6 +137,9 @@ __all__ = [
     'reply_to_comment',
     'delete_comment',
     'delete_post',
+    
+    # element_helper
+    'click_create_circle_button',
     
     # common_helper (modal and JS utilities)
     'evaluate_js',
@@ -149,7 +160,7 @@ __all__ = [
     'check_actions_member_main',
     
     # 新增模块
-    'element_helpers',
+    'element_helper',
     'virtual_user_helper',
     'common_helper',
     'workflow_helper',

@@ -72,6 +72,9 @@
 ### circle_helper.py → `verify_create_circle(mini)`
 验证可以从首页成功创建朋友圈。点击创建按钮，验证进入 details 页面，返回 main，自动清理。返回创建的 circle_id。
 
+### circle_helper.py → `wait_and_get_created_circle_id(mini, wait_seconds=3.0)`
+等待朋友圈创建完成并获取ID。适用于用户登录后前端自动继续创建流程的场景，只需等待并验证是否导航到 details 页面，返回 circle_id。
+
 ### circle_helper.py → `delete_circle_by_api(mini, circle_id)`
 通过 API 快速删除朋友圈，不使用 UI 操作。直接调用后端 DELETE /circles/:id 接口删除。
 
@@ -110,6 +113,13 @@
 
 ### circle_helper.py → `verify_enter_list(mini)`
 验证可以从 main 页面点击历史记录按钮进入 list 页面，成功后返回 main。
+
+---
+
+## element_helper.py - 通用元素操作
+
+### element_helper.py → `click_create_circle_button(mini)`
+点击创建朋友圈按钮。适用于需要在点击后执行其他操作的场景（如未登录用户点击触发登录弹窗）。
 
 ---
 

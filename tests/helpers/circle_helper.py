@@ -1647,6 +1647,92 @@ def check_latest_circle(mini, circle_id=None, expect_empty=False):
         }
 
 
+def _verify_circle_created_and_get_id(mini):
+    """【内部函数】验证朋友圈创建成功并获取ID
+    
+    验证逻辑：
+    - 检查是否导航到 details 页面（= 创建成功）
+    - 从页面数据获取 circle_id
+    
+    这是从 verify_create_circle 提取的公共逻辑，
+    供 verify_create_circle 和 wait_and_get_created_circle_id 复用。
+    
+    Args:
+        mini: Minium 实例
+    
+    Returns:
+        dict: {
+            'success': bool,
+            'message': str,
+            'circle_id': str
+        }
+    """
+    current_page = mini.app.current_page
+    
+    # 验证是否进入 details 页面
+    if 'details' not in current_page.path:
+        return {
+            'success': False,
+            'message': f'创建后未进入 details 页面，当前在: {current_page.path}',
+            'circle_id': ''
+        }
+    
+    print('   ✅ 已进入 details 页面，创建成功')
+    
+    # 获取朋友圈 ID
+    circle_id = current_page.data.get('circleId', '')
+    if not circle_id:
+        circle = current_page.data.get('circle', {})
+        circle_id = circle.get('_id', '')
+    
+    if not circle_id:
+        return {
+            'success': False,
+            'message': '无法获取创建的朋友圈 ID',
+            'circle_id': ''
+        }
+    
+    print(f'   ℹ️  创建的朋友圈 ID: {circle_id[:8]}...')
+    
+    return {
+        'success': True,
+        'message': '朋友圈创建成功',
+        'circle_id': circle_id
+    }
+
+
+def wait_and_get_created_circle_id(mini, wait_seconds=3.0):
+    """等待朋友圈创建完成并获取ID
+    
+    适用场景：
+    - 用户登录后，前端自动继续创建流程
+    - 只需等待创建完成并获取 ID
+    - 不需要点击按钮，只验证结果
+    
+    Args:
+        mini: Minium 实例
+        wait_seconds: 等待时间（秒），默认3.0秒
+    
+    Returns:
+        dict: {
+            'success': bool,
+            'message': str,
+            'circle_id': str
+        }
+    
+    Example:
+        >>> # 用户登录后，等待自动创建完成
+        >>> result = wait_and_get_created_circle_id(mini, wait_seconds=3.0)
+        >>> if result['success']:
+        >>>     circle_id = result['circle_id']
+    """
+    print(f'\n⏳ 等待朋友圈创建完成（{wait_seconds}秒）...')
+    time.sleep(wait_seconds)
+    
+    # 复用验证逻辑
+    return _verify_circle_created_and_get_id(mini)
+
+
 def verify_create_circle(mini):
     """验证可以从首页成功创建朋友圈
     
@@ -1679,48 +1765,22 @@ def verify_create_circle(mini):
         print('   ✅ 当前在 main 页面')
         time.sleep(0.5)
         
-        # 步骤2: 点击创建朋友圈卡片
-        page = mini.app.current_page
-        create_btn = page.get_element('#createCircleBtn')
-        
-        if not create_btn:
+        # 步骤2: 点击创建朋友圈按钮（复用 element_helper）
+        from .element_helper import click_create_circle_button
+        click_result = click_create_circle_button(mini)
+        if not click_result['success']:
             return {
                 'success': False,
-                'message': '未找到创建朋友圈按钮',
+                'message': click_result['message'],
                 'circle_id': ''
             }
         
-        create_btn.tap()
-        print('   ✅ 已点击创建朋友圈按钮')
+        # 步骤3: 等待创建完成并获取ID（复用逻辑）
+        result = wait_and_get_created_circle_id(mini, wait_seconds=2.5)
+        if not result['success']:
+            return result
         
-        # 等待创建和页面跳转
-        time.sleep(2.5)
-        
-        # 步骤3: 验证创建成功（检查是否进入 details 页面）
-        current_page = mini.app.current_page
-        if 'details' not in current_page.path:
-            return {
-                'success': False,
-                'message': f'创建后未进入 details 页面，当前在: {current_page.path}',
-                'circle_id': ''
-            }
-        
-        print('   ✅ 已进入 details 页面，创建成功')
-        
-        # 获取创建的朋友圈 ID
-        circle_id = current_page.data.get('circleId', '')
-        if not circle_id:
-            circle = current_page.data.get('circle', {})
-            circle_id = circle.get('_id', '')
-        
-        if not circle_id:
-            return {
-                'success': False,
-                'message': '无法获取创建的朋友圈 ID',
-                'circle_id': ''
-            }
-        
-        print(f'   ℹ️  创建的朋友圈 ID: {circle_id[:8]}...')
+        circle_id = result['circle_id']
         
         # 步骤4: 返回 main（使用 navigateBack）
         try:

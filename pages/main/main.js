@@ -1206,7 +1206,8 @@ Page({
     app.clearUserInfoPopupConfig();
     
     // 如果有待处理的意图，执行相应操作
-    if (pendingIntent && circleId) {
+    if (pendingIntent) {
+      // 某些意图（如 createCircle）不需要 circleId
       await this.handlePendingIntent(pendingIntent, circleId);
     } else {
       // 刷新页面数据
@@ -1237,12 +1238,20 @@ Page({
   // 处理待处理的意图
   async handlePendingIntent(intentType, circleId) {
     try {
-      if (intentType === 'invited') {
+      if (intentType === 'createCircle') {
+        // 用户登录后继续创建朋友圈
+        await this.createCircleDirectly();
+      } else if (intentType === 'invited') {
         // 接受邀请并跳转到详情页
         await this.acceptInviteAndNavigate(circleId);
       } else if (intentType === 'can_apply') {
         // 申请加入并跳转到详情页
         await this.applyToJoinAndNavigate(circleId);
+      } else {
+        // 未知意图类型，记录日志但不影响用户体验
+        console.warn(`未处理的意图类型: ${intentType}`);
+        // 刷新页面数据作为降级处理
+        this.loadCirclesWithThrottle(true);
       }
     } catch (error) {
       console.error('处理意图失败:', error);
