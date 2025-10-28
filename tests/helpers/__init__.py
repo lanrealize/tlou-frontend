@@ -77,7 +77,9 @@ from .virtual_user_helper import (
 from .workflow_helper import (
     check_actions_unregistered_main,
     check_actions_unregistered_details,
-    check_actions_member_main
+    check_actions_member_details,
+    check_actions_noaccess_details,
+    check_actions_registered_main
 )
 
 # 新增的辅助模块

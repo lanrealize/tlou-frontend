@@ -121,11 +121,14 @@
 ### workflow_helper.py → `check_actions_unregistered_details(mini, test_circle_id)`
 验证未注册用户在 details 页面的所有动作是否有正确反馈。包括：点赞弹窗、评论弹窗、设置弹窗、回复评论弹窗。
 
-### workflow_helper.py → `check_actions_member_main(mini, circle_id, test_images)`
+### workflow_helper.py → `check_actions_member_details(mini, circle_id, test_images)`
 验证成员在 details 页面的完整发帖工作流。包括：发帖（单图）、点赞、评论、回复、删除评论、取消点赞、删除帖子、发帖（多图）。
 
-### workflow_helper.py → `check_actions_noaccess_main(mini, circle_id, toast_text)`
+### workflow_helper.py → `check_actions_noaccess_details(mini, circle_id, toast_text)`
 验证无权限用户在 details 页面的所有动作是否显示正确的 Toast 提示。包括：点赞、评论、回复、进入设置，均预期失败并验证 Toast 内容。
+
+### workflow_helper.py → `check_actions_registered_main(mini, check_recent_circle='enter', recent_circle_id=None)`
+验证注册用户在 main 页面的流程和功能。不做身份切换，只验证操作结果。包括：验证最近朋友圈卡片、创建朋友圈、进入 list 页面、刷新发现朋友圈、进入发现朋友圈。
 
 ---
 

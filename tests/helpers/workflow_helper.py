@@ -9,7 +9,15 @@ Workflow Helper 模块
 import time
 import traceback
 from .navigation_helper import navigate_to_main, navigate_to_details
-from .circle_helper import enter_discover_circle, verify_discover_refresh, enter_circle_settings
+from .circle_helper import (
+    enter_discover_circle, 
+    verify_discover_refresh, 
+    enter_circle_settings,
+    enter_latest_circle,
+    check_latest_circle,
+    verify_create_circle,
+    verify_enter_list
+)
 from .auth_helper import check_register_popup_visible, close_register_popup_by_mask
 from .common_helper import check_toast
 from .post_helper import (
@@ -460,7 +468,7 @@ def check_actions_unregistered_details(mini, test_circle_id='68ff34ecc7f96a66e39
         return {'success': False, 'message': f'测试异常: {str(e)}'}
 
 
-def check_actions_member_main(mini, circle_id, test_images):
+def check_actions_member_details(mini, circle_id, test_images):
     """验证成员在 details 页面的完整发帖工作流
     
     前置条件：
@@ -606,7 +614,7 @@ def check_actions_member_main(mini, circle_id, test_images):
         }
 
 
-def check_actions_noaccess_main(mini, circle_id, toast_text):
+def check_actions_noaccess_details(mini, circle_id, toast_text):
     """验证无权限用户在 details 页面的所有动作是否显示正确的 Toast 提示
     
     前置条件：
@@ -758,6 +766,190 @@ def check_actions_noaccess_main(mini, circle_id, toast_text):
             return {
                 'success': True,
                 'message': '所有无权限操作的 Toast 提示正确',
+                'failed_checks': []
+            }
+        else:
+            print(f'❌ 有 {len(failed_checks)} 项检查失败:')
+            for check in failed_checks:
+                print(f'   - {check}')
+            return {
+                'success': False,
+                'message': f'{len(failed_checks)} 项检查失败',
+                'failed_checks': failed_checks
+            }
+        
+    except Exception as e:
+        print(f'\n❌ 工作流异常: {str(e)}')
+        traceback.print_exc()
+        return {
+            'success': False, 
+            'message': f'工作流异常: {str(e)}',
+            'failed_checks': failed_checks
+        }
+
+
+def check_actions_registered_main(mini, check_recent_circle='enter', recent_circle_id=None):
+    """验证注册用户在 main 页面的流程和功能
+    
+    不做任何身份切换和身份保证，只做操作和验证操作结果。
+    
+    测试步骤：
+    1. 验证最近朋友圈卡片（enter 或 check_empty）
+    2. 验证创建朋友圈功能
+    3. 验证进入 list 页面功能
+    4. 验证刷新发现朋友圈功能
+    5. 验证进入发现朋友圈功能
+    
+    Args:
+        mini: Minium 实例
+        check_recent_circle: 检查方式 - 'enter'（进入最近朋友圈）或 'check_empty'（检查空状态）
+        recent_circle_id: 最近朋友圈的 ID（当 check_recent_circle='enter' 时可选提供用于验证）
+        
+    Returns:
+        dict: {
+            'success': bool,
+            'message': str,
+            'failed_checks': list  # 失败的检查项列表
+        }
+    """
+    failed_checks = []
+    
+    try:
+        print('\n' + '='*60)
+        print('🧪 验证注册用户在 Main 页面的流程和功能')
+        print('='*60)
+        
+        # 步骤1: 验证最近朋友圈卡片
+        print('\n1️⃣ 验证最近朋友圈卡片...')
+        print('-'*60)
+        
+        if check_recent_circle == 'enter':
+            print('   📋 模式: 进入最近朋友圈')
+            result = enter_latest_circle(mini)
+            if result['success']:
+                print(f'   ✅ 成功进入最近朋友圈: {result["circle_id"][:8]}...')
+                # 如果提供了 recent_circle_id，验证是否匹配
+                if recent_circle_id and result['circle_id'] != recent_circle_id:
+                    print(f'   ⚠️  警告: 进入的朋友圈 ID 与期望不符')
+                    print(f'      期望: {recent_circle_id[:8]}...')
+                    print(f'      实际: {result["circle_id"][:8]}...')
+                    failed_checks.append(f'最近朋友圈 ID 不匹配（期望: {recent_circle_id[:8]}..., 实际: {result["circle_id"][:8]}...）')
+                
+                # 返回到 main 页面继续后续测试（使用 navigateBack）
+                print('   🔙 返回 main 页面...')
+                try:
+                    mini.app.navigate_back()
+                    time.sleep(0.5)
+                    
+                    # 验证是否返回到 main 页面
+                    current_page = mini.app.current_page
+                    if 'main' not in current_page.path:
+                        print(f'   ❌ 返回失败，当前在: {current_page.path}')
+                        failed_checks.append(f'从最近朋友圈返回 main 失败: 当前在 {current_page.path}')
+                    else:
+                        print('   ✅ 已返回 main 页面')
+                except Exception as e:
+                    print(f'   ❌ 返回 main 失败: {str(e)}')
+                    failed_checks.append(f'从最近朋友圈返回 main 失败: {str(e)}')
+            else:
+                print(f'   ❌ 进入最近朋友圈失败: {result["message"]}')
+                failed_checks.append(f'进入最近朋友圈失败: {result["message"]}')
+        
+        elif check_recent_circle == 'check_empty':
+            print('   📋 模式: 检查空状态')
+            result = check_latest_circle(mini, circle_id=None, expect_empty=True)
+            if result['success']:
+                print('   ✅ 空状态显示正确')
+            else:
+                print(f'   ❌ 空状态检查失败: {result["message"]}')
+                failed_checks.append(f'空状态检查失败: {result["message"]}')
+        
+        else:
+            print(f'   ❌ 无效的检查模式: {check_recent_circle}')
+            failed_checks.append(f'无效的检查模式: {check_recent_circle}')
+        
+        # 等待下一个操作
+        time.sleep(1.0)
+        
+        # 步骤2: 验证创建朋友圈功能
+        print('\n2️⃣ 验证创建朋友圈功能...')
+        print('-'*60)
+        
+        result = verify_create_circle(mini)
+        if result['success']:
+            print(f'   ✅ 创建朋友圈功能验证成功')
+            print(f'      朋友圈 ID: {result["circle_id"][:8]}...')
+        else:
+            print(f'   ❌ 创建朋友圈功能验证失败: {result["message"]}')
+            failed_checks.append(f'创建朋友圈失败: {result["message"]}')
+        
+        # 等待下一个操作
+        time.sleep(1.0)
+        
+        # 步骤3: 验证进入 list 页面功能
+        print('\n3️⃣ 验证进入 list 页面功能...')
+        print('-'*60)
+        
+        result = verify_enter_list(mini, return_to_main=True)
+        if result['success']:
+            print('   ✅ 进入 list 页面功能验证成功')
+        else:
+            print(f'   ❌ 进入 list 页面功能验证失败: {result["message"]}')
+            failed_checks.append(f'进入 list 页面失败: {result["message"]}')
+        
+        # 等待下一个操作
+        time.sleep(1.0)
+        
+        # 步骤4: 验证刷新发现朋友圈功能
+        print('\n4️⃣ 验证刷新发现朋友圈功能...')
+        print('-'*60)
+        
+        result = verify_discover_refresh(mini)
+        if result['success']:
+            print('   ✅ 刷新发现朋友圈功能验证成功')
+        else:
+            print(f'   ❌ 刷新发现朋友圈功能验证失败: {result["message"]}')
+            failed_checks.append(f'刷新发现朋友圈失败: {result["message"]}')
+        
+        # 等待下一个操作
+        time.sleep(1.0)
+        
+        # 步骤5: 验证进入发现朋友圈功能
+        print('\n5️⃣ 验证进入发现朋友圈功能...')
+        print('-'*60)
+        
+        result = enter_discover_circle(mini)
+        if result['success']:
+            print('   ✅ 进入发现朋友圈功能验证成功')
+            print(f'      朋友圈 ID: {result.get("circle_id", "N/A")}')
+            
+            # 返回 main 页面（使用 navigateBack）
+            print('   🔙 返回 main 页面...')
+            try:
+                mini.app.navigate_back()
+                time.sleep(0.5)
+                
+                # 验证是否返回到 main 页面
+                current_page = mini.app.current_page
+                if 'main' not in current_page.path:
+                    print(f'   ❌ 返回失败，当前在: {current_page.path}')
+                    failed_checks.append(f'从发现朋友圈返回 main 失败: 当前在 {current_page.path}')
+                else:
+                    print('   ✅ 已返回 main 页面')
+            except Exception as e:
+                print(f'   ❌ 返回 main 失败: {str(e)}')
+                failed_checks.append(f'从发现朋友圈返回 main 失败: {str(e)}')
+        else:
+            print(f'   ❌ 进入发现朋友圈功能验证失败: {result["message"]}')
+            failed_checks.append(f'进入发现朋友圈失败: {result["message"]}')
+        
+        # 总结
+        print('\n' + '='*60)
+        if len(failed_checks) == 0:
+            print('✅ 所有功能验证通过！')
+            return {
+                'success': True,
+                'message': '所有 main 页面功能验证通过',
                 'failed_checks': []
             }
         else:

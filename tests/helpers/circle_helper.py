@@ -1722,17 +1722,27 @@ def verify_create_circle(mini):
         
         print(f'   ℹ️  创建的朋友圈 ID: {circle_id[:8]}...')
         
-        # 步骤4: 返回 main
-        from .navigation_helper import navigate_to_main
-        nav_back = navigate_to_main(mini, use_relaunch=False)
-        if not nav_back['success']:
+        # 步骤4: 返回 main（使用 navigateBack）
+        try:
+            mini.app.navigate_back()
+            time.sleep(0.5)
+            
+            # 验证是否返回到 main 页面
+            current_page = mini.app.current_page
+            if 'main' not in current_page.path:
+                return {
+                    'success': False,
+                    'message': f'返回失败，当前在: {current_page.path}',
+                    'circle_id': circle_id
+                }
+            
+            print('   ✅ 已返回 main 页面')
+        except Exception as e:
             return {
                 'success': False,
-                'message': f'返回 main 页面失败: {nav_back["message"]}',
+                'message': f'返回 main 页面失败: {str(e)}',
                 'circle_id': circle_id
             }
-        
-        print('   ✅ 已返回 main 页面')
         
         # 步骤5: 清理创建的朋友圈
         delete_result = delete_circle_by_api(mini, circle_id)
@@ -2030,17 +2040,27 @@ def verify_enter_list(mini, return_to_main=True):
         
         print('   ✅ 已进入 list 页面')
         
-        # 步骤4: 可选 - 返回 main 页面
+        # 步骤4: 可选 - 返回 main 页面（使用 navigateBack）
         if return_to_main:
-            nav_back = navigate_to_main(mini, use_relaunch=False)
-            if not nav_back['success']:
+            try:
+                mini.app.navigate_back()
+                time.sleep(0.5)
+                
+                # 验证是否返回到 main 页面
+                current_page = mini.app.current_page
+                if 'main' not in current_page.path:
+                    return {
+                        'success': False,
+                        'message': f'返回失败，当前在: {current_page.path}'
+                    }
+                
+                print('   ✅ 已返回 main 页面')
+                message = '成功进入 list 页面并返回'
+            except Exception as e:
                 return {
                     'success': False,
-                    'message': f'返回 main 页面失败: {nav_back["message"]}'
+                    'message': f'返回 main 页面失败: {str(e)}'
                 }
-            
-            print('   ✅ 已返回 main 页面')
-            message = '成功进入 list 页面并返回'
         else:
             message = '成功进入 list 页面'
         
