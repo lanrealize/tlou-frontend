@@ -108,6 +108,9 @@
 ### circle_helper.py → `accept_to_join_circle(mini)`
 接受邀请加入朋友圈。点击接受邀请按钮。
 
+### circle_helper.py → `verify_enter_list(mini)`
+验证可以从 main 页面点击历史记录按钮进入 list 页面，成功后返回 main。
+
 ---
 
 ## workflow_helper.py - 工作流测试

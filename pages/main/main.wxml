@@ -106,7 +106,7 @@
     </view>
 
     <!-- 历史记录功能 -->
-    <view class="action-panel" bindtap="goToHistory">
+    <view id="historyBtn" class="action-panel" bindtap="goToHistory">
       <view class="action-bg"></view>
       <view class="action-icon-container">
         <image class="action-icon" src="/assets/icons/history.svg" mode="aspectFit"></image>

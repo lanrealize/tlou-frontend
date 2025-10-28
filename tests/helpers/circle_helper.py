@@ -1967,3 +1967,93 @@ def enter_latest_circle(mini):
             'circle_id': '',
             'message': f'操作时发生异常: {str(e)}'
         }
+
+
+def verify_enter_list(mini, return_to_main=True):
+    """验证可以从 main 页面点击历史记录按钮进入 list 页面
+    
+    步骤：
+    1. 确保在 main 页面
+    2. 点击历史记录按钮
+    3. 验证成功进入 list 页面
+    4. 可选：返回 main 页面
+    
+    Args:
+        mini: Minium 实例
+        return_to_main: 是否返回 main 页面（默认 True）
+        
+    Returns:
+        dict: {
+            'success': bool,
+            'message': str
+        }
+    """
+    try:
+        print('\n🔍 验证进入 list 页面功能...')
+        
+        # 步骤1: 确保在 main 页面
+        from .navigation_helper import navigate_to_main
+        nav_result = navigate_to_main(mini, use_relaunch=False)
+        if not nav_result['success']:
+            return {
+                'success': False,
+                'message': f'导航到 main 页面失败: {nav_result["message"]}'
+            }
+        
+        print('   ✅ 当前在 main 页面')
+        time.sleep(0.5)
+        
+        # 步骤2: 点击历史记录按钮
+        page = mini.app.current_page
+        history_btn = page.get_element('#historyBtn')
+        
+        if not history_btn:
+            return {
+                'success': False,
+                'message': '未找到历史记录按钮'
+            }
+        
+        print('   ℹ️  找到历史记录按钮，准备点击...')
+        history_btn.tap()
+        print('   ✅ 已点击历史记录按钮')
+        
+        # 等待页面跳转（可能有权限检查）
+        time.sleep(2.0)
+        
+        # 步骤3: 验证是否进入 list 页面
+        current_page = mini.app.current_page
+        if 'list' not in current_page.path:
+            return {
+                'success': False,
+                'message': f'未进入 list 页面，当前在: {current_page.path}'
+            }
+        
+        print('   ✅ 已进入 list 页面')
+        
+        # 步骤4: 可选 - 返回 main 页面
+        if return_to_main:
+            nav_back = navigate_to_main(mini, use_relaunch=False)
+            if not nav_back['success']:
+                return {
+                    'success': False,
+                    'message': f'返回 main 页面失败: {nav_back["message"]}'
+                }
+            
+            print('   ✅ 已返回 main 页面')
+            message = '成功进入 list 页面并返回'
+        else:
+            message = '成功进入 list 页面'
+        
+        return {
+            'success': True,
+            'message': message
+        }
+        
+    except Exception as e:
+        print(f'❌ 验证进入 list 页面失败: {str(e)}')
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'message': f'操作时发生异常: {str(e)}'
+        }
