@@ -6,55 +6,44 @@
 """
 
 import time
+from .common_helper import evaluate_js
 
 
-def navigate_to_details_from_share(mini, circle_id=None, inviter_id=None):
-    """模拟从分享链接进入 details 页面（邀请模式）
+def navigate_to_details_from_share(mini, circle_id, invite_code):
+    """模拟从分享链接进入 details 页面
     
-    这是应用的核心功能场景：用户通过分享链接被邀请进入朋友圈
+    真实场景：用户点击分享链接进入朋友圈
+    - 所有分享链接都带 inviteCode（不论公开/私有）
+    - 前端总是传递 inviteCode 给后端
+    - 后端根据朋友圈类型决定是否验证
     
     Args:
         mini: Minium 实例
-        circle_id: 朋友圈ID（可选，None=自动从推荐获取）
-        inviter_id: 邀请人ID（可选，None=自动从推荐获取）
+        circle_id: 朋友圈ID（必选）
+        invite_code: 邀请码（必选，从 create_circle/verify_create_circle 获取）
         
     Returns:
         dict: {
             'success': bool,
             'circle_id': str,
-            'inviter_id': str,
+            'invite_code': str,
             'url': str,
             'error': str (如果失败)
         }
     """
     try:
-        # 如果没有提供参数，从 main 页面的推荐圈子获取
-        if not circle_id or not inviter_id:
-            current_path = mini.app.current_page.path
-            if 'main' not in current_path:
-                mini.app.navigate_to('/pages/main/main')
-                time.sleep(0.5)
-            
-            page = mini.app.current_page
-            circles = page.data.get('recommendedCircles', [])
-            
-            if not circles or len(circles) == 0:
-                return {
-                    'success': False,
-                    'circle_id': '',
-                    'inviter_id': '',
-                    'url': '',
-                    'error': '没有推荐圈子数据，无法获取分享链接'
-                }
-            
-            circle = circles[0]
-            circle_id = circle.get('_id', '')
-            creator = circle.get('creator', {})
-            inviter_id = creator.get('_id', '') if isinstance(creator, dict) else creator
+        # 参数验证
+        if not circle_id:
+            raise ValueError('circle_id 是必选参数')
+        if invite_code is None:
+            raise ValueError('invite_code 是必选参数，请从 create_circle() 返回值中获取')
         
-        # 构造分享URL（邀请模式）
-        share_url = f'/pages/details/details?circleId={circle_id}&type=invite&inviterId={inviter_id}'
-        print(f'📤 模拟分享链接进入: {share_url}')
+        print(f'📤 模拟分享链接进入: circleId={circle_id[:8]}..., inviteCode={invite_code or "(empty)"}')
+        
+        # 构造分享 URL（总是带 inviteCode）
+        share_url = f'/pages/details/details?circleId={circle_id}&inviteCode={invite_code}'
+        
+        print(f'   完整链接: {share_url}')
         
         # 导航到 details 页面
         mini.app.navigate_to(share_url)
@@ -64,7 +53,7 @@ def navigate_to_details_from_share(mini, circle_id=None, inviter_id=None):
         return {
             'success': True,
             'circle_id': circle_id,
-            'inviter_id': inviter_id,
+            'invite_code': invite_code,
             'url': share_url,
             'error': ''
         }
@@ -76,7 +65,7 @@ def navigate_to_details_from_share(mini, circle_id=None, inviter_id=None):
         return {
             'success': False,
             'circle_id': '',
-            'inviter_id': '',
+            'invite_code': '',
             'url': '',
             'error': str(e)
         }

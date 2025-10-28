@@ -40,16 +40,16 @@ utils/checkUserActionPermission.js    # 核心逻辑（状态判断 + 权限检�
 **状态判断优先级**（决策树）：
 ```
 1. 未登录？
-   └─> 邀请模式？→ guest_invited
+   └─> 有邀请码？→ guest_invited
    └─> 公开？→ guest_can_apply
    └─> guest_no_access
 
 2. 已登录 + 成员？→ member
 
 3. 已登录 + 非成员
-   └─> 邀请 + 申请？→ invited_applied  （邀请优先）
-   └─> 邀请？→ invited
-   └─> 申请？→ applied
+   └─> 有邀请码 + 已申请？→ invited_applied  （邀请优先）
+   └─> 有邀请码？→ invited
+   └─> 已申请？→ applied
    └─> 公开？→ can_apply
    └─> no_access
 ```
@@ -92,7 +92,7 @@ utils/checkUserActionPermission.js    # 核心逻辑（状态判断 + 权限检�
 **获取用户状态（轻量）**
 
 ```javascript
-const status = getUserStatus(circle, userId, isInviteMode);
+const status = getUserStatus(circle, userId, inviteCode);
 // 返回：9种状态之一
 ```
 
@@ -101,14 +101,16 @@ const status = getUserStatus(circle, userId, isInviteMode);
 **参数**：
 - `circle`：朋友圈对象（必需）
 - `userId`：用户ID（可选，未登录为 `null`，未传则自动获取）
-- `isInviteMode`：是否邀请模式（默认 `false`）
+- `inviteCode`：邀请码（可选，默认 `''`）
+
+**注意**：函数内部会自动从 `inviteCode` 判断是否为邀请模式（`!!inviteCode`）
 
 ### 2. getUserStatusWithRole()
 
 **获取用户状态及角色（完整）**
 
 ```javascript
-const { status, isOwner } = getUserStatusWithRole(circle, userId, isInviteMode);
+const { status, isOwner } = getUserStatusWithRole(circle, userId, inviteCode);
 ```
 
 **用途**：UI 状态显示，返回状态 + 角色信息。
@@ -118,7 +120,11 @@ const { status, isOwner } = getUserStatusWithRole(circle, userId, isInviteMode);
 **检查动作权限（详细结果）**
 
 ```javascript
-const result = checkActionPermission('likePost', { circle, userId });
+const result = checkActionPermission('likePost', { 
+  circle, 
+  userId,        // 可选，未传则自动获取
+  inviteCode     // 可选，有邀请码时传递
+});
 
 // 返回：
 // {
@@ -137,7 +143,9 @@ const result = checkActionPermission('likePost', { circle, userId });
 **检查权限并自动处理拒绝（推荐）**
 
 ```javascript
-if (!checkAndHandle('likePost', { circle })) {
+const { circle, inviteCode } = this.data;
+
+if (!checkAndHandle('likePost', { circle, inviteCode })) {
   return;  // checkAndHandle 内部已自动处理：弹框/Toast + 保存意图
 }
 
@@ -154,7 +162,7 @@ if (!checkAndHandle('likePost', { circle })) {
 **获取 UI 配置（用于组件渲染）**
 
 ```javascript
-const uiConfig = getUIConfig(circle, userId, isInviteMode);
+const uiConfig = getUIConfig(circle, userId, inviteCode);
 // 返回：{ show, mainTitle, subTitle, button: { text, action, type, disabled } }
 ```
 
@@ -165,10 +173,10 @@ const uiConfig = getUIConfig(circle, userId, isInviteMode);
 ```javascript
 // pages/details/details.js
 onLike() {
-  const { circle } = this.data;
+  const { circle, inviteCode } = this.data;
   
-  // 一行代码，自动处理所有情况
-  if (!checkAndHandle('likePost', { circle })) {
+  // 一行代码，自动处理所有情况（包括邀请码验证）
+  if (!checkAndHandle('likePost', { circle, inviteCode })) {
     return;
   }
   

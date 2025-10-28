@@ -31,6 +31,7 @@ def create_circle(mini):
         dict: {
             'success': bool,
             'circle_id': str,
+            'invite_code': str,    # 朋友圈邀请码
             'message': str
         }
     """
@@ -171,15 +172,35 @@ def create_circle(mini):
         
         print(f'   ✅ 朋友圈创建成功: {circle_id[:8]}...')
         
+        # 🆕 获取邀请码（所有朋友圈分享都需要 inviteCode）
+        invite_code = ''
+        try:
+            from .common_helper import evaluate_js
+            js_code = f'''
+                const api = require('/utils/api.js');
+                const result = await api.circles.getInviteCode('{circle_id}');
+                return result.data.inviteCode || '';
+            '''
+            invite_code = evaluate_js(mini, js_code) or ''
+            if invite_code:
+                print(f'   🔑 获取到邀请码: {invite_code}')
+            else:
+                print(f'   ⚠️  未获取到邀请码')
+        except Exception as e:
+            print(f'   ⚠️  获取邀请码失败: {e}')
+        
         return {
             'success': True,
             'circle_id': circle_id,
+            'invite_code': invite_code,
             'message': f'朋友圈创建成功: {circle_id[:8]}...'
         }
         
     except Exception as e:
         return {
             'success': False,
+            'circle_id': '',
+            'invite_code': '',
             'message': f'创建失败: {str(e)}'
         }
 
@@ -1737,7 +1758,7 @@ def verify_create_circle(mini):
     """验证可以从首页成功创建朋友圈
     
     这是 create_circle 的简化版本，用于测试创建流程是否正常。
-    返回创建的 circle_id，便于后续清理。
+    返回创建的 circle_id 和 invite_code，便于后续清理和分享测试。
     
     Args:
         mini: Minium 实例
@@ -1746,7 +1767,8 @@ def verify_create_circle(mini):
         dict: {
             'success': bool,
             'message': str,
-            'circle_id': str  # 创建的朋友圈 ID
+            'circle_id': str,      # 创建的朋友圈 ID
+            'invite_code': str     # 朋友圈邀请码
         }
     """
     try:
@@ -1759,7 +1781,8 @@ def verify_create_circle(mini):
             return {
                 'success': False,
                 'message': f'导航到 main 页面失败: {nav_result["message"]}',
-                'circle_id': ''
+                'circle_id': '',
+                'invite_code': ''
             }
         
         print('   ✅ 当前在 main 页面')
@@ -1772,7 +1795,8 @@ def verify_create_circle(mini):
             return {
                 'success': False,
                 'message': click_result['message'],
-                'circle_id': ''
+                'circle_id': '',
+                'invite_code': ''
             }
         
         # 步骤3: 等待创建完成并获取ID（复用逻辑）
@@ -1782,7 +1806,24 @@ def verify_create_circle(mini):
         
         circle_id = result['circle_id']
         
-        # 步骤4: 返回 main（使用 navigateBack）
+        # 🆕 步骤4: 获取邀请码（在删除前）
+        invite_code = ''
+        try:
+            from .common_helper import evaluate_js
+            js_code = f'''
+                const api = require('/utils/api.js');
+                const result = await api.circles.getInviteCode('{circle_id}');
+                return result.data.inviteCode || '';
+            '''
+            invite_code = evaluate_js(mini, js_code) or ''
+            if invite_code:
+                print(f'   🔑 获取到邀请码: {invite_code}')
+            else:
+                print(f'   ⚠️  未获取到邀请码')
+        except Exception as e:
+            print(f'   ⚠️  获取邀请码失败: {e}')
+        
+        # 步骤5: 返回 main（使用 navigateBack）
         try:
             mini.app.navigate_back()
             time.sleep(0.5)
@@ -1793,7 +1834,8 @@ def verify_create_circle(mini):
                 return {
                     'success': False,
                     'message': f'返回失败，当前在: {current_page.path}',
-                    'circle_id': circle_id
+                    'circle_id': circle_id,
+                    'invite_code': invite_code
                 }
             
             print('   ✅ 已返回 main 页面')
@@ -1801,22 +1843,25 @@ def verify_create_circle(mini):
             return {
                 'success': False,
                 'message': f'返回 main 页面失败: {str(e)}',
-                'circle_id': circle_id
+                'circle_id': circle_id,
+                'invite_code': invite_code
             }
         
-        # 步骤5: 清理创建的朋友圈
+        # 步骤6: 清理创建的朋友圈
         delete_result = delete_circle_by_api(mini, circle_id)
         if not delete_result['success']:
             return {
                 'success': False,
                 'message': f'清理失败: {delete_result["message"]}',
-                'circle_id': circle_id
+                'circle_id': circle_id,
+                'invite_code': invite_code
             }
         
         return {
             'success': True,
             'message': '创建朋友圈功能验证成功（已清理）',
-            'circle_id': circle_id
+            'circle_id': circle_id,
+            'invite_code': invite_code
         }
         
     except Exception as e:
@@ -1826,7 +1871,8 @@ def verify_create_circle(mini):
         return {
             'success': False,
             'message': f'操作时发生异常: {str(e)}',
-            'circle_id': ''
+            'circle_id': '',
+            'invite_code': ''
         }
 
 

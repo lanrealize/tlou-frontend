@@ -21,9 +21,10 @@ Page({
     focusInput: false,    // 是否聚焦输入框
     pendingApplicationsCount: 0, // 待处理申请数量
     
-    // 邀请相关状态
-    isInviteMode: false,  // 是否为邀请模式
-    inviterId: '',        // 邀请人ID
+    // 🆕 邀请码访问
+    inviteCode: '',       // 邀请码（从URL参数获取）
+    
+    // 用户状态
     showJoinButton: false, // 是否显示加入按钮
     isJoining: false,     // 是否正在加入中
     isCircleOwner: false, // 当前用户是否为朋友圈主人
@@ -73,7 +74,7 @@ Page({
     this.getSafeAreaInfo();
     this.setupStoreBindings();
     
-    const { circleId, type, inviterId, preloaded, preloadFailed, source } = options;
+    const { circleId, inviteCode, preloaded, preloadFailed, source } = options;
     
     if (!circleId) {
       util.showToast('朋友圈ID不能为空');
@@ -81,29 +82,17 @@ Page({
       return;
     }
     
-    // 确定是否是邀请模式
-    const isInviteMode = (type === 'invite' && inviterId);
-    
-    // 设置邀请模式状态
-    if (isInviteMode) {
-      this.setData({ 
-        circleId,
-        isInviteMode: true,
-        inviterId: inviterId
-      });
-      wx.hideShareMenu();
-    } else {
-      this.setData({ 
-        circleId,
-        isInviteMode: false
-      });
-    }
+    // 🆕 保存邀请码到 data（用于后续 API 调用）
+    this.setData({ 
+      circleId,
+      inviteCode: inviteCode || ''
+    });
     
     // 加载朋友圈数据
     if (preloaded === 'true') {
-      this.loadWithPreloadedData(circleId, isInviteMode, inviterId);
+      this.loadWithPreloadedData(circleId);
     } else {
-      this.loadCircleDetail(isInviteMode, inviterId);
+      this.loadCircleDetail();
     }
   },
 
@@ -146,15 +135,31 @@ Page({
         errorMessage: 'errorMessage'
       },
       actions: {
-        loadPosts: 'loadPosts',
-        refreshPosts: 'refreshPosts',
-        loadMorePosts: 'loadMorePosts',
+        loadPostsRaw: 'loadPosts',
+        refreshPostsRaw: 'refreshPosts',
+        loadMorePostsRaw: 'loadMorePosts',
         toggleLike: 'toggleLike',
         addComment: 'addComment',
         deleteComment: 'deleteComment',
         deletePost: 'deletePost'
       }
     });
+  },
+  
+  // 🆕 包装方法：自动传递 inviteCode
+  async loadPosts(circleId, loadMore = false, extraParams = {}) {
+    const params = this.data.inviteCode ? { inviteCode: this.data.inviteCode, ...extraParams } : extraParams;
+    return this.loadPostsRaw(circleId, loadMore, params);
+  },
+  
+  async refreshPosts(circleId) {
+    const params = this.data.inviteCode ? { inviteCode: this.data.inviteCode } : {};
+    return this.refreshPostsRaw(circleId, params);
+  },
+  
+  async loadMorePosts() {
+    const params = this.data.inviteCode ? { inviteCode: this.data.inviteCode } : {};
+    return this.loadMorePostsRaw(params);
   },
 
   // 获取安全区域信息
@@ -380,13 +385,9 @@ Page({
     this.loadMorePosts();
   },
 
-  // 使用预加载数据加载朋友圈详情（优化：接受邀请状态参数）
-  async loadWithPreloadedData(circleId, isInviteMode = null, inviterId = null) {
+  // 使用预加载数据加载朋友圈详情
+  async loadWithPreloadedData(circleId) {
     try {
-      // 🔑 关键修复：当参数为 null 时，从 this.data 读取，保持邀请状态的持久性
-      const finalIsInviteMode = isInviteMode !== null ? isInviteMode : this.data.isInviteMode;
-      const finalInviterId = inviterId !== null ? inviterId : this.data.inviterId;
-      
       const app = getApp();
       const preloadedData = app.globalData.preloadedCircleData;
       
@@ -395,16 +396,16 @@ Page({
           preloadedData.circleId !== circleId ||
           !preloadedData.circleData ||
           (Date.now() - preloadedData.timestamp) > 10000) {
-        this.loadCircleDetail(finalIsInviteMode, finalInviterId);
+        this.loadCircleDetail();
         return;
       }
 
       const targetCircle = preloadedData.circleData;
       
-      // 🔑 使用全局状态管理判断用户关系（使用处理后的参数）
+      // 🔑 使用全局状态管理判断用户关系
       const { currentUser } = this.data;
       const userId = currentUser?._id || null;
-      const relation = getUserStatusWithRole(targetCircle, userId, finalIsInviteMode);
+      const relation = getUserStatusWithRole(targetCircle, userId, this.data.inviteCode);
 
       this.setData({
         circle: targetCircle,
@@ -419,7 +420,7 @@ Page({
       });
 
       // 🔑 根据权限设置分享菜单
-      this.setupShareMenu(targetCircle, currentUser, finalIsInviteMode);
+      this.setupShareMenu(targetCircle, currentUser);
 
       // 直接通过setData同步设置帖子数据，确保页面切换时立即有数据
       const { postStore } = require('../../store/postStore');
@@ -446,14 +447,9 @@ Page({
     }
   },
 
-  // 加载朋友圈详情（优化：接受邀请状态参数，避免异步问题）
-  async loadCircleDetail(isInviteMode = null, inviterId = null) {
+  // 加载朋友圈详情
+  async loadCircleDetail() {
     try {
-      // 🔑 关键修复：当参数为 null 时，从 this.data 读取，保持邀请状态的持久性
-      // 这样可以避免在刷新、删除评论等场景下丢失邀请状态
-      const finalIsInviteMode = isInviteMode !== null ? isInviteMode : this.data.isInviteMode;
-      const finalInviterId = inviterId !== null ? inviterId : this.data.inviterId;
-      
       let targetCircle = null;
       const { currentUser } = this.data;
       const isLoggedIn = currentUser && currentUser._id;
@@ -474,7 +470,9 @@ Page({
       // API 层会自动判断：已登录 → /circles/:id，未登录 → /public/circles/:id
       if (!targetCircle) {
         try {
-          const detailRes = await api.circles.getDetail(this.data.circleId);
+          // 🆕 传递 inviteCode 参数（如果有）
+          const params = this.data.inviteCode ? { inviteCode: this.data.inviteCode } : {};
+          const detailRes = await api.circles.getDetail(this.data.circleId, params);
           targetCircle = detailRes.data.circle;
         } catch (error) {
           this.handleCircleLoadError(error);
@@ -490,10 +488,9 @@ Page({
       targetCircle.formattedTime = util.formatRelativeTime(targetCircle.createdAt);
       targetCircle.memberCount = targetCircle.members ? targetCircle.members.length : 0;
 
-      // 🔑 使用全局状态管理判断用户关系（使用处理后的参数）
-      // currentUser 已在上面声明
+      // 🔑 使用全局状态管理判断用户关系
       const userId = currentUser?._id || null;
-      const relation = getUserStatusWithRole(targetCircle, userId, finalIsInviteMode);
+      const relation = getUserStatusWithRole(targetCircle, userId, this.data.inviteCode);
 
       this.setData({
         circle: targetCircle,
@@ -508,7 +505,7 @@ Page({
       });
 
       // 🔑 根据权限设置分享菜单
-      this.setupShareMenu(targetCircle, currentUser, finalIsInviteMode);
+      this.setupShareMenu(targetCircle, currentUser);
 
       // 帖子查看权限：公开朋友圈所有人可看，私密朋友圈只有成员和被邀请者可看
       const canViewPosts = targetCircle.isPublic || // 公开朋友圈任何人都能看
@@ -517,7 +514,8 @@ Page({
                           // 注意：私密朋友圈的申请者不能看（可能是之前公开时申请，后来改为私密）
       
       if (canViewPosts) {
-        await this.loadPosts(this.data.circleId);
+        // 包装方法会自动处理 inviteCode
+        await this.loadPosts(this.data.circleId, false);
       }
 
       // 如果是朋友圈主人，加载待处理申请数量
@@ -573,7 +571,7 @@ Page({
 
   // 打开设置
   openSettings() {
-    const { circleId, circle, isInviteMode } = this.data;
+    const { circleId, circle } = this.data;
     
     if (!circleId) {
       wx.showToast({
@@ -584,7 +582,7 @@ Page({
     }
     
     // 使用统一的权限检查：只有朋友圈成员才能进入设置页面
-    if (!checkAndHandle('enterSettingsPage', { circle, isInviteMode })) {
+    if (!checkAndHandle('enterSettingsPage', { circle, inviteCode: this.data.inviteCode })) {
       return; // checkAndHandle 会自动处理未登录（弹窗）或非成员（Toast）
     }
     
@@ -601,8 +599,8 @@ Page({
   },
 
   // 设置分享菜单的显示/隐藏
-  setupShareMenu(circle, currentUser, isInviteMode) {
-    const canShare = canShareCircle(circle, currentUser, isInviteMode);
+  setupShareMenu(circle, currentUser) {
+    const canShare = canShareCircle(circle, currentUser, this.data.inviteCode);
     
     if (canShare) {
       // 可以分享：显示分享菜单
@@ -619,31 +617,44 @@ Page({
   },
 
   // 微信分享处理
-  onShareAppMessage() {
-    const { circle, circleId, currentUser, isInviteMode } = this.data;
+  async onShareAppMessage() {
+    const { circle, circleId, currentUser } = this.data;
     
     // 🔑 使用统一的权限管理检查分享权限
-    const canShare = canShareCircle(circle, currentUser, isInviteMode);
+    const canShare = canShareCircle(circle, currentUser, this.data.inviteCode);
     
-    if (canShare) {
-      // 可以发出邀请
-      return {
-        title: `邀请你加入"${circle.name}"朋友圈`,
-        path: `/pages/details/details?circleId=${circleId}&type=invite&inviterId=${currentUser._id}`,
-      };
+    if (!canShare) {
+      console.warn('⚠️ 无权限分享，这不应该发生（分享菜单应该已隐藏）');
+      return null;
     }
     
-    // 其他情况返回 null（不应该发生，因为分享菜单应该已隐藏）
-    console.warn('⚠️ 无权限分享，这不应该发生（分享菜单应该已隐藏）');
-    return null;
+    // 🆕 所有分享都获取邀请码（不论公开/私有）
+    // 原因：防止朋友圈从公开改为私有后，之前的分享链接失效
+    let inviteCodeParam = '';
+    try {
+      const res = await api.circles.getInviteCode(circleId);
+      const inviteCode = res.data.inviteCode;
+      if (inviteCode) {
+        inviteCodeParam = `&inviteCode=${inviteCode}`;
+      }
+    } catch (error) {
+      console.error('获取邀请码失败:', error);
+      wx.showToast({ title: '分享失败，请稍后重试', icon: 'none' });
+      return null;
+    }
+    
+    return {
+      title: `邀请你加入"${circle.name}"朋友圈`,
+      path: `/pages/details/details?circleId=${circleId}${inviteCodeParam}`,
+    };
   },
 
   // 接受邀请加入朋友圈
   async acceptInvite() {
-    const { circleId, circle, isInviteMode, isJoining } = this.data;
+    const { circleId, circle, isJoining } = this.data;
     
     // 访问控制：检查是否登录
-    if (!checkAndHandle('acceptInvite', { circle, isInviteMode, circleId })) {
+    if (!checkAndHandle('acceptInvite', { circle, inviteCode: this.data.inviteCode, circleId })) {
       return; // checkAndHandle 会自动处理跳转和意图保存
     }
     
@@ -658,8 +669,8 @@ Page({
       wx.hideLoading();
       wx.showToast({ title: '加入成功！', icon: 'success' });
       
-      // 🔧 清除邀请模式状态，确保后续判断正确
-      this.setData({ isInviteMode: false, isJoining: false });
+      // 重置加入状态
+      this.setData({ isJoining: false });
       
       // 重新加载朋友圈详情，setupShareMenu 会根据用户权限自动设置分享菜单
       await this.loadCircleDetail();
@@ -707,8 +718,8 @@ Page({
     const { postId } = e.detail;
 
     // 使用统一的权限检查：登录 + 成员资格
-    const { circle, isInviteMode } = this.data;
-    if (!checkAndHandle('likePost', { circle, isInviteMode })) {
+    const { circle, inviteCode } = this.data;
+    if (!checkAndHandle('likePost', { circle, inviteCode })) {
       return;
     }
 
@@ -725,8 +736,8 @@ Page({
     const { postId } = e.detail;
 
     // 使用统一的权限检查：登录 + 成员资格
-    const { circle, isInviteMode } = this.data;
-    if (!checkAndHandle('commentPost', { circle, isInviteMode })) {
+    const { circle, inviteCode } = this.data;
+    if (!checkAndHandle('commentPost', { circle, inviteCode })) {
       return;
     }
 
@@ -745,8 +756,8 @@ Page({
     const { postId, replyToUser } = e.detail;
 
     // 使用统一的权限检查：登录 + 成员资格
-    const { circle, isInviteMode } = this.data;
-    if (!checkAndHandle('commentPost', { circle, isInviteMode })) {
+    const { circle, inviteCode } = this.data;
+    if (!checkAndHandle('commentPost', { circle, inviteCode })) {
       return;
     }
 
@@ -810,8 +821,8 @@ Page({
   // 导航到发布页面
   navigateToPublish() {
     // 使用统一的权限检查：登录 + 成员资格
-    const { circle, isInviteMode } = this.data;
-    if (!checkAndHandle('publishPost', { circle, isInviteMode })) {
+    const { circle, inviteCode } = this.data;
+    if (!checkAndHandle('publishPost', { circle, inviteCode })) {
       return;
     }
 
@@ -825,8 +836,8 @@ Page({
   // 回复评论
   replyComment(e) {
     // 使用统一的权限检查：登录 + 成员资格
-    const { circle, isInviteMode } = this.data;
-    if (!checkAndHandle('commentPost', { circle, isInviteMode })) {
+    const { circle, inviteCode } = this.data;
+    if (!checkAndHandle('commentPost', { circle, inviteCode })) {
       return;
     }
 
@@ -1004,10 +1015,10 @@ Page({
 
   // 申请加入朋友圈
   async applyToJoin() {
-    const { circleId, circle, isInviteMode, isApplying, currentUser } = this.data;
+    const { circleId, circle, isApplying, currentUser, inviteCode } = this.data;
     
     // 访问控制：检查是否登录
-    if (!checkAndHandle('applyToJoin', { circle, isInviteMode, circleId })) {
+    if (!checkAndHandle('applyToJoin', { circle, inviteCode, circleId })) {
       return; // checkAndHandle 会自动处理跳转和意图保存
     }
     
@@ -1071,19 +1082,12 @@ Page({
     const app = getApp();
     app.clearUserInfoPopupConfig();
     
-    // 🎯 方案 A：如果是邀请模式，自动接受邀请
-    if (this.data.isInviteMode) {
-      console.log('✨ 检测到邀请模式，自动接受邀请');
-      await this.acceptInvite();
-      return; // acceptInvite 内部会刷新数据，不需要再次刷新
-    }
-    
     // 如果有待处理的意图，执行相应操作
     if (pendingIntent && circleId) {
       await this.handlePendingIntent(pendingIntent, circleId);
     } else {
       // 刷新页面数据
-      this.loadCircleDetail(this.data.isInviteMode, this.data.inviterId);
+      this.loadCircleDetail();
     }
   },
   

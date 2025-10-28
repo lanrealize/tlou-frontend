@@ -50,8 +50,8 @@
 
 ## navigation_helper.py - 页面导航
 
-### navigation_helper.py → `navigate_to_details_from_share(mini, circle_id=None, inviter_id=None)`
-模拟从分享链接进入朋友圈详情页（邀请模式）。
+### navigation_helper.py → `navigate_to_details_from_share(mini, circle_id, invite_code)`
+模拟从分享链接进入朋友圈详情页。所有分享链接都带 inviteCode。
 
 ### navigation_helper.py → `navigate_to_details(mini, circle_id, source='discover')`
 导航到朋友圈详情页（普通模式）。支持指定来源标识（如 'discover', 'list' 等），会验证页面是否成功加载 circle 数据。
@@ -67,10 +67,10 @@
 ## circle_helper.py - 朋友圈操作
 
 ### circle_helper.py → `create_circle(mini)`
-创建新朋友圈并返回朋友圈ID。
+创建新朋友圈并返回朋友圈ID和邀请码。返回值包含 `circle_id` 和 `invite_code`（用于分享链接）。
 
 ### circle_helper.py → `verify_create_circle(mini)`
-验证可以从首页成功创建朋友圈。点击创建按钮，验证进入 details 页面，返回 main，自动清理。返回创建的 circle_id。
+验证可以从首页成功创建朋友圈。点击创建按钮，验证进入 details 页面，返回 main，自动清理。返回 `circle_id` 和 `invite_code`。
 
 ### circle_helper.py → `wait_and_get_created_circle_id(mini, wait_seconds=3.0)`
 等待朋友圈创建完成并获取ID。适用于用户登录后前端自动继续创建流程的场景，只需等待并验证是否导航到 details 页面，返回 circle_id。

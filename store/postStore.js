@@ -65,7 +65,7 @@ const postStore = observable({
   // 📋 核心业务方法
 
   // 加载帖子列表
-  async loadPosts(circleId, loadMore = false) {
+  async loadPosts(circleId, loadMore = false, extraParams = {}) {
     if (!circleId) {
       this.setStatus(POST_STATUS.ERROR, { message: '朋友圈ID不能为空' });
       return;
@@ -91,9 +91,11 @@ const postStore = observable({
 
     try {
       const currentPage = loadMore ? this.page + 1 : 1;
+      // 🆕 合并额外参数（如 inviteCode）
       const response = await api.posts.getList(circleId, {
         page: currentPage,
-        limit: this.pageSize
+        limit: this.pageSize,
+        ...extraParams
       });
 
       const newPosts = response.data.posts || [];
@@ -131,18 +133,18 @@ const postStore = observable({
   },
 
   // 刷新帖子列表
-  async refreshPosts(circleId) {
+  async refreshPosts(circleId, extraParams = {}) {
 
     this.page = 1;
     this.hasMore = true;
-    await this.loadPosts(circleId, false);
+    await this.loadPosts(circleId, false, extraParams);
   },
 
   // 加载更多帖子
-  async loadMorePosts() {
+  async loadMorePosts(extraParams = {}) {
     if (this.currentCircleId && this.hasMore && !this.isLoading) {
   
-      await this.loadPosts(this.currentCircleId, true);
+      await this.loadPosts(this.currentCircleId, true, extraParams);
     }
   },
 

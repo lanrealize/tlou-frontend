@@ -174,12 +174,15 @@ class API {
     getMyParticipated: () => this.get('/circles/my'),
     
     // ⭐ 获取朋友圈详情（自动适配：已登录用认证API，未登录用公开API）
-    getDetail: (circleId) => {
+    getDetail: (circleId, params = {}) => {
       const url = this.isUserLoggedIn() 
         ? `/circles/${circleId}`          // 已登录：认证API
         : `/public/circles/${circleId}`;  // 未登录：公开API
-      return this.get(url);
+      return this.get(url, params);       // 支持传递参数（如 inviteCode）
     },
+    
+    // 🆕 获取邀请码（圈主专用）
+    getInviteCode: (circleId) => this.get(`/circles/${circleId}/invite-code`),
     
     // 获取朋友圈成员
     getMembers: (circleId) => this.get(`/circles/${circleId}/members`),

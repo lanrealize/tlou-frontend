@@ -118,21 +118,33 @@ result = navigate_to_details(mini, circle_id='xxx', source=None)
 - ✅ 不需要邀请模式
 - ✅ 模拟从discover进入
 
-#### navigate_to_details_from_share - 邀请模式（从分享进入）
+#### navigate_to_details_from_share - 模拟分享链接进入
 
 ```python
-from helpers.test_helper import navigate_to_details_from_share
+from helpers.navigation_helper import navigate_to_details_from_share
+from helpers.circle_helper import create_circle
 
-# 用法1：自动获取推荐圈子（如果测试不在乎具体哪个圈子）
-result = navigate_to_details_from_share(mini)
+# 标准用法：从 create_circle 获取 invite_code
+result = create_circle(mini)
+circle_id = result['circle_id']
+invite_code = result['invite_code']  # 所有朋友圈都有 invite_code
 
-# 用法2：进入指定圈子的邀请模式
-result = navigate_to_details_from_share(mini, circle_id='xxx', inviter_id='yyy')
+# 模拟分享链接进入（invite_code 必选）
+share_result = navigate_to_details_from_share(mini, circle_id, invite_code)
+# 所有分享链接都带 inviteCode，后端根据朋友圈类型决定是否验证
 ```
 
+**核心逻辑：**
+- ✅ 所有分享都带 inviteCode（不论公开/私有）
+- ✅ 前端总是传递 inviteCode 给后端
+- ✅ 后端根据朋友圈类型决定：
+  - 公开朋友圈：忽略 inviteCode，直接允许访问
+  - 私有朋友圈：验证 inviteCode
+
 **适用场景：**
-- ✅ 测试邀请模式（type=invite&inviterId）
-- ✅ 验证"你收到了邀请"状态
+- ✅ 测试分享链接进入朋友圈
+- ✅ 验证公开/私有朋友圈的访问控制
+- ✅ 测试公开→私有切换后，老分享链接仍然有效
 
 ### 组件验证 (test_helper)
 #### 验证 circle_status_action 组件状态正确性

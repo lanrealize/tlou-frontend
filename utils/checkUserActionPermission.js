@@ -72,7 +72,7 @@ function getUserLoginStatus() {
  * 
  * @param {Object} circle - 朋友圈对象（必需）
  * @param {String} userId - 用户ID（可选，未登录为 null）
- * @param {Boolean} isInviteMode - 是否邀请模式（默认 false）
+ * @param {String} inviteCode - 邀请码（可选，默认 ''）
  * @returns {String} 状态字符串（9种之一）
  * 
  * 状态枚举（完整且互斥）：
@@ -99,11 +99,14 @@ function getUserLoginStatus() {
  * 6. 已登录 + 非成员 + 公开 → can_apply
  * 7. 已登录 + 非成员 + 私密 → no_access
  */
-function getUserStatus(circle, userId = null, isInviteMode = false) {
+function getUserStatus(circle, userId = null, inviteCode = '') {
   if (!circle) {
     console.error('❌ getUserStatus: circle 参数必需');
     return 'no_access';
   }
+  
+  // 🆕 从 inviteCode 推断邀请模式
+  const isInviteMode = !!inviteCode;
   
   // ===== 分支 1: 未登录 =====
   if (!userId) {
@@ -155,7 +158,7 @@ function getUserStatus(circle, userId = null, isInviteMode = false) {
  * @param {Object} options - 选项
  * @param {Object} options.circle - 朋友圈对象（必需）
  * @param {String} options.userId - 用户ID（可选，未传则自动获取）
- * @param {Boolean} options.isInviteMode - 是否邀请模式（可选）
+ * @param {String} options.inviteCode - 邀请码（可选）
  * @param {String} options.circleId - 朋友圈ID（可选，用于保存意图）
  * @param {String} options.postId - 帖子ID（可选，用于保存意图）
  * @param {Object} options.customData - 自定义数据（可选，用于保存意图）
@@ -185,7 +188,7 @@ function getUserStatus(circle, userId = null, isInviteMode = false) {
  * // 执行点赞
  */
 function checkActionPermission(action, options = {}) {
-  const { circle, isInviteMode = false, circleId, postId, customData } = options;
+  const { circle, inviteCode = '', circleId, postId, customData } = options;
   
   // 验证必需参数
   if (!action) {
@@ -244,7 +247,7 @@ function checkActionPermission(action, options = {}) {
   }
   
   // 1. 判断状态
-  const status = getUserStatus(circle, userId, isInviteMode);
+  const status = getUserStatus(circle, userId, inviteCode);
   
   // 2. 获取配置
   const config = STATE_CONFIGS[status];
@@ -362,12 +365,12 @@ function checkAndHandle(action, options = {}) {
  * 
  * @param {Object} circle - 朋友圈对象
  * @param {String} userId - 用户ID（可选）
- * @param {Boolean} isInviteMode - 是否邀请模式
+ * @param {String} inviteCode - 邀请码（可选）
  * @returns {Object} { status, isOwner }
  * 
  * @example
  * // 组件中使用
- * const { status, isOwner } = getUserStatusWithRole(circle, userId, isInviteMode);
+ * const { status, isOwner } = getUserStatusWithRole(circle, userId, inviteCode);
  * if (status === 'member') {
  *   // 显示"发布动态"按钮
  * }
@@ -375,14 +378,14 @@ function checkAndHandle(action, options = {}) {
  *   // 显示"管理"按钮
  * }
  */
-function getUserStatusWithRole(circle, userId = null, isInviteMode = false) {
+function getUserStatusWithRole(circle, userId = null, inviteCode = '') {
   // 自动获取 userId
   if (userId === undefined || userId === null) {
     const loginStatus = getUserLoginStatus();
     userId = loginStatus.userId;
   }
   
-  const status = getUserStatus(circle, userId, isInviteMode);
+  const status = getUserStatus(circle, userId, inviteCode);
   const isOwner = userId ? checkIsOwner(circle, userId) : false;
   
   return { status, isOwner };
@@ -395,7 +398,7 @@ function getUserStatusWithRole(circle, userId = null, isInviteMode = false) {
  * 
  * @param {Object} circle - 朋友圈对象
  * @param {String} userId - 用户ID（可选）
- * @param {Boolean} isInviteMode - 是否邀请模式
+ * @param {String} inviteCode - 邀请码（可选）
  * @returns {Object} UI 配置
  * {
  *   show: Boolean,          // 是否显示卡片
@@ -410,7 +413,7 @@ function getUserStatusWithRole(circle, userId = null, isInviteMode = false) {
  * }
  * 
  * @example
- * const uiConfig = getUIConfig(circle, userId, isInviteMode);
+ * const uiConfig = getUIConfig(circle, userId, inviteCode);
  * // 组件中直接使用配置
  * <view wx:if="{{uiConfig.show}}">
  *   <text>{{uiConfig.mainTitle}}</text>
@@ -418,8 +421,8 @@ function getUserStatusWithRole(circle, userId = null, isInviteMode = false) {
  *   <button>{{uiConfig.button.text}}</button>
  * </view>
  */
-function getUIConfig(circle, userId = null, isInviteMode = false) {
-  const status = getUserStatus(circle, userId, isInviteMode);
+function getUIConfig(circle, userId = null, inviteCode = '') {
+  const status = getUserStatus(circle, userId, inviteCode);
   const config = STATE_CONFIGS[status];
   
   if (!config || !config.uiConfig) {
@@ -446,12 +449,12 @@ function getUIConfig(circle, userId = null, isInviteMode = false) {
  * 
  * @param {Object} circle - 朋友圈对象
  * @param {Object|null} currentUser - 当前用户信息（可选，会自动获取）
- * @param {boolean} isInviteMode - 是否为邀请模式
+ * @param {string} inviteCode - 邀请码（可选）
  * @returns {boolean} 是否可以分享
  */
-function canShareCircle(circle, currentUser = null, isInviteMode = false) {
+function canShareCircle(circle, currentUser = null, inviteCode = '') {
   // 邀请模式下不能分享
-  if (isInviteMode) {
+  if (inviteCode) {
     return false;
   }
   
