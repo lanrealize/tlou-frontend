@@ -45,7 +45,7 @@
   </view>
 
   <!-- 朋友圈卡片 -->
-  <view class="friend-circle-card" wx:elif="{{loginStatus === 'loggedIn' && !isLoadingCircles && circles.length > 0}}" bindtap="goToRecentCircle">
+  <view id="recent-circle-card" class="friend-circle-card" wx:elif="{{loginStatus === 'loggedIn' && !isLoadingCircles && circles.length > 0}}" bindtap="goToRecentCircle">
     <view class="card-bg"></view>
     <view class="card-title card-main-title">最近的朋友圈</view>
     <view class="user-count">

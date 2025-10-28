@@ -90,6 +90,12 @@
 ### circle_helper.py → `enter_discover_circle(mini)`
 从 main 页面点击发现朋友圈卡片进入 details 页面，并验证图片一致性。通过 UI 元素获取信息，模拟真实用户操作。
 
+### circle_helper.py → `check_latest_circle(mini, circle_id=None, expect_empty=False)`
+检查 main 页面最近朋友圈卡片显示是否正确。可验证空状态或指定朋友圈 ID。
+
+### circle_helper.py → `enter_latest_circle(mini)`
+从 main 页面点击最近朋友圈卡片进入 details 页面，验证进入的朋友圈 ID 正确。
+
 ### circle_helper.py → `verify_discover_refresh(mini)`
 验证发现朋友圈的刷新功能。通过检查 UI 元素的 `data-refresh-timestamp` 属性验证刷新动作，不依赖朋友圈 ID 是否改变。
 

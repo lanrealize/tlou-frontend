@@ -1498,3 +1498,271 @@ def accept_to_join_circle(mini):
             'success': False,
             'message': f'操作时发生异常: {str(e)}'
         }
+
+
+def check_latest_circle(mini, circle_id=None, expect_empty=False):
+    """检查 main 页面最近朋友圈卡片显示是否正确
+    
+    Args:
+        mini: Minium 实例
+        circle_id: 期望显示的朋友圈 ID（当 expect_empty=False 时必须提供）
+        expect_empty: 是否期望没有最近朋友圈（如新用户）
+        
+    Returns:
+        dict: {
+            'success': bool,
+            'message': str,
+            'actual_circle_id': str,  # 实际显示的朋友圈 ID（如果有）
+            'is_empty': bool          # 是否为空状态
+        }
+    """
+    try:
+        print('\n🔍 检查最近朋友圈卡片显示...')
+        
+        # 确保在 main 页面
+        from .navigation_helper import navigate_to_main
+        nav_result = navigate_to_main(mini, use_relaunch=False)
+        if not nav_result['success']:
+            return {
+                'success': False,
+                'message': f'导航到 main 页面失败: {nav_result["message"]}',
+                'actual_circle_id': '',
+                'is_empty': True
+            }
+        
+        time.sleep(0.5)
+        page = mini.app.current_page
+        
+        # 获取页面数据
+        circles = page.data.get('circles', [])
+        recent_circle = page.data.get('recentCircle', {})
+        is_loading = page.data.get('isLoadingCircles', False)
+        
+        print(f'   ℹ️  朋友圈数量: {len(circles)}')
+        print(f'   ℹ️  是否正在加载: {is_loading}')
+        
+        # 情况1: 期望为空
+        if expect_empty:
+            if len(circles) == 0 and not recent_circle:
+                # 验证空状态卡片是否显示
+                empty_card = page.get_element('.empty-state-card')
+                if empty_card:
+                    print('   ✅ 空状态卡片显示正确')
+                    return {
+                        'success': True,
+                        'message': '最近朋友圈为空，空状态卡片显示正确',
+                        'actual_circle_id': '',
+                        'is_empty': True
+                    }
+                else:
+                    return {
+                        'success': False,
+                        'message': '数据为空但未找到空状态卡片',
+                        'actual_circle_id': '',
+                        'is_empty': True
+                    }
+            else:
+                return {
+                    'success': False,
+                    'message': f'期望为空，但实际有 {len(circles)} 个朋友圈',
+                    'actual_circle_id': recent_circle.get('_id', '') if recent_circle else '',
+                    'is_empty': False
+                }
+        
+        # 情况2: 期望有内容
+        if not circle_id:
+            return {
+                'success': False,
+                'message': '未提供期望的朋友圈 ID（expect_empty=False 时必须提供）',
+                'actual_circle_id': '',
+                'is_empty': len(circles) == 0
+            }
+        
+        # 验证朋友圈数据
+        if len(circles) == 0:
+            return {
+                'success': False,
+                'message': '期望有朋友圈，但 circles 为空',
+                'actual_circle_id': '',
+                'is_empty': True
+            }
+        
+        if not recent_circle:
+            return {
+                'success': False,
+                'message': '期望有朋友圈，但 recentCircle 为空',
+                'actual_circle_id': '',
+                'is_empty': True
+            }
+        
+        actual_circle_id = recent_circle.get('_id', '')
+        if not actual_circle_id:
+            return {
+                'success': False,
+                'message': 'recentCircle 存在但没有 _id',
+                'actual_circle_id': '',
+                'is_empty': False
+            }
+        
+        print(f'   ℹ️  实际朋友圈 ID: {actual_circle_id[:8]}...')
+        print(f'   ℹ️  期望朋友圈 ID: {circle_id[:8]}...')
+        
+        # 验证 ID 是否匹配
+        if actual_circle_id != circle_id:
+            return {
+                'success': False,
+                'message': f'朋友圈 ID 不匹配: 期望 {circle_id[:8]}..., 实际 {actual_circle_id[:8]}...',
+                'actual_circle_id': actual_circle_id,
+                'is_empty': False
+            }
+        
+        # 验证卡片元素是否存在
+        card_element = page.get_element('#recent-circle-card')
+        if not card_element:
+            return {
+                'success': False,
+                'message': '数据正确但未找到最近朋友圈卡片元素',
+                'actual_circle_id': actual_circle_id,
+                'is_empty': False
+            }
+        
+        print('   ✅ 最近朋友圈卡片显示正确')
+        
+        return {
+            'success': True,
+            'message': f'最近朋友圈显示正确: {actual_circle_id[:8]}...',
+            'actual_circle_id': actual_circle_id,
+            'is_empty': False
+        }
+        
+    except Exception as e:
+        print(f'❌ 检查最近朋友圈失败: {str(e)}')
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'message': f'操作时发生异常: {str(e)}',
+            'actual_circle_id': '',
+            'is_empty': False
+        }
+
+
+def enter_latest_circle(mini):
+    """从 main 页面点击最近朋友圈卡片进入 details 页面
+    
+    Args:
+        mini: Minium 实例
+        
+    Returns:
+        dict: {
+            'success': bool,
+            'circle_id': str,
+            'message': str
+        }
+    """
+    try:
+        print('\n🔍 进入最近朋友圈...')
+        
+        # 步骤1: 确保在 main 页面
+        from .navigation_helper import navigate_to_main
+        nav_result = navigate_to_main(mini, use_relaunch=False)
+        if not nav_result['success']:
+            return {
+                'success': False,
+                'circle_id': '',
+                'message': f'导航到 main 页面失败: {nav_result["message"]}'
+            }
+        
+        time.sleep(0.5)
+        
+        # 获取 main 页面
+        page = mini.app.current_page
+        
+        # 步骤2: 从页面数据获取最近朋友圈 ID
+        recent_circle = page.data.get('recentCircle', {})
+        if not recent_circle:
+            return {
+                'success': False,
+                'circle_id': '',
+                'message': '当前没有最近的朋友圈'
+            }
+        
+        expected_circle_id = recent_circle.get('_id', '')
+        if not expected_circle_id:
+            return {
+                'success': False,
+                'circle_id': '',
+                'message': '无法获取最近朋友圈的 ID'
+            }
+        
+        print(f'   ℹ️  最近朋友圈 ID: {expected_circle_id[:8]}...')
+        
+        # 步骤3: 点击最近朋友圈卡片
+        card_element = page.get_element('#recent-circle-card')
+        
+        if not card_element:
+            return {
+                'success': False,
+                'circle_id': expected_circle_id,
+                'message': '未找到最近朋友圈卡片'
+            }
+        
+        print('   ℹ️  找到最近朋友圈卡片，准备点击...')
+        card_element.tap()
+        print('   ✅ 已点击卡片')
+        
+        # 等待页面跳转和加载
+        time.sleep(1.5)
+        
+        # 步骤4: 验证是否进入 details 页面
+        current_page = mini.app.current_page
+        if 'details' not in current_page.path:
+            return {
+                'success': False,
+                'circle_id': expected_circle_id,
+                'message': f'未进入 details 页面，当前在: {current_page.path}'
+            }
+        
+        print('   ✅ 已进入 details 页面')
+        
+        # 步骤5: 验证进入的朋友圈 ID 是否正确
+        details_page = mini.app.current_page
+        
+        # 从多个来源获取实际进入的朋友圈 ID
+        actual_circle_id = details_page.data.get('circleId', '')
+        if not actual_circle_id:
+            circle = details_page.data.get('circle', {})
+            actual_circle_id = circle.get('_id', '')
+        
+        if not actual_circle_id:
+            return {
+                'success': False,
+                'circle_id': expected_circle_id,
+                'message': '无法获取当前页面的朋友圈 ID'
+            }
+        
+        # 验证 ID 是否匹配
+        if actual_circle_id != expected_circle_id:
+            return {
+                'success': False,
+                'circle_id': expected_circle_id,
+                'message': f'进入了错误的朋友圈: 期望 {expected_circle_id[:8]}..., 实际 {actual_circle_id[:8]}...'
+            }
+        
+        print(f'   ✅ 成功进入最近朋友圈: {actual_circle_id[:8]}...')
+        
+        return {
+            'success': True,
+            'circle_id': actual_circle_id,
+            'message': '成功进入最近朋友圈'
+        }
+        
+    except Exception as e:
+        print(f'❌ 进入最近朋友圈失败: {str(e)}')
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'circle_id': '',
+            'message': f'操作时发生异常: {str(e)}'
+        }
