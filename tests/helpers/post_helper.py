@@ -112,6 +112,9 @@ def publish_post_with_single_image(mini, circle_id, content, image_path, test_im
         
         print(f'   ✅ 帖子发布成功: {published_post["_id"][:8]}...')
         
+        # 额外等待0.5秒，方便肉眼确认
+        time.sleep(0.5)
+        
         return {
             'success': True,
             'post_id': published_post['_id'],
@@ -223,6 +226,9 @@ def publish_post_with_multi_images(mini, circle_id, content, image_paths):
             raise Exception(f'发布失败: 等待{max_retries * 2}秒后仍未找到帖子（可能图片验证失败）')
         
         print(f'   ✅ 多图帖子发布成功: {published_post["_id"][:8]}...')
+        
+        # 额外等待0.5秒，方便肉眼确认
+        time.sleep(0.5)
         
         return {
             'success': True,
