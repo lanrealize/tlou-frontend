@@ -268,7 +268,7 @@ module.exports = {
       likePost: false,
       commentPost: false,
       publishPost: false,
-      acceptInvite: true,
+      acceptInvite: false,
       applyToJoin: false,
       createCircle: false
     },
@@ -280,6 +280,7 @@ module.exports = {
       likePost: '登录后才能点赞',
       commentPost: '登录后才能发表评论',
       publishPost: '您需要登录才能发布动态',
+      acceptInvite: '请先完成注册后加入朋友圈',
       applyToJoin: '请先完成注册后提交申请',
       createCircle: '您需要登录才能创建朋友圈'
     },
@@ -309,7 +310,7 @@ module.exports = {
       commentPost: false,
       publishPost: false,
       acceptInvite: false,
-      applyToJoin: true,
+      applyToJoin: false,
       createCircle: false
     },
     
@@ -321,6 +322,7 @@ module.exports = {
       commentPost: '登录后才能发表评论',
       publishPost: '您需要登录才能发布动态',
       acceptInvite: '这不是邀请链接',
+      applyToJoin: '请先完成注册后提交申请',
       createCircle: '您需要登录才能创建朋友圈'
     },
     

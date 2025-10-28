@@ -1114,10 +1114,10 @@ Page({
   // 处理待处理的意图
   async handlePendingIntent(intentType, circleId) {
     try {
-      if (intentType === 'invited') {
+      if (intentType === 'acceptInvite' || intentType === 'invited') {
         // 接受邀请
         await this.acceptInvite();
-      } else if (intentType === 'can_apply') {
+      } else if (intentType === 'applyToJoin' || intentType === 'can_apply') {
         // 申请加入
         await this.applyToJoin();
       }

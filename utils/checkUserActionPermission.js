@@ -318,8 +318,9 @@ function checkAndHandle(action, options = {}) {
   
   // 1. 保存意图（如果需要）
   if (result.saveIntent) {
-    const { saveUserIntent } = require('./userStatus');
-    saveUserIntent({
+    // 简单实现：保存到 app.globalData
+    const app = getApp();
+    app.globalData.userIntent = {
       type: result.intentAction,
       actionName: result.intentAction,
       circleId: result.circleId,
@@ -327,7 +328,8 @@ function checkAndHandle(action, options = {}) {
       customData: result.customData,
       message: result.message,
       timestamp: Date.now()
-    });
+    };
+    console.log('💾 已保存用户意图:', app.globalData.userIntent);
   }
   
   // 2. 根据 rejectAction 处理拒绝
