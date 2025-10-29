@@ -73,20 +73,52 @@
 
   <!-- 空状态朋友圈卡片 -->
   <view class="empty-state-card" wx:elif="{{loginStatus === 'loggedIn' && !isLoadingCircles && circles.length === 0}}">
-    <view class="empty-bg"></view>
-    <view class="empty-title card-main-title">没有正在进行的朋友圈</view>
-    <view class="empty-desc card-sub-title">点击"创建朋友圈"按钮，邀请朋友或扫一扫开始吧</view>
-    <view class="divider"></view>
-    <view class="create-btn" bindtap="createCircleDirectly">创建朋友圈</view>
+    <!-- 视频背景 -->
+    <video 
+      class="empty-video-bg"
+      src="https://images.wltech-service.site/PhotoMemories-0.3.mp4"
+      autoplay
+      loop
+      muted
+      show-center-play-btn="{{false}}"
+      show-play-btn="{{false}}"
+      controls="{{false}}"
+      objectFit="cover"
+    ></video>
+    <!-- 毛玻璃遮罩 -->
+    <view class="glass-overlay"></view>
+    <!-- 内容层 -->
+    <view class="empty-content">
+      <view class="empty-title card-main-title">没有正在进行的朋友圈</view>
+      <view class="empty-desc card-sub-title">点击"创建朋友圈"按钮，邀请朋友或扫一扫开始吧</view>
+      <view class="divider"></view>
+      <view class="create-btn" bindtap="createCircleDirectly">创建朋友圈</view>
+    </view>
   </view>
 
   <!-- 未登录提示卡片 -->
   <view class="browse-tip-card" wx:elif="{{loginStatus === 'unregistered'}}">
-    <view class="empty-bg"></view>
-    <view class="empty-title card-main-title">浏览模式</view>
-    <view class="empty-desc card-sub-title">你可以浏览内容，点击感兴趣的功能时会引导登录</view>
-    <view class="divider"></view>
-    <view class="create-btn" bindtap="handleUserAuth">点击登录</view>
+    <!-- 视频背景 -->
+    <video 
+      class="empty-video-bg"
+      src="https://images.wltech-service.site/PhotoMemories-0.3.mp4"
+      autoplay
+      loop
+      muted
+      show-center-play-btn="{{false}}"
+      show-play-btn="{{false}}"
+      controls="{{false}}"
+      objectFit="cover"
+    ></video>
+    <!-- 毛玻璃遮罩 -->
+    <view class="glass-overlay"></view>
+    <!-- 内容层 -->
+    <view class="empty-content">
+      <view class="empty-title card-main-title">浏览模式</view>
+      <view class="empty-desc card-sub-title">你可以浏览内容，点击感兴趣的功能时会引导登录</view>
+      <view class="divider"></view>
+      <view class="create-btn" bindtap="handleUserAuth">点击登录</view>
+    </view>
   </view>
 
   <!-- 创建区域和历史记录功能 -->
