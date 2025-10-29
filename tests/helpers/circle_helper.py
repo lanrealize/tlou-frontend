@@ -664,16 +664,7 @@ def process_unique_join_application(mini, circle_id=None, action='approve'):
         
         print(f'   ℹ️  朋友圈 ID: {circle_id[:8]}...')
         
-        # 步骤2：验证当前用户是 admin
-        user_state = get_user_state(mini)
-        if not user_state['is_admin']:
-            return {
-                'success': False,
-                'message': f'当前用户不是管理员，无法处理申请。isAdmin: {user_state["is_admin"]}'
-            }
-        print(f'   ✅ 当前用户是管理员: {user_state["user_info"]["username"]}')
-        
-        # 步骤3：确认有待处理的申请
+        # 步骤2：确认有待处理的申请
         pending_count = page.data.get('pendingApplicationsCount', 0)
         if pending_count == 0:
             return {

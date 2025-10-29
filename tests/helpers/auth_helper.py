@@ -26,7 +26,8 @@ def _js_get_user_state():
                 _id: userStore.userInfo?._id || '',
                 username: userStore.userInfo?.username || '',
                 avatar: userStore.userInfo?.avatar || '',
-                circles: userStore.userInfo?.circles || []
+                circles: userStore.userInfo?.circles || [],
+                isAdmin: userStore.userInfo?.isAdmin || false
             }
         };
     """

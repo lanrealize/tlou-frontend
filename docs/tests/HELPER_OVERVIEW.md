@@ -121,6 +121,9 @@
 ### element_helper.py → `click_create_circle_button(mini)`
 点击创建朋友圈按钮。适用于需要在点击后执行其他操作的场景（如未登录用户点击触发登录弹窗）。
 
+### element_helper.py → `click_apply_join_button(mini)`
+点击接受邀请按钮。在 details 页面点击 circle-status-action 组件中的接受邀请按钮，用于被邀请用户直接加入朋友圈（无需等待审核）。
+
 ---
 
 ## workflow_helper.py - 工作流测试
