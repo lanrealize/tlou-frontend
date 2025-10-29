@@ -26,7 +26,11 @@
 19. 检查成员在详情页的操作权限
 20. 返回主页（不用relaunch）
 21. 检查注册用户在主页的操作权限
-22. 退出测试模式
+
+清理工作（finally块自动执行）：
+- 删除测试创建的圈子
+- 退出测试模式
+- 关闭小程序
 
 作者：测试团队
 日期：2025-10-29
@@ -300,13 +304,6 @@ def test_unregistered_apply_e2e():
             return False
         print('✅ 步骤21完成')
 
-        # 步骤22: system_helper.py -> exit_test_mode(mini)
-        print('\n【步骤22】退出测试模式')
-        print('-'*60)
-        exit_test_mode(mini)
-        time.sleep(1)
-        print('✅ 步骤22完成')
-
         # 输出最终结果
         print('\n' + '='*60)
         print('📊 测试结果')
@@ -326,17 +323,17 @@ def test_unregistered_apply_e2e():
         if mini:
             print('\n' + '='*60)
             print('🧹 清理测试环境...')
-            # 删除测试创建的圈子
-            if circle_id:
-                try:
-                    delete_circle_by_api(mini, circle_id)
-                except:
-                    pass
-            # 退出测试模式
+            # 先退出测试模式（恢复真实用户身份）
             try:
                 exit_test_mode(mini)
             except:
                 pass
+            # 然后删除测试创建的圈子（需要真实用户权限）
+            if circle_id:
+                try:
+                    delete_circle_by_api(mini, circle_id)
+                except Exception as e:
+                    print(f'   ⚠️  删除圈子失败: {str(e)}')
             close_miniprogram(mini)
             print('✅ 清理完成')
 

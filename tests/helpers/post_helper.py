@@ -41,7 +41,7 @@ def publish_post_with_single_image(mini, circle_id, content, image_path, test_im
                 raise Exception('未找到发布按钮')
             
             action_btn.tap()
-            time.sleep(2.0)
+            time.sleep(0.8)
             
             # 验证是否成功进入发布页面
             page = mini.app.current_page
@@ -76,7 +76,7 @@ def publish_post_with_single_image(mini, circle_id, content, image_path, test_im
         print('   ✅ 已点击发布按钮')
         
         # 等待发布完成并返回详情页
-        time.sleep(2.0)
+        time.sleep(0.8)
         
         # 验证返回到详情页面
         current_page = mini.app.current_page
@@ -94,26 +94,32 @@ def publish_post_with_single_image(mini, circle_id, content, image_path, test_im
             current_page = mini.app.current_page
             posts = current_page.data.get('posts', [])
             
-            # 查找刚发布的帖子
+            # 查找刚发布的帖子（必须是真实ID，不是temp_开头的临时ID）
             for post in posts:
-                if post.get('content', '') == content:
+                post_id = post.get('_id', '')
+                if post.get('content', '') == content and not post_id.startswith('temp_'):
                     published_post = post
+                    print(f'   ✅ 找到真实帖子ID: {post_id[:8]}...')
                     break
             
             if published_post:
                 break
+            else:
+                # 检查是否有临时ID的帖子
+                temp_post = next((p for p in posts if p.get('content', '') == content), None)
+                if temp_post and temp_post.get('_id', '').startswith('temp_'):
+                    print(f'   ⏳ 帖子仍为临时ID: {temp_post["_id"][:20]}..., 等待后端处理完成...')
             
             if attempt < max_retries - 1:
-                print(f'   ⏳ 帖子尚未出现，等待后重试...')
-                time.sleep(2.0)
+                time.sleep(0.8)
         
         if not published_post:
-            raise Exception(f'发布失败: 等待{max_retries * 2}秒后仍未找到帖子（可能图片验证失败）')
+            raise Exception(f'发布失败: 等待{max_retries * 0.8}秒后仍未找到真实帖子ID（可能图片验证失败或后端处理超时）')
         
         print(f'   ✅ 帖子发布成功: {published_post["_id"][:8]}...')
         
-        # 额外等待0.5秒，方便肉眼确认
-        time.sleep(0.5)
+        # 额外等待0.2秒，方便肉眼确认
+        time.sleep(0.2)
         
         return {
             'success': True,
@@ -159,7 +165,7 @@ def publish_post_with_multi_images(mini, circle_id, content, image_paths):
             raise Exception('未找到发布按钮')
         
         action_btn.tap()
-        time.sleep(1.5)
+        time.sleep(0.8)
         
         # 验证是否成功进入发布页面
         page = mini.app.current_page
@@ -191,7 +197,7 @@ def publish_post_with_multi_images(mini, circle_id, content, image_paths):
         print('   ✅ 已点击发布按钮')
         
         # 等待发布完成并返回详情页
-        time.sleep(2.0)
+        time.sleep(0.8)
         
         # 验证返回到详情页面
         current_page = mini.app.current_page
@@ -209,26 +215,32 @@ def publish_post_with_multi_images(mini, circle_id, content, image_paths):
             current_page = mini.app.current_page
             posts = current_page.data.get('posts', [])
             
-            # 查找刚发布的帖子
+            # 查找刚发布的帖子（必须是真实ID，不是temp_开头的临时ID）
             for post in posts:
-                if post.get('content', '') == content:
+                post_id = post.get('_id', '')
+                if post.get('content', '') == content and not post_id.startswith('temp_'):
                     published_post = post
+                    print(f'   ✅ 找到真实帖子ID: {post_id[:8]}...')
                     break
             
             if published_post:
                 break
+            else:
+                # 检查是否有临时ID的帖子
+                temp_post = next((p for p in posts if p.get('content', '') == content), None)
+                if temp_post and temp_post.get('_id', '').startswith('temp_'):
+                    print(f'   ⏳ 帖子仍为临时ID: {temp_post["_id"][:20]}..., 等待后端处理完成...')
             
             if attempt < max_retries - 1:
-                print(f'   ⏳ 帖子尚未出现，等待后重试...')
-                time.sleep(2.0)
+                time.sleep(0.8)
         
         if not published_post:
-            raise Exception(f'发布失败: 等待{max_retries * 2}秒后仍未找到帖子（可能图片验证失败）')
+            raise Exception(f'发布失败: 等待{max_retries * 0.8}秒后仍未找到真实帖子ID（可能图片验证失败或后端处理超时）')
         
         print(f'   ✅ 多图帖子发布成功: {published_post["_id"][:8]}...')
         
-        # 额外等待0.5秒，方便肉眼确认
-        time.sleep(0.5)
+        # 额外等待0.2秒，方便肉眼确认
+        time.sleep(0.2)
         
         return {
             'success': True,
@@ -282,7 +294,7 @@ def like_post(mini, post_id, expect_success=True):
         print('   ✅ 已点击点赞按钮')
         
         # 等待点赞操作完成
-        time.sleep(0.75)  # 缩短为原来的 1/4
+        time.sleep(0.3)
         
         # 根据 expect_success 决定是否验证点赞状态
         if expect_success:
@@ -340,7 +352,7 @@ def unlike_post(mini, post_id):
         print('   ✅ 已点击取消点赞')
         
         # 等待操作完成
-        time.sleep(2.0)
+        time.sleep(0.5)
         
         # 验证取消点赞状态
         _verify_post_like_status(mini, post_id, expected_liked=False)
@@ -422,7 +434,7 @@ def comment_on_post(mini, comment_text, expect_success=True):
         print('   ✅ 已发送评论')
         
         # 等待评论发送完成
-        time.sleep(2.0)
+        time.sleep(0.5)
         
         # 验证评论已添加
         _verify_comment_added(mini, comment_text)
@@ -468,7 +480,7 @@ def reply_to_comment(mini, reply_text, expect_success=True):
         
         reply_btn.tap()
         print('   ✅ 已点击回复按钮')
-        time.sleep(1.0)
+        time.sleep(0.3)
         
         # 如果不期望成功（无权限场景），点击后直接返回，不尝试输入
         if not expect_success:
@@ -496,7 +508,7 @@ def reply_to_comment(mini, reply_text, expect_success=True):
         print('   ✅ 已发送回复')
         
         # 等待回复发送完成
-        time.sleep(2.0)
+        time.sleep(0.5)
         print('   ✅ 回复添加成功')
         
         return {
@@ -539,10 +551,7 @@ def delete_comment(mini, is_reply=True):
                 delete_btn.tap()
                 print(f'   ✅ 已点击删除{target_type}按钮')
                 
-                # 等待确认对话框出现
-                time.sleep(1.0)
-                
-                # 处理确认对话框
+                # 处理确认对话框（会自动等待modal出现）
                 if handle_modal_confirm(mini, "确定"):
                     print('   ✅ 已确认删除')
                 else:
@@ -553,7 +562,7 @@ def delete_comment(mini, is_reply=True):
                     }
                 
                 # 等待删除操作完成
-                time.sleep(2.0)
+                time.sleep(0.5)
                 print(f'   ✅ {target_type}删除成功')
                 
                 return {
@@ -606,7 +615,7 @@ def delete_post(mini, post_id):
         
         actions_btn.tap()
         print('   ✅ 已点击帖子操作按钮')
-        time.sleep(1.0)
+        time.sleep(0.3)
         
         # 点击删除按钮
         delete_btn = page.get_element('post-item >>> #deletePostBtn')
@@ -616,14 +625,11 @@ def delete_post(mini, post_id):
         delete_btn.tap()
         print('   ✅ 已点击删除帖子按钮')
         
-        # 等待确认对话框出现
-        time.sleep(1.0)
-        
-        # 使用封装的函数处理modal确认对话框
+        # 使用封装的函数处理modal确认对话框（会自动等待modal出现）
         handle_modal_confirm(mini, "确定")
         
         # 等待删除操作完成
-        time.sleep(2.0)
+        time.sleep(0.5)
         
         # 验证删除结果
         _verify_post_deleted(mini, post_id)
@@ -669,7 +675,7 @@ def _add_images(mini, image_paths):
     _verify_images_displayed(mini, result['image_count'])
     
     print(f'   ✅ 成功选择了 {result["image_count"]} 张真实图片，可进行真实上传')
-    time.sleep(0.25)  # 缩短为原来的 1/4
+    time.sleep(0.1)
 
 
 def _verify_images_displayed(mini, expected_count):
@@ -744,10 +750,13 @@ def _verify_post_like_status(mini, post_id, expected_liked):
         status_data = result.get('result', {}).get('result', {})
         
         if not status_data.get('success'):
+            reason = status_data.get("reason", "unknown")
             if attempt == max_retries - 1:
-                print(f'   ⚠️  验证点赞状态失败: {status_data.get("reason")}')
-                return  # 不抛出异常，只是返回
-            time.sleep(1.0)
+                # 最后一次尝试仍然失败 - 必须抛出异常
+                error_msg = f'验证点赞状态失败: {reason}'
+                print(f'   ❌ {error_msg}')
+                raise Exception(error_msg)
+            time.sleep(0.3)
             continue
         
         is_liked = status_data.get('isLiked', False)
@@ -772,7 +781,7 @@ def _verify_post_like_status(mini, post_id, expected_liked):
         # 如果验证失败，等待后重试
         if attempt < max_retries - 1:
             print(f'   ⏳ 点赞状态不符合预期，等待后重试...')
-            time.sleep(2.0)
+            time.sleep(0.5)
         else:
             # 最后一次尝试仍然失败 - 抛出异常
             error_msg = (

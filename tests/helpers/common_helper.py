@@ -350,10 +350,11 @@ def handle_modal_confirm(mini, button_text="确定", timeout=3.0):
         
     Returns:
         bool: 是否成功处理
+    
+    Note:
+        mini.native.handle_modal() 会自动等待 modal 出现，不需要额外 sleep
     """
     try:
-        import time
-        time.sleep(0.5)
         result = mini.native.handle_modal(button_text)
         if result:
             print(f'   ✅ Modal确认成功: "{button_text}"')

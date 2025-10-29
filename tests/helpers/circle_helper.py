@@ -718,7 +718,7 @@ def process_unique_join_application(mini, circle_id=None, action='approve'):
         print('   ✅ 已点击设置按钮')
         
         # 等待进入 settings 页面
-        time.sleep(1.0)
+        time.sleep(0.8)
         
         settings_page = mini.app.current_page
         if 'setting' not in settings_page.path:
@@ -729,7 +729,7 @@ def process_unique_join_application(mini, circle_id=None, action='approve'):
         print('   ✅ 已进入 settings 页面')
         
         # 等待申请列表加载
-        time.sleep(0.5)
+        time.sleep(0.3)
         
         # 获取申请者列表
         appliers = settings_page.data.get('appliers', [])
