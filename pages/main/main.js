@@ -5,6 +5,7 @@ const api = require('../../utils/api');
 const util = require('../../utils/util');
 const navigationHelper = require('../../utils/navigationHelper');
 const { checkAndHandle } = require('../../utils/checkUserActionPermission');
+const { circleStore, CIRCLE_STATUS } = require('../../store/circleStore');
 
 // 🎬 视频动画状态机常量（定义在Page外部）
 const VIDEO_STATES = {
@@ -29,8 +30,9 @@ Page({
   behaviors: [storeBindingsBehavior],
   
   data: {
-    circles: [],          // 朋友圈列表
-    recentCircle: null,   // 最新活动的朋友圈（用于首页卡片显示）
+    // 🔧 注意：circles, recentCircle, isLoadingCircles, isUpdatingCircle, hasRecentCircle
+    // 现在由 circleStore 管理，通过 MobX bindings 自动同步到页面
+    
     currentCircleId: '',  // 当前选中的朋友圈ID
     posts: [],            // 帖子列表
     loading: false,       // 加载状态
@@ -40,22 +42,6 @@ Page({
     commentPostId: '',    // 当前评论的帖子ID
     commentText: '',      // 评论内容
     replyToUser: null,    // 回复的用户
-    
-    // 请求状态管理
-    isLoadingCircles: false,    // 是否正在加载朋友圈
-    lastCirclesLoadTime: 0,     // 上次加载朋友圈的时间戳
-    circlesLoadThrottle: 3000,  // 节流时间（3秒）
-    
-    // 缓存机制
-    cachedRecentCircle: null,   // 缓存的最新朋友圈数据
-    lastRecentCircleHash: '',   // 上次朋友圈数据的哈希值
-    recentCircleCacheConfig: {  // 缓存配置
-      enabled: true,            // 是否启用缓存
-      compareFields: ['_id', 'memberCount', 'formattedTime', 'createdAt', 'members'], // 对比字段
-      cacheTimeout: 300000      // 缓存超时时间（毫秒），5分钟后强制更新
-    },
-    lastRecentCircleCacheTime: 0,  // 最后一次缓存时间
-    hasInitialLoad: false,      // 是否已完成初始加载
     
     // 公开朋友圈推荐
     recommendedCircles: [],         // 推荐的公开朋友圈列表
@@ -176,17 +162,24 @@ Page({
   onUnload() {
     
     // 清理MobX绑定，防止内存泄漏
-    if (this.storeBindings) {
+    if (this.userStoreBindings) {
       try {
-        this.storeBindings.destroyStoreBindings();
-        this.storeBindings = null;
+        this.userStoreBindings.destroyStoreBindings();
+        this.userStoreBindings = null;
+      } catch (error) {
+      }
+    }
+    
+    if (this.circleStoreBindings) {
+      try {
+        this.circleStoreBindings.destroyStoreBindings();
+        this.circleStoreBindings = null;
       } catch (error) {
       }
     }
 
     // 清理其他可能的引用
     this.setData({
-      circles: [],
       posts: [],
       currentCircleId: ''
     });
@@ -197,7 +190,8 @@ Page({
     const app = getApp();
     const userStore = app.getUserStore();
     
-    this.storeBindings = createStoreBindings(this, {
+    // 绑定userStore
+    this.userStoreBindings = createStoreBindings(this, {
       store: userStore,
       fields: {
         // 绑定用户状态到页面data
@@ -226,6 +220,24 @@ Page({
         switchToVirtualIdentity: 'switchToVirtualIdentity',
         switchToRealIdentity: 'switchToRealIdentity',
         createVirtualUser: 'createVirtualUser'
+      }
+    });
+    
+    // 绑定circleStore
+    this.circleStoreBindings = createStoreBindings(this, {
+      store: circleStore,
+      fields: {
+        // 绑定朋友圈状态到页面data
+        circleStatus: 'status',            // 朋友圈加载状态
+        recentCircle: 'recentCircle',      // 最近活动的朋友圈
+        isLoadingCircles: 'isLoading',     // 是否正在加载
+        isUpdatingCircle: 'isUpdating',    // 是否正在更新（用于动画）
+        hasRecentCircle: 'hasRecentCircle' // 是否有最近朋友圈
+      },
+      actions: {
+        // 绑定朋友圈actions
+        loadRecentCircle: 'loadRecentCircle',
+        forceRefreshCircle: 'forceRefresh'
       }
     });
   },
@@ -258,8 +270,7 @@ Page({
     }
     
     // 🔧 确保登录状态检查完成后再加载数据（包括推荐朋友圈）
-    // 注意：由于userInfo页面已改为弹出组件，不再需要检查prevPage
-    this.waitForLoginCheckAndLoadData(null);
+    this.waitForLoginCheckAndLoadData();
     
     // 🎬 初始化视频动画（空状态卡片）
     this._initEmptyCardVideoAnimation();
@@ -270,95 +281,11 @@ Page({
     this._gracefullyStopVideoAnimation();
   },
 
-  // 缓存工具方法
-  
-  // 生成朋友圈数据的简化哈希值（用于快速比较）
-  generateRecentCircleHash(circleData) {
-    if (!circleData) return '';
-    
-    const keyFields = [
-      circleData._id,
-      circleData.memberCount,
-      circleData.formattedTime,
-      circleData.createdAt,
-      // 成员变化检测
-      (circleData.members || []).map(m => m._id).sort().join(',')
-    ];
-    
-    return keyFields.join('|');
-  },
-  
-  // 比较两个朋友圈数据是否有实质性变化
-  isRecentCircleChanged(newCircle, cachedCircle) {
-    if (!newCircle && !cachedCircle) return false;
-    if (!newCircle || !cachedCircle) return true;
-    
-    // 生成哈希值进行快速比较
-    const newHash = this.generateRecentCircleHash(newCircle);
-    const cachedHash = this.generateRecentCircleHash(cachedCircle);
-    
-    return newHash !== cachedHash;
-  },
-  
-  // 更新最新朋友圈缓存
-  updateRecentCircleCache(newCircle, forceUpdate = false) {
-    const config = this.data.recentCircleCacheConfig;
-    const now = Date.now();
-    
-    if (!newCircle) {
-      this.setData({
-        recentCircle: null,
-        cachedRecentCircle: null,
-        lastRecentCircleHash: '',
-        lastRecentCircleCacheTime: 0
-      });
-      return true; // 表示更新了（清空）
-    }
-    
-    // 检查是否禁用缓存或强制更新
-    if (!config.enabled || forceUpdate) {
-      this.setData({
-        recentCircle: newCircle,
-        cachedRecentCircle: JSON.parse(JSON.stringify(newCircle)),
-        lastRecentCircleHash: this.generateRecentCircleHash(newCircle),
-        lastRecentCircleCacheTime: now
-      });
-      return true;
-    }
-    
-    // 检查缓存是否超时
-    const cacheExpired = (now - this.data.lastRecentCircleCacheTime) > config.cacheTimeout;
-    
-    const newHash = this.generateRecentCircleHash(newCircle);
-    const oldHash = this.data.lastRecentCircleHash;
-    
-    // 如果数据有变化或缓存已超时，才更新界面
-    if (newHash !== oldHash || cacheExpired) {
-      this.setData({
-        recentCircle: newCircle,
-        cachedRecentCircle: JSON.parse(JSON.stringify(newCircle)), // 深拷贝
-        lastRecentCircleHash: newHash,
-        lastRecentCircleCacheTime: now
-      });
-      
-      return true; // 表示确实更新了
-    }
-    
-    return false; // 表示没有更新
-  },
-  
-  // 重置朋友圈缓存（用于强制刷新）
-  resetRecentCircleCache() {
-    this.setData({
-      cachedRecentCircle: null,
-      lastRecentCircleHash: '',
-      lastRecentCircleCacheTime: 0,
-      hasInitialLoad: false  // 重置初始加载标记，确保下次会显示loading
-    });
-  },
+  // 🔧 注意：旧的缓存工具方法已移除
+  // 现在所有朋友圈数据管理和缓存逻辑都在 circleStore 中实现
 
   // 🔧 等待登录检查完成后加载数据
-  async waitForLoginCheckAndLoadData(prevPage) {
+  async waitForLoginCheckAndLoadData() {
     const app = getApp();
     const userStore = app.getUserStore();
     
@@ -368,56 +295,21 @@ Page({
     }
     
     // 检查登录状态并加载用户朋友圈数据（需要登录）
-    const shouldLoadData = userStore.isLoggedIn;
-    
-    if (shouldLoadData) {
-      // 区分真正的数据修改操作和纯查看操作
-      const isFromDataModifyPage = prevPage && (
-        prevPage.route === 'pages/publish/publish' ||
-        prevPage.route === 'pages/list/list'
-      );
+    if (userStore.isLoggedIn) {
+      // 🎯 使用 circleStore 的智能加载策略
+      const isFirstLoad = !circleStore.recentCircle && !circleStore.lastUpdateTime;
       
-      // 从details页面返回时，只是查看操作，使用正常缓存机制
-      const isFromDetailsPage = prevPage && prevPage.route === 'pages/details/details';
-      
-      if (isFromDataModifyPage) {
-        // 如果是从可能修改数据的页面返回，强制刷新获取最新数据
-        const isFromListPage = prevPage && prevPage.route === 'pages/list/list';
-        if (isFromListPage) {
-          setTimeout(() => {
-            // 强制重置加载状态，确保不被节流阻止
-            this.setData({ 
-              isLoadingCircles: false,
-              lastCirclesLoadTime: 0 
-            });
-            this.loadCirclesWithThrottle(true);
-          }, 500);
-        } else {
-          this.loadCirclesWithThrottle(true);
-        }
-      } else if (isFromDetailsPage) {
-        // 🔧 从详情页返回时的智能处理
-        // 检查是否有有效的缓存数据且未超时
-        const config = this.data.recentCircleCacheConfig;
-        const cacheValid = this.data.cachedRecentCircle !== null;
-        const cacheNotExpired = (Date.now() - this.data.lastRecentCircleCacheTime) <= config.cacheTimeout;
-        const hasValidCache = cacheValid && cacheNotExpired;
-        
-        if (hasValidCache && this.data.hasInitialLoad) {
-          // 有有效缓存且已完成初始加载，直接使用缓存，不发送请求
-          console.log('🔧 从详情页返回，使用有效缓存，跳过请求');
-          // 仅更新加载时间以符合节流逻辑，但不实际加载
-          this.setData({
-            lastCirclesLoadTime: Date.now()
-          });
-        } else {
-          // 缓存无效或已过期，正常加载但不强制刷新
-          console.log('🔧 从详情页返回，缓存无效，正常加载');
-          this.loadCirclesWithThrottle(); // 不强制刷新，让缓存机制决定
-        }
+      if (isFirstLoad) {
+        // 首次加载：强制刷新（显示loading）
+        console.log('🆕 [首次加载] 强制刷新并显示loading');
+        await this.forceRefreshCircle();
       } else {
-        // 其他情况，正常加载
-        this.loadCirclesWithThrottle();
+        // 其他情况：静默检查，让 circleStore 自动决定
+        // - 身份变化了 → circleStore 自动强制刷新
+        // - 数据变化了 → circleStore 带动画更新
+        // - 没有变化 → circleStore 不更新 UI
+        console.log('🔄 [智能刷新] circleStore 检测变化并决定是否更新');
+        await this.loadRecentCircle(false, true);
       }
     }
     
@@ -496,15 +388,14 @@ Page({
   // ===== 数据加载相关 =====
 
   // 刷新数据
-  refreshData() {
+  async refreshData() {
     // 使用全局访问控制
     if (!checkAndHandle('enterListPage')) {
       return;
     }
 
-    // 重置缓存，确保强制更新
-    this.resetRecentCircleCache();
-    this.loadCirclesWithThrottle(true); // 强制刷新
+    // 🎯 使用 circleStore 强制刷新（显示loading）
+    await this.forceRefreshCircle();
   },
 
   // 刷新发现内容
@@ -524,133 +415,8 @@ Page({
     wx.showToast({ title: '功能开发中', icon: 'none' });
   },
 
-  // 带节流的加载朋友圈列表
-  loadCirclesWithThrottle(forceRefresh = false) {
-    const now = Date.now();
-    const timeSinceLastLoad = now - this.data.lastCirclesLoadTime;
-    
-    // 如果正在加载中，跳过（除非强制刷新）
-    if (this.data.isLoadingCircles && !forceRefresh) {
-      return;
-    }
-    
-    // 如果距离上次加载时间小于节流时间，且不是强制刷新，跳过
-    if (timeSinceLastLoad < this.data.circlesLoadThrottle && !forceRefresh) {
-      return;
-    }
-    
-    // 传递强制更新参数给loadCircles
-    this.loadCircles(0, forceRefresh);
-  },
-
-  // 加载朋友圈列表
-  async loadCircles(retryCount = 0, forceUpdate = false) {
-    // 检查多个状态源确保准确性
-    const app = getApp();
-    const userStore = app.getUserStore();
-    const globalLoginStatus = app.globalData.loginStatus;
-    
-    const isLoggedIn = this.data.isLoggedIn || 
-                      globalLoginStatus === 'loggedIn' || 
-                      userStore.isLoggedIn;
-    
-    if (!isLoggedIn) {
-      return;
-    }
-
-    // 🔧 优化loading显示逻辑：只有在真正需要时才显示loading
-    const config = this.data.recentCircleCacheConfig;
-    const cacheExpired = (Date.now() - this.data.lastRecentCircleCacheTime) > config.cacheTimeout;
-    
-    // 智能判断是否需要显示loading动画
-    const shouldShowLoading = forceUpdate || // 强制刷新时显示
-                              !config.enabled || // 缓存禁用时显示  
-                              !this.data.hasInitialLoad || // 首次加载时显示
-                              (cacheExpired && this.data.cachedRecentCircle === null); // 缓存过期且无缓存数据时显示
-    
-    if (shouldShowLoading) {
-      this.setData({
-        isLoadingCircles: true,
-        lastCirclesLoadTime: Date.now()
-      });
-    } else {
-      // 更新加载时间，但不显示loading
-      this.setData({
-        lastCirclesLoadTime: Date.now()
-      });
-    }
-
-    try {
-      const res = await api.circles.getMyParticipated();
-      const circles = res.data.circles || [];
-      
-      // 后端已按最新活动时间排序，第一个就是最近活动的朋友圈
-      const newRecentCircle = circles.length > 0 ? circles[0] : null;
-      if (newRecentCircle) {
-        // 格式化最新活动朋友圈的时间
-        newRecentCircle.formattedTime = util.formatRelativeTime(newRecentCircle.createdAt);
-        newRecentCircle.memberCount = newRecentCircle.members ? newRecentCircle.members.length : 0;
-      }
-      
-      // 使用缓存机制，只有数据真正变化时才更新界面
-      const wasUpdated = this.updateRecentCircleCache(newRecentCircle, forceUpdate);
-      
-      // 根据是否显示了loading来决定如何更新状态
-      if (shouldShowLoading) {
-        // 如果显示了loading，正常更新所有状态
-        this.setData({ 
-          circles,
-          isLoadingCircles: false,
-          hasInitialLoad: true  // 标记已完成初始加载
-        });
-      } else {
-        // 如果没有显示loading，只更新circles，不触及loading状态
-        this.setData({ 
-          circles,
-          hasInitialLoad: true  // 确保标记已完成初始加载
-        });
-      }
-      
-      // 如果有朋友圈且没有选中的朋友圈，默认选择第一个
-      if (circles.length > 0 && !this.data.currentCircleId) {
-        this.switchCircle(circles[0]._id);
-      }
-    } catch (error) {
-      console.error('❌ 加载朋友圈失败:', error);
-      
-      // 处理429错误（请求过于频繁）
-      if (error.message && error.message.includes('HTTP 429')) {
-        console.log('⚠️ 检测到429错误，请求过于频繁');
-        
-        // 如果重试次数少于3次，等待后重试
-        if (retryCount < 3) {
-          const retryDelay = Math.pow(2, retryCount) * 1000; // 指数退避：1s, 2s, 4s
-          console.log(`🔄 将在${retryDelay}ms后进行第${retryCount + 1}次重试`);
-          
-          setTimeout(() => {
-            this.loadCircles(retryCount + 1, forceUpdate);
-          }, retryDelay);
-          
-          // 显示用户友好的提示
-          if (retryCount === 0) {
-            util.showToast('请求过于频繁，正在重试...');
-          }
-          return;
-        } else {
-          util.showToast('网络繁忙，请稍后再试');
-        }
-      } else {
-        util.showToast('加载朋友圈失败');
-      }
-      
-      // 重置加载状态（只在显示了loading时才重置）
-      if (shouldShowLoading) {
-        this.setData({
-          isLoadingCircles: false
-        });
-      }
-    }
-  },
+  // 🔧 注意：旧的 loadCirclesWithThrottle 和 loadCircles 方法已移除
+  // 现在使用 circleStore.loadRecentCircle 和 circleStore.forceRefresh
 
   // 切换朋友圈
   switchCircle(circleId) {
@@ -1240,7 +1006,7 @@ Page({
       await this.handlePendingIntent(pendingIntent, circleId);
     } else {
       // 刷新页面数据
-      this.loadCirclesWithThrottle(true);
+      await this.forceRefreshCircle();
     }
   },
   
@@ -1280,7 +1046,7 @@ Page({
         // 未知意图类型，记录日志但不影响用户体验
         console.warn(`未处理的意图类型: ${intentType}`);
         // 刷新页面数据作为降级处理
-        this.loadCirclesWithThrottle(true);
+        await this.forceRefreshCircle();
       }
     } catch (error) {
       console.error('处理意图失败:', error);

@@ -32,8 +32,8 @@
     </view>
   </view>
 
-  <!-- 朋友圈卡片 -->
-  <view id="recent-circle-card" class="friend-circle-card" wx:elif="{{loginStatus === 'loggedIn' && !isLoadingCircles && circles.length > 0}}" bindtap="goToRecentCircle">
+  <!-- 朋友圈卡片 - 使用 circleStore 的数据 -->
+  <view id="recent-circle-card" class="friend-circle-card {{isUpdatingCircle ? 'updating' : ''}}" wx:elif="{{loginStatus === 'loggedIn' && !isLoadingCircles && hasRecentCircle}}" bindtap="goToRecentCircle">
     <view class="card-bg"></view>
     <view class="card-title card-main-title">最近的朋友圈</view>
     <view class="user-count">
@@ -60,7 +60,7 @@
   </view>
 
   <!-- 空状态朋友圈卡片 - 已登录无圈 或 未登录 -->
-  <view class="empty-state-card {{emptyCardVideoVisible ? 'video-active' : 'video-inactive'}}" wx:elif="{{!isLoadingCircles && (loginStatus !== 'loggedIn' || circles.length === 0)}}">
+  <view class="empty-state-card {{emptyCardVideoVisible ? 'video-active' : 'video-inactive'}}" wx:elif="{{!isLoadingCircles && (loginStatus !== 'loggedIn' || !hasRecentCircle)}}">
     <!-- 视频层：绝对定位，铺满整个卡片 -->
     <video 
       wx:if="{{showEmptyCardVideo}}"
