@@ -412,24 +412,23 @@ Page({
       // 尝试获取新创建的朋友圈ID，支持多种可能的响应格式
       const newCircleId = result.data?.circle?._id || result.data?._id || result.circle?._id;
 
-      // 隐藏 loading overlay
-      this.hideLoadingOverlay();
-      
-      wx.showToast({ title: '创建成功', icon: 'success' });
+      // 如果没有获取到ID，说明创建失败
+      if (!newCircleId) {
+        throw new Error('创建成功但未返回朋友圈ID');
+      }
 
-      // 导航到朋友圈详情页面查看新创建的朋友圈
-      setTimeout(() => {
-        if (newCircleId) {
-          wx.navigateTo({
-            url: `/pages/details/details?circleId=${newCircleId}`
-          });
-        } else {
-          // 如果没有获取到ID，导航到朋友圈管理页面
-          wx.navigateTo({
-            url: '/pages/list/list'
-          });
+      // 导航到朋友圈详情页面查看新创建的朋友圈（直接跳转，不等待overlay消失）
+      wx.navigateTo({
+        url: `/pages/details/details?circleId=${newCircleId}&showCreateSuccess=true`,
+        success: () => {
+          // 跳转成功后隐藏overlay
+          this.hideLoadingOverlay();
+        },
+        fail: () => {
+          // 跳转失败也要隐藏
+          this.hideLoadingOverlay();
         }
-      }, 1000); // 延迟1秒让用户看到成功提示
+      });
 
     } catch (error) {
       // 隐藏 loading overlay

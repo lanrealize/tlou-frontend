@@ -74,7 +74,7 @@ Page({
     this.getSafeAreaInfo();
     this.setupStoreBindings();
     
-    const { circleId, inviteCode, preloaded, preloadFailed, source } = options;
+    const { circleId, inviteCode, preloaded, preloadFailed, source, showCreateSuccess } = options;
     
     if (!circleId) {
       util.showToast('朋友圈ID不能为空');
@@ -87,6 +87,11 @@ Page({
       circleId,
       inviteCode: inviteCode || ''
     });
+    
+    // 如果是创建成功后跳转过来，显示成功提示
+    if (showCreateSuccess === 'true') {
+      wx.showToast({ title: '创建成功', icon: 'success', duration: 1000 });
+    }
     
     // 加载朋友圈数据
     if (preloaded === 'true') {
