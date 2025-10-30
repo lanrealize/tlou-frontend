@@ -874,5 +874,99 @@ Page({
         showCancel: false
       });
     }
+  },
+
+  // 删除朋友圈（仅限创建者）
+  async deleteCircle() {
+    const { circle } = this.data;
+    
+    if (!circle) {
+      wx.showToast({
+        title: '朋友圈信息错误',
+        icon: 'none'
+      });
+      return;
+    }
+
+    const confirm = await util.showConfirm(
+      `确定要删除朋友圈"${circle.name || '未命名朋友圈'}"吗？\n\n删除后所有成员将无法访问，此操作不可撤销。`,
+      '删除朋友圈'
+    );
+    if (!confirm) return;
+
+    try {
+      wx.showLoading({ title: '删除中...' });
+      
+      const res = await api.circles.delete(this.data.circleId);
+      
+      wx.hideLoading();
+      
+      if (res.success) {
+        wx.showToast({
+          title: '已删除朋友圈',
+          icon: 'success',
+          duration: 2000
+        });
+
+        // 延迟跳转到主页，让用户看到成功提示
+        setTimeout(() => {
+          wx.reLaunch({
+            url: '/pages/main/main',
+            fail: () => {
+              // 如果reLaunch失败，尝试navigateBack到上一页
+              wx.navigateBack({
+                fail: () => {
+                  // 最后的保底方案
+                  wx.switchTab({
+                    url: '/pages/main/main'
+                  });
+                }
+              });
+            }
+          });
+        }, 1500);
+
+      } else {
+        throw new Error(res.message || '删除朋友圈失败');
+      }
+
+    } catch (error) {
+      wx.hideLoading();
+      
+      wx.showModal({
+        title: '删除失败',
+        content: error.message || '删除朋友圈失败，请稍后重试',
+        showCancel: false
+      });
+    }
+  },
+
+  // 分享功能 - 邀请成员
+  async onShareAppMessage() {
+    const { circle, circleId } = this.data;
+    
+    if (!circle) {
+      console.warn('⚠️ 朋友圈信息不存在');
+      return null;
+    }
+    
+    // 获取邀请码
+    let inviteCodeParam = '';
+    try {
+      const res = await api.circles.getInviteCode(circleId);
+      const inviteCode = res.data.inviteCode;
+      if (inviteCode) {
+        inviteCodeParam = `&inviteCode=${inviteCode}`;
+      }
+    } catch (error) {
+      console.error('获取邀请码失败:', error);
+      wx.showToast({ title: '分享失败，请稍后重试', icon: 'none' });
+      return null;
+    }
+    
+    return {
+      title: `邀请你加入"${circle.name}"朋友圈`,
+      path: `/pages/details/details?circleId=${circleId}${inviteCodeParam}`,
+    };
   }
 });

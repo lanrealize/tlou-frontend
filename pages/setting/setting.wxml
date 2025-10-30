@@ -21,7 +21,7 @@
           <text class="section-title">朋友圈成员管理</text>
           <text class="section-subtitle">管理朋友圈的所有成员信息</text>
         </view>
-        <text class="add-btn-text" bindtap="addMember" wx:if="{{isCircleOwner}}">添加</text>
+        <button class="add-btn-text" open-type="share" wx:if="{{isCircleOwner}}" hover-class="none">添加</button>
       </view>
     
     <view id="member-list" class="member-list">
@@ -31,7 +31,7 @@
                mode="aspectFill" />
         <text class="member-name">{{item.username || item.nickName || item.displayName || '未知用户'}}</text>
         <image class="member-delete-btn" 
-               wx:if="{{isCircleOwner}}"
+               wx:if="{{isCircleOwner && (item._id !== currentUser._id && item.id !== currentUser._id)}}"
                bindtap="removeMember" 
                data-member-id="{{item._id || item.id}}"
                src="/assets/icons/delete.svg"
@@ -129,6 +129,22 @@
         </view>
         <button class="leave-btn" bindtap="leaveCircle" hover-class="button-hover">
           退出
+        </button>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 创建者操作区域 - 删除朋友圈 -->
+  <view class="section-card card card-spacing" wx:if="{{isCircleOwner}}">
+    <!-- 删除朋友圈按钮 -->
+    <view class="leave-circle-section">
+      <view class="leave-circle-item">
+        <view class="leave-info">
+          <text class="leave-title">删除朋友圈</text>
+          <text class="leave-desc">删除后所有成员将无法访问，此操作不可撤销</text>
+        </view>
+        <button class="leave-btn" bindtap="deleteCircle" hover-class="button-hover">
+          删除
         </button>
       </view>
     </view>

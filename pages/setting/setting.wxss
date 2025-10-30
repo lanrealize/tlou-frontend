@@ -75,6 +75,7 @@
   color: #808080;
   font-weight: 400;
   line-height: 1.6;
+  margin-right: 20rpx;
 }
 
 .add-btn {
@@ -94,6 +95,12 @@
   border-radius: 8rpx;
   transition: background-color 0.2s ease;
   line-height: 1.5; /* 与section-title保持一致 */
+  background-color: transparent;
+  border: none;
+}
+
+.add-btn-text::after {
+  border: none;
 }
 
 .add-btn-text:hover {
@@ -287,7 +294,7 @@
   font-size: 24rpx;
   color: #FA5151;
   font-weight: 600;
-  margin-left: 20rpx;
+  margin-left: auto;
   padding: 0;
   border-radius: 0;
 }
@@ -338,6 +345,7 @@
 .applier-actions {
   display: flex;
   gap: 0rpx;
+  margin-left: auto;
 }
 
 .action-btn {
