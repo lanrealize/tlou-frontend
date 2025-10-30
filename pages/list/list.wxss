@@ -212,7 +212,14 @@
 /* 空状态样式 */
 .empty-state {
   text-align: center;
-  padding: 120rpx 40rpx;
+  padding: 350rpx 40rpx 120rpx 40rpx;
+}
+
+.empty-text {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 16rpx;
 }
 
 .empty-desc {

@@ -47,7 +47,6 @@
 
     <!-- 空状态 -->
     <view class="empty-state" wx:if="{{circles.length === 0 && !loading}}">
-      <view class="empty-icon">📋</view>
       <view class="empty-text">还没有朋友圈</view>
       <view class="empty-desc">创建或加入一个朋友圈，开始分享生活吧</view>
     </view>
