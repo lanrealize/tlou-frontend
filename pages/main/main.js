@@ -44,10 +44,10 @@ Page({
     isLoadingRecommendations: false, // 是否正在加载推荐
     recommendationsLoaded: false,   // 是否已经加载过推荐内容（用于控制只在首次自动加载）
     
-    // 朋友圈详情预加载相关
-    isPreloadingCircle: false,      // 是否正在预加载朋友圈详情
-    preloadingCircleId: '',         // 正在预加载的朋友圈ID
-    preloadedCircleData: null,      // 预加载的朋友圈数据
+    // 🎯 统一的全屏 Loading Overlay
+    showLoadingOverlay: false,      // 是否显示 loading overlay
+    loadingOverlayTitle: '',        // loading 标题
+    loadingOverlaySubtitle: '',     // loading 副标题
     
     // 安全区域信息
     safeAreaInfo: {
@@ -74,6 +74,49 @@ Page({
     // 注意：不再需要手动检查登录状态
     // MobX store会在app启动时自动检查
     // 这里通过storeBindings可以直接访问userStore的状态
+  },
+
+  // 🎯 统一的 Loading Overlay 控制方法
+  
+  /**
+   * 显示全屏 Loading Overlay
+   * @param {string} title - 标题文本
+   * @param {string} subtitle - 副标题文本（可选）
+   */
+  showLoadingOverlayWithDelay(title = '加载中', subtitle = '马上就好...', delay = 1000) {
+    // 清除之前的定时器
+    if (this._loadingTimer) {
+      clearTimeout(this._loadingTimer);
+      this._loadingTimer = null;
+    }
+    
+    // 设置延迟显示的定时器
+    this._loadingTimer = setTimeout(() => {
+      this.setData({
+        showLoadingOverlay: true,
+        loadingOverlayTitle: title,
+        loadingOverlaySubtitle: subtitle
+      });
+      this._loadingTimer = null;
+    }, delay);
+  },
+  
+  /**
+   * 隐藏全屏 Loading Overlay
+   */
+  hideLoadingOverlay() {
+    // 清除定时器（如果还在等待中）
+    if (this._loadingTimer) {
+      clearTimeout(this._loadingTimer);
+      this._loadingTimer = null;
+    }
+    
+    // 隐藏 overlay
+    this.setData({
+      showLoadingOverlay: false,
+      loadingOverlayTitle: '',
+      loadingOverlaySubtitle: ''
+    });
   },
 
   // 获取安全区域信息
@@ -344,39 +387,6 @@ Page({
     }
   },
 
-  // 用户登录/注册处理
-  handleUserAuth() {
-    // 根据当前状态执行不同的操作
-    if (this.data.loginStatus === 'unregistered') {
-      // 未注册状态，直接弹出用户信息组件
-      const app = getApp();
-      app.showUserInfoPopup({
-        reason: '请完善您的个人信息'
-      });
-    } else if (this.data.hasError) {
-      // 错误状态，提示用户重新启动
-      wx.showModal({
-        title: '登录状态异常',
-        content: '当前登录状态出错，建议重新启动小程序',
-        showCancel: true,
-        cancelText: '重试',
-        confirmText: '重启应用',
-        success: (res) => {
-          if (res.confirm) {
-            // 重启小程序
-            wx.reLaunch({ url: '/pages/main/main' });
-          } else if (res.cancel) {
-            // 重试恢复状态
-            const app = getApp();
-            const userStore = app.getUserStore();
-            userStore.initializeFromStorage();
-          }
-        }
-      });
-    }
-  },
-
-
   // ===== 创建朋友圈相关 =====
   
 
@@ -389,7 +399,8 @@ Page({
     }
 
     try {
-      wx.showLoading({ title: '创建中...', mask: true });
+      // 🎯 使用统一的 loading overlay（1秒后显示）
+      this.showLoadingOverlayWithDelay('创建朋友圈', '正在创建中...', 1000);
 
       const data = {
         name: util.generateDefaultCircleName(),
@@ -398,11 +409,12 @@ Page({
 
       const result = await api.circles.create(data);
 
-      
       // 尝试获取新创建的朋友圈ID，支持多种可能的响应格式
       const newCircleId = result.data?.circle?._id || result.data?._id || result.circle?._id;
 
-      wx.hideLoading();
+      // 隐藏 loading overlay
+      this.hideLoadingOverlay();
+      
       wx.showToast({ title: '创建成功', icon: 'success' });
 
       // 导航到朋友圈详情页面查看新创建的朋友圈
@@ -420,7 +432,8 @@ Page({
       }, 1000); // 延迟1秒让用户看到成功提示
 
     } catch (error) {
-      wx.hideLoading();
+      // 隐藏 loading overlay
+      this.hideLoadingOverlay();
 
       wx.showToast({ title: '创建失败', icon: 'error' });
     }
@@ -1019,21 +1032,9 @@ Page({
 
   // 预加载朋友圈数据并跳转（带1秒延迟判断，支持source参数）
   async preloadAndNavigateToCircleWithTimer(circleId, source = '') {
-    const startTime = Date.now();
-    let showLoadingTimer = null;
-    let isLoadingShown = false;
-
     try {
-      // 设置1秒后显示loading的定时器
-      showLoadingTimer = setTimeout(() => {
-        if (!isLoadingShown) {
-          this.setData({
-            isPreloadingCircle: true,
-            preloadingCircleId: circleId
-          });
-          isLoadingShown = true;
-        }
-      }, 1000);
+      // 🎯 使用统一的 loading overlay（1秒后显示）
+      this.showLoadingOverlayWithDelay('加载朋友圈', '正在加载中...', 1000);
 
       // 预加载朋友圈详情数据
       let targetCircle = null;
@@ -1113,28 +1114,24 @@ Page({
         postStore.currentCircleId = circleId;
       }
 
-      // 清除定时器
-      if (showLoadingTimer) {
-        clearTimeout(showLoadingTimer);
-        showLoadingTimer = null;
-      }
-
-      // 确保数据完全设置后再跳转
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // 预加载完成，跳转到详情页
-      // 🔑 关键：如果有source参数，添加到URL中
+      // 🎯 优化：直接跳转，不等待overlay消失
+      // 新页面会立即覆盖，用户感受更流畅
       const sourceParam = source ? `&source=${source}` : '';
       wx.navigateTo({
-        url: `/pages/details/details?circleId=${circleId}&preloaded=true${sourceParam}`
+        url: `/pages/details/details?circleId=${circleId}&preloaded=true${sourceParam}`,
+        success: () => {
+          // 跳转成功后立即隐藏overlay，避免返回时有残留
+          this.hideLoadingOverlay();
+        },
+        fail: () => {
+          // 跳转失败也要隐藏overlay
+          this.hideLoadingOverlay();
+        }
       });
 
     } catch (error) {
-      // 清除定时器
-      if (showLoadingTimer) {
-        clearTimeout(showLoadingTimer);
-        showLoadingTimer = null;
-      }
+      // 🎯 隐藏 loading overlay
+      this.hideLoadingOverlay();
 
       util.showToast('加载朋友圈失败');
       
@@ -1144,14 +1141,6 @@ Page({
       wx.navigateTo({
         url: `/pages/details/details?circleId=${circleId}&preloadFailed=true${sourceParam}`
       });
-    } finally {
-      // 清理预加载状态
-      if (isLoadingShown) {
-        this.setData({
-          isPreloadingCircle: false,
-          preloadingCircleId: ''
-        });
-      }
     }
   },
 

@@ -23,20 +23,8 @@
     <view class="admin-btn" wx:if="{{isAdmin && isLoggedIn}}" bindtap="goToManagement">管理员设置</view>
   </view>
 
-  <!-- 🆕 朋友圈预加载状态 - 最高优先级显示 -->
-  <view class="circle-preloading-overlay" wx:if="{{isPreloadingCircle}}">
-    <view class="preloading-bg"></view>
-    <view class="preloading-content">
-      <view class="preloading-spinner">
-        <view class="spinner-circle"></view>
-      </view>
-      <view class="preloading-title">正在加载朋友圈</view>
-      <view class="preloading-subtitle">马上就好...</view>
-    </view>
-  </view>
-
   <!-- 朋友圈数据加载中状态 -->
-  <view class="friend-circle-loading" wx:elif="{{loginStatus === 'loggedIn' && isLoadingCircles}}">
+  <view class="friend-circle-loading" wx:if="{{loginStatus === 'loggedIn' && isLoadingCircles}}">
     <view class="loading-bg"></view>
     <view class="loading-content">
       <view class="loading-spinner"></view>
@@ -71,22 +59,13 @@
     <view class="update-time">最新内容更新于： {{recentCircle.formattedTime}}</view>
   </view>
 
-  <!-- 空状态朋友圈卡片 -->
-  <view class="empty-state-card" wx:elif="{{loginStatus === 'loggedIn' && !isLoadingCircles && circles.length === 0}}">
+  <!-- 空状态朋友圈卡片 - 已登录无圈 或 未登录 -->
+  <view class="empty-state-card" wx:elif="{{!isLoadingCircles && (loginStatus !== 'loggedIn' || circles.length === 0)}}">
     <view class="empty-bg"></view>
     <view class="empty-title card-main-title">没有正在进行的朋友圈</view>
     <view class="empty-desc card-sub-title">点击"创建朋友圈"按钮，邀请朋友或扫一扫开始吧</view>
     <view class="divider"></view>
     <view class="create-btn" bindtap="createCircleDirectly">创建朋友圈</view>
-  </view>
-
-  <!-- 未登录提示卡片 -->
-  <view class="browse-tip-card" wx:elif="{{loginStatus === 'unregistered'}}">
-    <view class="empty-bg"></view>
-    <view class="empty-title card-main-title">浏览模式</view>
-    <view class="empty-desc card-sub-title">你可以浏览内容，点击感兴趣的功能时会引导登录</view>
-    <view class="divider"></view>
-    <view class="create-btn" bindtap="handleUserAuth">点击登录</view>
   </view>
 
   <!-- 创建区域和历史记录功能 -->
@@ -161,5 +140,17 @@
     bind:cancel="onUserInfoCancel"
     bind:close="onUserInfoClose"
   ></user-info-popup>
+
+  <!-- 🎯 统一的全屏 Loading Overlay -->
+  <view class="unified-loading-overlay" wx:if="{{showLoadingOverlay}}">
+    <view class="loading-overlay-bg"></view>
+    <view class="loading-overlay-content">
+      <view class="loading-overlay-spinner">
+        <view class="spinner-circle"></view>
+      </view>
+      <view class="loading-overlay-title">{{loadingOverlayTitle}}</view>
+      <view class="loading-overlay-subtitle">{{loadingOverlaySubtitle}}</view>
+    </view>
+  </view>
 
 </view>
