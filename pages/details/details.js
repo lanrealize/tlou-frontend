@@ -90,7 +90,9 @@ Page({
     
     // 如果是创建成功后跳转过来，显示成功提示
     if (showCreateSuccess === 'true') {
-      wx.showToast({ title: '创建成功', icon: 'success', duration: 1000 });
+      setTimeout(() => {
+        wx.showToast({ title: '创建成功', icon: 'success', duration: 1000 });
+      }, 1000);
     }
     
     // 加载朋友圈数据
