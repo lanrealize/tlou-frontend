@@ -58,10 +58,10 @@
       scroll-y="{{true}}"
       style="height: calc(100vh - {{navigationData.totalNavigationHeight}}px - 117rpx - 10rpx);"
       bindscrolltolower="onReachBottom"
-      enhanced="{{true}}"
+      enhanced="{{false}}"
       show-scrollbar="{{false}}"
       enable-back-to-top="{{true}}"
-      scroll-with-animation="{{true}}"
+      scroll-with-animation="{{false}}"
     >
 
       <!-- 申请加入朋友圈区域 - 已移至底部统一组件 -->
@@ -99,8 +99,10 @@
           </view>
 
           <!-- 没有更多数据提示 -->
-          <view class="no-more" wx:if="{{!hasMore && posts.length > 0}}">
+          <view class="no-more-tip" wx:if="{{!hasMore && posts.length > 0}}">
+            <view class="no-more-line"></view>
             <text class="no-more-text">没有更多动态了</text>
+            <view class="no-more-line"></view>
           </view>
         </view>
       </view>

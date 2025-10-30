@@ -46,6 +46,33 @@ view, text, image {
 /* scroll-view样式 */
 .moment-scroll-view {
   width: 100%;
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+  overflow: -moz-scrollbars-none !important;
+}
+
+/* 彻底隐藏滚动条 - 所有可能的选择器 */
+.moment-scroll-view::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+  opacity: 0 !important;
+}
+
+.moment-scroll-view ::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* 针对 scroll-view 内部的滚动元素 */
+scroll-view::-webkit-scrollbar,
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  opacity: 0 !important;
 }
 
 /* 自定义导航栏样式已移至custom-navigation组件 */
@@ -279,16 +306,36 @@ view, text, image {
   line-height: 1.5;
 }
 
-.load-more,
-.no-more {
+.load-more {
   text-align: center;
   padding: 0rpx 40rpx 40rpx 40rpx;
 }
 
-.load-more-text,
-.no-more-text {
+.load-more-text {
   font-size: 26rpx;
   color: #999999;
+}
+
+/* 没有更多提示 - 与list页面保持一致 */
+.no-more-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 0 150rpx 0;
+  gap: 20rpx;
+}
+
+.no-more-line {
+  flex: 1;
+  height: 1rpx;
+  background-color: #f0f0f0;
+  max-width: 100rpx;
+}
+
+.no-more-text {
+  font-size: 24rpx;
+  color: #999;
+  white-space: nowrap;
 }
 
 /* ===== 发布按钮 - 已移至circle-status-action组件 ===== */
