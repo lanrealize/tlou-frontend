@@ -95,7 +95,10 @@ const circleStore = observable({
     if (!newCircle && !oldCircle) return false;
     if (!newCircle || !oldCircle) return true;
     
-    return this._generateCircleHash(newCircle) !== this._generateCircleHash(oldCircle);
+    const newHash = this._generateCircleHash(newCircle);
+    const oldHash = this._generateCircleHash(oldCircle);
+    
+    return newHash !== oldHash;
   },
 
   /**
@@ -128,39 +131,41 @@ const circleStore = observable({
     const hasChanged = this._isCircleChanged(formattedCircle, this.recentCircle);
     
     if (!hasChanged) {
-      console.log('💾 [circleStore] 数据未变化，跳过更新');
       return false;
     }
     
-    console.log('🔄 [circleStore] 数据已变化，准备更新', {
-      withAnimation,
-      oldId: this.recentCircle?._id,
-      newId: formattedCircle?._id
-    });
-    
     if (withAnimation && this.recentCircle) {
-      // 有动画：先标记正在更新，触发淡出
-      this.isUpdating = true;
+      // 有动画：先标记正在更新，触发淡出（参考 circle-status-action 动画时长）
+      action(() => {
+        this.isUpdating = true;
+      })();
       
-      // 等待淡出动画完成（500ms）
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // 等待淡出动画完成（250ms transform + 50ms buffer = 300ms）
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      // 更新数据
-      this.recentCircle = formattedCircle;
+      // 更新数据（使用 action 包裹确保 MobX 追踪）
+      action(() => {
+        this.recentCircle = formattedCircle;
+      })();
       
       // 短暂延迟后结束更新状态，触发淡入
       await new Promise(resolve => setTimeout(resolve, 50));
-      this.isUpdating = false;
+      action(() => {
+        this.isUpdating = false;
+      })();
     } else {
-      // 无动画：直接更新
-      this.recentCircle = formattedCircle;
-      this.isUpdating = false;
+      // 无动画：直接更新（使用 action 包裹）
+      action(() => {
+        this.recentCircle = formattedCircle;
+        this.isUpdating = false;
+      })();
     }
     
-    // 更新时间戳
-    this.lastUpdateTime = Date.now();
+    // 更新时间戳（使用 action 包裹）
+    action(() => {
+      this.lastUpdateTime = Date.now();
+    })();
     
-    console.log('✅ [circleStore] 更新完成');
     return true;
   },
 
@@ -179,23 +184,12 @@ const circleStore = observable({
     // 如果身份变化了，强制刷新（无动画，显示 loading）
     const userChanged = this.currentUserId && currentUserId !== this.currentUserId;
     if (userChanged) {
-      console.log('👤 [circleStore] 检测到身份变化，强制刷新', {
-        oldUserId: this.currentUserId,
-        newUserId: currentUserId
-      });
       forceUpdate = true;
       withAnimation = false;  // 身份变化时使用 loading 而非动画
     }
     
     // 更新当前用户ID
     this.currentUserId = currentUserId;
-    
-    console.log('🔄 [circleStore] 加载最近朋友圈', {
-      forceUpdate,
-      withAnimation,
-      hasCache: !!this.recentCircle,
-      userChanged
-    });
     
     // 强制更新时显示loading
     if (forceUpdate) {
@@ -210,8 +204,16 @@ const circleStore = observable({
       // 保存所有朋友圈（备用）
       this.circles = circles;
       
-      // 获取最近活动的朋友圈（第一个）
-      const newRecentCircle = circles.length > 0 ? circles[0] : null;
+      // 🔧 按最近活动时间排序（确保最新的排在前面）
+      const sortedCircles = [...circles].sort((a, b) => {
+        const timeA = a.latestPost?.createdAt || a.createdAt || 0;
+        const timeB = b.latestPost?.createdAt || b.createdAt || 0;
+        // 降序排列（最新的在前）
+        return new Date(timeB) - new Date(timeA);
+      });
+      
+      // 获取最近活动的朋友圈（排序后的第一个）
+      const newRecentCircle = sortedCircles.length > 0 ? sortedCircles[0] : null;
       
       // 设置数据（带动画）
       const wasUpdated = await this.setRecentCircle(
@@ -226,7 +228,6 @@ const circleStore = observable({
         this.setStatus(CIRCLE_STATUS.EMPTY);
       }
       
-      console.log(`✅ [circleStore] 加载完成，${wasUpdated ? '已更新UI' : 'UI无变化'}`);
       return { success: true, updated: wasUpdated };
       
     } catch (error) {

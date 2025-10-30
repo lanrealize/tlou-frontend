@@ -149,16 +149,19 @@ view, text, image {
   box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   
-  /* 🎬 切换动画 */
+  /* 🎬 切换动画 - 参考 circle-status-action */
   opacity: 1;
-  transform: scale(1);
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  transform: translateY(0);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.25s ease;
 }
 
-/* 🎬 更新中状态（淡出） */
+/* 🎬 更新中状态（淡出下沉） */
 .friend-circle-card.updating {
   opacity: 0;
-  transform: scale(0.98);
+  transform: translateY(20rpx);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 1, 1), 
+              opacity 0.2s ease;
 }
 
 .card-bg {
@@ -345,7 +348,7 @@ view, text, image {
 /* 视频激活状态：增强阴影效果 + 更大的圆角 */
 .empty-state-card.video-active {
   box-shadow: 0px 8rpx 24rpx rgba(0, 0, 0, 0.15);
-  border-radius: 28rpx;  /* 视频显示时圆角更大 */
+  border-radius: 22rpx;  /* 视频显示时圆角更大 */
 }
 
 /* 🎬 视频背景层（z-index: 0，最底层） */
@@ -364,7 +367,7 @@ view, text, image {
 
 .empty-card-video-bg.fade-in {
   opacity: 1;                /* 淡入：完全显示 */
-  border-radius: 28rpx;      /* 淡入时圆角变大 */
+  border-radius: 22rpx;      /* 淡入时圆角变大 */
 }
 
 .empty-card-video-bg.fade-out {
@@ -407,7 +410,7 @@ view, text, image {
 
 .empty-card-glass-overlay.fade-in {
   opacity: 1;
-  border-radius: 28rpx;      /* 淡入时圆角变大 */
+  border-radius: 22rpx;      /* 淡入时圆角变大 */
 }
 
 .empty-card-glass-overlay.fade-out {

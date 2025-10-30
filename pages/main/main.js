@@ -301,14 +301,12 @@ Page({
       
       if (isFirstLoad) {
         // 首次加载：强制刷新（显示loading）
-        console.log('🆕 [首次加载] 强制刷新并显示loading');
         await this.forceRefreshCircle();
       } else {
         // 其他情况：静默检查，让 circleStore 自动决定
         // - 身份变化了 → circleStore 自动强制刷新
         // - 数据变化了 → circleStore 带动画更新
         // - 没有变化 → circleStore 不更新 UI
-        console.log('🔄 [智能刷新] circleStore 检测变化并决定是否更新');
         await this.loadRecentCircle(false, true);
       }
     }
