@@ -6,6 +6,24 @@ const util = require('../../utils/util');
 const navigationHelper = require('../../utils/navigationHelper');
 const { checkAndHandle } = require('../../utils/checkUserActionPermission');
 
+// 🎬 视频动画状态机常量（定义在Page外部）
+const VIDEO_STATES = {
+  IDLE: 'idle',
+  LOADING: 'loading',
+  READY: 'ready',
+  FADE_IN: 'fade_in',
+  PLAYING: 'playing',
+  FADE_OUT: 'fade_out'
+};
+
+// 🎬 视频动画配置（定义在Page外部）
+const VIDEO_CONFIG = {
+  CREATE_DELAY: 300,           // 创建视频元素延迟（ms）
+  WAIT_BEFORE_FADE_IN: 2000,   // 等待2秒后淡入
+  FADE_DURATION: 2000,         // 淡入/淡出动画时长（2秒）
+  HIDE_FADE_DURATION: 500      // 页面隐藏时的快速淡出（500ms）
+};
+
 Page({
   // 使用MobX状态管理行为
   behaviors: [storeBindingsBehavior],
@@ -60,8 +78,23 @@ Page({
     userInfoPopupVisible: false,
     userInfoPopupReason: '',
     userInfoPopupIntent: '',
-    userInfoPopupCircleId: ''
+    userInfoPopupCircleId: '',
+    
+    // 🎬 空状态卡片视频动画
+    emptyCardVideoState: 'idle',       // 视频状态: idle/loading/ready/fade_in/playing/fade_out
+    showEmptyCardVideo: false,          // 是否显示视频元素
+    emptyCardVideoVisible: false,       // 视频是否可见（透明度控制）
+    emptyCardVideoFastFade: false       // 是否使用快速淡出（页面隐藏时）
   },
+  
+  // 🎬 视频动画定时器
+  _allowVideoAnimation: false,
+  _videoAnimationTimer: null,
+  _createVideoTimer: null,
+  _playVideoTimer: null,  // 淡入1秒后开始播放的定时器
+  
+  // 🎬 视频上下文
+  _emptyCardVideoContext: null,
 
   onLoad(options) {
     
@@ -227,6 +260,14 @@ Page({
     // 🔧 确保登录状态检查完成后再加载数据（包括推荐朋友圈）
     // 注意：由于userInfo页面已改为弹出组件，不再需要检查prevPage
     this.waitForLoginCheckAndLoadData(null);
+    
+    // 🎬 初始化视频动画（空状态卡片）
+    this._initEmptyCardVideoAnimation();
+  },
+  
+  onHide() {
+    // 🎬 页面隐藏时优雅淡出，而不是立即清除
+    this._gracefullyStopVideoAnimation();
   },
 
   // 缓存工具方法
@@ -1307,6 +1348,250 @@ Page({
         fail: reject
       });
     });
+  },
+  
+  // ========================================
+  // 🎬 空状态卡片视频动画控制方法
+  // ========================================
+  
+  /**
+   * 初始化视频动画
+   * 页面显示时调用，延迟创建视频元素并准备动画
+   */
+  _initEmptyCardVideoAnimation() {
+    // 🔧 智能检测：如果有残留的视频状态（快速切换页面导致），立即清理
+    if (this.data.showEmptyCardVideo || this.data.emptyCardVideoState !== VIDEO_STATES.IDLE) {
+      this._stopEmptyCardVideoAnimation();
+    }
+    
+    this._allowVideoAnimation = false;
+    this._resetEmptyCardVideoState();
+    
+    // 延迟创建视频元素（避免渲染时序问题）
+    this._createVideoTimer = setTimeout(() => {
+      this.setData({ 
+        emptyCardVideoState: VIDEO_STATES.LOADING, 
+        showEmptyCardVideo: true 
+      }, () => {
+        // 创建视频上下文
+        this._emptyCardVideoContext = wx.createVideoContext('emptyCardVideo', this);
+        
+        // 立即允许动画（视频元素已创建，可以开始动画流程）
+        this._allowVideoAnimation = true;
+      });
+    }, VIDEO_CONFIG.CREATE_DELAY);
+  },
+  
+  /**
+   * 触发视频淡入动画
+   * 当视频准备就绪时调用（onVideoCanPlay事件）
+   */
+  _triggerEmptyCardVideoAnimation() {
+    // 防重复触发：检查标志位、定时器、状态
+    if (!this._allowVideoAnimation || 
+        this._videoAnimationTimer || 
+        this.data.emptyCardVideoState !== VIDEO_STATES.LOADING) {
+      return;
+    }
+    
+    // 标记为准备状态
+    this.setData({ emptyCardVideoState: VIDEO_STATES.READY });
+    
+    // 等待2秒后开始淡入
+    this._videoAnimationTimer = setTimeout(() => {
+      this.setData({ 
+        emptyCardVideoState: VIDEO_STATES.FADE_IN, 
+        emptyCardVideoVisible: true 
+      });
+      
+      // 淡入1秒后开始播放视频（淡入到一半）
+      this._playVideoTimer = setTimeout(() => {
+        if (this._emptyCardVideoContext) {
+          this._emptyCardVideoContext.play();
+        }
+      }, VIDEO_CONFIG.FADE_DURATION / 2);  // 2秒淡入的一半 = 1秒
+      
+      // 淡入动画完成后进入播放状态
+      this._videoAnimationTimer = setTimeout(() => {
+        this.setData({ emptyCardVideoState: VIDEO_STATES.PLAYING });
+        this._videoAnimationTimer = null;
+      }, VIDEO_CONFIG.FADE_DURATION);
+    }, VIDEO_CONFIG.WAIT_BEFORE_FADE_IN);
+  },
+  
+  /**
+   * 视频淡出动画
+   * @param {number} duration - 淡出时长（毫秒），默认使用 FADE_DURATION
+   */
+  _fadeOutEmptyCardVideo(duration = VIDEO_CONFIG.FADE_DURATION) {
+    // 判断是否需要快速淡出
+    const isFastFade = duration < VIDEO_CONFIG.FADE_DURATION;
+    
+    this.setData({ 
+      emptyCardVideoState: VIDEO_STATES.FADE_OUT, 
+      emptyCardVideoVisible: false,
+      emptyCardVideoFastFade: isFastFade  // 设置快速淡出标志
+    });
+    
+    // 淡出完成后回到初始状态并移除视频元素
+    this._videoAnimationTimer = setTimeout(() => {
+      this.setData({ 
+        emptyCardVideoState: VIDEO_STATES.IDLE, 
+        showEmptyCardVideo: false,
+        emptyCardVideoFastFade: false  // 重置快速淡出标志
+      });
+      this._videoAnimationTimer = null;
+    }, duration);
+  },
+  
+  /**
+   * 重置视频状态
+   * 清理所有定时器并恢复初始状态
+   */
+  _resetEmptyCardVideoState() {
+    this._clearAllVideoTimers();
+    this.setData({ 
+      emptyCardVideoState: VIDEO_STATES.IDLE, 
+      showEmptyCardVideo: false, 
+      emptyCardVideoVisible: false,
+      emptyCardVideoFastFade: false
+    });
+    this._allowVideoAnimation = false;
+  },
+  
+  /**
+   * 停止视频动画
+   * 页面隐藏时立即调用，清理资源
+   */
+  _stopEmptyCardVideoAnimation() {
+    this._allowVideoAnimation = false;
+    this.setData({ 
+      showEmptyCardVideo: false,
+      emptyCardVideoVisible: false,
+      emptyCardVideoState: VIDEO_STATES.IDLE,
+      emptyCardVideoFastFade: false
+    });
+    this._clearAllVideoTimers();
+  },
+  
+  /**
+   * 清理所有视频相关定时器
+   */
+  _clearAllVideoTimers() {
+    [this._videoAnimationTimer, this._createVideoTimer, this._playVideoTimer].forEach(timer => {
+      if (timer) clearTimeout(timer);
+    });
+    this._videoAnimationTimer = null;
+    this._createVideoTimer = null;
+    this._playVideoTimer = null;
+  },
+  
+  /**
+   * 优雅地停止视频动画（页面隐藏时调用）
+   * 触发快速淡出动画后再清理资源
+   */
+  _gracefullyStopVideoAnimation() {
+    // 如果视频正在显示中（不是idle状态），触发快速淡出动画
+    if (this.data.emptyCardVideoState !== VIDEO_STATES.IDLE && 
+        this.data.showEmptyCardVideo) {
+      // 停止所有进行中的定时器
+      this._clearAllVideoTimers();
+      this._allowVideoAnimation = false;
+      
+      // 暂停视频播放
+      if (this._emptyCardVideoContext) {
+        this._emptyCardVideoContext.pause();
+      }
+      
+      // 触发快速淡出（500ms）
+      this._fadeOutEmptyCardVideo(VIDEO_CONFIG.HIDE_FADE_DURATION);
+    } else {
+      // 如果本来就是idle状态，直接清理
+      this._stopEmptyCardVideoAnimation();
+    }
+  },
+  
+  /**
+   * 视频事件：开始加载
+   */
+  onEmptyCardVideoLoadStart() {
+    // 视频开始加载
+  },
+  
+  /**
+   * 视频事件：元数据加载完成
+   */
+  onEmptyCardVideoLoadedMetadata(e) {
+    // 🔧 立即多次暂停，确保视频不会自动播放
+    if (this._emptyCardVideoContext) {
+      this._emptyCardVideoContext.pause();
+      // 延迟再次暂停，以防首次暂停不生效
+      setTimeout(() => {
+        if (this._emptyCardVideoContext && this.data.emptyCardVideoState === VIDEO_STATES.LOADING) {
+          this._emptyCardVideoContext.pause();
+        }
+      }, 50);
+    }
+    
+    // 触发动画序列
+    this._triggerEmptyCardVideoAnimation();
+  },
+  
+  /**
+   * 视频事件：视频可以播放
+   */
+  onEmptyCardVideoCanPlay() {
+    // canplay时也暂停，确保视频不会自动播放
+    if (this._emptyCardVideoContext && this.data.emptyCardVideoState === VIDEO_STATES.LOADING) {
+      this._emptyCardVideoContext.pause();
+      this._triggerEmptyCardVideoAnimation();
+    }
+  },
+  
+  /**
+   * 视频事件：视频开始播放
+   */
+  onEmptyCardVideoPlay() {
+    // 🔧 如果不是在 FADE_IN 或 PLAYING 状态，说明是意外播放，立即暂停
+    if (this.data.emptyCardVideoState !== VIDEO_STATES.FADE_IN && 
+        this.data.emptyCardVideoState !== VIDEO_STATES.PLAYING) {
+      if (this._emptyCardVideoContext) {
+        this._emptyCardVideoContext.pause();
+      }
+    }
+  },
+  
+  /**
+   * 视频事件：视频暂停
+   */
+  onEmptyCardVideoPause() {
+    // 视频暂停事件
+  },
+  
+  /**
+   * 视频事件：视频缓冲中
+   */
+  onEmptyCardVideoWaiting() {
+    // 视频缓冲事件
+  },
+  
+  /**
+   * 视频事件：视频播放结束
+   */
+  onEmptyCardVideoEnded() {
+    // 只有在允许动画且处于播放状态时才淡出
+    if (this._allowVideoAnimation && 
+        this.data.emptyCardVideoState === VIDEO_STATES.PLAYING) {
+      this._fadeOutEmptyCardVideo();
+    }
+  },
+  
+  /**
+   * 视频事件：视频加载错误
+   */
+  onEmptyCardVideoError(e) {
+    console.error('🎬 [空状态卡片] 视频加载失败:', e.detail);
+    this._resetEmptyCardVideoState();
   },
 
 });

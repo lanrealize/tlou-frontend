@@ -60,12 +60,39 @@
   </view>
 
   <!-- 空状态朋友圈卡片 - 已登录无圈 或 未登录 -->
-  <view class="empty-state-card" wx:elif="{{!isLoadingCircles && (loginStatus !== 'loggedIn' || circles.length === 0)}}">
-    <view class="empty-bg"></view>
-    <view class="empty-title card-main-title">没有正在进行的朋友圈</view>
-    <view class="empty-desc card-sub-title">点击"创建朋友圈"按钮，邀请朋友或扫一扫开始吧</view>
-    <view class="divider"></view>
-    <view class="create-btn" bindtap="createCircleDirectly">创建朋友圈</view>
+  <view class="empty-state-card {{emptyCardVideoVisible ? 'video-active' : 'video-inactive'}}" wx:elif="{{!isLoadingCircles && (loginStatus !== 'loggedIn' || circles.length === 0)}}">
+    <!-- 视频层：绝对定位，铺满整个卡片 -->
+    <video 
+      wx:if="{{showEmptyCardVideo}}"
+      id="emptyCardVideo"
+      class="empty-card-video-bg {{emptyCardVideoVisible ? 'fade-in' : (emptyCardVideoFastFade ? 'fade-out-fast' : 'fade-out')}}"
+      src="https://images.wltech-service.site/PhotoMemories-0.3.mp4"
+      muted
+      show-center-play-btn="{{false}}"
+      show-play-btn="{{false}}"
+      controls="{{false}}"
+      object-fit="cover"
+      enable-progress-gesture="{{false}}"
+      bindloadstart="onEmptyCardVideoLoadStart"
+      bindloadedmetadata="onEmptyCardVideoLoadedMetadata"
+      bindcanplay="onEmptyCardVideoCanPlay"
+      bindplay="onEmptyCardVideoPlay"
+      bindpause="onEmptyCardVideoPause"
+      bindended="onEmptyCardVideoEnded"
+      binderror="onEmptyCardVideoError"
+      bindwaiting="onEmptyCardVideoWaiting"
+    ></video>
+    
+    <!-- 毛玻璃层：绝对定位，在视频上方 -->
+    <view wx:if="{{showEmptyCardVideo}}" class="empty-card-glass-overlay {{emptyCardVideoVisible ? 'fade-in' : (emptyCardVideoFastFade ? 'fade-out-fast' : 'fade-out')}}"></view>
+    
+    <!-- 内容层：相对定位，在最上层 -->
+    <view class="empty-content">
+      <view class="empty-title card-main-title {{emptyCardVideoVisible ? 'text-light' : 'text-dark'}}">没有正在进行的朋友圈</view>
+      <view class="empty-desc card-sub-title {{emptyCardVideoVisible ? 'text-light' : 'text-dark'}}">点击"创建朋友圈"按钮，邀请朋友或扫一扫开始吧</view>
+      <view class="divider {{emptyCardVideoVisible ? 'divider-light' : 'divider-dark'}}"></view>
+      <view class="create-btn {{emptyCardVideoVisible ? 'btn-light' : 'btn-dark'}}" bindtap="createCircleDirectly">创建朋友圈</view>
+    </view>
   </view>
 
   <!-- 创建区域和历史记录功能 -->
