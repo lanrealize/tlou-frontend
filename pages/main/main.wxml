@@ -73,6 +73,8 @@
       controls="{{false}}"
       object-fit="cover"
       enable-progress-gesture="{{false}}"
+      poster=""
+      preload="auto"
       bindloadstart="onEmptyCardVideoLoadStart"
       bindloadedmetadata="onEmptyCardVideoLoadedMetadata"
       bindcanplay="onEmptyCardVideoCanPlay"
