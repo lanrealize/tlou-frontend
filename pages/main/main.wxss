@@ -427,6 +427,55 @@ view, text, image {
   transition: opacity 0.5s ease, border-radius 0.5s ease;  /* 500ms快速淡出 */
 }
 
+/* 🔄 刷新indicator通用样式 */
+.refreshing-indicator {
+  position: absolute;
+  z-index: 10;  /* 在所有内容之上 */
+  opacity: 0;
+  animation: fadeIn 0.2s ease forwards;  /* 快速淡入 */
+}
+
+/* 右上角位置 - 和第一行文字垂直居中对齐（空状态卡片） */
+.refreshing-indicator-top {
+  top: 36rpx;  /* 和 .empty-content 的 padding-top 对齐 */
+  right: 40rpx;
+}
+
+/* 右下角位置 - 和第三行用户头像垂直居中对齐（最近朋友圈卡片） */
+.refreshing-indicator-bottom {
+  bottom: 34rpx;  /* 和 .friend-circle-card 的 padding-bottom 对齐 */
+  right: 40rpx;
+}
+
+.refresh-icon {
+  width: 24rpx;
+  height: 24rpx;
+  display: block;
+}
+
+/* 旋转动画 */
+.refresh-icon.rotating {
+  animation: rotate 1s linear infinite;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* 🎬 内容层（z-index: 2，最上层） */
 .empty-content {
   position: absolute;

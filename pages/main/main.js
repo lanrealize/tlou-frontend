@@ -233,6 +233,7 @@ Page({
         isLoadingCircles: 'isLoading',            // 是否正在加载
         isUpdatingCircle: 'isUpdating',           // 朋友圈卡片是否正在更新（用于动画）
         isEmptyCardUpdating: 'isEmptyCardUpdating', // 空状态卡片是否正在更新（用于动画）
+        isRefreshing: 'isRefreshing',             // 是否正在刷新（显示旋转icon）
         hasRecentCircle: 'hasRecentCircle'        // 是否有最近朋友圈
       },
       actions: {
@@ -242,7 +243,7 @@ Page({
     });
   },
 
-  onShow() {
+  async onShow() {
     // 注册用户信息弹出层回调
     const app = getApp();
     app.registerUserInfoPopupCallback((config) => {
@@ -269,11 +270,15 @@ Page({
       this.setData({ isLoadingCircles: true });
     }
     
-    // 🔧 确保登录状态检查完成后再加载数据（包括推荐朋友圈）
-    this.waitForLoginCheckAndLoadData();
+    // 🎯 优雅的串行逻辑：先加载数据，再根据结果决定是否初始化视频
+    // 1. 等待数据加载完成（决定显示哪种卡片）
+    await this.waitForLoginCheckAndLoadData();
     
-    // 🎬 初始化视频动画（空状态卡片）
-    this._initEmptyCardVideoAnimation();
+    // 2. 如果是空状态卡片，再初始化视频动画
+    // 此时卡片一定已经渲染，视频元素存在，不会有时序问题 ✅
+    if (this.data.loginStatus !== 'loggedIn' || !this.data.hasRecentCircle) {
+      this._initEmptyCardVideoAnimation();
+    }
   },
   
   onHide() {
@@ -1101,7 +1106,7 @@ Page({
    * 页面显示时调用，延迟创建视频元素并准备动画
    */
   _initEmptyCardVideoAnimation() {
-    // 🔧 智能检测：如果有残留的视频状态（快速切换页面导致），立即清理
+    // 清理可能残留的视频状态
     if (this.data.showEmptyCardVideo || this.data.emptyCardVideoState !== VIDEO_STATES.IDLE) {
       this._stopEmptyCardVideoAnimation();
     }
@@ -1109,16 +1114,14 @@ Page({
     this._allowVideoAnimation = false;
     this._resetEmptyCardVideoState();
     
-    // 延迟创建视频元素（避免渲染时序问题）
+    // 延迟创建视频上下文，等待小程序框架完成DOM更新
     this._createVideoTimer = setTimeout(() => {
       this.setData({ 
         emptyCardVideoState: VIDEO_STATES.LOADING, 
         showEmptyCardVideo: true 
       }, () => {
-        // 创建视频上下文
+        // 创建视频上下文（此时视频元素已渲染）
         this._emptyCardVideoContext = wx.createVideoContext('emptyCardVideo', this);
-        
-        // 立即允许动画（视频元素已创建，可以开始动画流程）
         this._allowVideoAnimation = true;
       });
     }, VIDEO_CONFIG.CREATE_DELAY);
