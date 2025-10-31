@@ -33,19 +33,16 @@
   </view>
 
   <!-- 朋友圈卡片 - 使用 circleStore 的数据 -->
-  <view id="recent-circle-card" class="friend-circle-card {{isUpdatingCircle ? 'updating' : ''}}" wx:elif="{{loginStatus === 'loggedIn' && !isLoadingCircles && hasRecentCircle}}" bindtap="goToRecentCircle">
-    <!-- 🔄 刷新indicator - 右下角，和第三行用户头像垂直居中对齐 -->
-    <view class="refreshing-indicator refreshing-indicator-bottom" wx:if="{{isRefreshing}}">
-      <image class="refresh-icon rotating" src="/assets/icons/refresh.svg" mode="aspectFit"></image>
-    </view>
-    
+  <view id="recent-circle-card" class="friend-circle-card" wx:elif="{{loginStatus === 'loggedIn' && !isLoadingCircles && hasRecentCircle}}" bindtap="goToRecentCircle">
     <view class="card-title card-main-title">最近的朋友圈</view>
     <view class="status-tag">
       <text>查看详情</text>
       <image class="status-icon" src="/assets/icons/right.svg" mode="aspectFit"></image>
     </view>
-    <view class="update-time">最新内容更新于： {{recentCircle.formattedTime}}</view>
-    <view class="user-count">
+    <!-- 🎬 第2行 - 错落动画（先刷新） -->
+    <view class="update-time {{isUpdatingCircleLine1 ? 'line-updating' : ''}}">最新内容更新于： {{recentCircle.formattedTime}}</view>
+    <!-- 🎬 第3行 - 错落动画（后刷新，延迟150ms） -->
+    <view class="user-count {{isUpdatingCircleLine2 ? 'line-updating line-updating-delay' : ''}}">
       <text>有 {{recentCircle.memberCount}} 名用户在内</text>
       <view class="avatar-group">
         <image class="avatar-small-1" wx:if="{{recentCircle.members && recentCircle.members.length > 0}}" src="{{recentCircle.members[0].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
@@ -59,16 +56,15 @@
           <text class="avatar-more-text">+{{recentCircle.members.length - 5}}</text>
         </view>
       </view>
+      <!-- 🔄 刷新indicator - 和头像垂直居中对齐 -->
+      <view class="refreshing-indicator-inline" wx:if="{{isRefreshing}}">
+        <image class="refresh-icon rotating" src="/assets/icons/refresh.svg" mode="aspectFit"></image>
+      </view>
     </view>
   </view>
 
   <!-- 空状态朋友圈卡片 - 已登录无圈 或 未登录 -->
   <view class="empty-state-card {{emptyCardVideoVisible ? 'video-active' : 'video-inactive'}} {{isEmptyCardUpdating ? 'updating' : ''}}" wx:elif="{{!isLoadingCircles && (loginStatus !== 'loggedIn' || !hasRecentCircle)}}">
-    <!-- 🔄 刷新indicator - 右上角，和第一行文字垂直居中对齐 -->
-    <view class="refreshing-indicator refreshing-indicator-top" wx:if="{{isRefreshing}}">
-      <image class="refresh-icon rotating" src="/assets/icons/refresh.svg" mode="aspectFit"></image>
-    </view>
-    
     <!-- 视频层：绝对定位，铺满整个卡片 -->
     <video 
       wx:if="{{showEmptyCardVideo}}"
@@ -98,7 +94,14 @@
     
     <!-- 内容层：相对定位，在最上层 -->
     <view class="empty-content">
-      <view class="empty-title card-main-title {{emptyCardVideoVisible ? 'text-light' : 'text-dark'}}">没有正在进行的朋友圈</view>
+      <!-- 标题行 - 包含标题和refreshing indicator -->
+      <view class="empty-title-row">
+        <view class="empty-title card-main-title {{emptyCardVideoVisible ? 'text-light' : 'text-dark'}}">没有正在进行的朋友圈</view>
+        <!-- 🔄 刷新indicator - 和标题垂直居中对齐 -->
+        <view class="refreshing-indicator-inline" wx:if="{{isRefreshing}}">
+          <image class="refresh-icon rotating" src="/assets/icons/refresh.svg" mode="aspectFit"></image>
+        </view>
+      </view>
       <view class="empty-desc card-sub-title {{emptyCardVideoVisible ? 'text-light' : 'text-dark'}}">点击"创建朋友圈"按钮，开始一段有陪伴的旅程</view>
       <view class="divider {{emptyCardVideoVisible ? 'divider-light' : 'divider-dark'}}"></view>
       <view class="create-btn {{emptyCardVideoVisible ? 'btn-light' : 'btn-dark'}}" bindtap="createCircleDirectly">创建朋友圈</view>

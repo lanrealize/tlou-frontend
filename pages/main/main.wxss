@@ -138,11 +138,34 @@ view, text, image {
   align-items: center;
   justify-content: center;
   
-  /* 🎬 Loading 卡片也参与动画系统 */
+  /* 🎬 Loading 卡片动画系统 */
   opacity: 1;
   transform: translateY(0);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
               opacity 0.25s ease;
+  
+  /* 🎬 入场动画：从透明+下沉状态淡入 */
+  animation: cardFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* 🎬 卡片淡入动画 */
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 🎬 Loading卡片消失动画 */
+.friend-circle-loading.updating {
+  opacity: 0;
+  transform: translateY(20rpx);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 1, 1), 
+              opacity 0.2s ease;
 }
 
 /* 朋友圈卡片 - Flex 布局 */
@@ -164,14 +187,37 @@ view, text, image {
   transform: translateY(0);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
               opacity 0.25s ease;
+  
+  /* 🎬 入场动画：从透明+下沉状态淡入 */
+  animation: cardFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  
+  /* 🔧 性能优化：防止闪烁 */
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
-/* 🎬 更新中状态（淡出下沉） */
-.friend-circle-card.updating {
+/* 🎬 行级错落动画 - 正常状态 */
+.update-time,
+.user-count {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  /* 🔧 性能优化 */
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* 🎬 行级错落动画 - 更新中（淡出+轻微上移） */
+.line-updating {
   opacity: 0;
-  transform: translateY(20rpx);
-  transition: transform 0.25s cubic-bezier(0.4, 0, 1, 1), 
-              opacity 0.2s ease;
+  transform: translate3d(0, -8rpx, 0);  /* 轻微上移 */
+}
+
+/* 🎬 第2行延迟动画（150ms延迟） */
+.line-updating-delay {
+  transition-delay: 0.15s;  /* 150ms延迟，营造错落感 */
 }
 
 .card-title {
@@ -179,6 +225,7 @@ view, text, image {
 }
 
 .user-count {
+  position: relative;  /* 为绝对定位的 indicator 提供参照 */
   flex-shrink: 0;
   font-size: 24rpx;
   color: #808080;
@@ -335,6 +382,9 @@ view, text, image {
               opacity 0.25s ease,
               box-shadow 2s ease, 
               border-radius 2s ease;
+  
+  /* 🎬 入场动画：从透明+下沉状态淡入 */
+  animation: cardFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 /* 视频激活状态：增强阴影效果 + 更大的圆角 */
@@ -432,7 +482,7 @@ view, text, image {
   position: absolute;
   z-index: 10;  /* 在所有内容之上 */
   opacity: 0;
-  animation: fadeIn 0.2s ease forwards;  /* 快速淡入 */
+  animation: fadeInOnly 1s ease forwards;  /* 纯淡入，无滑动 */
 }
 
 /* 右上角位置 - 和第一行文字垂直居中对齐（空状态卡片） */
@@ -447,15 +497,58 @@ view, text, image {
   right: 40rpx;
 }
 
+/* 内联样式 - 绝对定位，垂直居中对齐 */
+.refreshing-indicator-inline {
+  position: absolute;
+  right: 0;  /* 靠右侧 */
+  top: 50%;  /* 垂直居中 */
+  transform: translate3d(0, -50%, 0);  /* 精确垂直居中 + GPU加速 */
+  z-index: 10;  /* 在所有内容之上 */
+  opacity: 0;
+  animation: fadeInSlow 1s ease forwards;  /* 1秒慢慢淡入 */
+  display: flex;
+  align-items: center;
+  /* 🔧 性能优化：防止闪烁 */
+  will-change: opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  margin-right: 10rpx;
+}
+
 .refresh-icon {
-  width: 24rpx;
-  height: 24rpx;
+  width: 44rpx;  /* 再次增大：36rpx → 44rpx */
+  height: 44rpx;
   display: block;
+  /* 🔧 性能优化：防止闪烁 */
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);  /* 启用GPU加速 */
 }
 
 /* 旋转动画 */
 .refresh-icon.rotating {
-  animation: rotate 1s linear infinite;
+  animation: rotate 3s linear infinite;  /* 3秒一圈 */
+}
+
+/* 慢速淡入动画 - 1秒 */
+@keyframes fadeInSlow {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 纯淡入动画（无滑动） */
+@keyframes fadeInOnly {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes fadeIn {
@@ -489,6 +582,16 @@ view, text, image {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+/* 标题行容器 - 包含标题和refreshing indicator */
+.empty-title-row {
+  position: relative;  /* 为绝对定位的 indicator 提供参照 */
+  width: 100%;  /* 占据整个宽度 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .empty-title {

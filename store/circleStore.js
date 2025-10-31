@@ -29,6 +29,8 @@ const circleStore = observable({
   isUpdating: false,              // 朋友圈卡片是否正在更新（用于控制切换动画）
   isEmptyCardUpdating: false,     // 空状态卡片是否正在更新（用于控制切换动画）
   isRefreshing: false,            // 是否正在刷新（显示右上角/右下角的旋转icon）
+  isUpdatingCircleLine1: false,   // 第2行（时间）是否正在更新（错落动画）
+  isUpdatingCircleLine2: false,   // 第3行（成员）是否正在更新（错落动画，延迟150ms）
   
   // 🔧 缓存机制
   lastUpdateTime: 0,          // 上次更新时间
@@ -210,25 +212,27 @@ const circleStore = observable({
         }
         
       } else if (oldHasCircle && newHasCircle) {
-        // 🎬 同类型卡片内容变化动画（原有逻辑）
+        // 🎬 同类型卡片内容变化 - 错落动画
         
-        // 先标记正在更新，触发淡出
+        // 1. 标记两行正在更新，触发淡出（第3行延迟150ms）
         action(() => {
-          this.isUpdating = true;
+          this.isUpdatingCircleLine1 = true;  // 第2行立即淡出
+          this.isUpdatingCircleLine2 = true;  // 第3行延迟150ms淡出
         })();
         
-        // 等待淡出动画完成（250ms transform + 50ms buffer = 300ms）
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // 2. 等待淡出动画完成（250ms + 150ms延迟 + 50ms buffer = 450ms）
+        await new Promise(resolve => setTimeout(resolve, 450));
         
-        // 更新数据
+        // 3. 更新数据
         action(() => {
           this.recentCircle = formattedCircle;
         })();
         
-        // 短暂延迟后结束更新状态，触发淡入
+        // 4. 短暂延迟后结束更新状态，触发淡入（第2行先淡入，第3行延迟150ms淡入）
         await new Promise(resolve => setTimeout(resolve, 50));
         action(() => {
-          this.isUpdating = false;
+          this.isUpdatingCircleLine1 = false;  // 第2行立即淡入
+          this.isUpdatingCircleLine2 = false;  // 第3行延迟150ms淡入
         })();
       } else {
         // 其他情况：直接更新
@@ -236,6 +240,8 @@ const circleStore = observable({
           this.recentCircle = formattedCircle;
           this.isUpdating = false;
           this.isEmptyCardUpdating = false;
+          this.isUpdatingCircleLine1 = false;
+          this.isUpdatingCircleLine2 = false;
         })();
       }
     } else {
@@ -244,6 +250,8 @@ const circleStore = observable({
         this.recentCircle = formattedCircle;
         this.isUpdating = false;
         this.isEmptyCardUpdating = false;
+        this.isUpdatingCircleLine1 = false;
+        this.isUpdatingCircleLine2 = false;
       })();
     }
     

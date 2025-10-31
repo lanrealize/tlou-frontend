@@ -234,6 +234,8 @@ Page({
         isUpdatingCircle: 'isUpdating',           // 朋友圈卡片是否正在更新（用于动画）
         isEmptyCardUpdating: 'isEmptyCardUpdating', // 空状态卡片是否正在更新（用于动画）
         isRefreshing: 'isRefreshing',             // 是否正在刷新（显示旋转icon）
+        isUpdatingCircleLine1: 'isUpdatingCircleLine1', // 第2行（时间）是否正在更新
+        isUpdatingCircleLine2: 'isUpdatingCircleLine2', // 第3行（成员）是否正在更新
         hasRecentCircle: 'hasRecentCircle'        // 是否有最近朋友圈
       },
       actions: {
