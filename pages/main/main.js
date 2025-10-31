@@ -272,12 +272,15 @@ Page({
       this.setData({ isLoadingCircles: true });
     }
     
-    // 🎯 优雅的串行逻辑：先加载数据，再根据结果决定是否初始化视频
-    // 1. 等待数据加载完成（决定显示哪种卡片）
-    await this.waitForLoginCheckAndLoadData();
+    // 🎯 智能加载逻辑：朋友圈和推荐并行，但视频等待朋友圈结果
+    // 1. 并行加载数据（朋友圈和推荐同时请求）
+    const circlePromise = this.waitForLoginCheckAndLoadData();
     
-    // 2. 如果是空状态卡片，再初始化视频动画
-    // 此时卡片一定已经渲染，视频元素存在，不会有时序问题 ✅
+    // 2. 等待朋友圈加载完成，确定卡片类型
+    await circlePromise;
+    
+    // 3. 如果是空状态卡片，再初始化视频
+    // 设计意图：先显示空状态卡片（纯文字），用户看几秒后，视频再慢慢淡入
     if (this.data.loginStatus !== 'loggedIn' || !this.data.hasRecentCircle) {
       this._initEmptyCardVideoAnimation();
     }
@@ -301,16 +304,22 @@ Page({
       await app.waitForInit();
     }
     
-    // 🎯 统一的智能刷新：自动判断是否需要刷新，并用动画切换
+    // 🎯 并行加载：朋友圈和推荐同时请求，互不阻塞
+    // 但返回朋友圈的 Promise，供调用方等待（推荐不阻塞）
+    let circlePromise = Promise.resolve();
+    
     if (userStore.isLoggedIn) {
-      await this.loadRecentCircle();
+      circlePromise = this.loadRecentCircle();  // 保存 Promise
     }
     
     // 📌 公开朋友圈推荐加载（无需登录，任何用户都可以浏览）
     // 只在首次自动加载，之后需要用户手动点击刷新按钮
     if (!this.data.recommendationsLoaded) {
-      this.loadRecommendations();
+      this.loadRecommendations();  // 并行执行，不阻塞
     }
+    
+    // 返回朋友圈加载的 Promise
+    return circlePromise;
   },
 
   // ===== 创建朋友圈相关 =====

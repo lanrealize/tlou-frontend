@@ -363,6 +363,7 @@ view, text, image {
   flex-shrink: 0;
   font-size: 24rpx;
   color: #808080;
+  margin-top: 5rpx;
 }
 
 /* 空状态朋友圈卡片 */

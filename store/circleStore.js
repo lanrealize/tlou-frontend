@@ -291,8 +291,8 @@ const circleStore = observable({
         
         const newRecentCircle = sortedCircles.length > 0 ? sortedCircles[0] : null;
         
-        // 首次加载完成后，用动画切换到目标卡片
-        await this.setRecentCircle(newRecentCircle, true);
+        // 首次加载完成后，直接显示目标卡片（不使用动画，因为是从 loading 卡片切换）
+        await this.setRecentCircle(newRecentCircle, false);
         
         if (newRecentCircle) {
           this.setStatus(CIRCLE_STATUS.LOADED);
