@@ -197,6 +197,95 @@ view, text, image {
   -webkit-backface-visibility: hidden;
 }
 
+/* 🎬 朋友圈卡片图片背景（复用视频样式逻辑） */
+/* 图片背景层（z-index: 0，最底层） */
+.circle-card-image-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  border-radius: 10rpx;
+  background: #000000;       /* 图片加载前的占位背景 */
+  opacity: 0;                /* 初始透明 */
+  transition: opacity 2s ease, border-radius 2s ease;  /* 2秒淡入淡出 + 圆角过渡 */
+}
+
+.circle-card-image-bg.fade-in {
+  opacity: 1;                /* 淡入：完全显示 */
+  border-radius: 22rpx;      /* 淡入时圆角变大 */
+}
+
+.circle-card-image-bg.fade-out {
+  opacity: 0;                /* 淡出：完全透明 */
+  border-radius: 10rpx;      /* 淡出时圆角恢复 */
+}
+
+/* 快速淡出（页面隐藏时使用） */
+.circle-card-image-bg.fade-out-fast {
+  opacity: 0;
+  border-radius: 10rpx;
+  transition: opacity 0.5s ease, border-radius 0.5s ease;  /* 500ms快速淡出 */
+}
+
+/* 毛玻璃遮罩层（z-index: 1，中间层） */
+.circle-card-glass-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  border-radius: 10rpx;
+  
+  /* 渐变半透明黑色遮罩（上下深，中间浅） */
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.3) 0%,
+    rgba(0, 0, 0, 0.1) 50%,
+    rgba(0, 0, 0, 0.3) 100%
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  
+  opacity: 0;                /* 初始透明 */
+  transition: opacity 2s ease, border-radius 2s ease;  /* 2秒淡入淡出 + 圆角过渡 */
+}
+
+.circle-card-glass-overlay.fade-in {
+  opacity: 1;
+  border-radius: 22rpx;      /* 淡入时圆角变大 */
+}
+
+.circle-card-glass-overlay.fade-out {
+  opacity: 0;
+  border-radius: 10rpx;      /* 淡出时圆角恢复 */
+}
+
+/* 快速淡出（页面隐藏时使用） */
+.circle-card-glass-overlay.fade-out-fast {
+  opacity: 0;
+  border-radius: 10rpx;
+  transition: opacity 0.5s ease, border-radius 0.5s ease;  /* 500ms快速淡出 */
+}
+
+/* 朋友圈卡片内容层（z-index: 2，最上层） */
+.friend-circle-card .card-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  transition: color 2s ease, text-shadow 2s ease;
+}
+
+/* 🎬 朋友圈卡片激活状态（有图片背景时） */
+.friend-circle-card.image-active {
+  transition: border-radius 2s ease, box-shadow 2s ease;
+}
+
 /* 🎬 行级错落动画 - 正常状态 */
 .update-time,
 .user-count {

@@ -33,18 +33,34 @@
   </view>
 
   <!-- 朋友圈卡片 - 使用 circleStore 的数据 -->
-  <view id="recent-circle-card" class="friend-circle-card" wx:elif="{{loginStatus === 'loggedIn' && !isLoadingCircles && hasRecentCircle}}" bindtap="goToRecentCircle">
-    <view class="card-title card-main-title">最近的朋友圈</view>
-    <view class="status-tag">
-      <text>查看详情</text>
-      <image class="status-icon" src="/assets/icons/right.svg" mode="aspectFit"></image>
-    </view>
-    <!-- 🎬 第2行 - 错落动画（先刷新） -->
-    <view class="update-time {{isUpdatingCircleLine1 ? 'line-updating' : ''}}">最新内容更新于： {{recentCircle.formattedTime}}</view>
-    <!-- 🎬 第3行 - 错落动画（后刷新，延迟150ms） -->
-    <view class="user-count {{isUpdatingCircleLine2 ? 'line-updating line-updating-delay' : ''}}">
-      <text>有 {{recentCircle.memberCount}} 名用户在内</text>
-      <view class="avatar-group">
+  <view id="recent-circle-card" class="friend-circle-card {{circleCardImageVisible ? 'image-active' : ''}}" wx:elif="{{loginStatus === 'loggedIn' && !isLoadingCircles && hasRecentCircle}}" bindtap="goToRecentCircle">
+    <!-- 🎬 图片背景层（z-index: 0，最底层） -->
+    <image 
+      wx:if="{{showCircleCardImage}}"
+      class="circle-card-image-bg {{circleCardImageVisible ? 'fade-in' : ''}} {{circleCardImageFastFade ? 'fade-out-fast' : ''}}"
+      src="{{circleCardImageUrl}}"
+      mode="aspectFill"
+    />
+    
+    <!-- 🎬 毛玻璃遮罩层（z-index: 1，中间层） -->
+    <view 
+      wx:if="{{showCircleCardImage}}"
+      class="circle-card-glass-overlay {{circleCardImageVisible ? 'fade-in' : ''}} {{circleCardImageFastFade ? 'fade-out-fast' : ''}}"
+    />
+    
+    <!-- 🎬 内容层（z-index: 2，最上层） -->
+    <view class="card-content">
+      <view class="card-title card-main-title {{circleCardImageVisible ? 'text-light' : ''}}">最近的朋友圈</view>
+      <view class="status-tag">
+        <text>查看详情</text>
+        <image class="status-icon" src="/assets/icons/right.svg" mode="aspectFit"></image>
+      </view>
+      <!-- 🎬 第2行 - 错落动画（先刷新） -->
+      <view class="update-time {{isUpdatingCircleLine1 ? 'line-updating' : ''}} {{circleCardImageVisible ? 'text-light' : ''}}">最新内容更新于： {{recentCircle.formattedTime}}</view>
+      <!-- 🎬 第3行 - 错落动画（后刷新，延迟150ms） -->
+      <view class="user-count {{isUpdatingCircleLine2 ? 'line-updating line-updating-delay' : ''}} {{circleCardImageVisible ? 'text-light' : ''}}">
+        <text>有 {{recentCircle.memberCount}} 名用户在内</text>
+        <view class="avatar-group">
         <image class="avatar-small-1" wx:if="{{recentCircle.members && recentCircle.members.length > 0}}" src="{{recentCircle.members[0].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
         <image class="avatar-small-2" wx:if="{{recentCircle.members && recentCircle.members.length > 1}}" src="{{recentCircle.members[1].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
         <image class="avatar-small-3" wx:if="{{recentCircle.members && recentCircle.members.length > 2}}" src="{{recentCircle.members[2].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
@@ -56,9 +72,10 @@
           <text class="avatar-more-text">+{{recentCircle.members.length - 5}}</text>
         </view>
       </view>
-      <!-- 🔄 刷新indicator - 和头像垂直居中对齐 -->
-      <view class="refreshing-indicator-inline" wx:if="{{isRefreshing}}">
-        <image class="refresh-icon rotating" src="/assets/icons/refresh.svg" mode="aspectFit"></image>
+        <!-- 🔄 刷新indicator - 和头像垂直居中对齐 -->
+        <view class="refreshing-indicator-inline" wx:if="{{isRefreshing}}">
+          <image class="refresh-icon rotating" src="/assets/icons/refresh.svg" mode="aspectFit"></image>
+        </view>
       </view>
     </view>
   </view>

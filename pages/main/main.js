@@ -25,6 +25,26 @@ const VIDEO_CONFIG = {
   HIDE_FADE_DURATION: 500      // 页面隐藏时的快速淡出（500ms）
 };
 
+// 🎬 朋友圈卡片图片背景动画配置（完全复用视频时间线）
+const IMAGE_BG_CONFIG = {
+  CREATE_DELAY: 300,           // 创建图片元素延迟（ms）
+  WAIT_BEFORE_FADE_IN: 2000,   // 等待2秒后淡入
+  FADE_DURATION: 2000,         // 淡入动画时长（2秒）
+  DISPLAY_DURATION: 5000,      // 显示时长（5秒）
+  FADE_OUT_DURATION: 2000,     // 淡出动画时长（2秒）
+  HIDE_FADE_DURATION: 500      // 页面隐藏时的快速淡出（500ms）
+};
+
+// 🎬 图片背景状态机（复用视频状态机）
+const IMAGE_BG_STATES = {
+  IDLE: 'idle',
+  LOADING: 'loading',
+  READY: 'ready',
+  FADE_IN: 'fade_in',
+  DISPLAYING: 'displaying',
+  FADE_OUT: 'fade_out'
+};
+
 Page({
   // 使用MobX状态管理行为
   behaviors: [storeBindingsBehavior],
@@ -70,7 +90,14 @@ Page({
     emptyCardVideoState: 'idle',       // 视频状态: idle/loading/ready/fade_in/playing/fade_out
     showEmptyCardVideo: false,          // 是否显示视频元素
     emptyCardVideoVisible: false,       // 视频是否可见（透明度控制）
-    emptyCardVideoFastFade: false       // 是否使用快速淡出（页面隐藏时）
+    emptyCardVideoFastFade: false,      // 是否使用快速淡出（页面隐藏时）
+    
+    // 🎬 朋友圈卡片图片背景动画（复用视频逻辑）
+    circleCardImageState: 'idle',      // 图片状态: idle/loading/ready/fade_in/displaying/fade_out
+    showCircleCardImage: false,         // 是否显示图片元素
+    circleCardImageVisible: false,      // 图片是否可见（透明度控制）
+    circleCardImageFastFade: false,     // 是否使用快速淡出（页面隐藏时）
+    circleCardImageUrl: ''              // 当前显示的图片URL
   },
   
   // 🎬 视频动画定时器
@@ -78,6 +105,14 @@ Page({
   _videoAnimationTimer: null,
   _createVideoTimer: null,
   _playVideoTimer: null,  // 淡入1秒后开始播放的定时器
+  
+  // 🎬 朋友圈卡片图片背景定时器和索引
+  _allowImageBgAnimation: false,
+  _currentImageIndex: 0,           // 当前显示的图片索引
+  _imageBgCreateTimer: null,       // 创建图片元素的定时器
+  _imageBgFadeInTimer: null,       // 淡入定时器
+  _imageBgDisplayTimer: null,      // 显示时长定时器
+  _imageBgFadeOutTimer: null,      // 淡出定时器
   
   // 🎬 视频上下文
   _emptyCardVideoContext: null,
@@ -159,6 +194,208 @@ Page({
     });
   },
 
+  // ======================================================================
+  // 🎬 朋友圈卡片图片背景动画控制（完全复用视频逻辑）
+  // ======================================================================
+  
+  /**
+   * 初始化朋友圈卡片图片背景动画
+   * 在 onShow 中调用，检查是否有图片可显示
+   */
+  _initCircleCardImageBg() {
+    // 检查是否有最近的朋友圈且有图片
+    const recentCircle = this.data.recentCircle;
+    if (!recentCircle || !recentCircle.latestPost || !recentCircle.latestPost.images || recentCircle.latestPost.images.length === 0) {
+      console.log('🖼️ [图片背景] 没有可显示的图片');
+      return;
+    }
+    
+    // 清理可能残留的图片状态
+    if (this.data.showCircleCardImage || this.data.circleCardImageState !== IMAGE_BG_STATES.IDLE) {
+      this._stopCircleCardImageBg();
+    }
+    
+    this._allowImageBgAnimation = false;
+    this._resetCircleCardImageBgState();
+    
+    // 延迟创建图片元素，等待小程序框架完成DOM更新
+    this._imageBgCreateTimer = setTimeout(() => {
+      // 获取当前要显示的图片
+      const images = recentCircle.latestPost.images;
+      const imageUrl = images[this._currentImageIndex % images.length];
+      
+      console.log(`🖼️ [图片背景] 显示图片 [${this._currentImageIndex % images.length + 1}/${images.length}]: ${imageUrl}`);
+      
+      this.setData({ 
+        circleCardImageState: IMAGE_BG_STATES.LOADING, 
+        showCircleCardImage: true,
+        circleCardImageUrl: imageUrl
+      }, () => {
+        this._allowImageBgAnimation = true;
+        // 图片加载完成后触发淡入动画
+        this._triggerCircleCardImageBgAnimation();
+      });
+    }, IMAGE_BG_CONFIG.CREATE_DELAY);
+  },
+  
+  /**
+   * 触发图片背景淡入动画
+   * 当图片元素创建完成后调用
+   */
+  _triggerCircleCardImageBgAnimation() {
+    // 防重复触发：检查标志位、定时器、状态
+    if (!this._allowImageBgAnimation || 
+        this._imageBgFadeInTimer || 
+        this.data.circleCardImageState !== IMAGE_BG_STATES.LOADING) {
+      console.log('🖼️ [图片背景] 动画被阻止（防重复触发）');
+      return;
+    }
+    
+    console.log('🖼️ [图片背景] 开始动画流程');
+    this.setData({ circleCardImageState: IMAGE_BG_STATES.READY });
+    
+    // 等待2秒后开始淡入
+    this._imageBgFadeInTimer = setTimeout(() => {
+      if (!this._allowImageBgAnimation) return;
+      
+      console.log('🖼️ [图片背景] 开始淡入（2秒）');
+      this.setData({ 
+        circleCardImageState: IMAGE_BG_STATES.FADE_IN, 
+        circleCardImageVisible: true 
+      });
+      
+      // 淡入完成后进入显示状态
+      this._imageBgDisplayTimer = setTimeout(() => {
+        if (!this._allowImageBgAnimation) return;
+        
+        console.log('🖼️ [图片背景] 完全显示（保持5秒）');
+        this.setData({ circleCardImageState: IMAGE_BG_STATES.DISPLAYING });
+        
+        // 显示5秒后开始淡出
+        this._imageBgFadeOutTimer = setTimeout(() => {
+          if (!this._allowImageBgAnimation) return;
+          
+          console.log('🖼️ [图片背景] 开始淡出（2秒）');
+          this._fadeOutCircleCardImageBg();
+        }, IMAGE_BG_CONFIG.DISPLAY_DURATION);
+      }, IMAGE_BG_CONFIG.FADE_DURATION);
+      
+      this._imageBgFadeInTimer = null;
+    }, IMAGE_BG_CONFIG.WAIT_BEFORE_FADE_IN);
+  },
+  
+  /**
+   * 图片背景淡出动画
+   * @param {number} duration - 淡出时长（毫秒），默认使用 FADE_OUT_DURATION
+   */
+  _fadeOutCircleCardImageBg(duration = IMAGE_BG_CONFIG.FADE_OUT_DURATION) {
+    // 判断是否需要快速淡出
+    const isFastFade = duration < IMAGE_BG_CONFIG.FADE_OUT_DURATION;
+    
+    this.setData({ 
+      circleCardImageState: IMAGE_BG_STATES.FADE_OUT, 
+      circleCardImageVisible: false,
+      circleCardImageFastFade: isFastFade
+    });
+    
+    // 淡出完成后回到初始状态并移除图片元素
+    const fadeOutTimer = setTimeout(() => {
+      this.setData({ 
+        circleCardImageState: IMAGE_BG_STATES.IDLE, 
+        showCircleCardImage: false,
+        circleCardImageFastFade: false,
+        circleCardImageUrl: ''
+      });
+      this._imageBgFadeOutTimer = null;
+    }, duration);
+    
+    // 如果是快速淡出（页面隐藏），不保存定时器
+    if (!isFastFade) {
+      this._imageBgFadeOutTimer = fadeOutTimer;
+    }
+  },
+  
+  /**
+   * 重置图片背景状态
+   * 清理所有定时器并恢复初始状态
+   */
+  _resetCircleCardImageBgState() {
+    this._clearAllImageBgTimers();
+    this.setData({ 
+      circleCardImageState: IMAGE_BG_STATES.IDLE, 
+      showCircleCardImage: false, 
+      circleCardImageVisible: false,
+      circleCardImageFastFade: false,
+      circleCardImageUrl: ''
+    });
+    this._allowImageBgAnimation = false;
+  },
+  
+  /**
+   * 停止图片背景动画
+   * 页面隐藏时立即调用，清理资源
+   */
+  _stopCircleCardImageBg() {
+    this._allowImageBgAnimation = false;
+    this.setData({ 
+      showCircleCardImage: false,
+      circleCardImageVisible: false,
+      circleCardImageState: IMAGE_BG_STATES.IDLE,
+      circleCardImageFastFade: false,
+      circleCardImageUrl: ''
+    });
+    this._clearAllImageBgTimers();
+  },
+  
+  /**
+   * 清理所有图片背景相关定时器
+   */
+  _clearAllImageBgTimers() {
+    [this._imageBgCreateTimer, this._imageBgFadeInTimer, this._imageBgDisplayTimer, this._imageBgFadeOutTimer].forEach(timer => {
+      if (timer) clearTimeout(timer);
+    });
+    this._imageBgCreateTimer = null;
+    this._imageBgFadeInTimer = null;
+    this._imageBgDisplayTimer = null;
+    this._imageBgFadeOutTimer = null;
+  },
+  
+  /**
+   * 优雅地停止图片背景动画（页面隐藏时调用）
+   * 触发快速淡出动画后再清理资源
+   */
+  _gracefullyStopImageBgAnimation() {
+    // 如果图片正在显示中（不是idle状态），触发快速淡出动画
+    if (this.data.circleCardImageState !== IMAGE_BG_STATES.IDLE && 
+        this.data.showCircleCardImage) {
+      // 停止所有进行中的定时器
+      this._clearAllImageBgTimers();
+      this._allowImageBgAnimation = false;
+      
+      // 触发快速淡出（500ms）
+      this._fadeOutCircleCardImageBg(IMAGE_BG_CONFIG.HIDE_FADE_DURATION);
+    } else {
+      // 如果本来就是idle状态，直接清理
+      this._stopCircleCardImageBg();
+    }
+  },
+  
+  /**
+   * 推进图片索引到下一张
+   */
+  _advanceImageIndex() {
+    const recentCircle = this.data.recentCircle;
+    if (!recentCircle || !recentCircle.latestPost || !recentCircle.latestPost.images) {
+      return;
+    }
+    
+    const images = recentCircle.latestPost.images;
+    if (images.length > 0) {
+      this._currentImageIndex = (this._currentImageIndex + 1) % images.length;
+      console.log(`🖼️ [图片索引] 推进到: ${this._currentImageIndex} (总共 ${images.length} 张)`);
+    }
+  },
+  
   onUnload() {
     
     // 清理MobX绑定，防止内存泄漏
@@ -283,12 +520,18 @@ Page({
     // 设计意图：先显示空状态卡片（纯文字），用户看几秒后，视频再慢慢淡入
     if (this.data.loginStatus !== 'loggedIn' || !this.data.hasRecentCircle) {
       this._initEmptyCardVideoAnimation();
+    } else if (this.data.loginStatus === 'loggedIn' && this.data.hasRecentCircle) {
+      // 4. 如果是朋友圈卡片，初始化图片背景
+      // 设计意图：复用视频的时间线，先显示纯文字卡片，2秒后图片淡入
+      this._advanceImageIndex();  // 推进到下一张图片
+      this._initCircleCardImageBg();
     }
   },
   
   onHide() {
     // 🎬 页面隐藏时优雅淡出，而不是立即清除
     this._gracefullyStopVideoAnimation();
+    this._gracefullyStopImageBgAnimation();  // 同时停止图片背景动画
   },
 
   // 🔧 注意：旧的缓存工具方法已移除
