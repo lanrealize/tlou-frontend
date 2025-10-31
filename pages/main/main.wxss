@@ -246,8 +246,9 @@ view, text, image {
     rgba(0, 0, 0, 0.1) 50%,
     rgba(0, 0, 0, 0.3) 100%
   );
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  /* 🔧 图片背景模糊度降低为视频的一半：20px → 10px */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   
   opacity: 0;                /* 初始透明 */
   transition: opacity 2s ease, border-radius 2s ease;  /* 2秒淡入淡出 + 圆角过渡 */
@@ -272,13 +273,25 @@ view, text, image {
 
 /* 朋友圈卡片内容层（z-index: 2，最上层） */
 .friend-circle-card .card-content {
-  position: relative;
+  /* ❌ 不使用 position: relative，避免影响 .status-tag 的绝对定位参照物 */
+  position: relative;  /* 但需要 relative 来让 z-index 生效 */
   z-index: 2;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   height: 100%;
-  transition: color 2s ease, text-shadow 2s ease;
+  /* 只保留文字颜色过渡，不影响布局 */
+}
+
+/* 🔧 确保 .status-tag 相对于卡片本身定位，不受 .card-content 影响 */
+.friend-circle-card .status-tag {
+  z-index: 3;  /* 在图片背景(0)、毛玻璃(1)、内容层(2)之上 */
+}
+
+/* 🔧 图片背景时，查看详情按钮变粗体，提高可读性 */
+.friend-circle-card .status-tag.text-light text {
+  font-weight: bold;
+  transition: font-weight 2s ease, color 2s ease, text-shadow 2s ease;
 }
 
 /* 🎬 朋友圈卡片激活状态（有图片背景时） */
@@ -339,7 +352,7 @@ view, text, image {
   width: 44rpx;
   height: 44rpx;
   border-radius: 50%;
-  border: 2rpx solid #ffffff;
+  /* 🔧 去掉白边 */
   z-index: 1;
 }
 
@@ -350,7 +363,7 @@ view, text, image {
   width: 44rpx;
   height: 44rpx;
   border-radius: 50%;
-  border: 2rpx solid #ffffff;
+  /* 🔧 去掉白边 */
   z-index: 2;
 }
 
@@ -361,7 +374,7 @@ view, text, image {
   width: 44rpx;
   height: 44rpx;
   border-radius: 50%;
-  border: 2rpx solid #ffffff;
+  /* 🔧 去掉白边 */
   z-index: 3;
 }
 
@@ -372,7 +385,7 @@ view, text, image {
   width: 44rpx;
   height: 44rpx;
   border-radius: 50%;
-  border: 2rpx solid #ffffff;
+  /* 🔧 去掉白边 */
   z-index: 4;
 }
 
@@ -383,7 +396,7 @@ view, text, image {
   width: 44rpx;
   height: 44rpx;
   border-radius: 50%;
-  border: 2rpx solid #ffffff;
+  /* 🔧 去掉白边 */
   z-index: 5;
 }
 
@@ -394,7 +407,7 @@ view, text, image {
   width: 44rpx;
   height: 44rpx;
   border-radius: 50%;
-  border: 2rpx solid #ffffff;
+  /* 🔧 去掉白边 */
   overflow: hidden;
   z-index: 6;
 }
@@ -446,6 +459,14 @@ view, text, image {
 .status-icon {
   width: 24rpx;
   height: 24rpx;
+  opacity: 1;
+  /* 🔧 和图片/文字变化速度保持一致（2秒） */
+  transition: opacity 2s ease;
+}
+
+/* 🔧 图片背景时隐藏图标（视觉隐藏，保留占位） */
+.status-icon.icon-hidden {
+  opacity: 0;
 }
 
 .update-time {
@@ -697,16 +718,20 @@ view, text, image {
   transition: color 2s ease, text-shadow 2s ease;
 }
 
-/* 🎬 文字样式：深色（无视频时） */
+/* 🎬 文字样式：深色（无视频/图片时） */
 .text-dark {
   color: #000000;
   text-shadow: none;
+  /* 🔧 和图片/视频淡入速度保持一致（2秒） */
+  transition: color 2s ease, text-shadow 2s ease;
 }
 
-/* 🎬 文字样式：浅色（有视频时） */
+/* 🎬 文字样式：浅色（有视频/图片时） */
 .text-light {
   color: #ffffff;
   text-shadow: 0 2rpx 8rpx rgba(0,0,0,0.8);  /* 深色阴影提高可读性 */
+  /* 🔧 和图片/视频淡入速度保持一致（2秒） */
+  transition: color 2s ease, text-shadow 2s ease;
 }
 
 /* 🎬 分割线 */
@@ -1191,7 +1216,7 @@ view, text, image {
   .friend-circle-card {
     margin: 45rpx 30rpx;
     height: 250rpx;
-    padding: 34rpx 30rpx 34rpx 30rpx;
+    padding: 34rpx 30rpx 34rpx 45rpx;
   }
   
   .status-tag {

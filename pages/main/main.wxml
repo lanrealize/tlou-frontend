@@ -48,13 +48,16 @@
       class="circle-card-glass-overlay {{circleCardImageVisible ? 'fade-in' : ''}} {{circleCardImageFastFade ? 'fade-out-fast' : ''}}"
     />
     
+    <!-- 🔧 查看详情按钮（z-index: 3，独立定位，不受 .card-content 影响） -->
+    <view class="status-tag {{circleCardImageVisible ? 'text-light' : ''}}">
+      <text>查看详情</text>
+      <!-- 🔧 图片背景时视觉隐藏右侧图标，但保留占位避免文字跳动 -->
+      <image class="status-icon {{circleCardImageVisible ? 'icon-hidden' : ''}}" src="/assets/icons/right.svg" mode="aspectFit"></image>
+    </view>
+    
     <!-- 🎬 内容层（z-index: 2，最上层） -->
     <view class="card-content">
       <view class="card-title card-main-title {{circleCardImageVisible ? 'text-light' : ''}}">最近的朋友圈</view>
-      <view class="status-tag">
-        <text>查看详情</text>
-        <image class="status-icon" src="/assets/icons/right.svg" mode="aspectFit"></image>
-      </view>
       <!-- 🎬 第2行 - 错落动画（先刷新） -->
       <view class="update-time {{isUpdatingCircleLine1 ? 'line-updating' : ''}} {{circleCardImageVisible ? 'text-light' : ''}}">最新内容更新于： {{recentCircle.formattedTime}}</view>
       <!-- 🎬 第3行 - 错落动画（后刷新，延迟150ms） -->

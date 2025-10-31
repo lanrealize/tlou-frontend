@@ -222,7 +222,10 @@ Page({
     this._imageBgCreateTimer = setTimeout(() => {
       // 获取当前要显示的图片
       const images = recentCircle.latestPost.images;
-      const imageUrl = images[this._currentImageIndex % images.length];
+      const currentImage = images[this._currentImageIndex % images.length];
+      
+      // 🔧 处理图片URL - 支持对象和字符串两种格式
+      const imageUrl = typeof currentImage === 'string' ? currentImage : (currentImage.url || '');
       
       console.log(`🖼️ [图片背景] 显示图片 [${this._currentImageIndex % images.length + 1}/${images.length}]: ${imageUrl}`);
       
@@ -516,13 +519,18 @@ Page({
     // 2. 等待朋友圈加载完成，确定卡片类型
     await circlePromise;
     
+    // 🔧 等待一个tick，确保MobX数据已完全同步到this.data
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
     // 3. 如果是空状态卡片，再初始化视频
     // 设计意图：先显示空状态卡片（纯文字），用户看几秒后，视频再慢慢淡入
     if (this.data.loginStatus !== 'loggedIn' || !this.data.hasRecentCircle) {
+      console.log('🎬 [main] 初始化空状态视频背景');
       this._initEmptyCardVideoAnimation();
     } else if (this.data.loginStatus === 'loggedIn' && this.data.hasRecentCircle) {
       // 4. 如果是朋友圈卡片，初始化图片背景
       // 设计意图：复用视频的时间线，先显示纯文字卡片，2秒后图片淡入
+      console.log('🖼️ [main] 初始化朋友圈图片背景');
       this._advanceImageIndex();  // 推进到下一张图片
       this._initCircleCardImageBg();
     }
