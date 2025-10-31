@@ -33,29 +33,50 @@ const circleStore = observable({
   lastUpdateTime: 0,          // 上次更新时间
   cacheTimeout: 300000,       // 缓存超时时间（5分钟）
   currentUserId: null,        // 当前用户ID（用于检测身份变化）
+  
+  // 🎯 Loading 延迟策略
+  _loadingTimer: null,
+  _loadingInnerTimer: null,  // 内部嵌套定时器
 
   // 🎯 统一状态更新接口
   setStatus(status, data = {}) {
     this.status = status;
-    this.isLoading = false;
+    
+    // 清理所有定时器
+    if (this._loadingTimer) {
+      clearTimeout(this._loadingTimer);
+      this._loadingTimer = null;
+    }
+    if (this._loadingInnerTimer) {
+      clearTimeout(this._loadingInnerTimer);
+      this._loadingInnerTimer = null;
+    }
     
     switch (status) {
       case CIRCLE_STATUS.LOADED:
+        this.isLoading = false;
         this.errorMessage = '';
         break;
         
       case CIRCLE_STATUS.ERROR:
+        this.isLoading = false;
         this.errorMessage = data.message || '加载朋友圈失败';
         break;
         
       case CIRCLE_STATUS.EMPTY:
+        this.isLoading = false;
         this.recentCircle = null;
         this.circles = [];
         this.errorMessage = '';
         break;
         
       case CIRCLE_STATUS.LOADING:
-        this.isLoading = true;
+        // 延迟 1 秒后才显示 loading（避免快速请求的闪烁）
+        this._loadingTimer = setTimeout(() => {
+          action(() => {
+            this.isLoading = true;
+          })();
+        }, 1000);
         break;
     }
   },
@@ -234,91 +255,186 @@ const circleStore = observable({
   },
 
   /**
-   * 静默加载最近朋友圈
-   * 从后端获取数据，比对后决定是否更新UI
-   * @param {Boolean} forceUpdate - 是否强制更新（显示loading）
-   * @param {Boolean} withAnimation - 是否使用切换动画（身份变化时自动禁用）
+   * 统一的智能刷新方法
+   * 每次进入main页面调用，自动判断是否需要刷新，并用动画优雅切换
    */
-  async loadRecentCircle(forceUpdate = false, withAnimation = true) {
-    // 🔧 检测身份变化（管理员切换虚拟身份）
+  async loadRecentCircle() {
     const app = getApp();
     const userStore = app.getUserStore();
     const currentUserId = userStore?.userInfo?._id;
     
-    // 如果身份变化了，强制刷新（无动画，显示 loading）
-    const userChanged = this.currentUserId && currentUserId !== this.currentUserId;
-    if (userChanged) {
-      forceUpdate = true;
-      withAnimation = false;  // 身份变化时使用 loading 而非动画
+    // 🎯 特殊情况1：首次加载（store为空），直接显示loading
+    const isFirstLoad = !this.recentCircle && !this.lastUpdateTime;
+    if (isFirstLoad) {
+      this.setStatus(CIRCLE_STATUS.LOADING);
+      
+      try {
+        const res = await api.circles.getMyParticipated();
+        const circles = res.data.circles || [];
+        this.circles = circles;
+        
+        const sortedCircles = [...circles].sort((a, b) => {
+          const timeA = a.latestPost?.createdAt || a.createdAt || 0;
+          const timeB = b.latestPost?.createdAt || b.createdAt || 0;
+          return new Date(timeB) - new Date(timeA);
+        });
+        
+        const newRecentCircle = sortedCircles.length > 0 ? sortedCircles[0] : null;
+        
+        // 首次加载完成后，用动画切换到目标卡片
+        await this.setRecentCircle(newRecentCircle, true);
+        
+        if (newRecentCircle) {
+          this.setStatus(CIRCLE_STATUS.LOADED);
+        } else {
+          this.setStatus(CIRCLE_STATUS.EMPTY);
+        }
+        
+        this.currentUserId = currentUserId;
+        return { success: true, updated: true };
+        
+      } catch (error) {
+        console.error('❌ [circleStore] 首次加载失败:', error);
+        this.setStatus(CIRCLE_STATUS.ERROR, { message: error.message });
+        return { success: false, error };
+      }
     }
     
-    // 更新当前用户ID
+    // 🎯 检查是否需要刷新
+    const userChanged = this.currentUserId && currentUserId !== this.currentUserId;
     this.currentUserId = currentUserId;
     
-    // 强制更新时显示loading
-    if (forceUpdate) {
-      this.setStatus(CIRCLE_STATUS.LOADING);
+    // 如果身份没变，先请求数据检查是否有变化
+    if (!userChanged) {
+      try {
+        const res = await api.circles.getMyParticipated();
+        const circles = res.data.circles || [];
+        const sortedCircles = [...circles].sort((a, b) => {
+          const timeA = a.latestPost?.createdAt || a.createdAt || 0;
+          const timeB = b.latestPost?.createdAt || b.createdAt || 0;
+          return new Date(timeB) - new Date(timeA);
+        });
+        
+        const newRecentCircle = sortedCircles.length > 0 ? sortedCircles[0] : null;
+        
+        // 检查是否有变化
+        const hasChanged = this._isCircleChanged(newRecentCircle, this.recentCircle);
+        
+        if (!hasChanged) {
+          // 🎯 数据没变化，不刷新UI
+          return { success: true, updated: false };
+        }
+        
+        // 🎯 数据有变化，直接用动画切换（数据已经在手里了）
+        await this.setRecentCircle(newRecentCircle, true);
+        
+        if (newRecentCircle) {
+          this.setStatus(CIRCLE_STATUS.LOADED);
+        } else {
+          this.setStatus(CIRCLE_STATUS.EMPTY);
+        }
+        
+        this.circles = circles;
+        return { success: true, updated: true };
+        
+      } catch (error) {
+        console.error('❌ [circleStore] 加载失败:', error);
+        this.setStatus(CIRCLE_STATUS.ERROR, { message: error.message });
+        return { success: false, error };
+      }
     }
-
+    
+    // 🎯 身份变化了，需要刷新（可能加载时间长，启用loading保护）
+    
+    // 启动1秒loading定时器
+    this._loadingTimer = setTimeout(() => {
+      action(() => {
+        // 1秒后数据还没回来，显示loading（用动画切换）
+        this.isUpdating = true;  // 触发当前卡片淡出
+      })();
+      
+      // 等待当前卡片淡出（300ms）
+      this._loadingInnerTimer = setTimeout(() => {
+        action(() => {
+          this.setStatus(CIRCLE_STATUS.LOADING);
+          this.isUpdating = false;
+        })();
+      }, 300);
+    }, 1000);
+    
     try {
-      // 调用后端接口
       const res = await api.circles.getMyParticipated();
       const circles = res.data.circles || [];
       
-      // 保存所有朋友圈（备用）
+      // 清理所有定时器
+      if (this._loadingTimer) {
+        clearTimeout(this._loadingTimer);
+        this._loadingTimer = null;
+      }
+      if (this._loadingInnerTimer) {
+        clearTimeout(this._loadingInnerTimer);
+        this._loadingInnerTimer = null;
+      }
+      
       this.circles = circles;
       
-      // 🔧 按最近活动时间排序（确保最新的排在前面）
       const sortedCircles = [...circles].sort((a, b) => {
         const timeA = a.latestPost?.createdAt || a.createdAt || 0;
         const timeB = b.latestPost?.createdAt || b.createdAt || 0;
-        // 降序排列（最新的在前）
         return new Date(timeB) - new Date(timeA);
       });
       
-      // 获取最近活动的朋友圈（排序后的第一个）
       const newRecentCircle = sortedCircles.length > 0 ? sortedCircles[0] : null;
       
-      // 设置数据（带动画）
-      const wasUpdated = await this.setRecentCircle(
-        newRecentCircle, 
-        withAnimation && !forceUpdate  // 非强制更新时才使用动画
-      );
+      // 用动画切换到目标卡片
+      await this.setRecentCircle(newRecentCircle, true);
       
-      // 更新状态
       if (newRecentCircle) {
         this.setStatus(CIRCLE_STATUS.LOADED);
       } else {
         this.setStatus(CIRCLE_STATUS.EMPTY);
       }
       
-      return { success: true, updated: wasUpdated };
+      return { success: true, updated: true };
       
     } catch (error) {
       console.error('❌ [circleStore] 加载失败:', error);
-      this.setStatus(CIRCLE_STATUS.ERROR, { 
-        message: error.message || '加载朋友圈失败' 
-      });
+      
+      // 清理所有定时器
+      if (this._loadingTimer) {
+        clearTimeout(this._loadingTimer);
+        this._loadingTimer = null;
+      }
+      if (this._loadingInnerTimer) {
+        clearTimeout(this._loadingInnerTimer);
+        this._loadingInnerTimer = null;
+      }
+      
+      this.setStatus(CIRCLE_STATUS.ERROR, { message: error.message });
       return { success: false, error };
     }
-  },
-
-  /**
-   * 强制刷新（显示loading）
-   */
-  async forceRefresh() {
-    return await this.loadRecentCircle(true, false);
   },
 
   /**
    * 重置状态
    */
   reset() {
+    // 清理所有定时器
+    if (this._loadingTimer) {
+      clearTimeout(this._loadingTimer);
+      this._loadingTimer = null;
+    }
+    if (this._loadingInnerTimer) {
+      clearTimeout(this._loadingInnerTimer);
+      this._loadingInnerTimer = null;
+    }
+    
     this.status = CIRCLE_STATUS.EMPTY;
     this.recentCircle = null;
     this.circles = [];
     this.isLoading = false;
     this.isUpdating = false;
+    this.isEmptyCardUpdating = false;
     this.errorMessage = '';
     this.lastUpdateTime = 0;
     this.currentUserId = null;

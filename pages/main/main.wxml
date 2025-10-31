@@ -34,11 +34,14 @@
 
   <!-- 朋友圈卡片 - 使用 circleStore 的数据 -->
   <view id="recent-circle-card" class="friend-circle-card {{isUpdatingCircle ? 'updating' : ''}}" wx:elif="{{loginStatus === 'loggedIn' && !isLoadingCircles && hasRecentCircle}}" bindtap="goToRecentCircle">
-    <view class="card-bg"></view>
     <view class="card-title card-main-title">最近的朋友圈</view>
+    <view class="status-tag">
+      <text>查看详情</text>
+      <image class="status-icon" src="/assets/icons/right.svg" mode="aspectFit"></image>
+    </view>
+    <view class="update-time">最新内容更新于： {{recentCircle.formattedTime}}</view>
     <view class="user-count">
       <text>有 {{recentCircle.memberCount}} 名用户在内</text>
-      <!-- 用户头像组 -->
       <view class="avatar-group">
         <image class="avatar-small-1" wx:if="{{recentCircle.members && recentCircle.members.length > 0}}" src="{{recentCircle.members[0].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
         <image class="avatar-small-2" wx:if="{{recentCircle.members && recentCircle.members.length > 1}}" src="{{recentCircle.members[1].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
@@ -52,11 +55,6 @@
         </view>
       </view>
     </view>
-    <view class="status-tag">
-      <text>查看详情</text>
-      <image class="status-icon" src="/assets/icons/right.svg" mode="aspectFit"></image>
-    </view>
-    <view class="update-time">最新内容更新于： {{recentCircle.formattedTime}}</view>
   </view>
 
   <!-- 空状态朋友圈卡片 - 已登录无圈 或 未登录 -->

@@ -237,8 +237,7 @@ Page({
       },
       actions: {
         // 绑定朋友圈actions
-        loadRecentCircle: 'loadRecentCircle',
-        forceRefreshCircle: 'forceRefresh'
+        loadRecentCircle: 'loadRecentCircle'
       }
     });
   },
@@ -295,21 +294,9 @@ Page({
       await app.waitForInit();
     }
     
-    // 检查登录状态并加载用户朋友圈数据（需要登录）
+    // 🎯 统一的智能刷新：自动判断是否需要刷新，并用动画切换
     if (userStore.isLoggedIn) {
-      // 🎯 使用 circleStore 的智能加载策略
-      const isFirstLoad = !circleStore.recentCircle && !circleStore.lastUpdateTime;
-      
-      if (isFirstLoad) {
-        // 首次加载：强制刷新（显示loading）
-        await this.forceRefreshCircle();
-        } else {
-        // 其他情况：静默检查，让 circleStore 自动决定
-        // - 身份变化了 → circleStore 自动强制刷新
-        // - 数据变化了 → circleStore 带动画更新
-        // - 没有变化 → circleStore 不更新 UI
-        await this.loadRecentCircle(false, true);
-      }
+      await this.loadRecentCircle();
     }
     
     // 📌 公开朋友圈推荐加载（无需登录，任何用户都可以浏览）
@@ -386,16 +373,6 @@ Page({
 
   // ===== 数据加载相关 =====
 
-  // 刷新数据
-  async refreshData() {
-    // 使用全局访问控制
-    if (!checkAndHandle('enterListPage')) {
-      return;
-    }
-
-    // 🎯 使用 circleStore 强制刷新（显示loading）
-    await this.forceRefreshCircle();
-  },
 
   // 刷新发现内容
   refreshDiscover() {
@@ -415,7 +392,7 @@ Page({
   },
 
   // 🔧 注意：旧的 loadCirclesWithThrottle 和 loadCircles 方法已移除
-  // 现在使用 circleStore.loadRecentCircle 和 circleStore.forceRefresh
+  // 现在使用统一的 circleStore.loadRecentCircle()
 
   // 切换朋友圈
   switchCircle(circleId) {
@@ -1005,7 +982,7 @@ Page({
       await this.handlePendingIntent(pendingIntent, circleId);
     } else {
       // 刷新页面数据
-      await this.forceRefreshCircle();
+      await this.loadRecentCircle();
     }
   },
   
@@ -1045,7 +1022,7 @@ Page({
         // 未知意图类型，记录日志但不影响用户体验
         console.warn(`未处理的意图类型: ${intentType}`);
         // 刷新页面数据作为降级处理
-        await this.forceRefreshCircle();
+        await this.loadRecentCircle();
       }
     } catch (error) {
       console.error('处理意图失败:', error);
