@@ -97,7 +97,8 @@ Page({
     showCircleCardImage: false,         // 是否显示图片元素
     circleCardImageVisible: false,      // 图片是否可见（透明度控制）
     circleCardImageFastFade: false,     // 是否使用快速淡出（页面隐藏时）
-    circleCardImageUrl: ''              // 当前显示的图片URL
+    circleCardImageUrl: '',             // 当前显示的图片URL
+    isFastTextReset: false              // 🔧 是否快速重置文字颜色（页面切换时）
   },
   
   // 🎬 视频动画定时器
@@ -486,6 +487,11 @@ Page({
   },
 
   async onShow() {
+    // 🔧 重置快速过渡标志
+    if (this.data.isFastTextReset) {
+      this.setData({ isFastTextReset: false });
+    }
+    
     // 注册用户信息弹出层回调
     const app = getApp();
     app.registerUserInfoPopupCallback((config) => {
@@ -540,6 +546,15 @@ Page({
     // 🎬 页面隐藏时优雅淡出，而不是立即清除
     this._gracefullyStopVideoAnimation();
     this._gracefullyStopImageBgAnimation();  // 同时停止图片背景动画
+    
+    // 🔧 立即重置图片和文字状态，避免切回来时还在慢慢变化
+    if (this.data.circleCardImageVisible) {
+      this.setData({
+        circleCardImageVisible: false,  // 立即移除 text-light 类
+        showCircleCardImage: false,     // 立即移除图片元素
+        isFastTextReset: true           // 标记为快速重置（供下次 onShow 使用）
+      });
+    }
   },
 
   // 🔧 注意：旧的缓存工具方法已移除

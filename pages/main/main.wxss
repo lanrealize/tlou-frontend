@@ -737,9 +737,14 @@ view, text, image {
   text-shadow: 0 2rpx 8rpx rgba(0,0,0,0.8);  /* 深色阴影提高可读性 */
 }
 
+/* 🔧 快速重置类：页面切换时立即禁用过渡，直接重置状态 */
+.fast-reset {
+  transition: none !important;  /* 立即重置，不用过渡 */
+}
+
 /* 🔧 为不同元素的 .text-light 定义【变白】时的过渡时间（从黑/灰→白） */
 .card-main-title.text-light {
-  transition: color 1.5s ease-out, text-shadow 1s ease-out;  /* 第1行变白时间 */
+  transition: color 1.9s ease-out, text-shadow 1s ease-out;  /* 第1行变白时间 */
 }
 
 .update-time.text-light,
