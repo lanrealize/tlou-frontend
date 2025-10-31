@@ -150,7 +150,7 @@ view, text, image {
   position: relative;
   margin: 30rpx 40rpx;
   height: 250rpx;
-  padding: 36rpx 40rpx 32rpx 40rpx;
+  padding: 34rpx 40rpx 34rpx 40rpx;
   border-radius: 10rpx;
   background: #ffffff;
   box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.25);
@@ -184,6 +184,7 @@ view, text, image {
   color: #808080;
   display: flex;
   align-items: center;
+  margin-bottom: 5rpx;
 }
 
 .avatar-group {
@@ -295,7 +296,7 @@ view, text, image {
 .status-tag {
   position: absolute;
   right: 40rpx;
-  top: 36rpx;
+  top: 34rpx;
   display: flex;
   align-items: center;
 }
@@ -315,7 +316,6 @@ view, text, image {
   flex-shrink: 0;
   font-size: 24rpx;
   color: #808080;
-  margin-top: 12rpx;
 }
 
 /* 空状态朋友圈卡片 */
@@ -949,7 +949,12 @@ view, text, image {
   .friend-circle-card {
     margin: 45rpx 30rpx;
     height: 250rpx;
-    padding: 36rpx 30rpx 32rpx 30rpx;
+    padding: 34rpx 30rpx 34rpx 30rpx;
+  }
+  
+  .status-tag {
+    right: 30rpx;
+    top: 34rpx;
   }
   
   .empty-state-card {
