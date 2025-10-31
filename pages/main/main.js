@@ -30,7 +30,7 @@ const IMAGE_BG_CONFIG = {
   CREATE_DELAY: 300,           // 创建图片元素延迟（ms）
   WAIT_BEFORE_FADE_IN: 2000,   // 等待2秒后淡入
   FADE_DURATION: 2000,         // 淡入动画时长（2秒）
-  DISPLAY_DURATION: 5000,      // 显示时长（5秒）
+  DISPLAY_DURATION: 3000,      // 显示时长（3秒）⚡ 减少2秒
   FADE_OUT_DURATION: 2000,     // 淡出动画时长（2秒）
   HIDE_FADE_DURATION: 500      // 页面隐藏时的快速淡出（500ms）
 };

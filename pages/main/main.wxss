@@ -310,7 +310,7 @@ view, text, image {
   transform: translate3d(0, 0, 0);
   /* 🔧 第2/3行【变回灰色】的时间（从白→灰） */
   transition: opacity 0.25s ease, transform 0.25s ease, 
-              color 5s ease-out, text-shadow 2.5s ease-out;
+              color 3s ease-out, text-shadow 2.5s ease-out;
   /* 🔧 性能优化 */
   will-change: transform, opacity;
   backface-visibility: hidden;
@@ -739,7 +739,7 @@ view, text, image {
 
 /* 🔧 为不同元素的 .text-light 定义【变白】时的过渡时间（从黑/灰→白） */
 .card-main-title.text-light {
-  transition: color 2s ease-out, text-shadow 1s ease-out;  /* 第1行变白时间 */
+  transition: color 1.5s ease-out, text-shadow 1s ease-out;  /* 第1行变白时间 */
 }
 
 .update-time.text-light,
