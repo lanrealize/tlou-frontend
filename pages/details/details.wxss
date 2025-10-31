@@ -92,7 +92,7 @@ scroll-view::-webkit-scrollbar,
     #ffffff 0%, 
     #ffffff 80%, 
     rgba(255, 255, 255, 0.85) 95%,
-    rgba(249, 249, 249, 0.3) 100%
+    rgba(255, 255, 255, 0.3) 100%
   );
   z-index: 10;
   border-radius: 0 0 32rpx 32rpx; /* 下面两个圆角，上面直角 */
@@ -282,7 +282,7 @@ scroll-view::-webkit-scrollbar,
   right: 0;
   height: 60rpx;
   background: linear-gradient(to bottom, 
-    rgba(249, 249, 249, 0.3) 0%, 
+    rgba(255, 255, 255, 1) 0%, 
     transparent 100%
   );
   pointer-events: none; /* 不影响内容点击 */
@@ -321,7 +321,7 @@ scroll-view::-webkit-scrollbar,
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20rpx 0 150rpx 0;
+  padding: 20rpx 0 50rpx 0;
   gap: 20rpx;
 }
 

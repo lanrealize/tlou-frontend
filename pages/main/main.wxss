@@ -342,13 +342,30 @@ view, text, image {
   align-items: center;
   text-align: center;
   overflow: hidden;          /* 裁剪超出的视频边缘 */
-  transition: box-shadow 2s ease, border-radius 2s ease;
+  
+  /* 🎬 卡片切换动画 - 与朋友圈卡片保持一致 */
+  opacity: 1;
+  transform: translateY(0);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.25s ease,
+              box-shadow 2s ease, 
+              border-radius 2s ease;
 }
 
 /* 视频激活状态：增强阴影效果 + 更大的圆角 */
 .empty-state-card.video-active {
   box-shadow: 0px 8rpx 24rpx rgba(0, 0, 0, 0.15);
   border-radius: 22rpx;  /* 视频显示时圆角更大 */
+}
+
+/* 🎬 空状态卡片更新中状态（淡出下沉） */
+.empty-state-card.updating {
+  opacity: 0;
+  transform: translateY(20rpx);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 1, 1), 
+              opacity 0.2s ease,
+              box-shadow 2s ease,
+              border-radius 2s ease;
 }
 
 /* 🎬 视频背景层（z-index: 0，最底层） */

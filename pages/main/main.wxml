@@ -60,7 +60,7 @@
   </view>
 
   <!-- 空状态朋友圈卡片 - 已登录无圈 或 未登录 -->
-  <view class="empty-state-card {{emptyCardVideoVisible ? 'video-active' : 'video-inactive'}}" wx:elif="{{!isLoadingCircles && (loginStatus !== 'loggedIn' || !hasRecentCircle)}}">
+  <view class="empty-state-card {{emptyCardVideoVisible ? 'video-active' : 'video-inactive'}} {{isEmptyCardUpdating ? 'updating' : ''}}" wx:elif="{{!isLoadingCircles && (loginStatus !== 'loggedIn' || !hasRecentCircle)}}">
     <!-- 视频层：绝对定位，铺满整个卡片 -->
     <video 
       wx:if="{{showEmptyCardVideo}}"

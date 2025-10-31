@@ -228,11 +228,12 @@ Page({
       store: circleStore,
       fields: {
         // 绑定朋友圈状态到页面data
-        circleStatus: 'status',            // 朋友圈加载状态
-        recentCircle: 'recentCircle',      // 最近活动的朋友圈
-        isLoadingCircles: 'isLoading',     // 是否正在加载
-        isUpdatingCircle: 'isUpdating',    // 是否正在更新（用于动画）
-        hasRecentCircle: 'hasRecentCircle' // 是否有最近朋友圈
+        circleStatus: 'status',                   // 朋友圈加载状态
+        recentCircle: 'recentCircle',             // 最近活动的朋友圈
+        isLoadingCircles: 'isLoading',            // 是否正在加载
+        isUpdatingCircle: 'isUpdating',           // 朋友圈卡片是否正在更新（用于动画）
+        isEmptyCardUpdating: 'isEmptyCardUpdating', // 空状态卡片是否正在更新（用于动画）
+        hasRecentCircle: 'hasRecentCircle'        // 是否有最近朋友圈
       },
       actions: {
         // 绑定朋友圈actions
@@ -302,7 +303,7 @@ Page({
       if (isFirstLoad) {
         // 首次加载：强制刷新（显示loading）
         await this.forceRefreshCircle();
-      } else {
+        } else {
         // 其他情况：静默检查，让 circleStore 自动决定
         // - 身份变化了 → circleStore 自动强制刷新
         // - 数据变化了 → circleStore 带动画更新

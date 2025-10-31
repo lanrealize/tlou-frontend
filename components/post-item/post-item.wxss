@@ -7,11 +7,35 @@
   flex-direction: row;
   align-items: flex-start;
   gap: 20rpx;
+  position: relative;
 }
 
-/* 最后一个帖子的底部边距调整 */
+/* 帖子之间的分割线 */
+.post-item::after {
+  content: '';
+  position: absolute;
+  bottom: -35rpx;
+  left: 50rpx;
+  right: 50rpx;
+  height: 2rpx;
+  background: linear-gradient(to right, 
+    transparent 0%, 
+    rgba(200, 200, 200, 0.4) 15%, 
+    rgba(180, 180, 180, 0.5) 50%, 
+    rgba(200, 200, 200, 0.4) 85%, 
+    transparent 100%
+  );
+  transform: scaleY(0.5);
+  transform-origin: center;
+}
+
+/* 最后一个帖子的底部边距调整，不显示分割线 */
 .post-item.last-item {
   margin-bottom: 25rpx;
+}
+
+.post-item.last-item::after {
+  display: none;
 }
 
 .user-avatar {

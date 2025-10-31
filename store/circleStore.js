@@ -26,7 +26,8 @@ const circleStore = observable({
   errorMessage: '',
   
   // 🎬 动画控制
-  isUpdating: false,          // 是否正在更新（用于控制切换动画）
+  isUpdating: false,              // 朋友圈卡片是否正在更新（用于控制切换动画）
+  isEmptyCardUpdating: false,     // 空状态卡片是否正在更新（用于控制切换动画）
   
   // 🔧 缓存机制
   lastUpdateTime: 0,          // 上次更新时间
@@ -134,30 +135,93 @@ const circleStore = observable({
       return false;
     }
     
-    if (withAnimation && this.recentCircle) {
-      // 有动画：先标记正在更新，触发淡出（参考 circle-status-action 动画时长）
-      action(() => {
-        this.isUpdating = true;
-      })();
-      
-      // 等待淡出动画完成（250ms transform + 50ms buffer = 300ms）
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // 更新数据（使用 action 包裹确保 MobX 追踪）
-      action(() => {
-        this.recentCircle = formattedCircle;
-      })();
-      
-      // 短暂延迟后结束更新状态，触发淡入
-      await new Promise(resolve => setTimeout(resolve, 50));
-      action(() => {
-        this.isUpdating = false;
-      })();
+    // 🎯 检测卡片类型变化（有圈 ↔ 无圈）
+    const oldHasCircle = this.recentCircle !== null;
+    const newHasCircle = formattedCircle !== null;
+    const isCardTypeChanged = oldHasCircle !== newHasCircle;
+    
+    if (withAnimation) {
+      if (isCardTypeChanged) {
+        // 🎬 跨卡片类型切换动画
+        
+        if (oldHasCircle && !newHasCircle) {
+          // 从有圈变无圈：朋友圈卡片淡出 → 空状态卡片淡入
+          action(() => {
+            this.isUpdating = true;  // 淡出朋友圈卡片
+          })();
+          
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // 更新数据，同时让新的空状态卡片以updating状态出现
+          action(() => {
+            this.recentCircle = formattedCircle;
+            this.isUpdating = false;
+            this.isEmptyCardUpdating = true;  // 新卡片以淡出状态出现
+          })();
+          
+          // 短暂延迟后触发淡入
+          await new Promise(resolve => setTimeout(resolve, 50));
+          action(() => {
+            this.isEmptyCardUpdating = false;  // 触发空状态卡片淡入
+          })();
+          
+        } else if (!oldHasCircle && newHasCircle) {
+          // 从无圈变有圈：空状态卡片淡出 → 朋友圈卡片淡入
+          action(() => {
+            this.isEmptyCardUpdating = true;  // 淡出空状态卡片
+          })();
+          
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // 更新数据，同时让新的朋友圈卡片以updating状态出现
+          action(() => {
+            this.recentCircle = formattedCircle;
+            this.isEmptyCardUpdating = false;
+            this.isUpdating = true;  // 新卡片以淡出状态出现
+          })();
+          
+          // 短暂延迟后触发淡入
+          await new Promise(resolve => setTimeout(resolve, 50));
+          action(() => {
+            this.isUpdating = false;  // 触发朋友圈卡片淡入
+          })();
+        }
+        
+      } else if (oldHasCircle && newHasCircle) {
+        // 🎬 同类型卡片内容变化动画（原有逻辑）
+        
+        // 先标记正在更新，触发淡出
+        action(() => {
+          this.isUpdating = true;
+        })();
+        
+        // 等待淡出动画完成（250ms transform + 50ms buffer = 300ms）
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // 更新数据
+        action(() => {
+          this.recentCircle = formattedCircle;
+        })();
+        
+        // 短暂延迟后结束更新状态，触发淡入
+        await new Promise(resolve => setTimeout(resolve, 50));
+        action(() => {
+          this.isUpdating = false;
+        })();
+      } else {
+        // 其他情况：直接更新
+        action(() => {
+          this.recentCircle = formattedCircle;
+          this.isUpdating = false;
+          this.isEmptyCardUpdating = false;
+        })();
+      }
     } else {
       // 无动画：直接更新（使用 action 包裹）
       action(() => {
         this.recentCircle = formattedCircle;
         this.isUpdating = false;
+        this.isEmptyCardUpdating = false;
       })();
     }
     
