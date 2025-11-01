@@ -144,7 +144,7 @@
               hold-keyboard="{{true}}"
               show-confirm-bar="{{false}}"
               maxlength="500"
-              cursor-spacing="25"
+              cursor-spacing="45"
               disable-default-padding="{{true}}"
               auto-height="{{false}}"
             ></textarea>
