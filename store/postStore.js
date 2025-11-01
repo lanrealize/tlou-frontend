@@ -282,7 +282,8 @@ const postStore = observable({
               content: commentData.content,
               replyTo: replyToUser,
               createdAt: new Date().toISOString(),
-              formattedTime: util.formatRelativeTime(new Date())
+              formattedTime: util.formatRelativeTime(new Date()),
+              _isNew: true  // 标记为新评论，用于高亮
             };
             
 
@@ -294,6 +295,12 @@ const postStore = observable({
             post.comments.push(newComment);
             
             this.posts = updatedPosts;
+            
+            // 2.5秒后自动清除 _isNew 标记
+            const commentId = newComment._id;
+            setTimeout(() => {
+              this._clearCommentNewFlag(postId, commentId);
+            }, 2500);
           } else {
             throw new Error('用户信息不完整');
           }
@@ -317,6 +324,32 @@ const postStore = observable({
       if (this._pendingComments) {
         this._pendingComments.delete(commentKey);
       }
+    }
+  },
+
+  // 清除评论的 _isNew 标记（内部方法）
+  _clearCommentNewFlag(postId, commentId) {
+    const postIndex = this.posts.findIndex(p => p._id === postId);
+    if (postIndex === -1) return;
+    
+    const post = this.posts[postIndex];
+    if (!post.comments) return;
+    
+    const commentIndex = post.comments.findIndex(c => c._id === commentId);
+    if (commentIndex === -1) return;
+    
+    if (post.comments[commentIndex]._isNew) {
+      const updatedPosts = [...this.posts];
+      const updatedComments = [...updatedPosts[postIndex].comments];
+      updatedComments[commentIndex] = {
+        ...updatedComments[commentIndex],
+        _isNew: false
+      };
+      updatedPosts[postIndex] = {
+        ...updatedPosts[postIndex],
+        comments: updatedComments
+      };
+      this.posts = updatedPosts;
     }
   },
 

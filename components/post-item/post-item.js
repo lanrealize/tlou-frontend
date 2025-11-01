@@ -36,8 +36,6 @@ Component({
     commentsExpanded: false,
     // 最多显示的评论数量
     maxCommentsShow: 3,
-    // 显示的评论列表
-    displayComments: [],
     // 弹出菜单显示状态
     showActionsMenu: false,
     // 单张图片的方向和样式信息
@@ -59,8 +57,18 @@ Component({
    * 数据监听器
    */
   observers: {
-    'post.comments, commentsExpanded': function(comments, expanded) {
-      this.updateDisplayComments();
+    'post.comments': function(comments) {
+      if (!comments || !Array.isArray(comments)) return;
+      
+      // 检查是否有新评论（未处理过的）
+      const newComment = comments.find(c => {
+        return c._isNew && !this._isProcessingComment(c._id);
+      });
+      
+      if (newComment) {
+        this._markCommentAsProcessing(newComment._id);
+        this.handleNewComment(newComment);
+      }
     },
     // 监听post对象变化，立即设置样式和初始化状态
     'post': function(post) {
@@ -206,30 +214,44 @@ Component({
       });
     },
 
-    // 更新显示的评论列表
-    updateDisplayComments() {
+    // 检查评论是否正在处理中
+    _isProcessingComment(commentId) {
+      if (!this._processedCommentIds) {
+        this._processedCommentIds = new Set();
+      }
+      return this._processedCommentIds.has(commentId);
+    },
+
+    // 标记评论为处理中
+    _markCommentAsProcessing(commentId) {
+      if (!this._processedCommentIds) {
+        this._processedCommentIds = new Set();
+      }
+      this._processedCommentIds.add(commentId);
+    },
+
+    // 处理新评论（自动展开）
+    handleNewComment(newComment) {
       const { post, commentsExpanded, maxCommentsShow } = this.data;
       
-      if (!post || !post.comments || !Array.isArray(post.comments)) {
-        this.setData({
-          displayComments: []
-        });
-        return;
+      if (!newComment || !post || !post.comments) return;
+      
+      // 找到新评论的索引位置
+      const commentIndex = post.comments.findIndex(c => c._id === newComment._id);
+      if (commentIndex === -1) return;
+      
+      // 逻辑：如果新评论在第4条及以上（被折叠），自动展开
+      if (commentIndex >= maxCommentsShow && !commentsExpanded) {
+        this.setData({ commentsExpanded: true });
       }
+      
+      // 注意：_isNew 标记会由 postStore 在 2.5 秒后自动清除
+      // 这里不需要手动清除，避免触发 observer 循环
+    },
 
-      let displayComments = [];
-      
-      if (commentsExpanded) {
-        // 展开状态：显示所有评论
-        displayComments = post.comments;
-      } else {
-        // 收起状态：显示前N条评论
-        displayComments = post.comments.slice(0, maxCommentsShow);
-      }
-      
-      this.setData({
-        displayComments: displayComments
-      });
+    // 更新显示的评论列表（兼容旧逻辑，现在只是空函数）
+    updateDisplayComments() {
+      // 不再需要 displayComments，所有评论通过 CSS 控制显示/隐藏
     },
 
     // 点赞/取消点赞
@@ -488,8 +510,6 @@ Component({
     attached() {
       // 组件挂载时立即尝试设置图片样式（基于现有数据）
       this.setSingleImageStyleFromMeta();
-      // 初始化评论显示
-      this.updateDisplayComments();
       // 初始化图片加载状态
       this.initImageLoadStates();
       // 初始化点赞状态
@@ -504,7 +524,11 @@ Component({
     },
     
     detached() {
-      // 组件卸载时的逻辑
+      // 清理已处理评论的记录
+      if (this._processedCommentIds) {
+        this._processedCommentIds.clear();
+        this._processedCommentIds = null;
+      }
     }
   },
 

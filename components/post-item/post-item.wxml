@@ -153,11 +153,11 @@
         <!-- 评论列表 -->
         <view class="comments-section" wx:if="{{post.comments && post.comments.length > 0}}">
           <view class="comments-container">
-            <!-- 显示部分评论 -->
+            <!-- 显示所有评论（通过CSS控制折叠） -->
             <view 
-              class="comment-item" 
+              class="comment-item {{comment._isNew ? 'comment-new-highlight' : ''}} {{!commentsExpanded && index >= maxCommentsShow ? 'comment-hidden' : ''}}" 
               id="comment-{{comment._id}}"
-              wx:for="{{displayComments}}" 
+              wx:for="{{post.comments}}" 
               wx:for-item="comment" 
               wx:key="_id"
             >
@@ -216,7 +216,7 @@
 
             <!-- 展开/收起评论 -->
             <view 
-              class="comments-toggle" 
+              class="comments-toggle {{commentsExpanded ? 'toggle-expanded' : 'toggle-collapsed'}}" 
               wx:if="{{post.comments.length > maxCommentsShow}}"
               bindtap="toggleComments"
             >

@@ -515,15 +515,63 @@
   align-items: flex-start;
   margin-bottom: 16rpx;
   line-height: 1.4;
+  /* 展开/收起动画 - 参考小红书/抖音 */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+  transform: translateY(0);
+  max-height: 500rpx;
+  overflow: visible;
 }
 
-.comment-item:last-child {
-  margin-bottom: 0;
-}
-
-/* 当存在toggle按钮时，最后一个评论项也不需要底部边距 */
+/* 最后一个评论去掉底部间距 */
 .comment-item:last-of-type {
   margin-bottom: 0;
+}
+
+/* 折叠状态（隐藏的评论）*/
+.comment-item.comment-hidden {
+  opacity: 0;
+  transform: translateY(-20rpx);
+  max-height: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* 新评论高亮动画 */
+.comment-new-highlight {
+  position: relative;
+}
+
+/* 使用伪元素实现高亮背景，避免影响布局 */
+.comment-new-highlight::before {
+  content: '';
+  position: absolute;
+  top: -12rpx;
+  left: -32rpx;
+  right: 8rpx;
+  bottom: -8rpx;
+  background-color: #E3EEFF;
+  border-radius: 8rpx;
+  z-index: -1;
+  opacity: 0;
+  animation: commentHighlightFade 2.5s ease-out forwards;
+}
+
+@keyframes commentHighlightFade {
+  0% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 /* 评论头像 */
@@ -652,7 +700,18 @@
   text-align: left;
   line-height: 1;
   gap: 16rpx;
+  /* 和评论展开/收起动画保持一致 */
+  transition: margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 展开状态：30rpx（最后评论margin-bottom: 0） */
+.comments-toggle.toggle-expanded {
   margin-top: 30rpx;
+}
+
+/* 收起状态：14rpx（第3条评论margin-bottom: 16rpx，总和30rpx） */
+.comments-toggle.toggle-collapsed {
+  margin-top: 14rpx;
 }
 
 .toggle-dash {
