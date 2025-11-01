@@ -106,6 +106,9 @@ Page({
   _createVideoTimer: null,
   _playVideoTimer: null,  // 淡入1秒后开始播放的定时器
   
+  // 🎬 发现朋友圈首次加载标志
+  _isFirstDiscoverLoad: true,
+  
   // 🎬 朋友圈卡片图片背景定时器和索引
   _allowImageBgAnimation: false,
   _currentImageIndex: 0,           // 当前显示的图片索引
@@ -982,6 +985,8 @@ Page({
           postImageUrl = typeof firstImage === 'string' ? firstImage : (firstImage.url || '');
         }
         
+        const isInitialLoad = this._isFirstDiscoverLoad;
+        
         this.setData({
           recommendedCircles: [{
             ...circle,
@@ -989,10 +994,16 @@ Page({
             memberCount: circle.members ? circle.members.length : 0,
             hasLatestPost: !!(circle.latestPost && circle.latestPost.content),
             postImageUrl: postImageUrl,
-            refreshTimestamp: Date.now()  // 添加刷新时间戳，用于测试验证
+            refreshTimestamp: Date.now(),
+            isInitialLoad: isInitialLoad
           }],
           recommendationsLoaded: true
         });
+        
+        // 首次加载完成后立即标记
+        if (this._isFirstDiscoverLoad) {
+          this._isFirstDiscoverLoad = false;
+        }
       } else {
         // 暂无可用的朋友圈（正常情况）
         this.setData({ 
@@ -1036,6 +1047,8 @@ Page({
           postImageUrl = typeof firstImage === 'string' ? firstImage : (firstImage.url || '');
         }
         
+        const isInitialLoad = this._isFirstDiscoverLoad;
+        
         this.setData({
           recommendedCircles: [{
             ...circle,
@@ -1043,10 +1056,16 @@ Page({
             memberCount: circle.members ? circle.members.length : 0,
             hasLatestPost: !!(circle.latestPost && circle.latestPost.content),
             postImageUrl: postImageUrl,
-            refreshTimestamp: Date.now()  // 添加刷新时间戳，用于测试验证
+            refreshTimestamp: Date.now(),
+            isInitialLoad: isInitialLoad
           }],
           recommendationsLoaded: true
         });
+        
+        // 刷新时也标记（防止首次加载失败后刷新仍用初始动画）
+        if (this._isFirstDiscoverLoad) {
+          this._isFirstDiscoverLoad = false;
+        }
       } else {
         // 暂无可推荐的朋友圈
         this.setData({ 

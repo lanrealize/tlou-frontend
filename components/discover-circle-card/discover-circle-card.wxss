@@ -325,11 +325,28 @@
 }
 
 /* 动画效果 */
-.discover-fade-in {
-  animation: fadeInUp 0.5s ease-out;
+/* 初始加载：只淡入 */
+.card-fade-only {
+  opacity: 0;
+  animation: cardFadeOnly 0.5s ease-out forwards;
 }
 
-@keyframes fadeInUp {
+/* 刷新：淡入+上滑 */
+.card-fade-slide {
+  opacity: 0;
+  animation: cardFadeSlide 0.5s ease-out forwards;
+}
+
+@keyframes cardFadeOnly {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cardFadeSlide {
   from {
     opacity: 0;
     transform: translate3d(0, 40px, 0);
