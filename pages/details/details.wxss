@@ -399,7 +399,7 @@ scroll-view::-webkit-scrollbar,
 
 .cancel-btn {
   font-size: 28rpx;
-  color: #999999;
+  color: #1A73E8;  /* 和发送按钮一样的蓝色，始终enable */
   padding: 10rpx;
 }
 
@@ -410,9 +410,9 @@ scroll-view::-webkit-scrollbar,
 
 .comment-textarea {
   flex: 1;
-  height: 80rpx;
-  min-height: 80rpx;
-  max-height: 80rpx;
+  height: 120rpx;  /* 固定两行高度 */
+  min-height: 120rpx;
+  max-height: 120rpx;
   padding: 22rpx 15rpx;
   border: 1rpx solid #e8e8e8;
   border-radius: 12rpx;
@@ -421,30 +421,29 @@ scroll-view::-webkit-scrollbar,
   background-color: #ffffff;
   box-sizing: border-box;
   margin-right: 15rpx;
-  vertical-align: middle;
+  vertical-align: top;  /* 改为顶部对齐 */
   word-wrap: break-word;
 }
 
 .input-row {
   display: flex;
-  align-items: center;
+  align-items: center;  /* 垂直居中对齐 */
 }
 
-
-
 .send-btn {
-  padding: 0 40rpx;
-  height: 80rpx;
-  font-size: 26rpx;
-  background-color: #1A73E8;
-  color: #ffffff;
-  border: none;
-  border-radius: 12rpx;
+  /* 使用 admin-btn 样式 */
+  color: #1A73E8;
+  font-size: 28rpx;  /* 和取消按钮字号一致 */
+  line-height: 1.2;
+  font-weight: 400;
+  padding: 10rpx;  /* 和取消按钮padding一致 */
   flex-shrink: 0;
-  box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  /* 去掉椭圆形背景 */
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  /* 靠右对齐，垂直居中 */
 }
 
 .send-btn::after {
