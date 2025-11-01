@@ -283,6 +283,10 @@ view, text, image {
   justify-content: space-between;
   height: 100%;
   /* 只保留文字颜色过渡，不影响布局 */
+  
+  /* 抖动修复：强制内容层独立渲染，避免受图片层动画影响 */
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 /* 🔧 确保 .status-tag 相对于卡片本身定位，不受 .card-content 影响 */
@@ -311,8 +315,10 @@ view, text, image {
   /* 统一过渡时间：2秒 */
   transition: opacity 0.25s ease, transform 0.25s ease, 
               color 2s ease, text-shadow 2s ease;
-  /* 性能优化 */
-  will-change: transform, opacity;
+  /* 性能优化 + 抖动修复 */
+  will-change: transform, opacity, color, text-shadow;  /* 添加 color 和 text-shadow 到 will-change */
+  transform: translateZ(0);  /* 强制GPU加速，创建独立合成层 */
+  isolation: isolate;  /* 创建独立堆叠上下文，避免受图片层渲染影响 */
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
