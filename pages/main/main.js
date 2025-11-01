@@ -112,6 +112,8 @@ Page({
   // 🎬 朋友圈卡片图片背景定时器和索引
   _allowImageBgAnimation: false,
   _currentImageIndex: 0,           // 当前显示的图片索引
+  _currentImageSessionId: null,    // 当前图片动画会话ID（circleId），用于验证数据有效性
+  _lastDisplayedCircleId: null,    // 上次显示过的朋友圈ID，用于判断是否切换朋友圈
   _imageBgCreateTimer: null,       // 创建图片元素的定时器
   _imageBgFadeInTimer: null,       // 淡入定时器
   _imageBgDisplayTimer: null,      // 显示时长定时器
@@ -221,22 +223,60 @@ Page({
     this._allowImageBgAnimation = false;
     this._resetCircleCardImageBgState();
     
+    // 🎯 创建动画会话：保存完整的数据快照
+    const sessionId = recentCircle._id;
+    const imagesSnapshot = [...recentCircle.latestPost.images];  // 数组快照
+    
+    // 🔧 确保索引在有效范围内
+    if (this._currentImageIndex >= imagesSnapshot.length) {
+      console.log(`🖼️ [图片背景] 索引越界 [${this._currentImageIndex} >= ${imagesSnapshot.length}]，重置为0`);
+      this._currentImageIndex = 0;
+    }
+    
+    const imageIndex = this._currentImageIndex % Math.max(imagesSnapshot.length, 1);
+    
+    // 标记当前会话
+    this._currentImageSessionId = sessionId;
+    
+    console.log(`🖼️ [图片背景] 启动会话 [session=${sessionId}, index=${imageIndex}/${imagesSnapshot.length}]`);
+    
     // 延迟创建图片元素，等待小程序框架完成DOM更新
     this._imageBgCreateTimer = setTimeout(() => {
-      // 获取当前要显示的图片
-      const images = recentCircle.latestPost.images;
-      const currentImage = images[this._currentImageIndex % images.length];
+      // 🎯 验证会话仍然有效
+      if (this._currentImageSessionId !== sessionId) {
+        console.log(`🖼️ [图片背景] 会话已失效 [期望=${sessionId}, 当前=${this._currentImageSessionId}]`);
+        return;
+      }
       
-      // 🔧 处理图片URL - 支持对象和字符串两种格式
+      // 🎯 使用快照数据，不依赖当前状态
+      const currentImage = imagesSnapshot[imageIndex];
+      
+      // 处理图片URL - 支持对象和字符串两种格式
+      if (!currentImage) {
+        console.log('🖼️ [图片背景] 图片数据无效，取消显示');
+        return;
+      }
       const imageUrl = typeof currentImage === 'string' ? currentImage : (currentImage.url || '');
       
-      console.log(`🖼️ [图片背景] 显示图片 [${this._currentImageIndex % images.length + 1}/${images.length}]: ${imageUrl}`);
+      if (!imageUrl) {
+        console.log('🖼️ [图片背景] 图片URL为空，取消显示');
+        return;
+      }
+      
+      console.log(`🖼️ [图片背景] 显示图片 [${imageIndex + 1}/${imagesSnapshot.length}]: ${imageUrl}`);
       
       this.setData({ 
         circleCardImageState: IMAGE_BG_STATES.LOADING, 
         showCircleCardImage: true,
         circleCardImageUrl: imageUrl
       }, () => {
+        // 再次验证会话（防止setData期间切换）
+        if (this._currentImageSessionId !== sessionId) {
+          console.log('🖼️ [图片背景] setData完成后会话已失效，取消动画');
+          this._stopCircleCardImageBg();
+          return;
+        }
+        
         this._allowImageBgAnimation = true;
         // 图片加载完成后触发淡入动画
         this._triggerCircleCardImageBgAnimation();
@@ -257,12 +297,15 @@ Page({
       return;
     }
     
+    // 保存当前会话ID用于后续验证
+    const sessionId = this._currentImageSessionId;
+    
     console.log('🖼️ [图片背景] 开始动画流程');
     this.setData({ circleCardImageState: IMAGE_BG_STATES.READY });
     
     // 等待2秒后开始淡入
     this._imageBgFadeInTimer = setTimeout(() => {
-      if (!this._allowImageBgAnimation) return;
+      if (!this._allowImageBgAnimation || this._currentImageSessionId !== sessionId) return;
       
       console.log('🖼️ [图片背景] 开始淡入（2秒）');
       this.setData({ 
@@ -272,14 +315,14 @@ Page({
       
       // 淡入完成后进入显示状态
       this._imageBgDisplayTimer = setTimeout(() => {
-        if (!this._allowImageBgAnimation) return;
+        if (!this._allowImageBgAnimation || this._currentImageSessionId !== sessionId) return;
         
         console.log('🖼️ [图片背景] 完全显示（保持5秒）');
         this.setData({ circleCardImageState: IMAGE_BG_STATES.DISPLAYING });
         
         // 显示5秒后开始淡出
         this._imageBgFadeOutTimer = setTimeout(() => {
-          if (!this._allowImageBgAnimation) return;
+          if (!this._allowImageBgAnimation || this._currentImageSessionId !== sessionId) return;
           
           console.log('🖼️ [图片背景] 开始淡出（2秒）');
           this._fadeOutCircleCardImageBg();
@@ -335,6 +378,7 @@ Page({
       circleCardImageUrl: ''
     });
     this._allowImageBgAnimation = false;
+    this._currentImageSessionId = null;  // 清理会话ID
   },
   
   /**
@@ -343,6 +387,7 @@ Page({
    */
   _stopCircleCardImageBg() {
     this._allowImageBgAnimation = false;
+    this._currentImageSessionId = null;  // 清理会话ID
     this.setData({ 
       showCircleCardImage: false,
       circleCardImageVisible: false,
@@ -534,7 +579,22 @@ Page({
       // 4. 如果是朋友圈卡片，初始化图片背景
       // 设计意图：复用视频的时间线，先显示纯文字卡片，2秒后图片淡入
       console.log('🖼️ [main] 初始化朋友圈图片背景');
-      this._advanceImageIndex();  // 推进到下一张图片
+      
+      // 🎯 智能索引推进：只在需要时推进
+      const currentCircleId = this.data.recentCircle?._id;
+      const lastDisplayedCircleId = this._lastDisplayedCircleId;
+      
+      if (currentCircleId !== lastDisplayedCircleId) {
+        // 朋友圈切换了，重置索引到0
+        console.log(`🖼️ [main] 朋友圈切换 [${lastDisplayedCircleId} → ${currentCircleId}]，重置索引`);
+        this._currentImageIndex = 0;
+        this._lastDisplayedCircleId = currentCircleId;
+      } else {
+        // 同一个朋友圈，推进索引
+        console.log('🖼️ [main] 同一朋友圈，推进索引');
+        this._advanceImageIndex();
+      }
+      
       this._initCircleCardImageBg();
     }
   },
@@ -982,7 +1042,9 @@ Page({
         let postImageUrl = '';
         if (circle.latestPost && circle.latestPost.images && circle.latestPost.images.length > 0) {
           const firstImage = circle.latestPost.images[0];
-          postImageUrl = typeof firstImage === 'string' ? firstImage : (firstImage.url || '');
+          if (firstImage) {
+            postImageUrl = typeof firstImage === 'string' ? firstImage : (firstImage.url || '');
+          }
         }
         
         const isInitialLoad = this._isFirstDiscoverLoad;
@@ -1044,7 +1106,9 @@ Page({
         let postImageUrl = '';
         if (circle.latestPost && circle.latestPost.images && circle.latestPost.images.length > 0) {
           const firstImage = circle.latestPost.images[0];
-          postImageUrl = typeof firstImage === 'string' ? firstImage : (firstImage.url || '');
+          if (firstImage) {
+            postImageUrl = typeof firstImage === 'string' ? firstImage : (firstImage.url || '');
+          }
         }
         
         const isInitialLoad = this._isFirstDiscoverLoad;
