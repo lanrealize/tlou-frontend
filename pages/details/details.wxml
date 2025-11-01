@@ -167,4 +167,23 @@
     bind:close="onUserInfoClose"
   ></user-info-popup>
 
+  <!-- 朋友圈不存在提示 -->
+  <view class="circle-not-found-overlay" wx:if="{{circleNotFound}}" bindtap="goToMainPage">
+    <!-- 背景光球层 -->
+    <view class="overlay-bg">
+      <!-- 额外的光球 - 紫色 -->
+      <view class="color-orb orb-purple"></view>
+      <!-- 额外的光球 - 橙色 -->
+      <view class="color-orb orb-orange"></view>
+    </view>
+    <!-- 毛玻璃遮罩层 -->
+    <view class="overlay-bg-glass"></view>
+    <!-- 内容层 -->
+    <view class="overlay-content">
+      <view class="overlay-title">内容不存在</view>
+      <view class="overlay-subtitle">可能已被删除</view>
+      <view class="overlay-hint">点击任意位置返回首页</view>
+    </view>
+  </view>
+
 </view>

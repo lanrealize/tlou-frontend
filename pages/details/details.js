@@ -49,6 +49,9 @@ Page({
     loading: false,       // 加载状态
     hasMore: true,        // 是否还有更多数据
     
+    // 朋友圈不存在状态
+    circleNotFound: false, // 朋友圈是否不存在
+    
     // 安全区域信息
     safeAreaInfo: {
       statusBarHeight: 44
@@ -555,6 +558,13 @@ Page({
     }
   },
 
+  // 返回首页
+  goToMainPage() {
+    wx.reLaunch({
+      url: '/pages/main/main'
+    });
+  },
+
 
 
   // 加载待处理申请数量
@@ -1010,13 +1020,8 @@ Page({
         }
       });
     } else {
-      // 其他错误
-      wx.showModal({
-        title: '加载失败',
-        content: error.message || '朋友圈不存在或网络错误',
-        showCancel: false,
-        success: () => wx.navigateBack()
-      });
+      // 其他错误：显示全屏overlay
+      this.setData({ circleNotFound: true });
     }
   },
 

@@ -508,3 +508,161 @@ scroll-view::-webkit-scrollbar,
 }
 
 /* ===== 添加新分享部分样式 - 已移至circle-status-action组件 ===== */
+
+/* 朋友圈不存在提示overlay */
+.circle-not-found-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* 彩色光球背景层 */
+.overlay-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+/* 彩色光球 - 粉色 */
+.overlay-bg::before {
+  content: '';
+  position: absolute;
+  width: 600rpx;
+  height: 600rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 105, 180, 0.6) 0%, rgba(255, 182, 193, 0.3) 50%, transparent 100%);
+  top: -100rpx;
+  left: -150rpx;
+  animation: float1 8s linear infinite alternate;
+}
+
+/* 彩色光球 - 蓝色 */
+.overlay-bg::after {
+  content: '';
+  position: absolute;
+  width: 500rpx;
+  height: 500rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(64, 156, 255, 0.5) 0%, rgba(135, 206, 250, 0.25) 50%, transparent 100%);
+  top: 40%;
+  right: -100rpx;
+  animation: float2 10s linear infinite alternate;
+}
+
+/* 额外的彩色光球 */
+.color-orb {
+  position: absolute;
+  border-radius: 50%;
+}
+
+/* 紫色光球 */
+.orb-purple {
+  width: 450rpx;
+  height: 450rpx;
+  background: radial-gradient(circle, rgba(147, 51, 234, 0.5) 0%, rgba(192, 132, 252, 0.25) 50%, transparent 100%);
+  bottom: -50rpx;
+  left: 10%;
+  animation: float3 12s linear infinite alternate;
+}
+
+/* 橙色光球 */
+.orb-orange {
+  width: 400rpx;
+  height: 400rpx;
+  background: radial-gradient(circle, rgba(251, 146, 60, 0.5) 0%, rgba(253, 186, 116, 0.3) 50%, transparent 100%);
+  top: 20%;
+  right: 5%;
+  animation: float4 9s linear infinite alternate;
+}
+
+/* 毛玻璃遮罩层 */
+.overlay-bg-glass {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(40rpx) saturate(130%);
+  -webkit-backdrop-filter: blur(40rpx) saturate(130%);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.overlay-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.overlay-title {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #333333;
+  margin-bottom: 20rpx;
+  text-align: center;
+  text-shadow: 0 2rpx 8rpx rgba(255, 255, 255, 0.8);
+}
+
+.overlay-subtitle {
+  font-size: 28rpx;
+  color: #666666;
+  text-align: center;
+  margin-bottom: 60rpx;
+  text-shadow: 0 2rpx 8rpx rgba(255, 255, 255, 0.8);
+}
+
+.overlay-hint {
+  font-size: 24rpx;
+  color: #999999;
+  text-align: center;
+}
+
+/* 漂浮动画 - 光球1（粉色）- 纯横向右移 */
+@keyframes float1 {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(400rpx);
+  }
+}
+
+/* 漂浮动画 - 光球2（蓝色）- 纯横向左移 */
+@keyframes float2 {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-400rpx);
+  }
+}
+
+/* 漂浮动画 - 光球3（紫色）- 纯纵向上移 */
+@keyframes float3 {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-400rpx);
+  }
+}
+
+/* 漂浮动画 - 光球4（橙色）- 纯纵向下移 */
+@keyframes float4 {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(400rpx);
+  }
+}
