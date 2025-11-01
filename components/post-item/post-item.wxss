@@ -700,18 +700,20 @@
   text-align: left;
   line-height: 1;
   gap: 16rpx;
-  /* 和评论展开/收起动画保持一致 */
-  transition: margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 展开状态：30rpx（最后评论margin-bottom: 0） */
 .comments-toggle.toggle-expanded {
   margin-top: 30rpx;
+  /* 展开时使用 cubic-bezier，和评论展开动画一致 */
+  transition: margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 收起状态：14rpx（第3条评论margin-bottom: 16rpx，总和30rpx） */
 .comments-toggle.toggle-collapsed {
   margin-top: 14rpx;
+  /* 收起时使用 ease-in-out，更平滑 */
+  transition: margin-top 0.3s ease-in-out;
 }
 
 .toggle-dash {
