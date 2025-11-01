@@ -1,11 +1,14 @@
 // pages/main/main.js
+console.log('🔵 [main] 开始加载 main.js');
 const { storeBindingsBehavior } = require('mobx-miniprogram-bindings');
+console.log('🔵 [main] MobX bindings 加载完成');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const api = require('../../utils/api');
 const util = require('../../utils/util');
 const navigationHelper = require('../../utils/navigationHelper');
 const { checkAndHandle } = require('../../utils/checkUserActionPermission');
 const { circleStore, CIRCLE_STATUS } = require('../../store/circleStore');
+console.log('🔵 [main] 所有依赖加载完成');
 
 // 🎬 视频动画状态机常量（定义在Page外部）
 const VIDEO_STATES = {
@@ -45,6 +48,7 @@ const IMAGE_BG_STATES = {
   FADE_OUT: 'fade_out'
 };
 
+console.log('🔵 [main] 准备注册 Page');
 Page({
   // 使用MobX状态管理行为
   behaviors: [storeBindingsBehavior],
@@ -123,6 +127,7 @@ Page({
   _emptyCardVideoContext: null,
 
   onLoad(options) {
+    console.log('🟢 [main] Page 已注册，onLoad 执行');
     
     // 获取安全区域信息
     this.getSafeAreaInfo();

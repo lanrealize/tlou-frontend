@@ -33,6 +33,7 @@ App({
 
   onLaunch() {
     console.log('🚀 小程序启动');
+    console.log('🔵 [app] 开始初始化流程');
     
     // 设置导航栏信息
     this.setNavigationInfo();
@@ -49,6 +50,7 @@ App({
 
   onShow() {
     console.log('👁️ 小程序显示');
+    console.log('🔵 [app] onShow 触发，即将导航到首页');
   },
 
   onHide() {
