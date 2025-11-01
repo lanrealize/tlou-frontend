@@ -543,7 +543,7 @@ scroll-view::-webkit-scrollbar,
   background: radial-gradient(circle, rgba(255, 105, 180, 0.6) 0%, rgba(255, 182, 193, 0.3) 50%, transparent 100%);
   top: -100rpx;
   left: -150rpx;
-  animation: float1 10s linear infinite alternate;
+  animation: float1 8s linear infinite alternate;
 }
 
 /* 彩色光球 - 蓝色 */
@@ -556,7 +556,7 @@ scroll-view::-webkit-scrollbar,
   background: radial-gradient(circle, rgba(64, 156, 255, 0.5) 0%, rgba(135, 206, 250, 0.25) 50%, transparent 100%);
   top: 40%;
   right: -100rpx;
-  animation: float2 12s linear infinite alternate;
+  animation: float2 10s linear infinite alternate;
 }
 
 /* 额外的彩色光球 */
@@ -572,7 +572,7 @@ scroll-view::-webkit-scrollbar,
   background: radial-gradient(circle, rgba(147, 51, 234, 0.5) 0%, rgba(192, 132, 252, 0.25) 50%, transparent 100%);
   bottom: -50rpx;
   left: 10%;
-  animation: float3 13s linear infinite alternate;
+  animation: float3 12s linear infinite alternate;
 }
 
 /* 橙色光球 */
@@ -627,42 +627,42 @@ scroll-view::-webkit-scrollbar,
   text-align: center;
 }
 
-/* iOS风格漂浮动画 - 光球1（粉色）- 缓慢横向右移 */
+/* 漂浮动画 - 光球1（粉色）- 纯横向右移 */
 @keyframes float1 {
   0% {
     transform: translateX(0);
   }
   100% {
-    transform: translateX(200rpx);
+    transform: translateX(400rpx);
   }
 }
 
-/* iOS风格漂浮动画 - 光球2（蓝色）- 缓慢横向左移 */
+/* 漂浮动画 - 光球2（蓝色）- 纯横向左移 */
 @keyframes float2 {
   0% {
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-200rpx);
+    transform: translateX(-400rpx);
   }
 }
 
-/* iOS风格漂浮动画 - 光球3（紫色）- 缓慢纵向上移 */
+/* 漂浮动画 - 光球3（紫色）- 纯纵向上移 */
 @keyframes float3 {
   0% {
     transform: translateY(0);
   }
   100% {
-    transform: translateY(-250rpx);
+    transform: translateY(-400rpx);
   }
 }
 
-/* iOS风格漂浮动画 - 光球4（橙色）- 缓慢纵向下移 */
+/* 漂浮动画 - 光球4（橙色）- 纯纵向下移 */
 @keyframes float4 {
   0% {
     transform: translateY(0);
   }
   100% {
-    transform: translateY(250rpx);
+    transform: translateY(400rpx);
   }
 }
