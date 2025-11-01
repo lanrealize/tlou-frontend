@@ -736,6 +736,11 @@ view, text, image {
   text-shadow: 0 2rpx 8rpx rgba(0,0,0,0.8);  /* 深色阴影提高可读性 */
 }
 
+/* 第1行变白加速：1.4秒 */
+.card-main-title.text-light {
+  transition: color 1.4s ease, text-shadow 1.4s ease;
+}
+
 /* 🎬 分割线 */
 .divider {
   flex-shrink: 0;
