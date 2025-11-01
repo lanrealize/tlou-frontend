@@ -155,7 +155,7 @@
           <view class="comments-container">
             <!-- 显示所有评论（通过CSS控制折叠） -->
             <view 
-              class="comment-item {{comment._isNew ? 'comment-new-highlight' : ''}} {{!commentsExpanded && index >= maxCommentsShow ? 'comment-hidden' : ''}}" 
+              class="comment-item {{comment._isNew ? 'comment-new-highlight' : ''}} {{!commentsExpanded && index >= maxCommentsShow ? 'comment-hidden' : ''}} {{!commentsExpanded && index === maxCommentsShow - 1 ? 'last-visible-comment' : ''}}" 
               id="comment-{{comment._id}}"
               wx:for="{{post.comments}}" 
               wx:for-item="comment" 
