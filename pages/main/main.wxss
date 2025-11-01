@@ -304,6 +304,7 @@ view, text, image {
 
 /* 🎬 朋友圈卡片激活状态（有图片背景时） */
 .friend-circle-card.image-active {
+  border-radius: 22rpx;  /* 图片显示时，外层容器圆角也变大，与内层保持一致 */
   transition: border-radius 2s ease, box-shadow 2s ease;
 }
 
