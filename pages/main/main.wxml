@@ -57,6 +57,7 @@
     
     <!-- 🎬 内容层（z-index: 2，最上层） -->
     <view class="card-content">
+      <!-- 🐛 测试：恢复 text-light 类，观察是否是文字样式变化导致抖动 -->
       <view class="card-title card-main-title {{circleCardImageVisible ? 'text-light' : ''}}">最近的朋友圈</view>
       <!-- 🎬 第2行 - 错落动画（先刷新） -->
       <view class="update-time {{isUpdatingCircleLine1 ? 'line-updating' : ''}} {{circleCardImageVisible ? 'text-light' : ''}}">最新内容更新于： {{recentCircle.formattedTime}}</view>

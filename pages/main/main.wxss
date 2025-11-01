@@ -6,8 +6,8 @@
   color: #000000;
   font-weight: 400;
   line-height: 1.5;
-  /* 统一过渡时间：2秒 */
-  transition: color 2s ease, text-shadow 2s ease;
+  /* 🐛 测试：去掉 text-shadow 过渡 */
+  transition: color 2s ease;
 }
 
 .card-sub-title {
@@ -312,13 +312,13 @@ view, text, image {
 .user-count {
   opacity: 1;
   transform: translate3d(0, 0, 0);
-  /* 统一过渡时间：2秒 */
+  /* 🐛 测试：去掉 text-shadow 过渡，只保留颜色过渡 */
   transition: opacity 0.25s ease, transform 0.25s ease, 
-              color 2s ease, text-shadow 2s ease;
-  /* 性能优化 + 抖动修复 */
-  will-change: transform, opacity, color, text-shadow;  /* 添加 color 和 text-shadow 到 will-change */
-  transform: translateZ(0);  /* 强制GPU加速，创建独立合成层 */
-  isolation: isolate;  /* 创建独立堆叠上下文，避免受图片层渲染影响 */
+              color 2s ease;
+  /* 性能优化 */
+  will-change: transform, opacity, color;
+  transform: translateZ(0);
+  isolation: isolate;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
@@ -739,12 +739,14 @@ view, text, image {
 /* 🎬 文字样式：浅色（有视频/图片时） */
 .text-light {
   color: #ffffff;
-  text-shadow: 0 2rpx 8rpx rgba(0,0,0,0.8);  /* 深色阴影提高可读性 */
+  /* 🔧 抖动修复：移除 text-shadow，避免真机渲染抖动 */
+  /* text-shadow: 0 2rpx 8rpx rgba(0,0,0,0.8); */
 }
 
 /* 第1行变白加速：1.4秒 */
 .card-main-title.text-light {
-  transition: color 1.4s ease, text-shadow 1.4s ease;
+  /* 🐛 测试：只保留颜色过渡 */
+  transition: color 1.4s ease;
 }
 
 /* 🎬 分割线 */
