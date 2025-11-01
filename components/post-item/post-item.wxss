@@ -519,7 +519,7 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 1;
   transform: translateY(0);
-  max-height: 500rpx;
+  max-height: 150rpx;
   overflow: visible;
 }
 
@@ -536,7 +536,6 @@
 /* 折叠状态（隐藏的评论）*/
 .comment-item.comment-hidden {
   opacity: 0;
-  transform: translateY(-20rpx);
   max-height: 0;
   margin-top: 0;
   margin-bottom: 0;
