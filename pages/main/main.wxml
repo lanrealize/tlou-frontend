@@ -57,11 +57,11 @@
     
     <!-- 🎬 内容层（z-index: 2，最上层） -->
     <view class="card-content">
-      <view class="card-title card-main-title {{circleCardImageVisible ? 'text-light' : ''}} {{isFastTextReset ? 'fast-reset' : ''}}">最近的朋友圈</view>
+      <view class="card-title card-main-title {{circleCardImageVisible ? 'text-light' : ''}}">最近的朋友圈</view>
       <!-- 🎬 第2行 - 错落动画（先刷新） -->
-      <view class="update-time {{isUpdatingCircleLine1 ? 'line-updating' : ''}} {{circleCardImageVisible ? 'text-light' : ''}} {{isFastTextReset ? 'fast-reset' : ''}}">最新内容更新于： {{recentCircle.formattedTime}}</view>
+      <view class="update-time {{isUpdatingCircleLine1 ? 'line-updating' : ''}} {{circleCardImageVisible ? 'text-light' : ''}}">最新内容更新于： {{recentCircle.formattedTime}}</view>
       <!-- 🎬 第3行 - 错落动画（后刷新，延迟150ms） -->
-      <view class="user-count {{isUpdatingCircleLine2 ? 'line-updating line-updating-delay' : ''}} {{circleCardImageVisible ? 'text-light' : ''}} {{isFastTextReset ? 'fast-reset' : ''}}">
+      <view class="user-count {{isUpdatingCircleLine2 ? 'line-updating line-updating-delay' : ''}} {{circleCardImageVisible ? 'text-light' : ''}}">
         <text>有 {{recentCircle.memberCount}} 名用户在内</text>
         <view class="avatar-group">
         <image class="avatar-small-1" wx:if="{{recentCircle.members && recentCircle.members.length > 0}}" src="{{recentCircle.members[0].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>

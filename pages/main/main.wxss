@@ -6,8 +6,8 @@
   color: #000000;
   font-weight: 400;
   line-height: 1.5;
-  /* 🔧 第1行【变回黑色】的时间（从白→黑） */
-  transition: color 4s ease-out, text-shadow 1s ease-out;
+  /* 统一过渡时间：2秒 */
+  transition: color 2s ease, text-shadow 2s ease;
 }
 
 .card-sub-title {
@@ -308,10 +308,10 @@ view, text, image {
 .user-count {
   opacity: 1;
   transform: translate3d(0, 0, 0);
-  /* 🔧 第2/3行【变回灰色】的时间（从白→灰） */
+  /* 统一过渡时间：2秒 */
   transition: opacity 0.25s ease, transform 0.25s ease, 
-              color 3s ease-out, text-shadow 2.5s ease-out;
-  /* 🔧 性能优化 */
+              color 2s ease, text-shadow 2s ease;
+  /* 性能优化 */
   will-change: transform, opacity;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
@@ -728,29 +728,12 @@ view, text, image {
 .text-dark {
   color: #000000;
   text-shadow: none;
-  /* 🔧 不定义transition，让元素本身的类控制过渡时间 */
 }
 
 /* 🎬 文字样式：浅色（有视频/图片时） */
 .text-light {
   color: #ffffff;
   text-shadow: 0 2rpx 8rpx rgba(0,0,0,0.8);  /* 深色阴影提高可读性 */
-}
-
-/* 🔧 快速重置类：页面切换时立即禁用过渡，直接重置状态 */
-.fast-reset {
-  transition: none !important;  /* 立即重置，不用过渡 */
-}
-
-/* 🔧 为不同元素的 .text-light 定义【变白】时的过渡时间（从黑/灰→白） */
-.card-main-title.text-light {
-  transition: color 1.9s ease-out, text-shadow 1s ease-out;  /* 第1行变白时间 */
-}
-
-.update-time.text-light,
-.user-count.text-light {
-  transition: opacity 0.25s ease, transform 0.25s ease, 
-              color 5s ease-out, text-shadow 2.5s ease-out;  /* 第2/3行变白时间 */
 }
 
 /* 🎬 分割线 */
