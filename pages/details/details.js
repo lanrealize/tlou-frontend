@@ -1,10 +1,12 @@
 // pages/details/details.js
 const { storeBindingsBehavior } = require('mobx-miniprogram-bindings');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
+const { when } = require('mobx-miniprogram');
 const api = require('../../utils/api');
 const util = require('../../utils/util');
 const navigationHelper = require('../../utils/navigationHelper');
 const { getUserStatusWithRole, checkAndHandle, canShareCircle } = require('../../utils/checkUserActionPermission');
+const { ShareAnimationController, SHARE_ANIMATION_CONFIG } = require('./shareAnimationController');
 
 Page({
   // 使用MobX状态管理行为
@@ -70,14 +72,24 @@ Page({
     userInfoPopupVisible: false,
     userInfoPopupReason: '',
     userInfoPopupIntent: '',
-    userInfoPopupCircleId: ''
+    userInfoPopupCircleId: '',
+    
+    // 🎬 分享入场动画
+    isFromShare: false,           // 是否从分享打开
+    shareAnimationState: 'idle',  // 动画状态机：idle | ready | playing | completed
+    showShareAnimation: false,    // 是否显示动画容器
+    shareAnimationClass: '',      // 动画容器类名
+    shareGradientClass: '',       // 渐变遮罩类名
+    shareAnimationImageUrl: '',   // 动画图片URL
+    shareAnimationCompleted: false, // 动画是否完成
+    shareAnimationEnabled: true   // 🧪 动画开关（测试用，生产环境设为 true）
   },
 
   onLoad(options) {
     this.getSafeAreaInfo();
     this.setupStoreBindings();
     
-    const { circleId, inviteCode, preloaded, preloadFailed, source, showCreateSuccess } = options;
+    const { circleId, inviteCode, preloaded, preloadFailed, source, showCreateSuccess, shared } = options;
     
     if (!circleId) {
       util.showToast('朋友圈ID不能为空');
@@ -85,11 +97,30 @@ Page({
       return;
     }
     
-    // 🆕 保存邀请码到 data（用于后续 API 调用）
+    const isFromShare = shared === 'true';
+    const shouldShowAnimation = isFromShare && this.data.shareAnimationEnabled;
+    
+    console.log('📱 onLoad:', { isFromShare, shouldShowAnimation });
+    
+    // 🎬 创建动画控制器
+    this.shareAnimationController = new ShareAnimationController(this);
+    
+    // 🎬 如果从分享打开，设置状态为 ready 并立即显示黑色背景
     this.setData({ 
       circleId,
-      inviteCode: inviteCode || ''
+      inviteCode: inviteCode || '',
+      isFromShare,
+      shareAnimationState: shouldShowAnimation ? 'ready' : 'idle',
+      showShareAnimation: shouldShowAnimation,  // 立即显示黑色背景
+      shareAnimationClass: '',
+      shareGradientClass: '',
+      shareAnimationImageUrl: '',
+      shareAnimationCompleted: false
     });
+    
+    if (shouldShowAnimation) {
+      console.log('🎬 已设置为 ready 状态，等待 posts 数据触发动画');
+    }
     
     // 如果是创建成功后跳转过来，显示成功提示
     if (showCreateSuccess === 'true') {
@@ -107,6 +138,12 @@ Page({
   },
 
   onUnload() {
+    // 🎬 销毁动画控制器
+    if (this.shareAnimationController) {
+      this.shareAnimationController.destroy();
+      this.shareAnimationController = null;
+    }
+    
     // 清理MobX绑定
     if (this.storeBindings) {
       this.storeBindings.destroyStoreBindings();
@@ -441,6 +478,8 @@ Page({
           hasMore: postStore.hasMore,
           loading: false
         });
+        // 🎬 直接检查动画（无需延迟，从 postStore 读取）
+        this.checkAndTriggerShareAnimation();
       }
 
       // 清理全局预加载数据
@@ -526,6 +565,8 @@ Page({
       if (canViewPosts) {
         // 包装方法会自动处理 inviteCode
         await this.loadPosts(this.data.circleId, false);
+        // 🎬 直接检查动画（无需延迟，从 postStore 读取）
+        this.checkAndTriggerShareAnimation();
       }
 
       // 如果是朋友圈主人，加载待处理申请数量
@@ -662,7 +703,7 @@ Page({
     
     return {
       title: `邀请你加入"${circle.name}"朋友圈`,
-      path: `/pages/details/details?circleId=${circleId}${inviteCodeParam}`,
+      path: `/pages/details/details?circleId=${circleId}${inviteCodeParam}&shared=true`, // 🎬 添加分享标记
     };
   },
 
@@ -1136,6 +1177,98 @@ Page({
     } catch (error) {
       console.error('处理意图失败:', error);
       util.showToast(error.message || '操作失败', 'error');
+    }
+  },
+
+  // ===== 🎬 分享入场动画控制方法 =====
+
+  /**
+   * 检查并触发分享动画（使用 MobX Observable 模式 + ShareAnimationController）
+   * 🎯 使用 MobX when() 监听 postStore 数据变化，优雅地等待数据就绪
+   */
+  async checkAndTriggerShareAnimation() {
+    console.log('🎬 [checkAndTriggerShareAnimation] 被调用');
+    
+    const { shareAnimationState, isFromShare, shareAnimationEnabled } = this.data;
+    
+    console.log('🔍 当前状态:', { 
+      shareAnimationState,
+      isFromShare,
+      shareAnimationEnabled
+    });
+    
+    // 只在 ready 状态且满足条件时触发
+    if (shareAnimationState !== 'ready') {
+      console.log('⏭️ 跳过：状态不是 ready，当前状态:', shareAnimationState);
+      return;
+    }
+    
+    if (!isFromShare) {
+      console.log('⏭️ 跳过：不是从分享打开');
+      return;
+    }
+    
+    if (!shareAnimationEnabled) {
+      console.log('⏭️ 跳过：动画开关未开启');
+      return;
+    }
+    
+    // 🎯 使用 MobX when() Observable 模式等待数据就绪
+    const { postStore } = require('../../store/postStore');
+    const startTime = Date.now();
+    
+    console.log('👀 使用 Observable 模式监听 postStore 数据变化...');
+    
+    try {
+      // when() 会在条件满足时立即执行，或超时后拒绝
+      await when(
+        // 条件：posts 有数据
+        () => {
+          const hasData = postStore.posts && postStore.posts.length > 0;
+          if (!hasData) {
+            console.log('👀 Observable 检查：数据尚未就绪...');
+          }
+          return hasData;
+        },
+        {
+          timeout: SHARE_ANIMATION_CONFIG.dataWait.TIMEOUT,
+          onError: (error) => {
+            console.error('❌ Observable 等待出错:', error);
+          }
+        }
+      );
+      
+      const waitTime = Date.now() - startTime;
+      console.log(`✅ Observable 成功！数据就绪，等待耗时: ${waitTime}ms`);
+      
+      const posts = postStore.posts;
+      
+      // 检查第一个帖子是否有图片
+      const firstPost = posts[0];
+      console.log('🔍 第一个帖子:', firstPost);
+      
+      if (!firstPost || !firstPost.images || firstPost.images.length === 0) {
+        console.log('❌ 第一个帖子没有图片，取消动画');
+        this.shareAnimationController?.cancel();
+        return;
+      }
+      
+      // 获取第一张图片URL
+      const firstImage = firstPost.images[0];
+      const imageUrl = typeof firstImage === 'object' ? firstImage.url : firstImage;
+      
+      console.log('✅ 满足条件，使用 ShareAnimationController 启动动画');
+      console.log('📷 图片URL:', imageUrl);
+      
+      // 🎬 使用动画控制器启动动画
+      this.shareAnimationController?.start(imageUrl);
+      
+    } catch (error) {
+      // 超时或其他错误
+      const waitTime = Date.now() - startTime;
+      console.warn(`⚠️ Observable 等待超时或失败（${waitTime}ms）:`, error);
+      console.warn('取消动画');
+      this.shareAnimationController?.cancel();
     }
   }
 

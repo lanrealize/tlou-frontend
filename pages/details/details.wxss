@@ -12,6 +12,102 @@ view, text, image {
   box-sizing: border-box;
 }
 
+/* ===== 🎬 分享入场动画样式（页面级） ===== */
+
+/* 页面黑色背景（动画播放时） */
+.page-container.page-black-bg {
+  background-color: #000000;
+}
+
+/* 动画容器 - 全屏 */
+.share-animation-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  overflow: hidden;
+  background-color: #000000; /* 确保容器本身是黑色 */
+}
+
+/* 动画容器初始状态 - 容器本身立即可见（黑色背景） */
+.share-animation-container-appear {
+  /* 不设置 opacity: 0，确保黑色背景立即可见 */
+}
+
+/* 动画容器激活状态 */
+.share-animation-container.active {
+  /* 动画应用到图片，而不是容器 */
+}
+
+/* 全屏图片 - 初始状态：模糊、变暗、放大 */
+.share-animation-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: 0;
+  filter: blur(90px) brightness(0.4);
+  transform: scale(1.3);
+}
+
+/* 图片激活状态 */
+.share-animation-container.active .share-animation-image {
+  animation: shareImageFadeIn 2.5s ease-out forwards;
+}
+
+/* 渐变遮罩层 */
+.share-gradient-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 400%;
+  height: 100%;
+  /* 🎭 幕布效果：前25%完全不透明（实体幕布），然后渐变到透明 */
+  background: linear-gradient(225deg, #000 25%, transparent 100%);
+  transform: translateX(-65%);
+  opacity: 1;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* 渐变遮罩激活状态 
+   ✨ 优化缓动：cubic-bezier 让幕布拉开更有"力量感"和"重量感"
+   注意：1.2s 是 CSS 内部延迟，实际触发时间 = 500ms(JS) + 1200ms(CSS) = 1700ms */
+.share-gradient-overlay.active {
+  animation: gradientSlide 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards 1.2s;
+}
+
+/* 动画关键帧 */
+
+/* 图片从模糊到清晰的动画 */
+@keyframes shareImageFadeIn {
+  from {
+    opacity: 0;
+    filter: blur(90px) brightness(0.4);
+    transform: scale(1.3);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0px) brightness(1);
+    transform: scale(1);
+  }
+}
+
+/* 渐变遮罩滑动动画 */
+@keyframes gradientSlide {
+  from {
+    transform: translateX(-65%);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 0;
+  }
+}
+
+/* ===== 分享动画样式结束 ===== */
+
 /* 页面容器 */
 .page-container {
   position: relative;
@@ -19,6 +115,7 @@ view, text, image {
   height: 100vh;
   background-color: #ffffff;
   overflow: hidden; /* 防止页面滚动 */
+  transition: background-color 0.3s ease-out;
 }
 
 /* 状态栏占位 - 已集成到自定义导航栏中 */
