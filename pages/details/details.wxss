@@ -19,6 +19,37 @@ view, text, image {
   background-color: #000000;
 }
 
+/* 🎬 内容淡入遮罩层 */
+.content-fade-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff;  /* ✅ 白色遮罩（页面背景是白色的） */
+  opacity: 1;  /* 初始完全不透明，遮住下面的内容 */
+  z-index: 9998;  /* ✅ 比导航栏(1000)高，但比动画容器(9999)低 */
+  pointer-events: none;  /* 不阻挡交互 */
+  transition: opacity 2000ms linear;  /* 2秒线性淡出 */
+}
+
+.content-fade-mask.fade-out {
+  opacity: 0;  /* 淡出到透明，露出下面的白色内容 */
+}
+
+/* 🚫 交互阻止层：在动画期间阻止所有用户交互 */
+.animation-interaction-blocker {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;  /* ✅ 最高层级，覆盖所有元素 */
+  background-color: transparent;  /* 完全透明 */
+  opacity: 1;  /* 保持可见（虽然透明） */
+  pointer-events: auto;  /* ✅ 关键：阻止所有触摸和点击事件 */
+}
+
 /* 动画容器 - 全屏 */
 .share-animation-container {
   position: fixed;
@@ -106,6 +137,53 @@ view, text, image {
   }
 }
 
+/* ===== 阶段3：过渡动画样式 ===== */
+
+/* 容器过渡状态：背景从黑色渐变到白色 + 尺寸位置过渡 */
+.share-animation-container.transitioning {
+  background-color: #ffffff;
+  /* ❌ 移除背景色过渡，避免在容器边缘（圆角、sub-pixel等）露出黑色背景 */
+  transition: /* background-color 2000ms ease-out, */
+              width 2000ms cubic-bezier(0.4, 0, 0.2, 1),
+              height 2000ms cubic-bezier(0.4, 0, 0.2, 1),
+              left 2000ms cubic-bezier(0.4, 0, 0.2, 1),
+              top 2000ms cubic-bezier(0.4, 0, 0.2, 1),
+              border-radius 2000ms cubic-bezier(0.4, 0, 0.2, 1);  /* 🔧 圆角也要平滑过渡 */
+}
+
+/* 目标状态：激活目标尺寸和位置（通过data属性） */
+.share-animation-container.transitioning[data-transition-active="true"] {
+  /* 尺寸和位置通过内联样式动态设置 */
+  border-radius: 6rpx;  /* 🔧 与post-item图片圆角统一（.single-image: 6rpx, .grid-item: 8rpx，使用通用值6rpx） */
+}
+
+/* 图片过渡状态：保持100%填充容器 */
+.share-animation-container.transitioning .share-animation-image {
+  /* 停止开场动画 */
+  animation: none !important;
+  
+  /* ✅ 关键：保持开场动画结束后的状态（包括transform） */
+  opacity: 1;
+  filter: blur(0px) brightness(1) !important;
+  transform: scale(1) !important;  /* ← 必须保留！防止图片突然变大 */
+  
+  /* 图片填充容器，aspectFill会自动处理 */
+  width: 100%;
+  height: 100%;
+}
+
+/* 隐藏渐变遮罩（在过渡阶段不需要） */
+.share-animation-container.transitioning .share-gradient-overlay {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ===== 隐藏第一个post-item的图片（过渡期间） ===== */
+/* 注意：由于微信小程序不支持>>>深度选择器，我们采用另一种方案：
+   在过渡动画期间，全屏图片会精确覆盖在第一个post图片的位置上，
+   用户看到的实际上是动画图片，所以不需要隐藏真实图片。
+   在过渡完成后（T=6250ms），我们移除动画容器并显示真实图片，实现无缝切换。 */
+
 /* ===== 分享动画样式结束 ===== */
 
 /* 页面容器 */
@@ -115,7 +193,8 @@ view, text, image {
   height: 100vh;
   background-color: #ffffff;
   overflow: hidden; /* 防止页面滚动 */
-  transition: background-color 0.3s ease-out;
+  /* ❌ 移除背景色过渡，避免在左右margin区域露出黑色背景过渡效果 */
+  /* transition: background-color 1200ms ease-out; */
 }
 
 /* 状态栏占位 - 已集成到自定义导航栏中 */

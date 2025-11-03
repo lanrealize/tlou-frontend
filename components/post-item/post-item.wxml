@@ -38,7 +38,8 @@
     </view>
 
     <!-- 图片内容 -->
-    <view class="post-images" wx:if="{{post.images && post.images.length > 0}}">
+    <!-- ✅ 使用 class 控制 opacity，而不是 wx:if，确保图片能加载 -->
+    <view class="post-images {{hideImage ? 'post-images-hidden' : ''}}" wx:if="{{post.images && post.images.length > 0}}">
       <!-- 单张图片 -->
       <view class="single-image" wx:if="{{post.images.length === 1}}" 
             style="width: {{singleImageInfo.displayWidth}}rpx; height: {{singleImageInfo.displayHeight}}rpx;">
@@ -61,7 +62,7 @@
         ></image>
       </view>
 
-      <!-- 多张图片网格 -->
+      <!-- 多张图片网格（不受hideImage影响，多图模式不会被分享动画使用） -->
       <view class="images-grid images-grid-{{post.images.length > 9 ? 9 : post.images.length}}" wx:else>
         <view 
           class="grid-item"

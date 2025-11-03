@@ -74,15 +74,17 @@ Page({
     userInfoPopupIntent: '',
     userInfoPopupCircleId: '',
     
-    // 🎬 分享入场动画
+    // 🎬 分享入场动画 - 完整三步
     isFromShare: false,           // 是否从分享打开
-    shareAnimationState: 'idle',  // 动画状态机：idle | ready | playing | completed
+    shareAnimationState: 'idle',  // 动画状态机：idle | ready | playing | transitioning | completed
     showShareAnimation: false,    // 是否显示动画容器
     shareAnimationClass: '',      // 动画容器类名
     shareGradientClass: '',       // 渐变遮罩类名
     shareAnimationImageUrl: '',   // 动画图片URL
     shareAnimationCompleted: false, // 动画是否完成
-    shareAnimationEnabled: true   // 🧪 动画开关（测试用，生产环境设为 true）
+    shareAnimationEnabled: true,  // 🧪 动画开关（测试用，生产环境设为 true）
+    shareAnimationTransform: '',  // 动画过渡的 CSS 变量
+    transitionActive: false       // 是否激活过渡动画
   },
 
   onLoad(options) {
@@ -120,6 +122,11 @@ Page({
     
     if (shouldShowAnimation) {
       console.log('🎬 已设置为 ready 状态，等待 posts 数据触发动画');
+      console.log('📊 初始状态:', {
+        showShareAnimation: this.data.showShareAnimation,
+        shareAnimationCompleted: this.data.shareAnimationCompleted
+      });
+      console.log('🎨 CSS 类应该是: content-fade-in (opacity: 0)');
     }
     
     // 如果是创建成功后跳转过来，显示成功提示
@@ -1181,6 +1188,46 @@ Page({
   },
 
   // ===== 🎬 分享入场动画控制方法 =====
+
+  /**
+   * 全屏动画图片加载完成
+   * @param {Object} e - 事件对象，包含图片尺寸信息
+   */
+  onShareAnimationImageLoad(e) {
+    const { width, height } = e.detail;
+    console.log('📷 ========== 全屏动画图片加载完成 ==========');
+    console.log('📐 图片尺寸:', { width, height });
+    console.log('📐 图片宽高比:', (width / height).toFixed(2));
+    
+    // 🔍 关键：这个尺寸是什么？
+    console.log('🤔 这是图片的【显示尺寸】还是【原始尺寸】？');
+    console.log('   - 如果是显示尺寸（屏幕大小），我们需要从别处获取原始尺寸');
+    console.log('   - 如果是原始尺寸（如3000x4000），可以直接使用');
+    
+    // 将尺寸传递给动画控制器进行计算
+    if (this.shareAnimationController) {
+      this.shareAnimationController.setImageSize(width, height);
+      console.log('✅ 尺寸已传递给动画控制器');
+    } else {
+      console.error('❌ 动画控制器不存在');
+    }
+  },
+
+  /**
+   * 🚫 阻止滑动操作（动画期间）
+   */
+  preventTouchMove(e) {
+    console.log('🚫 [交互阻止] 用户尝试滑动，已阻止');
+    return false;  // 阻止事件继续传播
+  },
+
+  /**
+   * 🚫 阻止点击操作（动画期间）
+   */
+  preventTap(e) {
+    console.log('🚫 [交互阻止] 用户尝试点击，已阻止');
+    return false;  // 阻止事件继续传播
+  },
 
   /**
    * 检查并触发分享动画（使用 MobX Observable 模式 + ShareAnimationController）

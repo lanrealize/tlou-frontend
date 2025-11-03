@@ -23,6 +23,11 @@ Component({
     isLast: {
       type: Boolean,
       value: false
+    },
+    // 🎬 分享动画相关：是否隐藏图片（用于动画过渡）
+    hideImage: {
+      type: Boolean,
+      value: false
     }
   },
 
@@ -83,6 +88,10 @@ Component({
     // 监听用户变化，更新点赞状态
     'currentUser._id': function() {
       this.updateLikedStatus();
+    },
+    // 🔍 调试：监听 hideImage 属性变化
+    'hideImage': function(value) {
+      console.log('🔍 [post-item] hideImage 变化:', value, 'postId:', this.data.post?._id);
     }
   },
 
@@ -90,6 +99,79 @@ Component({
    * 组件的方法列表
    */
   methods: {
+    /**
+     * 🎬 获取图片位置信息（供分享动画使用）
+     * @returns {Promise<Object>} 图片的 boundingClientRect 信息
+     */
+    getImageRect() {
+      return new Promise((resolve, reject) => {
+        const postId = this.data.post?._id;
+        if (!postId) {
+          reject(new Error('No post ID'));
+          return;
+        }
+        
+        // 尝试多种选择器
+        const selectors = [
+          `#post-image-${postId}-0`,     // ID选择器
+          '.post-image-single',           // class选择器
+          '.single-image image'           // 容器选择器
+        ];
+        
+        const trySelector = (index = 0) => {
+          if (index >= selectors.length) {
+            reject(new Error('Image not found'));
+            return;
+          }
+          
+          wx.createSelectorQuery()
+            .in(this)  // 🔑 关键：在组件实例内查询
+            .select(selectors[index])
+            .boundingClientRect()
+            .exec((res) => {
+              if (res[0]) {
+                resolve(res[0]);
+              } else {
+                trySelector(index + 1);
+              }
+            });
+        };
+        
+        trySelector(0);
+      });
+    },
+
+    /**
+     * 🖼️ 检查第一张图片是否已加载完成（骨架屏已消失）
+     * @returns {boolean} true表示图片已完全加载且骨架屏已消失
+     */
+    isFirstImageFullyLoaded() {
+      const { post, imageLoadStates, hideImage } = this.data;
+      
+      console.log('🔍 [post-item] isFirstImageFullyLoaded 检查:', {
+        hasPost: !!post,
+        hasImages: post?.images?.length > 0,
+        hideImage,
+        imageLoadStates
+      });
+      
+      if (!post || !post.images || post.images.length === 0) {
+        console.log('   → ❌ 没有图片数据');
+        return false;
+      }
+      
+      const firstImage = post.images[0];
+      const imageUrl = typeof firstImage === 'object' ? firstImage.url : firstImage;
+      const loadState = imageLoadStates[imageUrl];
+      
+      console.log('   → 第一张图片 URL:', imageUrl);
+      console.log('   → 加载状态:', loadState);
+      console.log('   → 是否已完成:', loadState === 'show' ? '✅' : '❌');
+      
+      // 必须是'show'状态，才表示图片已加载且骨架屏已消失
+      return loadState === 'show';
+    },
+
     /**
      * 更新点赞状态到 data
      * 由 observer 自动调用

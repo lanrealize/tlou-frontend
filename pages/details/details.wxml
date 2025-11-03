@@ -1,8 +1,10 @@
 <!--pages/details/details.wxml-->
-<view class="page-container {{showShareAnimation ? 'page-black-bg' : ''}}">
+<view class="page-container {{showShareAnimation && !shareAnimationCompleted ? 'page-black-bg' : ''}}">
   <!-- 🎬 分享入场动画容器（页面级） -->
   <view 
     class="share-animation-container {{shareAnimationClass}} {{showShareAnimation ? 'share-animation-container-appear' : ''}}"
+    style="{{shareAnimationTransform}}"
+    data-transition-active="{{transitionActive}}"
     wx:if="{{showShareAnimation}}"
   >
     <!-- 全屏图片（只在有URL时显示） -->
@@ -10,6 +12,7 @@
       class="share-animation-image"
       src="{{shareAnimationImageUrl}}" 
       mode="aspectFill"
+      bindload="onShareAnimationImageLoad"
       wx:if="{{shareAnimationImageUrl}}"
     ></image>
     
@@ -17,13 +20,29 @@
     <view class="share-gradient-overlay {{shareGradientClass}}"></view>
   </view>
 
+  <!-- 🎬 白色遮罩层：用于控制内容淡入效果 -->
+  <view 
+    class="content-fade-mask {{shareAnimationCompleted ? 'fade-out' : ''}}"
+    wx:if="{{showShareAnimation}}"
+  ></view>
+
+  <!-- 🚫 交互阻止层：在动画期间阻止所有用户交互 -->
+  <view 
+    class="animation-interaction-blocker"
+    wx:if="{{showShareAnimation}}"
+    catchtouchmove="preventTouchMove"
+    catchtouchstart="preventTap"
+    catchtouchend="preventTap"
+    catchtap="preventTap"
+    catchlongpress="preventTap"
+  ></view>
+
   <!-- 自定义导航栏 -->
   <custom-navigation 
     title="两个人的朋友圈" 
     customBack="{{true}}" 
     bindnavigationReady="onNavigationReady" 
     bind:back="navigateBack"
-    style="opacity: {{showShareAnimation && !shareAnimationCompleted ? 0 : 1}}; transition: opacity 1s ease-in-out;"
   ></custom-navigation>
 
   <!-- 🔧 移除了整体的"加载中..."显示，改为在main page预加载 -->
@@ -31,7 +50,7 @@
   <!-- 朋友圈详情页面 -->
   <view 
     class="moment-page" 
-    style="padding-top: {{navigationData.totalNavigationHeight}}px; opacity: {{showShareAnimation && !shareAnimationCompleted ? 0 : 1}}; transition: opacity 1s ease-in-out;"
+    style="padding-top: {{navigationData.totalNavigationHeight}}px;"
   >
     
     <!-- 朋友圈信息卡片 - 固定在顶部 -->
@@ -103,12 +122,14 @@
         <!-- 帖子列表 -->
         <view class="posts-list" wx:else>
           <post-item
+            id="{{index === 0 ? 'first-post-item' : ''}}"
             wx:for="{{posts}}"
             wx:key="_id"
             post="{{item}}"
             current-user="{{currentUser}}"
             show-actions="{{true}}"
             is-last="{{index === posts.length - 1}}"
+            hide-image="{{index === 0 && showShareAnimation}}"
             bind:like="onPostLike"
             bind:comment="onPostComment"
             bind:replyComment="onPostReplyComment"
@@ -116,7 +137,6 @@
             bind:deleteComment="onCommentDelete"
             bind:previewImage="onPreviewImage"
             bind:tapAvatar="onTapAvatar"
-
           ></post-item>
 
           <!-- 加载更多提示 -->

@@ -235,6 +235,14 @@
 .post-images {
   margin-bottom: 10rpx;
   max-width: 100%;
+  /* ❌ 不要添加 transition，避免显示时的淡入效果 */
+  /* 动画结束时应该瞬间切换，因为动画图片已经在正确位置 */
+}
+
+/* 🎬 分享动画期间隐藏图片（但保留在DOM中，占据空间） */
+.post-images-hidden {
+  opacity: 0 !important;  /* 完全透明，但仍占据空间 */
+  pointer-events: none;   /* 禁用交互 */
 }
 
 /* 当没有文字内容时（图片是post-content的第一个子元素），增加顶部间距 */
