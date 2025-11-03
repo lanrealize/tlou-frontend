@@ -35,11 +35,6 @@ App({
     console.log('🚀 小程序启动');
     console.log('🔵 [app] 开始初始化流程');
     
-    // 🔍 启用导航日志工具（用于调试"页面未找到"问题）
-    const navigationLogger = require('./utils/navigationLogger');
-    navigationLogger.enable();
-    console.log('🔍 导航日志工具已启用');
-    
     // 设置导航栏信息
     this.setNavigationInfo();
     
@@ -64,18 +59,6 @@ App({
 
   onError(msg) {
     console.error('小程序错误:', msg);
-  },
-
-  onPageNotFound(res) {
-    console.error('🚫 页面未找到:', res);
-    console.error('   → 尝试访问的页面:', res.path);
-    console.error('   → 页面参数:', res.query);
-    console.error('   → 是否为 tabBar 页面:', res.isEntryPage);
-    
-    // 重定向到首页
-    wx.reLaunch({
-      url: '/pages/main/main'
-    });
   },
 
   // 设置导航栏信息

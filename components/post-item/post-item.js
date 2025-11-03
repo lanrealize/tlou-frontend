@@ -89,9 +89,9 @@ Component({
     'currentUser._id': function() {
       this.updateLikedStatus();
     },
-    // 🔍 调试：监听 hideImage 属性变化
+    // 监听 hideImage 属性变化
     'hideImage': function(value) {
-      console.log('🔍 [post-item] hideImage 变化:', value, 'postId:', this.data.post?._id);
+      // hideImage 用于分享动画时隐藏第一张图片
     }
   },
 
@@ -146,27 +146,15 @@ Component({
      * @returns {boolean} true表示图片已完全加载且骨架屏已消失
      */
     isFirstImageFullyLoaded() {
-      const { post, imageLoadStates, hideImage } = this.data;
-      
-      console.log('🔍 [post-item] isFirstImageFullyLoaded 检查:', {
-        hasPost: !!post,
-        hasImages: post?.images?.length > 0,
-        hideImage,
-        imageLoadStates
-      });
+      const { post, imageLoadStates } = this.data;
       
       if (!post || !post.images || post.images.length === 0) {
-        console.log('   → ❌ 没有图片数据');
         return false;
       }
       
       const firstImage = post.images[0];
       const imageUrl = typeof firstImage === 'object' ? firstImage.url : firstImage;
       const loadState = imageLoadStates[imageUrl];
-      
-      console.log('   → 第一张图片 URL:', imageUrl);
-      console.log('   → 加载状态:', loadState);
-      console.log('   → 是否已完成:', loadState === 'show' ? '✅' : '❌');
       
       // 必须是'show'状态，才表示图片已加载且骨架屏已消失
       return loadState === 'show';

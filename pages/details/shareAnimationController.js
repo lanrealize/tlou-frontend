@@ -418,19 +418,9 @@ class ShareAnimationController {
         const targetWidth = rect.width;
         const targetHeight = rect.height;
         targetStyle = `width: ${targetWidth}px; height: ${targetHeight}px; left: ${targetLeft}px; top: ${targetTop}px;`;
-        
-        // 打印动画使用的目标位置
-        console.log('🎯 动画目标位置（DOM测量）:');
-        console.log(`   left: ${targetLeft.toFixed(2)}px, top: ${targetTop.toFixed(2)}px`);
-        console.log(`   width: ${targetWidth.toFixed(2)}px, height: ${targetHeight.toFixed(2)}px`);
       } else if (this.cachedTargetInfo) {
         // 降级：使用纯计算值
         targetStyle = this.cachedTargetInfo.targetStyle;
-        const { targetLeft, targetTop, targetWidth, targetHeight } = this.cachedTargetInfo;
-        
-        console.log('🎯 动画目标位置（纯计算）:');
-        console.log(`   left: ${targetLeft.toFixed(2)}px, top: ${targetTop.toFixed(2)}px`);
-        console.log(`   width: ${targetWidth.toFixed(2)}px, height: ${targetHeight.toFixed(2)}px`);
       } else {
         // 两种方案都失败
         console.error('❌ 没有位置数据，动画无法继续');
@@ -467,20 +457,15 @@ class ShareAnimationController {
         }
       });
       
+      // 🎨 遮罩淡出的同时，让第一个帖子的图片也开始淡入（同步动画）
       this.page.setData({
-        shareAnimationCompleted: true
+        shareAnimationCompleted: true,
+        hideFirstPostImage: false  // 图片开始淡入（800ms）
       });
     }, timeline.START_MASK_FADEOUT);
 
-    // T=IMAGE_ARRIVED: 图片到达目标位置
-    this.addTimer(() => {
-      console.log('🎬 [T=' + timeline.IMAGE_ARRIVED + 'ms] 图片到达目标位置');
-    }, timeline.IMAGE_ARRIVED);
-    
     // T=TRANSITION_END: 遮罩淡出完成，解除交互阻止
     this.addTimer(() => {
-      console.log('🎬 [T=' + timeline.TRANSITION_END + 'ms] 遮罩淡出完成，解除交互阻止');
-      
       // 🔓 内容完全显现，立即允许用户操作
       // 🔄 同时图片交接：隐藏动画容器，显示真实图片
       this.page.setData({
@@ -529,69 +514,12 @@ class ShareAnimationController {
   }
 
   /**
-   * 🔍 验证最终位置
-   * - 如果使用了实测方案：验证动画值和真实值的一致性
-   * - 如果使用了计算方案：对比计算值和实际值的误差
+   * 🔍 验证最终位置（调试用）
    * @param {Object} realImageRect - 真实图片的最终 boundingClientRect
    */
   verifyFinalPosition(realImageRect) {
-    console.log('');
-    console.log('🔍 ========== 动画目标位置 vs 真实图片位置对比 ==========');
-    
-    // 🎯 动画使用的目标位置
-    let animTargetLeft, animTargetTop, animTargetWidth, animTargetHeight;
-    let isUsingMeasured = false;
-    
-    if (this.cachedRealRect) {
-      // 使用 DOM 实测值
-      isUsingMeasured = true;
-      animTargetLeft = this.cachedRealRect.left;
-      animTargetTop = this.cachedRealRect.top;
-      animTargetWidth = this.cachedRealRect.width;
-      animTargetHeight = this.cachedRealRect.height;
-    } else if (this.cachedTargetInfo) {
-      // 使用计算值
-      animTargetLeft = this.cachedTargetInfo.targetLeft;
-      animTargetTop = this.cachedTargetInfo.targetTop;
-      animTargetWidth = this.cachedTargetInfo.targetWidth;
-      animTargetHeight = this.cachedTargetInfo.targetHeight;
-    } else {
-      console.error('❌ 没有可用的位置数据');
-      return;
-    }
-    
-    // 计算差异
-    const leftDiff = realImageRect.left - animTargetLeft;
-    const topDiff = realImageRect.top - animTargetTop;
-    const widthDiff = realImageRect.width - animTargetWidth;
-    const heightDiff = realImageRect.height - animTargetHeight;
-    
-    console.log(`方案: ${isUsingMeasured ? 'DOM实测' : '纯计算'}`);
-    console.log('');
-    console.log('| 属性   | 动画目标     | 真实位置     | 差异         |');
-    console.log('|--------|------------|------------|--------------|');
-    console.log(`| left   | ${animTargetLeft.toFixed(2).padStart(10)}px | ${realImageRect.left.toFixed(2).padStart(10)}px | ${(leftDiff >= 0 ? '+' : '') + leftDiff.toFixed(2)}px`);
-    console.log(`| top    | ${animTargetTop.toFixed(2).padStart(10)}px | ${realImageRect.top.toFixed(2).padStart(10)}px | ${(topDiff >= 0 ? '+' : '') + topDiff.toFixed(2)}px ${Math.abs(topDiff) > 0.1 ? '⚠️' : '✅'}`);
-    console.log(`| width  | ${animTargetWidth.toFixed(2).padStart(10)}px | ${realImageRect.width.toFixed(2).padStart(10)}px | ${(widthDiff >= 0 ? '+' : '') + widthDiff.toFixed(2)}px ${Math.abs(widthDiff) > 0.1 ? '⚠️' : '✅'}`);
-    console.log(`| height | ${animTargetHeight.toFixed(2).padStart(10)}px | ${realImageRect.height.toFixed(2).padStart(10)}px | ${(heightDiff >= 0 ? '+' : '') + heightDiff.toFixed(2)}px ${Math.abs(heightDiff) > 0.1 ? '⚠️' : '✅'}`);
-    console.log('');
-    
-    const maxDiff = Math.max(Math.abs(leftDiff), Math.abs(topDiff), Math.abs(widthDiff), Math.abs(heightDiff));
-    console.log(`最大误差: ${maxDiff.toFixed(2)}px ${maxDiff <= 0.1 ? '✅ 完美' : maxDiff <= 1 ? '⚡ 轻微' : '⚠️ 明显'}`);
-    
-    if (maxDiff > 0.1) {
-      console.log('');
-      console.log('⚠️ 可能原因:');
-      if (Math.abs(topDiff) > 0.1 || Math.abs(heightDiff) > 0.1) {
-        console.log('  - 图片尺寸计算使用了 Math.round，导致亚像素精度损失');
-        console.log('  - 建议: calculateTargetImageInfo 中移除 Math.round，保留小数');
-      }
-      if (!isUsingMeasured) {
-        console.log('  - 使用的是计算方案，可能存在布局计算误差');
-      }
-    }
-    
-    console.log('========================================================');
+    // 验证逻辑已移除（生产环境不需要）
+    // 如需调试，可以在这里添加临时日志
   }
 
   /**
@@ -613,6 +541,7 @@ class ShareAnimationController {
 
     this.page.setData({
       showShareAnimation: false,
+      hideFirstPostImage: false,
       shareAnimationImageUrl: '',
       shareAnimationClass: '',
       shareGradientClass: '',

@@ -79,6 +79,7 @@ Page({
     isFromShare: false,           // 是否从分享打开
     shareAnimationState: 'idle',  // 动画状态机：idle | ready | playing | transitioning | completed
     showShareAnimation: false,    // 是否显示动画容器
+    hideFirstPostImage: false,    // 是否隐藏第一个帖子的图片（用于分享动画）
     shareAnimationClass: '',      // 动画容器类名
     shareGradientClass: '',       // 渐变遮罩类名
     shareAnimationImageUrl: '',   // 动画图片URL
@@ -109,12 +110,6 @@ Page({
                                 shareTimeEnabled &&
                                 shouldPlayShareAnimation(circleId);  // 智能播放判断
     
-    console.log('📱 onLoad:', { 
-      isFromShare,
-      shareTimeEnabled,
-      shouldShowAnimation
-    });
-    
     // 🎬 创建动画控制器
     this.shareAnimationController = new ShareAnimationController(this);
     
@@ -125,20 +120,12 @@ Page({
       isFromShare,
       shareAnimationState: shouldShowAnimation ? 'ready' : 'idle',
       showShareAnimation: shouldShowAnimation,  // 只有要播放才显示黑屏
+      hideFirstPostImage: shouldShowAnimation,  // 同时隐藏第一个帖子的图片
       shareAnimationClass: '',
       shareGradientClass: '',
       shareAnimationImageUrl: '',
       shareAnimationCompleted: false
     });
-    
-    if (shouldShowAnimation) {
-      console.log('🎬 已设置为 ready 状态，等待 posts 数据触发动画');
-      console.log('📊 初始状态:', {
-        showShareAnimation: this.data.showShareAnimation,
-        shareAnimationCompleted: this.data.shareAnimationCompleted
-      });
-      console.log('🎨 CSS 类应该是: content-fade-in (opacity: 0)');
-    }
     
     // 如果是创建成功后跳转过来，显示成功提示
     if (showCreateSuccess === 'true') {
@@ -1209,21 +1196,9 @@ Page({
    */
   onShareAnimationImageLoad(e) {
     const { width, height } = e.detail;
-    console.log('📷 ========== 全屏动画图片加载完成 ==========');
-    console.log('📐 图片尺寸:', { width, height });
-    console.log('📐 图片宽高比:', (width / height).toFixed(2));
     
-    // 🔍 关键：这个尺寸是什么？
-    console.log('🤔 这是图片的【显示尺寸】还是【原始尺寸】？');
-    console.log('   - 如果是显示尺寸（屏幕大小），我们需要从别处获取原始尺寸');
-    console.log('   - 如果是原始尺寸（如3000x4000），可以直接使用');
-    
-    // 将尺寸传递给动画控制器进行计算
     if (this.shareAnimationController) {
       this.shareAnimationController.setImageSize(width, height);
-      console.log('✅ 尺寸已传递给动画控制器');
-    } else {
-      console.error('❌ 动画控制器不存在');
     }
   },
 
@@ -1231,7 +1206,6 @@ Page({
    * 🚫 阻止滑动操作（动画期间）
    */
   preventTouchMove(e) {
-    console.log('🚫 [交互阻止] 用户尝试滑动，已阻止');
     return false;  // 阻止事件继续传播
   },
 
@@ -1239,7 +1213,6 @@ Page({
    * 🚫 阻止点击操作（动画期间）
    */
   preventTap(e) {
-    console.log('🚫 [交互阻止] 用户尝试点击，已阻止');
     return false;  // 阻止事件继续传播
   },
 
@@ -1247,9 +1220,9 @@ Page({
    * 🎬 取消分享动画
    */
   cancelShareAnimation() {
-    console.log('🎬 [cancelShareAnimation] 取消动画，恢复正常状态');
     this.setData({
       showShareAnimation: false,
+      hideFirstPostImage: false,
       shareAnimationState: 'idle',
       shareAnimationClass: '',
       shareGradientClass: '',
@@ -1271,13 +1244,8 @@ Page({
       return;
     }
     
-    console.log('🎬 准备播放分享动画');
-    
     // 🎯 使用 MobX when() Observable 模式等待数据就绪
     const { postStore } = require('../../store/postStore');
-    const startTime = Date.now();
-    
-    console.log('👀 使用 Observable 模式监听 postStore 数据变化...');
     
     try {
       // when() 会在条件满足时立即执行，或超时后拒绝
@@ -1285,30 +1253,19 @@ Page({
         // 条件：posts 有数据
         () => {
           const hasData = postStore.posts && postStore.posts.length > 0;
-          if (!hasData) {
-            console.log('👀 Observable 检查：数据尚未就绪...');
-          }
           return hasData;
         },
         {
-          timeout: SHARE_ANIMATION_CONFIG.dataWait.TIMEOUT,
-          onError: (error) => {
-            console.error('❌ Observable 等待出错:', error);
-          }
+          timeout: SHARE_ANIMATION_CONFIG.dataWait.TIMEOUT
         }
       );
-      
-      const waitTime = Date.now() - startTime;
-      console.log(`✅ Observable 成功！数据就绪，等待耗时: ${waitTime}ms`);
       
       const posts = postStore.posts;
       
       // 检查第一个帖子是否有图片
       const firstPost = posts[0];
-      console.log('🔍 第一个帖子:', firstPost);
       
       if (!firstPost || !firstPost.images || firstPost.images.length === 0) {
-        console.log('❌ 第一个帖子没有图片，取消动画');
         this.cancelShareAnimation();
         return;
       }
@@ -1316,9 +1273,6 @@ Page({
       // 获取第一张图片URL
       const firstImage = firstPost.images[0];
       const imageUrl = typeof firstImage === 'object' ? firstImage.url : firstImage;
-      
-      console.log('✅ 满足条件，使用 ShareAnimationController 启动动画');
-      console.log('📷 图片URL:', imageUrl);
       
       // 🎬 记录动画播放（用于智能播放判断）
       recordShareAnimationPlay(circleId);
@@ -1328,9 +1282,6 @@ Page({
       
     } catch (error) {
       // 超时或其他错误
-      const waitTime = Date.now() - startTime;
-      console.warn(`⚠️ Observable 等待超时或失败（${waitTime}ms）:`, error);
-      console.warn('取消动画');
       this.cancelShareAnimation();
     }
   }

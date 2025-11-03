@@ -8,8 +8,8 @@
  */
 
 const STORAGE_KEY = 'shareAnimationHistory';
-// const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000; // 7天（毫秒）
-const SEVEN_DAYS_MS =20 * 1000; // 7天（毫秒）
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000; // 7天（毫秒）
+// const SEVEN_DAYS_MS =20 * 1000; // 7天（毫秒）
 
 /**
  * 判断是否应该播放分享动画

@@ -129,7 +129,7 @@
             current-user="{{currentUser}}"
             show-actions="{{true}}"
             is-last="{{index === posts.length - 1}}"
-            hide-image="{{index === 0 && showShareAnimation}}"
+            hide-image="{{index === 0 && hideFirstPostImage}}"
             bind:like="onPostLike"
             bind:comment="onPostComment"
             bind:replyComment="onPostReplyComment"

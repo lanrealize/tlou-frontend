@@ -240,6 +240,10 @@
 }
 
 /* 🎬 分享动画期间隐藏图片（但保留在DOM中，占据空间） */
+.post-images {
+  transition: opacity 800ms linear;  /* 🎬 和遮罩层同步的淡入动画 */
+}
+
 .post-images-hidden {
   opacity: 0 !important;  /* 完全透明，但仍占据空间 */
   pointer-events: none;   /* 禁用交互 */

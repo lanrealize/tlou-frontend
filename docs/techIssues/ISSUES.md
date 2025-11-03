@@ -10,3 +10,15 @@
 
 **适用场景**：所有使用 `max-height` 实现的折叠/展开动画，包括评论区、下拉菜单、手风琴组件等。
 
+---
+
+## 穿透组件隔离获取内部元素信息
+
+**问题场景**：需要从父页面获取子组件内部元素的位置和尺寸信息（如分享动画需要获取 post-item 内图片的精确位置），但小程序组件有严格的隔离机制，无法直接通过 `wx.createSelectorQuery()` 访问组件内部元素。
+
+**解决方案**：在子组件内暴露公开方法，使用 `wx.createSelectorQuery().in(this)` 在组件内部查询元素，并将结果通过 Promise 返回给父页面。示例：`getImageRect()` 方法在 post-item 组件内查询图片位置，返回 boundingClientRect 信息。
+
+**关键代码**：父页面调用 `this.selectComponent('#post-item-xxx').getImageRect()`，子组件内执行 `wx.createSelectorQuery().in(this).select('.image').boundingClientRect().exec()`。
+
+**核心价值**：既尊重组件封装边界，又提供了灵活的数据查询能力，避免通过全局选择器破坏组件隔离性。
+
