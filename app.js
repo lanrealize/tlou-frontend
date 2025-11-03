@@ -30,10 +30,17 @@ App({
   // 初始化状态跟踪
   _initPromise: null,
   _initCompleted: false,
+  _pagesReady: false,  // 页面注册完成标记
+  _pageRegistrationPromise: null,  // 页面注册 Promise
+  _pageRegistrationResolve: null,  // 页面注册 resolve
 
   onLaunch() {
     console.log('🚀 小程序启动');
-    console.log('🔵 [app] 开始初始化流程');
+    
+    // 🔧 创建页面注册等待 Promise（修复热重载白屏）
+    this._pageRegistrationPromise = new Promise(resolve => {
+      this._pageRegistrationResolve = resolve;
+    });
     
     // 设置导航栏信息
     this.setNavigationInfo();
@@ -48,9 +55,23 @@ App({
     this.initDevTools();
   },
 
-  onShow() {
+  async onShow() {
     console.log('👁️ 小程序显示');
-    console.log('🔵 [app] onShow 触发，即将导航到首页');
+    
+    // 🔧 修复热重载白屏：等待首页注册完成
+    // 热重载时 onShow 会在页面注册前触发，导致导航失败
+    if (!this._pagesReady) {
+      await this._pageRegistrationPromise;
+      this._pagesReady = true;
+    }
+  },
+  
+  // 🔧 页面注册完成通知（由 main.js 调用，修复热重载白屏）
+  notifyMainPageRegistered() {
+    if (this._pageRegistrationResolve) {
+      this._pageRegistrationResolve();
+      this._pageRegistrationResolve = null;
+    }
   },
 
   onHide() {
