@@ -30,7 +30,7 @@ view, text, image {
   opacity: 1;  /* 初始完全不透明，遮住下面的内容 */
   z-index: 9998;  /* ✅ 比导航栏(1000)高，但比动画容器(9999)低 */
   pointer-events: none;  /* 不阻挡交互 */
-  transition: opacity 2000ms linear;  /* 2秒线性淡出 */
+  transition: opacity 800ms linear;  /* 800ms线性淡出（速度2.5倍） */
 }
 
 .content-fade-mask.fade-out {
@@ -154,7 +154,7 @@ view, text, image {
 /* 目标状态：激活目标尺寸和位置（通过data属性） */
 .share-animation-container.transitioning[data-transition-active="true"] {
   /* 尺寸和位置通过内联样式动态设置 */
-  border-radius: 6rpx;  /* 🔧 与post-item图片圆角统一（.single-image: 6rpx, .grid-item: 8rpx，使用通用值6rpx） */
+  border-radius: 10rpx;  /* 🔧 与post-item图片圆角统一（.post-image-single: 10rpx） */
 }
 
 /* 图片过渡状态：保持100%填充容器 */

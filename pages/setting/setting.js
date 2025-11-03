@@ -22,8 +22,9 @@ Page({
     
     // 设置数据
     settingData: {
-      isPublic: false,           // 是否公开
-      allowInvite: false         // 是否允许成员邀请
+      isPublic: false,                // 是否公开
+      allowInvite: false,             // 是否允许成员邀请
+      enableShareAnimation: true      // 是否开启分享动画（默认开启）
     },
     
     // 成员管理
@@ -264,6 +265,7 @@ Page({
         isCircleOwner: isOwner,
         'settingData.isPublic': circle.isPublic || false,
         'settingData.allowInvite': circle.allowInvite || false,
+        'settingData.enableShareAnimation': circle.enableShareAnimation !== false, // 默认为 true
         lastSettingsLoadTime: Date.now(),
         appliers: appliers,
         isLoadingAppliers: false
@@ -490,6 +492,50 @@ Page({
       // 失败时回滚并给出明确提示
       this.setData({
         'settingData.allowInvite': oldValue
+      });
+      
+      wx.showToast({
+        title: '设置失败，请检查网络后重试',
+        icon: 'none',
+        duration: 2000
+      });
+    }
+  },
+
+  // 切换分享动画状态（乐观更新模式）
+  async toggleShareAnimation(e) {
+    const newValue = e.detail.value;
+    const oldValue = this.data.settingData.enableShareAnimation;
+    
+    // 乐观更新：先更新UI，提供即时反馈
+    this.setData({
+      'settingData.enableShareAnimation': newValue
+    });
+    
+    // 检查网络状态
+    const networkInfo = await this.checkNetworkStatus();
+    if (!networkInfo.isConnected) {
+      wx.showToast({
+        title: '网络不可用，设置将在网络恢复后同步',
+        icon: 'none',
+        duration: 2000
+      });
+      return;
+    }
+    
+    try {
+      // 异步同步到后端
+      await api.circles.updateSettings(this.data.circleId, {
+        enableShareAnimation: newValue
+      });
+      
+      // 🎯 方案二：记录设置变更
+      this.markDataChanged('circleSettings');
+      
+    } catch (error) {
+      // 失败时回滚并给出明确提示
+      this.setData({
+        'settingData.enableShareAnimation': oldValue
       });
       
       wx.showToast({
