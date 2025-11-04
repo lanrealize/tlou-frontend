@@ -1369,15 +1369,15 @@ Page({
     }
     
     // 🎯 使用 MobX when() Observable 模式等待数据就绪
-    const { postStore } = require('../../store/postStore');
+    const { postStore, POST_STATUS } = require('../../store/postStore');
     
     try {
       // when() 会在条件满足时立即执行，或超时后拒绝
+      // 等待数据加载完成（无论有没有帖子，只要加载完成就继续）
       await when(
-        // 条件：posts 有数据
+        // 条件：数据加载完成（不再是 LOADING 状态）
         () => {
-          const hasData = postStore.posts && postStore.posts.length > 0;
-          return hasData;
+          return postStore.status !== POST_STATUS.LOADING;
         },
         {
           timeout: SHARE_ANIMATION_CONFIG.dataWait.TIMEOUT
@@ -1390,6 +1390,7 @@ Page({
       const firstPost = posts[0];
       
       if (!firstPost || !firstPost.images || firstPost.images.length === 0) {
+        // 没有图片，不播放动画，直接取消（立即取消，不等2秒超时）
         this.cancelShareAnimation();
         return;
       }
@@ -1405,7 +1406,7 @@ Page({
       this.shareAnimationController?.start(imageUrl);
       
     } catch (error) {
-      // 超时或其他错误
+      // 超时或其他错误（可能是网络问题）
       this.cancelShareAnimation();
     }
   }
