@@ -735,7 +735,7 @@ Page({
     const shareTimestamp = Date.now();
     
     return {
-      title: `邀请你加入"${circle.name}"朋友圈`,
+      title: `点击加入状态分享`,
       path: `/pages/details/details?circleId=${circleId}${inviteCodeParam}&shared=true&enableAnim=${enableAnimParam}&shareTs=${shareTimestamp}`,
     };
   },
@@ -1055,7 +1055,7 @@ Page({
     if (!circle) return {};
 
     return {
-      title: circle.name || '查看朋友圈',
+      title: '查看状态分享',
       query: `circleId=${this.data.circleId}`,
       imageUrl: circle.coverImage || '/assets/pics/newShare.png'
     };

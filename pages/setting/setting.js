@@ -859,7 +859,7 @@ Page({
     }
 
     const confirm = await util.showConfirm(
-      `确定要退出朋友圈"${circle.name || '未命名朋友圈'}"吗？\n\n退出后将无法查看此朋友圈的内容，如需重新加入需要申请或邀请。`,
+      `确定要退出此朋友圈吗？\n\n退出后将无法查看此朋友圈的内容，如需重新加入需要申请或邀请。`,
       '退出朋友圈'
     );
     if (!confirm) return;
@@ -935,7 +935,7 @@ Page({
     }
 
     const confirm = await util.showConfirm(
-      `确定要删除朋友圈"${circle.name || '未命名朋友圈'}"吗？\n\n删除后所有成员将无法访问，此操作不可撤销。`,
+      `确定要删除此朋友圈吗？\n\n删除后所有成员将无法访问，此操作不可撤销。`,
       '删除朋友圈'
     );
     if (!confirm) return;
@@ -1011,7 +1011,7 @@ Page({
     }
     
     return {
-      title: `邀请你加入"${circle.name}"朋友圈`,
+      title: `点击加入状态分享`,
       path: `/pages/details/details?circleId=${circleId}${inviteCodeParam}`,
     };
   }
