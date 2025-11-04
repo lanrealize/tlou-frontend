@@ -94,7 +94,7 @@ Page({
     this.getSafeAreaInfo();
     this.setupStoreBindings();
     
-    const { circleId, inviteCode, preloaded, preloadFailed, source, showCreateSuccess, shared, enableAnim } = options;
+    const { circleId, inviteCode, preloaded, preloadFailed, source, showCreateSuccess, shared, enableAnim, shareTs } = options;
     
     if (!circleId) {
       util.showToast('朋友圈ID不能为空');
@@ -106,10 +106,14 @@ Page({
     
     // 🎯 完整判断是否应该播放动画（只有两种状态：播放或不播放）
     // enableAnim: 分享时的快照设置，代表分享者的意愿（默认 true，兼容老链接）
+    // shareTs: 分享时间戳，用于标识每次独特的分享
     const shareTimeEnabled = enableAnim !== 'false';
     const shouldShowAnimation = isFromShare && 
                                 shareTimeEnabled &&
-                                shouldPlayShareAnimation(circleId);  // 智能播放判断
+                                shouldPlayShareAnimation(circleId, shareTs);  // 智能播放判断
+    
+    // 🎬 保存分享时间戳（用于记录动画播放）
+    this.shareTimestamp = shareTs;
     
     // 🎬 创建动画控制器
     this.shareAnimationController = new ShareAnimationController(this);
@@ -727,10 +731,12 @@ Page({
     
     // 🎬 分享时的动画设置快照（代表分享者的意愿）
     const enableAnimParam = circle?.enableShareAnimation !== false ? 'true' : 'false';
+    // 🆕 生成分享时间戳，用于标识这次独特的分享
+    const shareTimestamp = Date.now();
     
     return {
       title: `邀请你加入"${circle.name}"朋友圈`,
-      path: `/pages/details/details?circleId=${circleId}${inviteCodeParam}&shared=true&enableAnim=${enableAnimParam}`,
+      path: `/pages/details/details?circleId=${circleId}${inviteCodeParam}&shared=true&enableAnim=${enableAnimParam}&shareTs=${shareTimestamp}`,
     };
   },
 
@@ -1294,7 +1300,7 @@ Page({
       const imageUrl = typeof firstImage === 'object' ? firstImage.url : firstImage;
       
       // 🎬 记录动画播放（用于智能播放判断）
-      recordShareAnimationPlay(circleId);
+      recordShareAnimationPlay(circleId, this.shareTimestamp);
       
       // 🎬 使用动画控制器启动动画
       this.shareAnimationController?.start(imageUrl);
