@@ -29,10 +29,15 @@
     "useStaticServer": true,
     "showES6CompileOption": false,
     "checkInvalidKey": true,
-    "disableUseStrict": false
+    "disableUseStrict": false,
+    "compileWorklet": false,
+    "localPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true
   },
   "compileType": "miniprogram",
-  "libVersion": "3.0.0",
+  "libVersion": "3.9.0",
   "simulatorType": "wechat",
   "simulatorPluginLibVersion": {},
   "condition": {},

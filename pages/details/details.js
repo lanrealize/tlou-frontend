@@ -595,6 +595,8 @@ Page({
         await this.loadPosts(this.data.circleId, false);
         // 🎬 直接检查动画（无需延迟，从 postStore 读取）
         this.checkAndTriggerShareAnimation();
+        // 🖼️ 初始化分享封面
+        this.updateShareImage();
       }
 
       // 如果是朋友圈主人，加载待处理申请数量
@@ -702,9 +704,96 @@ Page({
     }
   },
 
+  // 🖼️ 更新分享封面图片
+  async updateShareImage() {
+    const { postStore } = require('../../store/postStore');
+    
+    // 使用 MobX when() 等待数据就绪（优雅方式）
+    try {
+      await when(
+        () => postStore.posts && postStore.posts.length > 0,
+        { timeout: 3000 }
+      );
+    } catch (error) {
+      // 超时或无数据
+      this._localShareImagePath = null;
+      this._lastDownloadedImageUrl = null;
+      console.log('⏭️ 无图片，清空分享封面');
+      return;
+    }
+    
+    const posts = postStore.posts;
+    const firstImage = posts[0]?.images?.[0];
+    
+    // 没有图片，清空状态
+    if (!firstImage) {
+      this._localShareImagePath = null;
+      this._lastDownloadedImageUrl = null;
+      console.log('⏭️ 无图片，清空分享封面');
+      return;
+    }
+    
+    const imageUrl = typeof firstImage === 'object' ? firstImage.url : firstImage;
+    
+    // URL未变化，跳过下载
+    if (this._lastDownloadedImageUrl === imageUrl && this._localShareImagePath) {
+      console.log('📌 封面未变化，跳过下载');
+      return;
+    }
+    
+    // URL变化，立即清空（防止用错的图）
+    this._localShareImagePath = null;
+    
+    // 使用七牛缩略图（宽度400px，质量85）
+    const downloadUrl = imageUrl.includes('images.wltech-service.site')
+      ? `${imageUrl}?imageView2/2/w/400/q/85`
+      : imageUrl;
+    
+    try {
+      console.log('🔽 下载分享封面...');
+      const startTime = Date.now();
+      const res = await new Promise((resolve, reject) => {
+        wx.downloadFile({ url: downloadUrl, success: resolve, fail: reject });
+      });
+      
+      if (res.statusCode === 200) {
+        this._localShareImagePath = res.tempFilePath;
+        this._lastDownloadedImageUrl = imageUrl; // 记录原图URL
+        console.log(`✅ 封面更新成功 (${Date.now() - startTime}ms)`);
+      } else {
+        console.warn(`❌ 下载失败 (${res.statusCode})，将使用默认封面`);
+      }
+    } catch (error) {
+      console.warn('❌ 下载失败:', error.errMsg, '，将使用默认封面');
+    }
+  },
+
+  // 🛡️ 分享时验证封面URL（最后保险）
+  checkShareImageUrl() {
+    const { postStore } = require('../../store/postStore');
+    const posts = postStore.posts;
+    const firstImage = posts?.[0]?.images?.[0];
+    
+    if (!firstImage || !this._localShareImagePath || !this._lastDownloadedImageUrl) {
+      return null; // 无封面或未下载，返回null使用默认
+    }
+    
+    const currentUrl = typeof firstImage === 'object' ? firstImage.url : firstImage;
+    
+    // URL吻合，使用下载的封面
+    if (this._lastDownloadedImageUrl === currentUrl) {
+      console.log('✅ 封面URL吻合，使用自定义封面');
+      return this._localShareImagePath;
+    }
+    
+    // URL不吻合，不能用（防止错图）
+    console.warn('⚠️ 封面URL不吻合，使用默认封面');
+    return null;
+  },
+
   // 微信分享处理
   async onShareAppMessage() {
-    const { circle, circleId, currentUser } = this.data;
+    const { circle, circleId, currentUser, posts } = this.data;
     
     // 🔑 使用统一的权限管理检查分享权限
     const canShare = canShareCircle(circle, currentUser, this.data.inviteCode);
@@ -734,10 +823,18 @@ Page({
     // 🆕 生成分享时间戳，用于标识这次独特的分享
     const shareTimestamp = Date.now();
     
-    return {
+    const shareConfig = {
       title: `点击加入状态分享`,
-      path: `/pages/details/details?circleId=${circleId}${inviteCodeParam}&shared=true&enableAnim=${enableAnimParam}&shareTs=${shareTimestamp}`,
+      path: `/pages/details/details?circleId=${circleId}${inviteCodeParam}&shared=true&enableAnim=${enableAnimParam}&shareTs=${shareTimestamp}`
     };
+    
+    // 🛡️ 分享时验证并使用封面（最后保险）
+    const imageUrl = this.checkShareImageUrl();
+    if (imageUrl) {
+      shareConfig.imageUrl = imageUrl;
+    }
+    
+    return shareConfig;
   },
 
   // 接受邀请加入朋友圈
@@ -872,6 +969,8 @@ Page({
     try {
       await this.deletePost(postId);
       util.showToast('删除成功');
+      // 🖼️ 删帖成功后更新分享封面
+      this.updateShareImage();
     } catch (error) {
       console.error('删除帖子失败:', error);
       util.showToast('删除失败');

@@ -1010,9 +1010,47 @@ Page({
       return null;
     }
     
-    return {
+    const shareConfig = {
       title: `点击加入状态分享`,
-      path: `/pages/details/details?circleId=${circleId}${inviteCodeParam}`,
+      path: `/pages/details/details?circleId=${circleId}${inviteCodeParam}`
     };
+    
+    // 🖼️ 获取第一个post的第一张图片作为分享图片
+    try {
+      const { postStore } = require('../../store/postStore');
+      // 优先从缓存获取，如果没有则临时加载
+      const posts = (postStore.currentCircleId === circleId && postStore.posts?.length > 0)
+        ? postStore.posts
+        : (await api.posts.getList(circleId, { limit: 1 }))?.data?.posts;
+      
+      if (posts?.[0]?.images?.[0]) {
+        const firstImage = posts[0].images[0];
+        const imageUrl = typeof firstImage === 'object' ? firstImage.url : firstImage;
+        
+        // 使用微信已缓存的本地图片（用户看到的就是最好的）
+        try {
+          const imageInfo = await new Promise((resolve, reject) => {
+            wx.getImageInfo({
+              src: imageUrl,
+              success: resolve,
+              fail: reject
+            });
+          });
+          shareConfig.imageUrl = imageInfo.path;
+        } catch (error) {
+          // 如果获取失败，降级使用缩略图URL
+          console.warn('获取本地图片失败，使用网络缩略图:', error);
+          let fallbackUrl = imageUrl;
+          if (fallbackUrl.includes('tlou.images.wltech-service.site')) {
+            fallbackUrl += '?imageView2/1/w/200/h/200/q/75';
+          }
+          shareConfig.imageUrl = fallbackUrl;
+        }
+      }
+    } catch (error) {
+      console.error('获取帖子图片失败，使用小程序默认图标:', error);
+    }
+    
+    return shareConfig;
   }
 });

@@ -505,6 +505,14 @@ Page({
       if (response.data && response.data.post) {
         postStore.replaceOptimisticPost(tempId, response.data.post);
         console.log('✅ 帖子发布成功，临时帖子已替换为真实帖子');
+        
+        // 🖼️ 直接通知当前的 details 页面更新分享封面
+        const pages = getCurrentPages();
+        const detailsPage = pages.find(page => page.route === 'pages/details/details');
+        if (detailsPage && typeof detailsPage.updateShareImage === 'function') {
+          console.log('📸 通知 details 页面更新分享封面');
+          detailsPage.updateShareImage();
+        }
       }
 
     } catch (error) {
