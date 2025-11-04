@@ -439,6 +439,12 @@ Page({
 
       // 立即返回上一页，让用户看到新帖子
       setTimeout(() => {
+        // 设置全局标记，告诉 details 页面需要滚动到顶部
+        const app = getApp();
+        if (app.globalData) {
+          app.globalData.shouldScrollToTopAfterPost = true;
+        }
+        
         wx.navigateBack();
         
         // 🔥 在后台继续上传（不阻塞UI）

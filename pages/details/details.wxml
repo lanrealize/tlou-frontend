@@ -101,12 +101,13 @@
     <scroll-view 
       class="moment-scroll-view"
       scroll-y="{{true}}"
+      scroll-top="{{scrollTopValue}}"
+      scroll-with-animation="{{true}}"
       style="height: calc(100vh - {{navigationData.totalNavigationHeight}}px - 117rpx - 10rpx);"
       bindscrolltolower="onReachBottom"
       enhanced="{{false}}"
       show-scrollbar="{{false}}"
       enable-back-to-top="{{true}}"
-      scroll-with-animation="{{false}}"
     >
 
       <!-- 申请加入朋友圈区域 - 已移至底部统一组件 -->

@@ -23,6 +23,7 @@ Page({
     showCommentInput: false, // 是否显示评论输入框
     focusInput: false,    // 是否聚焦输入框
     pendingApplicationsCount: 0, // 待处理申请数量
+    scrollTopValue: 0,    // 滚动位置
     
     // 🆕 邀请码访问
     inviteCode: '',       // 邀请码（从URL参数获取）
@@ -261,9 +262,17 @@ Page({
       });
     });
     
-    // 智能刷新：基于场景和数据状态精确判断
-    if (this.data.circleId) {
-      this.intelligentRefreshData();
+    // 检查是否需要在发帖后滚动到顶部
+    if (app.globalData?.shouldScrollToTopAfterPost) {
+      app.globalData.shouldScrollToTopAfterPost = false;
+      // 发帖后不需要刷新（已经有乐观更新），只需要滚动到顶部
+      console.log('📜 检测到发帖返回，直接滚动到顶部');
+      this.scrollToTop();
+    } else {
+      // 智能刷新：基于场景和数据状态精确判断
+      if (this.data.circleId) {
+        this.intelligentRefreshData();
+      }
     }
   },
   
@@ -276,6 +285,7 @@ Page({
     
     // 分析刷新场景
     const refreshContext = this.analyzeRefreshContext();
+    
     // 根据场景决定刷新策略
     if (refreshContext.shouldRefresh) {
       console.log('✅ 执行刷新，原因:', refreshContext.reason, '刷新类型:', refreshContext.refreshType);
@@ -420,6 +430,15 @@ Page({
     this.setData({
       needsDataRefresh: true
     });
+  },
+
+  // 滚动到顶部
+  scrollToTop() {
+    console.log('📜 开始滚动到顶部');
+    setTimeout(() => {
+      this.setData({ scrollTopValue: 0 });
+      console.log('✅ 设置 scrollTopValue = 0');
+    }, 0);
   },
 
   // 下拉刷新（由于使用scroll-view，这个方法保留但不再使用）
