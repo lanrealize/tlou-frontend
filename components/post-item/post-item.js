@@ -63,7 +63,9 @@ Component({
     // 折叠状态显示的文本（截断后的）
     collapsedText: '',
     // 文本切换动画状态
-    textAnimating: false
+    textAnimating: false,
+    // 评论展开状态 - 使用对象存储每条评论的状态
+    commentTextStates: {} // { commentId: { expanded, needToggle, collapsedText, animating } }
   },
 
   /**
@@ -104,6 +106,12 @@ Component({
     // 监听帖子内容变化，检查是否需要展开/收起按钮
     'post.content': function(content) {
       this.checkTextLength();
+    },
+    // 监听评论列表变化，初始化评论文字状态
+    'post.comments': function(comments) {
+      if (comments && comments.length > 0) {
+        this.initCommentTextStates();
+      }
     }
   },
 
@@ -638,6 +646,80 @@ Component({
           this.setData({ textAnimating: false });
         }, 20);
       }, 150);
+    },
+
+    /**
+     * 初始化评论文字状态
+     */
+    initCommentTextStates() {
+      const { post, commentTextStates } = this.data;
+      if (!post || !post.comments || !Array.isArray(post.comments)) return;
+
+      const newStates = { ...commentTextStates };
+      let hasChanges = false;
+
+      post.comments.forEach(comment => {
+        if (!comment || !comment._id || !comment.content) return;
+        
+        const commentId = comment._id;
+        
+        // 如果这条评论已经有状态了，跳过
+        if (newStates[commentId]) return;
+
+        const content = comment.content;
+        const maxLength = 40; // 约两行的长度，留出空间给"全文"按钮
+        const needToggle = content.length > maxLength;
+
+        newStates[commentId] = {
+          expanded: false,
+          needToggle: needToggle,
+          collapsedText: needToggle ? content.substring(0, maxLength) : '',
+          animating: false
+        };
+
+        hasChanges = true;
+      });
+
+      if (hasChanges) {
+        this.setData({ commentTextStates: newStates });
+      }
+    },
+
+    /**
+     * 切换评论展开/收起状态
+     */
+    toggleCommentText(e) {
+      const { commentId } = e.currentTarget.dataset;
+      if (!commentId) return;
+
+      const { commentTextStates } = this.data;
+      const state = commentTextStates[commentId];
+      if (!state) return;
+
+      // 设置动画状态
+      const newStates = { ...commentTextStates };
+      newStates[commentId] = { ...state, animating: true };
+      this.setData({ commentTextStates: newStates });
+
+      // 等淡出完成后切换内容
+      setTimeout(() => {
+        const updatedStates = { ...this.data.commentTextStates };
+        updatedStates[commentId] = {
+          ...updatedStates[commentId],
+          expanded: !updatedStates[commentId].expanded
+        };
+        this.setData({ commentTextStates: updatedStates });
+
+        // 切换内容后立即开始淡入
+        setTimeout(() => {
+          const finalStates = { ...this.data.commentTextStates };
+          finalStates[commentId] = {
+            ...finalStates[commentId],
+            animating: false
+          };
+          this.setData({ commentTextStates: finalStates });
+        }, 20);
+      }, 150);
     }
   },
 
@@ -654,6 +736,8 @@ Component({
       this.updateLikedStatus();
       // 检查文本长度
       this.checkTextLength();
+      // 初始化评论文字状态
+      this.initCommentTextStates();
     },
     
     ready() {
@@ -663,6 +747,8 @@ Component({
       this.initImageLoadStates();
       // 再次检查文本长度（此时DOM已渲染）
       this.checkTextLength();
+      // 再次初始化评论文字状态
+      this.initCommentTextStates();
     },
     
     detached() {

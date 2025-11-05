@@ -565,7 +565,7 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 1;
   transform: translateY(0);
-  max-height: 150rpx;
+  max-height: none;
   overflow: visible;
 }
 
@@ -663,6 +663,13 @@
   line-height: 1.4;
   word-wrap: break-word;
   margin-bottom: 5rpx;
+  opacity: 1;
+  transition: opacity 0.15s ease-out;
+}
+
+/* 评论文字动画状态 */
+.comment-content.comment-text-animating {
+  opacity: 0;
 }
 
 .comment-text-flow {
@@ -710,6 +717,24 @@
 .comment-main-content {
   width: 100%;
   margin-top: 8rpx;
+}
+
+/* 评论展开/收起按钮 - 和帖子按钮样式一致 */
+.comment-toggle-btn {
+  font-size: 26rpx;
+  color: #1A73E8;
+  padding: 2rpx 0rpx;
+  border-radius: 4rpx;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  line-height: 1.4;
+  display: inline;
+  margin-right: 20rpx;
+}
+
+.comment-toggle-btn:active {
+  background-color: rgba(26, 115, 232, 0.1);
+  transform: scale(0.95);
 }
 
 /* 回复按钮 */

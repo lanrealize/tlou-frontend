@@ -202,16 +202,22 @@
                 </view>
                 
                 <!-- 评论内容 -->
-                <view class="comment-content">
+                <view class="comment-content {{commentTextStates[comment._id] && commentTextStates[comment._id].animating ? 'comment-text-animating' : ''}}">
                   <text class="comment-text-flow">
                     <text 
                       class="comment-main-text"
                       catchtap="onReplyComment"
                       data-user-id="{{comment.author ? comment.author._id : ''}}"
                       data-username="{{comment.author ? (comment.author.username || comment.author.name) : '匿名用户'}}"
-                      data-comment-id="{{comment._id}}">{{comment.content || '内容为空'}}</text><text class="comment-space" decode="{{true}}"></text>
+                      data-comment-id="{{comment._id}}">{{commentTextStates[comment._id] && commentTextStates[comment._id].needToggle && !commentTextStates[comment._id].expanded ? commentTextStates[comment._id].collapsedText + '...' : (comment.content || '内容为空')}}</text><text class="comment-space" decode="{{true}}"></text>
                   </text>
                   <view class="comment-actions-container">
+                    <text 
+                      class="comment-toggle-btn"
+                      wx:if="{{commentTextStates[comment._id] && commentTextStates[comment._id].needToggle}}"
+                      catchtap="toggleCommentText"
+                      data-comment-id="{{comment._id}}"
+                    >{{commentTextStates[comment._id].expanded ? '收起' : '全文'}}</text>
                     <text 
                       class="reply-btn"
                       catchtap="onReplyComment"
