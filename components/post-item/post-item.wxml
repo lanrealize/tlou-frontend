@@ -33,8 +33,25 @@
     </view>
 
     <!-- 文字内容 -->
-    <view class="post-text" wx:if="{{post.content}}">
-      <text>{{post.content}}</text>
+    <view class="post-text-container {{textAnimating ? 'animating' : ''}}" wx:if="{{post.content}}">
+      <!-- 展开状态或不需要折叠：完整文字 + inline按钮 -->
+      <block wx:if="{{textExpanded || !needTextToggle}}">
+        <text class="post-text">{{post.content}}</text>
+        <text 
+          class="text-toggle-btn" 
+          wx:if="{{needTextToggle && textExpanded}}"
+          catchtap="toggleText"
+        >收起</text>
+      </block>
+      
+      <!-- 折叠状态：截断文字 + "..." + inline按钮 -->
+      <block wx:if="{{!textExpanded && needTextToggle}}">
+        <text class="post-text">{{collapsedText}}...</text>
+        <text 
+          class="text-toggle-btn" 
+          catchtap="toggleText"
+        >全文</text>
+      </block>
     </view>
 
     <!-- 图片内容 -->

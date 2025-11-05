@@ -55,7 +55,15 @@ Component({
     // 图片加载状态管理
     imageLoadStates: {},  // 记录每张图片的加载状态
     // 当前用户是否点赞（计算属性）
-    isLiked: false
+    isLiked: false,
+    // 文本展开状态
+    textExpanded: false,
+    // 是否需要展开/收起按钮
+    needTextToggle: false,
+    // 折叠状态显示的文本（截断后的）
+    collapsedText: '',
+    // 文本切换动画状态
+    textAnimating: false
   },
 
   /**
@@ -92,6 +100,10 @@ Component({
     // 监听 hideImage 属性变化
     'hideImage': function(value) {
       // hideImage 用于分享动画时隐藏第一张图片
+    },
+    // 监听帖子内容变化，检查是否需要展开/收起按钮
+    'post.content': function(content) {
+      this.checkTextLength();
     }
   },
 
@@ -570,6 +582,62 @@ Component({
           imageLoadStates: newImageLoadStates
         });
       }
+    },
+
+    /**
+     * 检查文本长度，判断是否需要展开/收起按钮
+     * 使用字符数作为简单判断标准，并生成截断文本
+     */
+    checkTextLength() {
+      const { post } = this.data;
+      if (!post || !post.content) {
+        this.setData({ 
+          needTextToggle: false,
+          collapsedText: ''
+        });
+        return;
+      }
+
+      const content = post.content;
+      // 粗略估算：约80个字符（留出空间给"全文"按钮）
+      const maxCollapsedLength = 70;
+      
+      // 如果文本超过限制，需要折叠
+      const needToggle = content.length > maxCollapsedLength;
+      
+      // 生成折叠状态显示的文本（截断后的文本）
+      let collapsedText = '';
+      if (needToggle) {
+        collapsedText = content.substring(0, maxCollapsedLength);
+        // 如果截断位置不是完整的词，可以稍微往前找最后一个标点或空格
+        // 为简单起见，这里直接截断
+      }
+      
+      this.setData({ 
+        needTextToggle: needToggle,
+        collapsedText: collapsedText,
+        textExpanded: false  // 初始状态为收起
+      });
+    },
+
+    /**
+     * 切换文本展开/收起状态（带动画效果）
+     */
+    toggleText() {
+      // 先淡出
+      this.setData({ textAnimating: true });
+      
+      // 等淡出完成后切换内容
+      setTimeout(() => {
+        this.setData({
+          textExpanded: !this.data.textExpanded
+        });
+        
+        // 切换内容后立即开始淡入
+        setTimeout(() => {
+          this.setData({ textAnimating: false });
+        }, 20);
+      }, 150);
     }
   },
 
@@ -584,6 +652,8 @@ Component({
       this.initImageLoadStates();
       // 初始化点赞状态
       this.updateLikedStatus();
+      // 检查文本长度
+      this.checkTextLength();
     },
     
     ready() {
@@ -591,6 +661,8 @@ Component({
       this.setSingleImageStyleFromMeta();
       // 确保图片加载状态初始化
       this.initImageLoadStates();
+      // 再次检查文本长度（此时DOM已渲染）
+      this.checkTextLength();
     },
     
     detached() {
