@@ -171,7 +171,7 @@
     title="发现有趣朋友圈"
     circle-data="{{recommendedCircles[0]}}"
     circle-id="{{recommendedCircles[0]._id}}"
-    creator-avatar="{{recommendedCircles[0].creator.avatar || '/images/default_avatar.png'}}"
+    creator-avatar="{{recommendedCircles[0].postAuthorAvatar || '/images/default_avatar.png'}}"
     content="{{recommendedCircles[0].latestPost.content}}"
     has-content="{{recommendedCircles[0].hasLatestPost}}"
     post-image="{{recommendedCircles[0].postImageUrl || ''}}"

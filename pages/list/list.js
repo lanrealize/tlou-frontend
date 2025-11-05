@@ -97,7 +97,7 @@ Page({
         circle.formattedTime = util.formatRelativeTime(circle.createdAt);
         circle.memberCount = circle.members ? circle.members.length : 0;
         
-        // 🔧 处理图片URL - 支持对象和字符串两种格式
+        // 处理图片URL - 支持对象和字符串两种格式
         circle.postImageUrl = '';
         if (circle.latestPost && circle.latestPost.images && circle.latestPost.images.length > 0) {
           const firstImage = circle.latestPost.images[0];
@@ -107,6 +107,11 @@ Page({
             circle.postImageUrl = firstImage.url;
           }
         }
+        
+        // 提取帖子作者头像（降级到创建者头像）
+        circle.postAuthorAvatar = circle.latestPost?.author?.avatar 
+                                || circle.creator?.avatar 
+                                || '/images/default_avatar.png';
         
         // 处理最新帖子信息
         if (circle.latestPost) {

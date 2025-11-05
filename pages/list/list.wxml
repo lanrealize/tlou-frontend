@@ -21,7 +21,7 @@
         title="{{item.name}}"
         circle-data="{{item}}"
         circle-id="{{item._id}}"
-        creator-avatar="{{item.creator.avatar || '/images/default_avatar.png'}}"
+        creator-avatar="{{item.postAuthorAvatar || '/images/default_avatar.png'}}"
         content="{{item.latestPost ? (item.latestPost.content || '图片动态') : '还没有动态'}}"
         has-content="{{!!item.latestPost}}"
         post-image="{{item.postImageUrl || ''}}"

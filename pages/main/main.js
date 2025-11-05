@@ -1046,6 +1046,11 @@ Page({
           }
         }
         
+        // 提取帖子作者头像（降级到创建者头像）
+        const postAuthorAvatar = circle.latestPost?.author?.avatar 
+                               || circle.creator?.avatar 
+                               || '/images/default_avatar.png';
+        
         const isInitialLoad = this._isFirstDiscoverLoad;
         
         this.setData({
@@ -1055,6 +1060,7 @@ Page({
             memberCount: circle.members ? circle.members.length : 0,
             hasLatestPost: !!(circle.latestPost && circle.latestPost.content),
             postImageUrl: postImageUrl,
+            postAuthorAvatar: postAuthorAvatar,
             refreshTimestamp: Date.now(),
             isInitialLoad: isInitialLoad
           }],
@@ -1099,7 +1105,6 @@ Page({
       });
 
       if (res && res.success && res.data && res.data.circle) {
-        // 复用格式化逻辑
         const circle = res.data.circle;
         
         let postImageUrl = '';
@@ -1110,6 +1115,11 @@ Page({
           }
         }
         
+        // 提取帖子作者头像（降级到创建者头像）
+        const postAuthorAvatar = circle.latestPost?.author?.avatar 
+                               || circle.creator?.avatar 
+                               || '/images/default_avatar.png';
+        
         const isInitialLoad = this._isFirstDiscoverLoad;
         
         this.setData({
@@ -1119,6 +1129,7 @@ Page({
             memberCount: circle.members ? circle.members.length : 0,
             hasLatestPost: !!(circle.latestPost && circle.latestPost.content),
             postImageUrl: postImageUrl,
+            postAuthorAvatar: postAuthorAvatar,
             refreshTimestamp: Date.now(),
             isInitialLoad: isInitialLoad
           }],
