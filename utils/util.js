@@ -211,19 +211,6 @@ const generateId = (length = 8) => {
 };
 
 /**
- * 获取用户位置
- */
-const getUserLocation = () => {
-  return new Promise((resolve, reject) => {
-    wx.getLocation({
-      type: 'gcj02',
-      success: resolve,
-      fail: reject
-    });
-  });
-};
-
-/**
  * 选择图片
  * @param {number} count 最大选择数量
  * @param {Array} sizeType 图片尺寸类型
@@ -321,7 +308,6 @@ module.exports = {
   isEmpty,
   truncate,
   generateId,
-  getUserLocation,
   chooseImage,
   navigateTo,
   navigateBack,

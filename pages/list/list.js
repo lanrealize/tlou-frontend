@@ -119,8 +119,9 @@ Page({
         }
         
         // 格式化最后更新时间显示
+        // 🔧 优先使用 latestActivityTime（包含发帖/点赞/评论/加入等所有活动）
         circle.lastUpdateFormatted = util.formatRelativeTime(
-          circle.latestPost ? circle.latestPost.createdAt : circle.createdAt
+          circle.latestActivityTime || (circle.latestPost ? circle.latestPost.createdAt : circle.createdAt)
         );
 
         // 添加删除权限判断
@@ -128,10 +129,11 @@ Page({
       });
 
       // 按更新时间排序（最新的在前面）
+      // 🔧 优先使用 latestActivityTime（包含发帖/点赞/评论/加入等所有活动）
       circles.sort((a, b) => {
-        const aTime = a.latestPost ? new Date(a.latestPost.createdAt) : new Date(a.createdAt);
-        const bTime = b.latestPost ? new Date(b.latestPost.createdAt) : new Date(b.createdAt);
-        return bTime - aTime; // 降序排序，最新的在前面
+        const aTime = a.latestActivityTime || (a.latestPost?.createdAt) || a.createdAt;
+        const bTime = b.latestActivityTime || (b.latestPost?.createdAt) || b.createdAt;
+        return new Date(bTime) - new Date(aTime); // 降序排序，最新的在前面
       });
 
       this.setData({

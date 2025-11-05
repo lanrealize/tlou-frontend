@@ -96,12 +96,12 @@ const circleStore = observable({
     // 🔧 关键字段说明：
     // - _id: 朋友圈ID
     // - memberCount: 成员数量
-    // - latestPost?.createdAt: 最新帖子时间（用户发新帖会变）
-    // - createdAt: 朋友圈创建时间（兜底）
+    // - latestActivityTime: 最新活动时间（发帖/点赞/评论/加入都会更新）
     // - members: 成员列表（加入/退出会变）
-    const latestActivityTime = circle.latestPost 
-      ? circle.latestPost.createdAt 
-      : circle.createdAt;
+    // 🔧 优先使用 latestActivityTime，降级到 latestPost.createdAt -> createdAt
+    const latestActivityTime = circle.latestActivityTime
+      || (circle.latestPost ? circle.latestPost.createdAt : null)
+      || circle.createdAt;
     
     const keyFields = [
       circle._id,
@@ -132,10 +132,11 @@ const circleStore = observable({
   _formatCircle(circle) {
     if (!circle) return null;
     
-    // 🔧 "最近更新于"应该是最新帖子的时间，如果没有帖子则用朋友圈创建时间
-    const lastActivityTime = circle.latestPost 
-      ? circle.latestPost.createdAt 
-      : circle.createdAt;
+    // 🔧 优先使用后端的 latestActivityTime（包含发帖/点赞/评论/加入等所有活动）
+    // 降级方案：latestPost.createdAt -> createdAt
+    const lastActivityTime = circle.latestActivityTime
+      || (circle.latestPost ? circle.latestPost.createdAt : null)
+      || circle.createdAt;
     
     return {
       ...circle,
@@ -283,9 +284,10 @@ const circleStore = observable({
         const circles = res.data.circles || [];
         this.circles = circles;
         
+        // 🔧 优先使用 latestActivityTime，后端已排序但前端再排序一次作为降级方案
         const sortedCircles = [...circles].sort((a, b) => {
-          const timeA = a.latestPost?.createdAt || a.createdAt || 0;
-          const timeB = b.latestPost?.createdAt || b.createdAt || 0;
+          const timeA = a.latestActivityTime || a.latestPost?.createdAt || a.createdAt || 0;
+          const timeB = b.latestActivityTime || b.latestPost?.createdAt || b.createdAt || 0;
           return new Date(timeB) - new Date(timeA);
         });
         
@@ -332,9 +334,10 @@ const circleStore = observable({
         this.isRefreshing = false;
       })();
       
+      // 🔧 优先使用 latestActivityTime，后端已排序但前端再排序一次作为降级方案
       const sortedCircles = [...circles].sort((a, b) => {
-        const timeA = a.latestPost?.createdAt || a.createdAt || 0;
-        const timeB = b.latestPost?.createdAt || b.createdAt || 0;
+        const timeA = a.latestActivityTime || a.latestPost?.createdAt || a.createdAt || 0;
+        const timeB = b.latestActivityTime || b.latestPost?.createdAt || b.createdAt || 0;
         return new Date(timeB) - new Date(timeA);
       });
       

@@ -1053,10 +1053,13 @@ Page({
         
         const isInitialLoad = this._isFirstDiscoverLoad;
         
+        // 🔧 优先使用 latestActivityTime（包含发帖/点赞/评论/加入等所有活动）
+        const circleTime = circle.latestActivityTime || circle.createdAt;
+        
         this.setData({
           recommendedCircles: [{
             ...circle,
-            formattedTime: util.formatRelativeTime(circle.createdAt),
+            formattedTime: util.formatRelativeTime(circleTime),
             memberCount: circle.members ? circle.members.length : 0,
             hasLatestPost: !!(circle.latestPost && circle.latestPost.content),
             postImageUrl: postImageUrl,
@@ -1122,10 +1125,13 @@ Page({
         
         const isInitialLoad = this._isFirstDiscoverLoad;
         
+        // 🔧 优先使用 latestActivityTime（包含发帖/点赞/评论/加入等所有活动）
+        const circleTime = circle.latestActivityTime || circle.createdAt;
+        
         this.setData({
           recommendedCircles: [{
             ...circle,
-            formattedTime: util.formatRelativeTime(circle.createdAt),
+            formattedTime: util.formatRelativeTime(circleTime),
             memberCount: circle.members ? circle.members.length : 0,
             hasLatestPost: !!(circle.latestPost && circle.latestPost.content),
             postImageUrl: postImageUrl,
@@ -1220,7 +1226,9 @@ Page({
       }
 
       // 格式化数据
-      targetCircle.formattedTime = util.formatRelativeTime(targetCircle.createdAt);
+      // 🔧 优先使用 latestActivityTime（包含发帖/点赞/评论/加入等所有活动）
+      const circleTime = targetCircle.latestActivityTime || targetCircle.createdAt;
+      targetCircle.formattedTime = util.formatRelativeTime(circleTime);
       targetCircle.memberCount = targetCircle.members ? targetCircle.members.length : 0;
 
       // 🔧 同时预加载帖子数据，避免details页面空白
