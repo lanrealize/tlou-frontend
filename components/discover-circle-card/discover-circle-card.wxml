@@ -27,8 +27,21 @@
       </view>
     </view>
     
-    <!-- 创建者头像 -->
-    <image class="discover-avatar" src="{{creatorAvatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+    <!-- 创建者头像 - 添加骨架屏 -->
+    <view class="discover-avatar-wrapper">
+      <!-- 骨架屏 -->
+      <view class="image-skeleton skeleton-circle {{imageLoadStates['creator-avatar'] === 'show' ? '' : 'show'}}">
+        <view class="skeleton-shimmer"></view>
+      </view>
+      <!-- 实际头像 -->
+      <image 
+        class="discover-avatar {{imageLoadStates['creator-avatar'] === 'show' ? 'image-loaded' : 'image-loading'}}" 
+        src="{{creatorAvatar || '/images/default_avatar.png'}}" 
+        mode="aspectFill"
+        bindload="onCreatorAvatarLoad"
+        binderror="onCreatorAvatarError"
+      ></image>
+    </view>
     
     <!-- 动态内容区域 -->
     <view class="content-container">
@@ -57,18 +70,31 @@
       </view>
     </view>
     
-    <!-- 倾斜的图片 -->
+    <!-- 倾斜的图片 - 添加骨架屏 -->
     <view class="rotated-img">
+      <!-- 骨架屏 -->
+      <view class="image-skeleton {{imageLoadStates['post-image'] === 'show' ? '' : 'show'}}" wx:if="{{(postImage && postImage !== '') || (hasContent && !postImage)}}">
+        <view class="skeleton-shimmer"></view>
+      </view>
+      
       <!-- 只有当确实有帖子图片时才显示 -->
       <image wx:if="{{postImage && postImage !== ''}}" 
+             class="rotated-image {{imageLoadStates['post-image'] === 'show' ? 'image-loaded' : 'image-loading'}}"
              src="{{postImage}}" 
              mode="aspectFill" 
-             style="width: 100%; height: 100%; border-radius: 10rpx;"></image>
+             style="width: 100%; height: 100%; border-radius: 10rpx;"
+             bindload="onPostImageLoad"
+             binderror="onPostImageError"
+      ></image>
       <!-- 如果有内容但没有图片，显示创建者头像 -->
       <image wx:elif="{{hasContent && !postImage}}" 
+             class="rotated-image {{imageLoadStates['post-image'] === 'show' ? 'image-loaded' : 'image-loading'}}"
              src="{{creatorAvatar || '/images/default_avatar.png'}}" 
              mode="aspectFill" 
-             style="width: 100%; height: 100%; border-radius: 10rpx;"></image>
+             style="width: 100%; height: 100%; border-radius: 10rpx;"
+             bindload="onPostImageLoad"
+             binderror="onPostImageError"
+      ></image>
       <!-- 完全空的朋友圈保持空白，不显示任何内容 -->
     </view>
     

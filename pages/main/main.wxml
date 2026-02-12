@@ -5,8 +5,21 @@
   
   <!-- 头部区域 -->
   <view class="header">
-    <!-- 用户头像 - 只在已登录状态显示 -->
-    <image wx:if="{{loginStatus === 'loggedIn'}}" class="avatar-main" src="{{avatarUrl}}" mode="aspectFill"></image>
+    <!-- 用户头像 - 只在已登录状态显示，添加骨架屏 -->
+    <view wx:if="{{loginStatus === 'loggedIn'}}" class="avatar-main-wrapper" style="position: relative; width: 102rpx; height: 102rpx;">
+      <!-- 骨架屏 -->
+      <view class="image-skeleton skeleton-circle {{imageLoadStates['avatar-main'] === 'show' ? '' : 'show'}}">
+        <view class="skeleton-shimmer"></view>
+      </view>
+      <!-- 实际头像 -->
+      <image 
+        class="avatar-main {{imageLoadStates['avatar-main'] === 'show' ? 'image-loaded' : 'image-loading'}}" 
+        src="{{avatarUrl}}" 
+        mode="aspectFill"
+        bindload="onAvatarMainLoad"
+        binderror="onAvatarMainError"
+      ></image>
+    </view>
     
     <!-- 标题组 -->
     <view class="title-group {{loginStatus !== 'loggedIn' ? 'no-avatar' : ''}}">
@@ -65,13 +78,88 @@
       <view class="user-count {{isUpdatingCircleLine2 ? 'line-updating line-updating-delay' : ''}} {{circleCardImageVisible ? 'text-light' : ''}}">
         <text>有 {{recentCircle.memberCount}} 名用户在内</text>
         <view class="avatar-group">
-        <image class="avatar-small-1" wx:if="{{recentCircle.members && recentCircle.members.length > 0}}" src="{{recentCircle.members[0].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
-        <image class="avatar-small-2" wx:if="{{recentCircle.members && recentCircle.members.length > 1}}" src="{{recentCircle.members[1].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
-        <image class="avatar-small-3" wx:if="{{recentCircle.members && recentCircle.members.length > 2}}" src="{{recentCircle.members[2].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
-        <image class="avatar-small-4" wx:if="{{recentCircle.members && recentCircle.members.length > 3}}" src="{{recentCircle.members[3].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
-        <image class="avatar-small-5" wx:if="{{recentCircle.members && recentCircle.members.length > 4}}" src="{{recentCircle.members[4].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+        <!-- 成员头像 1 - 添加骨架屏 -->
+        <view wx:if="{{recentCircle.members && recentCircle.members.length > 0}}" class="avatar-small-wrapper" style="position: absolute; left: 0; top: 0; width: 44rpx; height: 44rpx;">
+          <view class="image-skeleton skeleton-circle {{imageLoadStates['avatar-small-1'] === 'show' ? '' : 'show'}}">
+            <view class="skeleton-shimmer"></view>
+          </view>
+          <image 
+            class="avatar-small-1 {{imageLoadStates['avatar-small-1'] === 'show' ? 'image-loaded' : 'image-loading'}}" 
+            src="{{recentCircle.members[0].avatar || '/images/default_avatar.png'}}" 
+            mode="aspectFill"
+            bindload="onAvatarSmall1Load"
+            binderror="onAvatarSmall1Error"
+          ></image>
+        </view>
+        
+        <!-- 成员头像 2 - 添加骨架屏 -->
+        <view wx:if="{{recentCircle.members && recentCircle.members.length > 1}}" class="avatar-small-wrapper" style="position: absolute; left: 30rpx; top: 0; width: 44rpx; height: 44rpx;">
+          <view class="image-skeleton skeleton-circle {{imageLoadStates['avatar-small-2'] === 'show' ? '' : 'show'}}">
+            <view class="skeleton-shimmer"></view>
+          </view>
+          <image 
+            class="avatar-small-2 {{imageLoadStates['avatar-small-2'] === 'show' ? 'image-loaded' : 'image-loading'}}" 
+            src="{{recentCircle.members[1].avatar || '/images/default_avatar.png'}}" 
+            mode="aspectFill"
+            bindload="onAvatarSmall2Load"
+            binderror="onAvatarSmall2Error"
+          ></image>
+        </view>
+        
+        <!-- 成员头像 3 - 添加骨架屏 -->
+        <view wx:if="{{recentCircle.members && recentCircle.members.length > 2}}" class="avatar-small-wrapper" style="position: absolute; left: 60rpx; top: 0; width: 44rpx; height: 44rpx;">
+          <view class="image-skeleton skeleton-circle {{imageLoadStates['avatar-small-3'] === 'show' ? '' : 'show'}}">
+            <view class="skeleton-shimmer"></view>
+          </view>
+          <image 
+            class="avatar-small-3 {{imageLoadStates['avatar-small-3'] === 'show' ? 'image-loaded' : 'image-loading'}}" 
+            src="{{recentCircle.members[2].avatar || '/images/default_avatar.png'}}" 
+            mode="aspectFill"
+            bindload="onAvatarSmall3Load"
+            binderror="onAvatarSmall3Error"
+          ></image>
+        </view>
+        
+        <!-- 成员头像 4 - 添加骨架屏 -->
+        <view wx:if="{{recentCircle.members && recentCircle.members.length > 3}}" class="avatar-small-wrapper" style="position: absolute; left: 90rpx; top: 0; width: 44rpx; height: 44rpx;">
+          <view class="image-skeleton skeleton-circle {{imageLoadStates['avatar-small-4'] === 'show' ? '' : 'show'}}">
+            <view class="skeleton-shimmer"></view>
+          </view>
+          <image 
+            class="avatar-small-4 {{imageLoadStates['avatar-small-4'] === 'show' ? 'image-loaded' : 'image-loading'}}" 
+            src="{{recentCircle.members[3].avatar || '/images/default_avatar.png'}}" 
+            mode="aspectFill"
+            bindload="onAvatarSmall4Load"
+            binderror="onAvatarSmall4Error"
+          ></image>
+        </view>
+        
+        <!-- 成员头像 5 - 添加骨架屏 -->
+        <view wx:if="{{recentCircle.members && recentCircle.members.length > 4}}" class="avatar-small-wrapper" style="position: absolute; left: 120rpx; top: 0; width: 44rpx; height: 44rpx;">
+          <view class="image-skeleton skeleton-circle {{imageLoadStates['avatar-small-5'] === 'show' ? '' : 'show'}}">
+            <view class="skeleton-shimmer"></view>
+          </view>
+          <image 
+            class="avatar-small-5 {{imageLoadStates['avatar-small-5'] === 'show' ? 'image-loaded' : 'image-loading'}}" 
+            src="{{recentCircle.members[4].avatar || '/images/default_avatar.png'}}" 
+            mode="aspectFill"
+            bindload="onAvatarSmall5Load"
+            binderror="onAvatarSmall5Error"
+          ></image>
+        </view>
+        
+        <!-- 更多成员头像 - 添加骨架屏 -->
         <view class="avatar-more" wx:if="{{recentCircle.members && recentCircle.members.length > 5}}">
-          <image class="avatar-more-bg" src="{{recentCircle.members[5].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+          <view class="image-skeleton skeleton-circle {{imageLoadStates['avatar-more-bg'] === 'show' ? '' : 'show'}}">
+            <view class="skeleton-shimmer"></view>
+          </view>
+          <image 
+            class="avatar-more-bg {{imageLoadStates['avatar-more-bg'] === 'show' ? 'image-loaded' : 'image-loading'}}" 
+            src="{{recentCircle.members[5].avatar || '/images/default_avatar.png'}}" 
+            mode="aspectFill"
+            bindload="onAvatarMoreBgLoad"
+            binderror="onAvatarMoreBgError"
+          ></image>
           <view class="avatar-more-mask"></view>
           <text class="avatar-more-text">+{{recentCircle.members.length - 5}}</text>
         </view>

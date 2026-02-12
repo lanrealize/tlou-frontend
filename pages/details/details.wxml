@@ -40,7 +40,8 @@
   <!-- 自定义导航栏 -->
   <custom-navigation 
     title="两个人的朋友圈" 
-    customBack="{{true}}" 
+    customBack="{{true}}"
+    backIconType="{{backIconType}}"
     bindnavigationReady="onNavigationReady" 
     bind:back="navigateBack"
   ></custom-navigation>

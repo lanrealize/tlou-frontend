@@ -27,6 +27,11 @@ Component({
     showActionBar: {
       type: Boolean,
       value: false
+    },
+    // 返回按钮图标类型：'back' 或 'home'
+    backIconType: {
+      type: String,
+      value: 'back'
     }
   },
 

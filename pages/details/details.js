@@ -25,6 +25,9 @@ Page({
     pendingApplicationsCount: 0, // 待处理申请数量
     scrollTopValue: 0,    // 滚动位置
     
+    // 导航栏图标控制
+    backIconType: 'back', // 'back' 或 'home'
+    
     // 🆕 邀请码访问
     inviteCode: '',       // 邀请码（从URL参数获取）
     
@@ -104,6 +107,10 @@ Page({
     
     const isFromShare = shared === 'true';
     
+    // 🏠 判断显示 home 还是 back 图标
+    const pages = getCurrentPages();
+    const backIconType = pages.length <= 1 ? 'home' : 'back';
+    
     // 🎯 完整判断是否应该播放动画（只有两种状态：播放或不播放）
     // enableAnim: 分享时的快照设置，代表分享者的意愿（默认 true，兼容老链接）
     // shareTs: 分享时间戳，用于标识每次独特的分享
@@ -123,6 +130,7 @@ Page({
       circleId,
       inviteCode: inviteCode || '',
       isFromShare,
+      backIconType,  // 设置导航栏图标类型
       shareAnimationState: shouldShowAnimation ? 'ready' : 'idle',
       showShareAnimation: shouldShowAnimation,  // 只有要播放才显示黑屏
       hideFirstPostImage: shouldShowAnimation,  // 同时隐藏第一个帖子的图片

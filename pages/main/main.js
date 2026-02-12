@@ -63,6 +63,9 @@ Page({
     commentText: '',      // 评论内容
     replyToUser: null,    // 回复的用户
     
+    // 🖼️ 图片加载状态管理
+    imageLoadStates: {},  // 图片加载状态对象 { 'avatar-main': 'loading'|'show'|'error' }
+    
     // 公开朋友圈推荐
     recommendedCircles: [],         // 推荐的公开朋友圈列表
     isLoadingRecommendations: false, // 是否正在加载推荐
@@ -468,8 +471,80 @@ Page({
     // 清理其他可能的引用
     this.setData({
       posts: [],
-      currentCircleId: ''
+      currentCircleId: '',
+      imageLoadStates: {}  // 清理图片状态
     });
+  },
+
+  // ===== 🖼️ 图片加载状态管理方法 =====
+  
+  /**
+   * 设置图片加载状态
+   * @param {string} key - 图片标识符
+   * @param {string} state - 状态: 'loading' | 'show' | 'error'
+   */
+  setImageLoadState(key, state) {
+    this.setData({
+      [`imageLoadStates.${key}`]: state
+    });
+  },
+  
+  // 头部用户头像加载事件
+  onAvatarMainLoad() {
+    this.setImageLoadState('avatar-main', 'show');
+  },
+  
+  onAvatarMainError() {
+    this.setImageLoadState('avatar-main', 'error');
+  },
+  
+  // 朋友圈成员头像加载事件
+  onAvatarSmall1Load() {
+    this.setImageLoadState('avatar-small-1', 'show');
+  },
+  
+  onAvatarSmall1Error() {
+    this.setImageLoadState('avatar-small-1', 'error');
+  },
+  
+  onAvatarSmall2Load() {
+    this.setImageLoadState('avatar-small-2', 'show');
+  },
+  
+  onAvatarSmall2Error() {
+    this.setImageLoadState('avatar-small-2', 'error');
+  },
+  
+  onAvatarSmall3Load() {
+    this.setImageLoadState('avatar-small-3', 'show');
+  },
+  
+  onAvatarSmall3Error() {
+    this.setImageLoadState('avatar-small-3', 'error');
+  },
+  
+  onAvatarSmall4Load() {
+    this.setImageLoadState('avatar-small-4', 'show');
+  },
+  
+  onAvatarSmall4Error() {
+    this.setImageLoadState('avatar-small-4', 'error');
+  },
+  
+  onAvatarSmall5Load() {
+    this.setImageLoadState('avatar-small-5', 'show');
+  },
+  
+  onAvatarSmall5Error() {
+    this.setImageLoadState('avatar-small-5', 'error');
+  },
+  
+  onAvatarMoreBgLoad() {
+    this.setImageLoadState('avatar-more-bg', 'show');
+  },
+  
+  onAvatarMoreBgError() {
+    this.setImageLoadState('avatar-more-bg', 'error');
   },
 
   // 设置MobX Store绑定

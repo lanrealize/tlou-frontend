@@ -5,7 +5,7 @@
   <view class="navigation-content" style="height: {{navigationData.navigationBarHeight}}px; margin-top: {{navigationData.statusBarHeight}}px;">
     <!-- 左侧返回按钮 -->
     <view class="nav-back-btn" wx:if="{{showBack}}" bindtap="onBackTap">
-      <image class="back-icon" src="/assets/icons/back.svg" mode="aspectFit"></image>
+      <image class="back-icon" src="/assets/icons/{{backIconType}}.svg" mode="aspectFit"></image>
     </view>
     
     <!-- 中间标题 -->

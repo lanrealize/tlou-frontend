@@ -28,12 +28,19 @@
   justify-content: center;
   top: 50%;
   transform: translateY(-50%);
+  margin-left: 6px;
 }
 
 .back-icon {
   width: 28px;
   height: 28px;
   opacity: 0.8;
+}
+
+/* home 图标特殊样式 - 缩小为原来的 2/3 */
+.back-icon[src*="home.svg"] {
+  width: 18.67px;  /* 28 * 2/3 = 18.67 */
+  height: 18.67px;
 }
 
 .nav-title {

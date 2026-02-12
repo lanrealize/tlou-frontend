@@ -64,10 +64,42 @@ Component({
   },
 
   data: {
-    showDropdown: false  // 控制下拉菜单显示状态
+    showDropdown: false,  // 控制下拉菜单显示状态
+    imageLoadStates: {}   // 图片加载状态管理
   },
 
   methods: {
+    // ===== 🖼️ 图片加载状态管理方法 =====
+    
+    /**
+     * 设置图片加载状态
+     * @param {string} key - 图片标识符
+     * @param {string} state - 状态: 'loading' | 'show' | 'error'
+     */
+    setImageLoadState(key, state) {
+      this.setData({
+        [`imageLoadStates.${key}`]: state
+      });
+    },
+    
+    // 创建者头像加载事件
+    onCreatorAvatarLoad() {
+      this.setImageLoadState('creator-avatar', 'show');
+    },
+    
+    onCreatorAvatarError() {
+      this.setImageLoadState('creator-avatar', 'error');
+    },
+    
+    // 帖子图片加载事件
+    onPostImageLoad() {
+      this.setImageLoadState('post-image', 'show');
+    },
+    
+    onPostImageError() {
+      this.setImageLoadState('post-image', 'error');
+    },
+    
     // 卡片点击事件
     onCardTap() {
       // 如果下拉菜单正在显示，则只隐藏菜单，不触发其他逻辑
