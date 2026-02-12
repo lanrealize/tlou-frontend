@@ -90,7 +90,7 @@
                mode="aspectFill" />
         <view class="applier-info">
           <text class="applier-name">{{item.username || '未知用户'}}</text>
-          <text class="applier-time">申请时间：刚刚</text>
+          <text class="applier-time">{{item.formattedAppliedTime || '刚刚'}}</text>
         </view>
         <view class="applier-actions">
           <button id="approve-btn-{{item._id}}" class="action-btn approve-btn {{isProcessingApplication ? 'disabled' : ''}}" 

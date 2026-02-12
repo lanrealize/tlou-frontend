@@ -256,6 +256,12 @@ Page({
           const appliersRes = await api.circles.getAppliers(circleId);
           if (appliersRes.success) {
             appliers = appliersRes.data.appliers || [];
+            // 格式化申请时间
+            appliers.forEach(applier => {
+              applier.formattedAppliedTime = applier.appliedAt 
+                ? util.formatRelativeTime(applier.appliedAt)
+                : '未知';
+            });
           }
         } catch (error) {
           console.error('加载申请列表失败:', error);
@@ -320,6 +326,12 @@ Page({
       
       if (res.success) {
         const appliers = res.data.appliers || [];
+        // 格式化申请时间
+        appliers.forEach(applier => {
+          applier.formattedAppliedTime = applier.appliedAt 
+            ? util.formatRelativeTime(applier.appliedAt)
+            : '未知';
+        });
         this.setData({ appliers: appliers });
       }
     } catch (error) {
