@@ -560,16 +560,9 @@ Page({
     this.setData({
       'circle.name': newName,
       tempCircleName: newName,
-      isNameChanged: newName.trim() !== oldName.trim(),
+      isNameChanged: newName.trim() !== oldName.trim() && newName.trim() !== '',
       circleNameLength: newName.length
     });
-  },
-
-  // 名称输入框失焦时保存
-  onNameBlur(e) {
-    if (this.data.isNameChanged) {
-      this.saveCircleName();
-    }
   },
 
   // 保存朋友圈名称
@@ -587,8 +580,6 @@ Page({
         title: '名称不能为空',
         icon: 'none'
       });
-      // 恢复原名称
-      this.loadCircleSettings();
       return;
     }
     
@@ -601,10 +592,13 @@ Page({
     }
     
     try {
+      wx.showLoading({ title: '保存中...' });
+      
       await api.circles.updateSettings(circleId, {
         name: newName
       });
       
+      wx.hideLoading();
       wx.showToast({
         title: '保存成功',
         icon: 'success',
@@ -620,6 +614,7 @@ Page({
       this.markDataChanged('circleSettings');
       
     } catch (error) {
+      wx.hideLoading();
       wx.showToast({
         title: error.message || '保存失败',
         icon: 'none'

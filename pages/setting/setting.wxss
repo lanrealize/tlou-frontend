@@ -583,46 +583,65 @@
   transform: scale(0.98);
 }
 
-/* 朋友圈名称编辑 */
-.circle-name-edit-container {
+/* 朋友圈名称编辑 - 行内布局 */
+.circle-name-edit-row {
   margin-top: 20rpx;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
   position: relative;
 }
 
-.circle-name-input {
-  width: 100%;
-  padding: 24rpx;
-  padding-right: 120rpx;
+.circle-name-input-inline {
+  flex: 1;
+  padding: 0 24rpx;
+  padding-right: 100rpx;
   background-color: #f8f9fa;
   border-radius: 12rpx;
   border: 2rpx solid #e9ecef;
   font-size: 28rpx;
   color: #333;
-  line-height: 1.5;
   box-sizing: border-box;
   transition: all 0.2s ease;
-  min-height: 80rpx;
-  display: flex;
-  align-items: center;
+  height: 88rpx;
+  line-height: 88rpx;
 }
 
-.circle-name-input:focus {
+.circle-name-input-inline:focus {
   background-color: #ffffff;
   border-color: #1A73E8;
 }
 
-/* placeholder 样式 */
-.circle-name-input::placeholder {
-  color: #999;
-}
-
-.circle-name-hint {
+.circle-name-counter {
   position: absolute;
-  right: 24rpx;
+  right: 140rpx;
   top: 50%;
   transform: translateY(-50%);
   font-size: 24rpx;
   color: #999;
   pointer-events: none;
   white-space: nowrap;
+}
+
+.change-name-btn {
+  font-size: 28rpx;
+  color: #1A73E8;
+  padding: 8rpx 12rpx;
+  border-radius: 8rpx;
+  background-color: transparent !important;
+  border: none;
+  flex-shrink: 0;
+}
+
+.change-name-btn::after {
+  border: none;
+}
+
+.change-name-btn:not(.disabled):active {
+  background-color: rgba(26, 115, 232, 0.1) !important;
+}
+
+.change-name-btn.disabled {
+  color: #666;
+  background-color: transparent !important;
 }

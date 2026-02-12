@@ -53,16 +53,20 @@
       </view>
     </view>
     
-    <view class="circle-name-edit-container">
-      <input class="circle-name-input" 
+    <view class="circle-name-edit-row">
+      <input class="circle-name-input-inline" 
              placeholder="请输入朋友圈名称" 
-             placeholder-style="color: #999;"
+             placeholder-style="color: #999; line-height: 88rpx;"
              value="{{circle.name || ''}}" 
              maxlength="50"
-             bindinput="onNameInputDirect"
-             bindblur="onNameBlur"
-             bindconfirm="saveCircleName" />
-      <text class="circle-name-hint">{{circleNameLength}}/50</text>
+             bindinput="onNameInputDirect" />
+      <text class="circle-name-counter">{{circleNameLength}}/50</text>
+      <button class="change-name-btn {{isNameChanged ? '' : 'disabled'}}" 
+              bindtap="saveCircleName"
+              disabled="{{!isNameChanged}}"
+              hover-class="none">
+        更改
+      </button>
     </view>
   </view>
 
