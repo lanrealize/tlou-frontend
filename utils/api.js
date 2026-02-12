@@ -32,42 +32,43 @@ class API {
     const DEBUG_API = true; // 设置为 false 可关闭调试日志
     
     try {
-      // 🎯 从 mobx 获取当前身份的 openid（统一处理真实和虚拟身份）
+      // 🎯 优化：优先从 userStore 获取 openid，如果没有则从 Storage 获取
+      // 这样即使用户未登录（未注册），也能发送 openid 用于限流等功能
       const app = getApp();
       const userStore = app?.getUserStore();
       
-      if (DEBUG_API) {
-        console.log(`\n📤 API请求: ${method} ${url}`);
-        console.log('🔐 认证状态:', {
-          hasApp: !!app,
-          hasUserStore: !!userStore,
-          isLoggedIn: userStore?.isLoggedIn,
-          hasUserInfo: !!userStore?.userInfo,
-          hasUserId: !!userStore?.userInfo?._id,
-          userIdValue: userStore?.userInfo?._id || 'null'
-        });
+      let openid = null;
+      
+      // 方案1：已登录用户，从 userStore 获取
+      if (userStore && userStore.isLoggedIn && userStore.userInfo?._id) {
+        openid = userStore.userInfo._id;
+        if (DEBUG_API) {
+          console.log('✅ 从 userStore 获取 openid:', openid);
+        }
+      } 
+      // 方案2：未登录用户，从 Storage 获取
+      else {
+        try {
+          openid = wx.getStorageSync('openid');
+          if (openid && DEBUG_API) {
+            console.log('✅ 从 Storage 获取 openid:', openid);
+          }
+        } catch (error) {
+          if (DEBUG_API) {
+            console.warn('⚠️ 从 Storage 获取 openid 失败:', error);
+          }
+        }
       }
       
-      if (userStore && userStore.isLoggedIn && userStore.userInfo?._id) {
-        // ✅ 后端架构：_id 就是 openid 值
-        header['x-openid'] = userStore.userInfo._id;
+      // 如果有 openid，添加到请求头
+      if (openid) {
+        header['x-openid'] = openid;
         if (DEBUG_API) {
-          console.log('✅ 已添加 x-openid:', header['x-openid']);
+          console.log('✅ 已添加 x-openid 到请求头');
         }
       } else {
         if (DEBUG_API) {
-          console.warn('⚠️ 未添加 x-openid，可能导致403错误！');
-          
-          // 尝试从其他来源获取
-          const globalOpenid = app?.globalData?.openid;
-          const storageOpenid = wx.getStorageSync('openid');
-          
-          if (globalOpenid) {
-            console.warn('💡 globalData.openid 存在:', globalOpenid);
-          }
-          if (storageOpenid) {
-            console.warn('💡 storage openid 存在:', storageOpenid);
-          }
+          console.warn('⚠️ 未找到 openid，请求将不包含身份信息');
         }
       }
     } catch (error) {

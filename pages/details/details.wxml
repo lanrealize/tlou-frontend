@@ -39,7 +39,7 @@
 
   <!-- 自定义导航栏 -->
   <custom-navigation 
-    title="两个人的朋友圈" 
+    title="{{circle.name || '两个人的朋友圈'}}" 
     customBack="{{true}}"
     backIconType="{{backIconType}}"
     bindnavigationReady="onNavigationReady" 
@@ -61,7 +61,7 @@
         <view class="left-content">
           <!-- 左侧用户信息 -->
           <view class="circle-info">
-            <view class="member-count">{{circle.memberCount || 1}} 名用户在内</view>
+            <view class="member-count">{{circle.memberCount || 1}} 名成员在内</view>
             <view class="circle-status">点击设置按钮可移除用户</view>
           </view>
           

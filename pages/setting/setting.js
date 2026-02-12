@@ -33,8 +33,9 @@ Page({
     newMemberInput: '',
     
     // 名称编辑
-    showEditNameDialog: false,
-    editNameInput: '',
+    tempCircleName: '',  // 临时存储正在编辑的名称
+    isNameChanged: false, // 名称是否有变化
+    circleNameLength: 0,  // 名称长度
     
     // 申请列表管理
     appliers: [],                    // 申请者列表
@@ -272,7 +273,8 @@ Page({
         'settingData.enableShareAnimation': circle.enableShareAnimation !== false, // 默认为 true
         lastSettingsLoadTime: Date.now(),
         appliers: appliers,
-        isLoadingAppliers: false
+        isLoadingAppliers: false,
+        circleNameLength: (circle.name || '').length
       });
       
       this.setStatus(STATUS_CONSTANTS.SUCCESS);
@@ -550,40 +552,43 @@ Page({
     }
   },
 
-  // 显示编辑名称对话框
-  showEditNameDialog() {
-    this.setData({
-      showEditNameDialog: true,
-      editNameInput: this.data.circle?.name || ''
-    });
-  },
-
-  // 隐藏编辑名称对话框
-  hideEditNameDialog() {
-    this.setData({
-      showEditNameDialog: false,
-      editNameInput: ''
-    });
-  },
-
-  // 输入朋友圈名称
-  onNameInput(e) {
-    this.setData({
-      editNameInput: e.detail.value
-    });
-  },
-
-  // 确认修改名称
-  async confirmEditName() {
-    const { editNameInput, circleId, circle } = this.data;
+  // 直接输入朋友圈名称
+  onNameInputDirect(e) {
+    const newName = e.detail.value;
+    const oldName = this.data.circle?.name || '';
     
-    const newName = editNameInput.trim();
+    this.setData({
+      'circle.name': newName,
+      tempCircleName: newName,
+      isNameChanged: newName.trim() !== oldName.trim(),
+      circleNameLength: newName.length
+    });
+  },
+
+  // 名称输入框失焦时保存
+  onNameBlur(e) {
+    if (this.data.isNameChanged) {
+      this.saveCircleName();
+    }
+  },
+
+  // 保存朋友圈名称
+  async saveCircleName() {
+    const { circle, circleId, isNameChanged } = this.data;
+    const newName = (circle?.name || '').trim();
+    
+    // 如果没有变化，不执行保存
+    if (!isNameChanged) {
+      return;
+    }
     
     if (!newName) {
       wx.showToast({
-        title: '请输入朋友圈名称',
+        title: '名称不能为空',
         icon: 'none'
       });
+      // 恢复原名称
+      this.loadCircleSettings();
       return;
     }
     
@@ -595,41 +600,33 @@ Page({
       return;
     }
     
-    // 如果名称没有变化，直接关闭对话框
-    if (newName === circle?.name) {
-      this.hideEditNameDialog();
-      return;
-    }
-    
     try {
-      wx.showLoading({ title: '保存中...' });
-      
       await api.circles.updateSettings(circleId, {
         name: newName
       });
       
-      wx.hideLoading();
       wx.showToast({
-        title: '修改成功',
-        icon: 'success'
+        title: '保存成功',
+        icon: 'success',
+        duration: 1500
       });
       
-      // 更新本地数据
+      // 重置变化标记
       this.setData({
-        'circle.name': newName
+        isNameChanged: false
       });
-      
-      this.hideEditNameDialog();
       
       // 标记数据变更
       this.markDataChanged('circleSettings');
       
     } catch (error) {
-      wx.hideLoading();
       wx.showToast({
-        title: error.message || '修改失败',
+        title: error.message || '保存失败',
         icon: 'none'
       });
+      
+      // 恢复原名称
+      this.loadCircleSettings();
     }
   },
 

@@ -251,25 +251,10 @@ const navigateBack = (delta = 1) => {
 
 /**
  * 生成默认朋友圈名字
- * 格式：YYYY年 季节（如：2025年 夏天）
+ * 固定返回"两个人的朋友圈"
  */
 const generateDefaultCircleName = () => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1; // getMonth() 返回 0-11
-  
-  let season = '';
-  if (month >= 3 && month <= 5) {
-    season = '春天';
-  } else if (month >= 6 && month <= 8) {
-    season = '夏天';
-  } else if (month >= 9 && month <= 11) {
-    season = '秋天';
-  } else {
-    season = '冬天';
-  }
-  
-  return `${year}年 ${season}`;
+  return '两个人的朋友圈';
 };
 
 /**
