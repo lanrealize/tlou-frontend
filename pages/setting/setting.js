@@ -32,6 +32,10 @@ Page({
     showAddMemberDialog: false,
     newMemberInput: '',
     
+    // 名称编辑
+    showEditNameDialog: false,
+    editNameInput: '',
+    
     // 申请列表管理
     appliers: [],                    // 申请者列表
     isLoadingAppliers: false,        // 是否正在加载申请列表
@@ -542,6 +546,89 @@ Page({
         title: '设置失败，请检查网络后重试',
         icon: 'none',
         duration: 2000
+      });
+    }
+  },
+
+  // 显示编辑名称对话框
+  showEditNameDialog() {
+    this.setData({
+      showEditNameDialog: true,
+      editNameInput: this.data.circle?.name || ''
+    });
+  },
+
+  // 隐藏编辑名称对话框
+  hideEditNameDialog() {
+    this.setData({
+      showEditNameDialog: false,
+      editNameInput: ''
+    });
+  },
+
+  // 输入朋友圈名称
+  onNameInput(e) {
+    this.setData({
+      editNameInput: e.detail.value
+    });
+  },
+
+  // 确认修改名称
+  async confirmEditName() {
+    const { editNameInput, circleId, circle } = this.data;
+    
+    const newName = editNameInput.trim();
+    
+    if (!newName) {
+      wx.showToast({
+        title: '请输入朋友圈名称',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    if (newName.length > 50) {
+      wx.showToast({
+        title: '名称不能超过50个字符',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    // 如果名称没有变化，直接关闭对话框
+    if (newName === circle?.name) {
+      this.hideEditNameDialog();
+      return;
+    }
+    
+    try {
+      wx.showLoading({ title: '保存中...' });
+      
+      await api.circles.updateSettings(circleId, {
+        name: newName
+      });
+      
+      wx.hideLoading();
+      wx.showToast({
+        title: '修改成功',
+        icon: 'success'
+      });
+      
+      // 更新本地数据
+      this.setData({
+        'circle.name': newName
+      });
+      
+      this.hideEditNameDialog();
+      
+      // 标记数据变更
+      this.markDataChanged('circleSettings');
+      
+    } catch (error) {
+      wx.hideLoading();
+      wx.showToast({
+        title: error.message || '修改失败',
+        icon: 'none'
       });
     }
   },

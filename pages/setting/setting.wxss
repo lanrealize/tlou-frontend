@@ -582,3 +582,19 @@
   background-color: rgba(255, 71, 87, 0.1);
   transform: scale(0.98);
 }
+
+/* 朋友圈名称显示 */
+.circle-name-display {
+  margin-top: 20rpx;
+  padding: 24rpx;
+  background-color: #f8f9fa;
+  border-radius: 12rpx;
+  border: 1rpx solid #e9ecef;
+}
+
+.circle-name-text {
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.5;
+  word-break: break-all;
+}

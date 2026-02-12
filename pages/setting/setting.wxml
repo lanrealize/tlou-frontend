@@ -44,6 +44,21 @@
     </view>
   </view>
 
+  <!-- 朋友圈名称设置（只有创建者可见） -->
+  <view class="section-card card card-spacing" wx:if="{{isCircleOwner}}">
+    <view class="section-header">
+      <view class="section-title-group">
+        <text class="section-title">设置朋友圈名字</text>
+        <text class="section-subtitle">此名字会在分享时被朋友看到</text>
+      </view>
+      <button class="add-btn-text" bindtap="showEditNameDialog" hover-class="none">编辑</button>
+    </view>
+    
+    <view class="circle-name-display">
+      <text class="circle-name-text">{{circle.name || '未命名朋友圈'}}</text>
+    </view>
+  </view>
+
   <!-- 申请管理（只有主人可见） -->
   <view class="section-card card card-spacing" wx:if="{{isCircleOwner && (appliers.length > 0 || isLoadingAppliers)}}">
     <view class="section-header">
@@ -164,6 +179,36 @@
     </view>
   </view>
   
+  <!-- 编辑朋友圈名称对话框 -->
+  <view class="modal-overlay" wx:if="{{showEditNameDialog}}" bindtap="hideEditNameDialog">
+    <view class="modal-content" catchtap="true">
+      <view class="modal-header">
+        <text class="modal-title">编辑朋友圈名称</text>
+        <text class="modal-close" bindtap="hideEditNameDialog">✕</text>
+      </view>
+      
+      <view class="modal-body">
+        <view class="form-group">
+          <text class="form-label">朋友圈名称（1-50个字符）</text>
+          <input class="form-input" 
+                 placeholder="请输入朋友圈名称" 
+                 value="{{editNameInput}}" 
+                 maxlength="50"
+                 bindinput="onNameInput" />
+        </view>
+      </view>
+      
+      <view class="modal-footer">
+        <button class="btn btn-secondary" bindtap="hideEditNameDialog">取消</button>
+        <button class="btn theme-btn {{editNameInput && editNameInput.trim() ? '' : 'disabled'}}" 
+                bindtap="confirmEditName" 
+                disabled="{{!editNameInput || !editNameInput.trim()}}">
+          保存
+        </button>
+      </view>
+    </view>
+  </view>
+
   <!-- 添加成员对话框 -->
   <view class="modal-overlay" wx:if="{{showAddMemberDialog}}" bindtap="hideAddMemberDialog">
     <view class="modal-content" catchtap="true">
