@@ -122,6 +122,11 @@ class API {
                 console.error('   请求header:', header);
                 console.error('   是否有x-openid:', !!header['x-openid']);
               }
+              
+              // 特别处理429错误（配额超限）
+              if (res.statusCode === 429) {
+                console.warn('⚠️ 配额超限:', res.data);
+              }
             }
             
             const error = new Error(`HTTP ${res.statusCode}: ${res.data.message || '网络错误'}`);
@@ -129,6 +134,7 @@ class API {
               status: res.statusCode,
               data: res.data
             };
+            error.code = res.data.code; // 保存错误代码（如 QUOTA_EXCEEDED）
             reject(error);
           }
         },
