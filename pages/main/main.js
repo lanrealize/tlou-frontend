@@ -1101,7 +1101,7 @@ Page({
     if (this.data.isLoadingRecommendations) {
       return;
     }
-    
+
     // 1. 先从缓存读取并立即展示（避免白屏）
     const cached = quotaCache.getQuotaCache();
     if (cached && cached.circle) {
@@ -1155,36 +1155,36 @@ Page({
   // 展示朋友圈数据（统一处理）
   _displayCircle(circle, isInitialLoad) {
     // 处理图片URL
-    let postImageUrl = '';
-    if (circle.latestPost && circle.latestPost.images && circle.latestPost.images.length > 0) {
-      const firstImage = circle.latestPost.images[0];
-      if (firstImage) {
-        postImageUrl = typeof firstImage === 'string' ? firstImage : (firstImage.url || '');
-      }
-    }
-    
+        let postImageUrl = '';
+        if (circle.latestPost && circle.latestPost.images && circle.latestPost.images.length > 0) {
+          const firstImage = circle.latestPost.images[0];
+          if (firstImage) {
+            postImageUrl = typeof firstImage === 'string' ? firstImage : (firstImage.url || '');
+          }
+        }
+        
     // 提取帖子作者头像
-    const postAuthorAvatar = circle.latestPost?.author?.avatar 
-                           || circle.creator?.avatar 
-                           || '/images/default_avatar.png';
-    
-    const circleTime = circle.latestActivityTime || circle.createdAt;
-    
-    this.setData({
-      recommendedCircles: [{
-        ...circle,
-        formattedTime: util.formatRelativeTime(circleTime),
-        memberCount: circle.members ? circle.members.length : 0,
-        hasLatestPost: !!(circle.latestPost && circle.latestPost.content),
-        postImageUrl: postImageUrl,
-        postAuthorAvatar: postAuthorAvatar,
-        refreshTimestamp: Date.now(),
+        const postAuthorAvatar = circle.latestPost?.author?.avatar 
+                               || circle.creator?.avatar 
+                               || '/images/default_avatar.png';
+        
+        const circleTime = circle.latestActivityTime || circle.createdAt;
+        
+        this.setData({
+          recommendedCircles: [{
+            ...circle,
+            formattedTime: util.formatRelativeTime(circleTime),
+            memberCount: circle.members ? circle.members.length : 0,
+            hasLatestPost: !!(circle.latestPost && circle.latestPost.content),
+            postImageUrl: postImageUrl,
+            postAuthorAvatar: postAuthorAvatar,
+            refreshTimestamp: Date.now(),
         isInitialLoad: isInitialLoad && this._isFirstDiscoverLoad
       }]
-    });
-    
+        });
+        
     if (isInitialLoad && this._isFirstDiscoverLoad) {
-      this._isFirstDiscoverLoad = false;
+          this._isFirstDiscoverLoad = false;
     }
   },
 
@@ -1196,7 +1196,7 @@ Page({
       console.log('🔍 [refreshRecommendations] 已在加载中，直接返回');
       return;
     }
-    
+
     // 1. 检查缓存配额（在设置 loading 状态之前）
     const cached = quotaCache.getQuotaCache();
     console.log('🔍 [refreshRecommendations] 缓存数据:', cached);
@@ -1245,7 +1245,7 @@ Page({
       this._handleLoadError(error);
     } finally {
       this.setData({ isLoadingRecommendations: false });
-    }
+          }
   },
   
   // 处理加载错误
@@ -1256,7 +1256,7 @@ Page({
     if (error.response && error.response.status === 429) {
       const errorData = error.response.data;
       console.log('🔍 [_handleLoadError] 429错误数据:', errorData);
-      
+        
       // 🔧 关键修复：即使没有缓存，也要创建并保存 quota 信息
       if (errorData.data && errorData.data.quota) {
         let cached = quotaCache.getQuotaCache();
@@ -1284,15 +1284,15 @@ Page({
       
       // 保持当前卡片显示，不清空
       // 不执行 setData({ recommendedCircles: [] })
-    } else {
+      } else {
       // 其他错误才清空卡片
       console.log('🔍 [_handleLoadError] 非429错误，清空卡片');
-      this.setData({ 
-        recommendedCircles: [],
-        recommendationsLoaded: true
-      });
+        this.setData({ 
+          recommendedCircles: [],
+          recommendationsLoaded: true
+        });
       util.showToast('刷新失败');
-    }
+      }
   },
   
   // 显示配额超限提示
