@@ -3,16 +3,8 @@
   
   <!-- ========== 已登录状态 ========== -->
   
-  <!-- 状态1: 成员 - 发布新动态 -->
-  <view class="status-card" wx:if="{{status === 'member'}}" bindtap="onPublish">
-    <view class="card-layout">
-      <view class="left-content">
-        <text id="mainTitle" class="main-title">发布新动态</text>
-        <text id="subTitle" class="sub-title">分享你的精彩瞬间</text>
-      </view>
-      <view id="actionBtn" class="action-btn static">发布</view>
-    </view>
-  </view>
+  <!-- 状态1: 成员 - 不显示任何内容（发布功能已移至页面顶部） -->
+  <view wx:if="{{status === 'member'}}"></view>
 
   <!-- 状态2: 已申请 -->
   <view class="status-card" wx:elif="{{status === 'applied'}}">

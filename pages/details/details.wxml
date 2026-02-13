@@ -90,10 +90,24 @@
           </view>
         </view>
         
-        <!-- 右侧设置按钮 -->
-        <view id="setting-btn-wrapper" class="setting-btn-wrapper" bindtap="openSettings">
-          <text id="setting-btn" class="setting-btn theme-color">设置</text>
-          <text id="pending-count" class="setting-count" wx:if="{{isCircleOwner && pendingApplicationsCount > 0}}">({{pendingApplicationsCount}})</text>
+        <!-- 右侧按钮组 -->
+        <view id="action-btn-group" class="top-btn-group">
+          <!-- 发布按钮 - 仅成员可见 -->
+          <text class="top-btn" 
+                wx:if="{{userStatus === 'member'}}" 
+                bindtap="navigateToPublish">发布</text>
+          
+          <!-- 分隔符 - 仅成员可见 -->
+          <text class="top-btn-divider" 
+                wx:if="{{userStatus === 'member'}}">|</text>
+          
+          <!-- 设置按钮 - 所有人都能看到 -->
+          <text id="setting-btn" class="top-btn" 
+                bindtap="openSettings">设置</text>
+          
+          <!-- 待处理申请数角标 -->
+          <text id="pending-count" class="setting-count" 
+                wx:if="{{isCircleOwner && pendingApplicationsCount > 0}}">({{pendingApplicationsCount}})</text>
         </view>
       </view>
     </view>
@@ -104,7 +118,7 @@
       scroll-y="{{true}}"
       scroll-top="{{scrollTopValue}}"
       scroll-with-animation="{{true}}"
-      style="height: calc(100vh - {{navigationData.totalNavigationHeight}}px - 117rpx - 10rpx);"
+      style="top: {{navigationData.totalNavigationHeight}}px; bottom: {{userStatus === 'member' ? '0' : '127rpx'}};"
       bindscrolltolower="onReachBottom"
       enhanced="{{false}}"
       show-scrollbar="{{false}}"
@@ -114,7 +128,7 @@
       <!-- 申请加入朋友圈区域 - 已移至底部统一组件 -->
 
       <!-- 帖子列表区域 -->
-      <view class="posts-container">
+      <view class="posts-container {{userStatus === 'member' ? 'posts-container-member' : ''}}">
         <!-- 空状态 -->
         <view class="empty-content" wx:if="{{posts.length === 0 && !loading}}">
           <view class="empty-title">朋友圈内容为空</view>

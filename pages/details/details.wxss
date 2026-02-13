@@ -221,6 +221,9 @@ view, text, image {
 
 /* scroll-view样式 */
 .moment-scroll-view {
+  position: absolute;
+  left: 0;
+  right: 0;
   width: 100%;
   -ms-overflow-style: none !important;  /* IE and Edge */
   scrollbar-width: none !important;  /* Firefox */
@@ -240,15 +243,6 @@ view, text, image {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
-}
-
-/* 针对 scroll-view 内部的滚动元素 */
-scroll-view::-webkit-scrollbar,
-::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  opacity: 0 !important;
 }
 
 /* 自定义导航栏样式已移至custom-navigation组件 */
@@ -442,11 +436,42 @@ scroll-view::-webkit-scrollbar,
   margin-left: 2rpx;
 }
 
+/* 顶部按钮组容器 */
+.top-btn-group {
+  display: flex;
+  align-items: center;
+  padding: 8rpx 16rpx;
+  flex-shrink: 0;
+}
+
+/* 顶部按钮样式 */
+.top-btn {
+  color: #1A73E8;
+  font-size: 28rpx;
+  line-height: 1.2;
+  font-weight: 400;
+}
+
+/* 顶部按钮分隔符 */
+.top-btn-divider {
+  color: #E0E0E0;
+  font-size: 32rpx;
+  line-height: 1;
+  font-weight: 300;
+  margin: 0 10rpx; /* 左右各 8rpx 间距 */
+  transform: translateY(-3rpx); /* 视觉上向上调整 1rpx */
+}
+
 /* ===== 帖子列表区域 ===== */
 .posts-container {
   padding-top: 50rpx; /* 缩小间距，让内容更紧凑自然 */
-  padding-bottom: 180rpx; /* 为底部统一组件留出空间 */
+  padding-bottom: 180rpx; /* 为底部统一组件留出空间（非成员状态） */
   position: relative;
+}
+
+/* 成员状态：减少底部 padding（因为没有底部卡片） */
+.posts-container-member {
+  padding-bottom: 50rpx;
 }
 
 /* 添加顶部渐变过渡，与卡片底部渐变呼应 */
