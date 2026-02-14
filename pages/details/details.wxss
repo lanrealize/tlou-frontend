@@ -455,6 +455,13 @@ view, text, image {
   font-weight: 400;
 }
 
+/* 顶部按钮 disabled 状态 */
+.top-btn.disabled {
+  color:rgb(135, 135, 135);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 /* 顶部按钮分隔符 */
 .top-btn-divider {
   color: #E0E0E0;

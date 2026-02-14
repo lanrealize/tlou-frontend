@@ -104,14 +104,12 @@
         
         <!-- 右侧按钮组 -->
         <view id="action-btn-group" class="top-btn-group">
-          <!-- 发布按钮 - 仅成员可见 -->
-          <text class="top-btn" 
-                wx:if="{{userStatus === 'member'}}" 
+          <!-- 发布按钮 - 始终显示，非成员时 disabled -->
+          <text class="top-btn {{userStatus !== 'member' ? 'disabled' : ''}}" 
                 bindtap="navigateToPublish">发布</text>
           
-          <!-- 分隔符 - 仅成员可见 -->
-          <text class="top-btn-divider" 
-                wx:if="{{userStatus === 'member'}}">|</text>
+          <!-- 分隔符 - 始终显示 -->
+          <text class="top-btn-divider">|</text>
           
           <!-- 设置按钮 - 所有人都能看到 -->
           <text id="setting-btn" class="top-btn" 
