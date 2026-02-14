@@ -73,6 +73,9 @@ Page({
       capsuleVerticalCenter: 22
     },
     
+    // card 高度（动态计算）
+    cardHeight: 0,
+    
     // 用户信息弹出层
     userInfoPopupVisible: false,
     userInfoPopupReason: '',
@@ -253,11 +256,27 @@ Page({
     if (navigationData && navigationData.totalNavigationHeight) {
       this.setData({
         navigationData: navigationData
+      }, () => {
+        // 导航栏高度确定后，计算 card 高度
+        this.calculateCardHeight();
       });
     } else {
       // 如果事件数据有问题，使用当前 data 中的默认值
       console.warn('导航栏数据不完整，使用默认值');
     }
+  },
+
+  // 计算 card 的实际高度
+  calculateCardHeight() {
+    const query = wx.createSelectorQuery();
+    query.select('.card-content-fixed').boundingClientRect();
+    query.exec((res) => {
+      if (res && res[0]) {
+        const cardHeight = this.data.navigationData.totalNavigationHeight + res[0].height;
+        this.setData({ cardHeight });
+        console.log('📏 Card 高度计算完成:', cardHeight);
+      }
+    });
   },
 
   onShow() {

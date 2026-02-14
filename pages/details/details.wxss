@@ -216,15 +216,17 @@ view, text, image {
   display: flex;
   flex-direction: column;
   padding-top: 20px; /* 默认导航栏高度，会被动态设置覆盖 */
-  overflow: visible; /* 允许阴影显示 */
+  overflow: hidden; /* 防止页面滚动 */
+  box-sizing: border-box; /* 让 padding 包含在 100vh 内 */
 }
 
 /* scroll-view样式 */
 .moment-scroll-view {
-  position: absolute;
-  left: 0;
-  right: 0;
+  flex: 1;
   width: 100%;
+  height: 0; /* 关键：配合 flex: 1 使用，让 flex 计算实际高度 */
+  padding-top: 10rpx; /* 向上延伸一点，让卡片阴影覆盖 */
+  margin-top: -10rpx; /* 负margin让内容向上移 */
   -ms-overflow-style: none !important;  /* IE and Edge */
   scrollbar-width: none !important;  /* Firefox */
   overflow: -moz-scrollbars-none !important;
@@ -256,6 +258,7 @@ view, text, image {
 /* 固定顶部的卡片容器 */
 .card-content-fixed {
   position: relative;
+  flex-shrink: 0; /* 防止被压缩 */
   width: 100vw;
   margin-left: calc(-50vw + 50%);
   background: linear-gradient(to bottom, 
@@ -267,7 +270,7 @@ view, text, image {
   z-index: 10;
   border-radius: 0 0 32rpx 32rpx; /* 下面两个圆角，上面直角 */
   box-shadow: 0px 2px 6px -2px rgba(0, 0, 0, 0.06); /* 更轻的阴影，淡化分隔感 */
-  overflow: hidden;
+  overflow: visible; /* 让阴影可以显示出来 */
   transition: all 0.2s ease;
 }
 
@@ -440,7 +443,7 @@ view, text, image {
 .top-btn-group {
   display: flex;
   align-items: center;
-  padding: 8rpx 16rpx;
+  padding: 8rpx 10rpx;
   flex-shrink: 0;
 }
 
@@ -458,7 +461,7 @@ view, text, image {
   font-size: 32rpx;
   line-height: 1;
   font-weight: 300;
-  margin: 0 10rpx; /* 左右各 8rpx 间距 */
+  margin: 0 15rpx; /* 左右各 8rpx 间距 */
   transform: translateY(-3rpx); /* 视觉上向上调整 1rpx */
 }
 
