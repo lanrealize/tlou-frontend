@@ -55,6 +55,7 @@ Page({
     posts: [],            // 帖子列表
     loading: false,       // 加载状态
     hasMore: true,        // 是否还有更多数据
+    showNoMoreTip: false, // 是否显示"没有更多"提示
     
     // 朋友圈不存在状态
     circleNotFound: false, // 朋友圈是否不存在
@@ -163,6 +164,12 @@ Page({
     if (this.shareAnimationController) {
       this.shareAnimationController.destroy();
       this.shareAnimationController = null;
+    }
+    
+    // 清理"没有更多"提示定时器
+    if (this.noMoreTipTimer) {
+      clearTimeout(this.noMoreTipTimer);
+      this.noMoreTipTimer = null;
     }
     
     // 清理MobX绑定
@@ -484,7 +491,38 @@ Page({
 
   // 上拉加载更多（现在通过scroll-view的bindscrolltolower触发）
   onReachBottom() {
-    this.loadMorePosts();
+    console.log('🔽 触底事件触发', { hasMore: this.data.hasMore, loading: this.data.loading });
+    
+    if (!this.data.hasMore && !this.data.loading) {
+      // 没有更多数据，显示提示
+      this.showNoMoreTipWithInterval();
+    } else if (this.data.hasMore) {
+      // 还有更多数据，加载下一页
+      this.loadMorePosts();
+    }
+  },
+
+  // 显示"没有更多"提示（带最小间隔控制）
+  showNoMoreTipWithInterval() {
+    const now = Date.now();
+    const MIN_INTERVAL = 3000; // 最小间隔 3 秒
+    
+    // 如果距离上次显示不足 3 秒，跳过
+    if (this.lastShowTipTime && (now - this.lastShowTipTime < MIN_INTERVAL)) {
+      console.log('⏭️ 距离上次提示不足3秒，跳过');
+      return;
+    }
+    
+    console.log('✨ 显示"没有更多"提示');
+    this.lastShowTipTime = now;
+    this.setData({ showNoMoreTip: true });
+    
+    // 3秒后自动隐藏
+    clearTimeout(this.noMoreTipTimer);
+    this.noMoreTipTimer = setTimeout(() => {
+      console.log('⏰ 3秒到，自动隐藏');
+      this.setData({ showNoMoreTip: false });
+    }, 3000);
   },
 
   // 使用预加载数据加载朋友圈详情

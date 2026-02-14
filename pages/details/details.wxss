@@ -527,25 +527,30 @@ view, text, image {
   color: #999999;
 }
 
-/* 没有更多提示 - 与list页面保持一致 */
-.no-more-tip {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20rpx 0 50rpx 0;
-  gap: 20rpx;
+/* 没有更多动态 Toast 提示 */
+.no-more-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 200rpx;
+  transform: translateX(-50%) translateY(100rpx);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  padding: 20rpx 40rpx;
+  border-radius: 12rpx;
+  z-index: 9999;
+  opacity: 0;
+  transition: all 0.3s ease-in-out;
+  pointer-events: none;
 }
 
-.no-more-line {
-  flex: 1;
-  height: 1rpx;
-  background-color: #f0f0f0;
-  max-width: 100rpx;
+.no-more-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
-.no-more-text {
-  font-size: 24rpx;
-  color: #999;
+.no-more-toast-text {
+  font-size: 28rpx;
+  color: #ffffff;
   white-space: nowrap;
 }
 
