@@ -9,7 +9,7 @@
   display: grid;
   grid-template-columns: 50rpx 1fr; /* 第一列：时间线+节点，第二列：内容 */
   grid-template-rows: auto 1fr; /* 第一行：头部，第二行：内容 */
-  column-gap: 20rpx; /* 列间距：让右侧内容距离时间线更远 */
+  column-gap: 24rpx; /* 列间距：让右侧内容距离时间线更远 */
   row-gap: 0;
   margin-bottom: var(--post-gap); /* 使用变量 */
   position: relative;
@@ -35,10 +35,10 @@
   bottom: calc(var(--post-gap) / -2); /* 向下延伸一半间距 */
   left: 50%; /* 水平居中 */
   transform: translateX(-50%);
-  background: linear-gradient(to bottom, 
-    rgba(26, 115, 232, 0.15) 0%, 
-    rgba(26, 115, 232, 0.08) 50%, 
-    rgba(26, 115, 232, 0.15) 100%);
+  background: linear-gradient(to bottom,
+    rgba(26, 115, 232, 0.2) 0%,
+    rgba(26, 115, 232, 0.12) 50%,
+    rgba(26, 115, 232, 0.2) 100%);
   z-index: 1;
 }
 
@@ -47,10 +47,10 @@
   top: calc(var(--header-height) / -2 - 13rpx); /* 从圆点中心向上延伸 13rpx */
   background: linear-gradient(to bottom,
     transparent 0%,                                      /* 顶部完全透明 */
-    rgba(26, 115, 232, 0.05) 8rpx,                      /* 开始显现 */
-    rgba(26, 115, 232, 0.15) calc(var(--header-height) / 2 + 13rpx), /* 到达圆点位置 */
-    rgba(26, 115, 232, 0.08) 50%,
-    rgba(26, 115, 232, 0.15) 100%
+    rgba(26, 115, 232, 0.08) 8rpx,                      /* 开始显现 */
+    rgba(26, 115, 232, 0.2) calc(var(--header-height) / 2 + 13rpx), /* 到达圆点位置 */
+    rgba(26, 115, 232, 0.12) 50%,
+    rgba(26, 115, 232, 0.2) 100%
   );
 }
 
@@ -222,7 +222,7 @@
 .actions-menu-btn {
   width: 90rpx;
   height: 45rpx;
-  display: flex;
+  display: none; /* 临时隐藏 */
   align-items: center;
   justify-content: center;
   background-color: #F0F5FF;
