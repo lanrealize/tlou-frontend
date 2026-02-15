@@ -1,17 +1,69 @@
 <!--components/post-item/post-item.wxml-->
-<view class="post-item {{isLast ? 'last-item' : ''}}" id="post-{{post._id}}">
-  <!-- 第一个item：用户头像 -->
+<view class="post-item {{isLast ? 'last-item' : ''}} {{isFirst ? 'first-item' : ''}} {{timelineMode ? 'timeline-mode' : ''}}" id="post-{{post._id}}">
+  
+  <!-- 时间轴模式：时间线背景 -->
+  <view class="timeline-line" wx:if="{{timelineMode}}"></view>
+  
+  <!-- 时间轴模式：节点圆点（Grid 直接子元素） -->
+  <view class="node-dot" wx:if="{{timelineMode}}"></view>
+  
+  <!-- 时间轴模式：头部信息 -->
+  <view class="timeline-header" wx:if="{{timelineMode}}">
+    <view class="timeline-info">
+      <image 
+        class="timeline-avatar" 
+        src="{{post.author.avatar || '/images/default_avatar.png'}}" 
+        mode="aspectFill"
+        bindtap="onTapAvatar"
+      ></image>
+      <text class="timeline-separator">·</text>
+      <text class="timeline-username">{{post.author.username || post.author.name || '未知用户'}}</text>
+      <text class="timeline-separator">·</text>
+      <text class="timeline-time">{{post.formattedTime || '刚刚'}}</text>
+    </view>
+    
+    <view class="actions-menu-container">
+      <view id="postActionsBtn" class="actions-menu-btn" bindtap="toggleActionsMenu">
+        <image class="menu-dots-icon" src="/assets/icons/more.svg" mode="aspectFit"></image>
+      </view>
+      
+      <view class="dropdown-menu {{showActions && showActionsMenu ? 'show' : 'hide'}} {{isLiked ? 'wide-menu' : 'narrow-menu'}}">
+        <view id="likeBtn" class="dropdown-item" catchtap="onLikeFromPopup">
+          <image class="dropdown-icon like-icon-dropdown" src="/assets/icons/like.svg" mode="aspectFit"></image>
+          <text class="dropdown-text">{{isLiked ? '取消点赞' : '点赞'}}</text>
+        </view>
+        
+        <view id="commentBtn" class="dropdown-item" catchtap="onCommentFromPopup">
+          <image class="dropdown-icon comment-icon" src="/assets/icons/edit.svg" mode="aspectFit"></image>
+          <text class="dropdown-text">评论</text>
+        </view>
+        
+        <view 
+          id="deletePostBtn"
+          class="dropdown-item delete-item" 
+          wx:if="{{currentUser && currentUser._id && post.author && post.author._id && currentUser._id === post.author._id}}"
+          catchtap="onDeleteFromPopup"
+        >
+          <image class="dropdown-icon" src="/assets/icons/delete.svg" mode="aspectFit"></image>
+          <text class="dropdown-text">删除</text>
+        </view>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 普通模式：用户头像 -->
   <image 
     class="user-avatar" 
+    wx:if="{{!timelineMode}}"
     src="{{post.author.avatar || '/images/default_avatar.png'}}" 
     mode="aspectFill"
     bindtap="onTapAvatar"
   ></image>
   
-  <!-- 第二个item：右侧内容区域 -->
+  <!-- 右侧内容区域 -->
   <view class="post-right-content">
-    <!-- 用户信息区域 -->
-    <view class="user-info-header">
+    <!-- 用户信息区域（仅普通模式） -->
+    <view class="user-info-header" wx:if="{{!timelineMode}}">
       <view class="username">{{post.author.username || post.author.name || '未知用户'}}</view>
     </view>
 
@@ -114,8 +166,8 @@
       </view>
     </view>
     
-      <!-- 帖子时间地点和操作按钮 -->
-    <view class="post-bottom-meta">
+      <!-- 帖子时间地点和操作按钮（仅普通模式） -->
+    <view class="post-bottom-meta" wx:if="{{!timelineMode}}">
       <view class="post-meta">
         <text class="post-time">{{post.formattedTime || '刚刚'}}</text>
         <text class="post-location" wx:if="{{post.location}}">· {{post.location}}</text>

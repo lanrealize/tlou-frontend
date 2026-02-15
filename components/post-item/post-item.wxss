@@ -1,8 +1,136 @@
 /* components/post-item/post-item.wxss */
 
+/* ===== 时间轴模式样式 - Grid 布局 ===== */
+.post-item.timeline-mode {
+  /* 🎯 CSS 变量：帖子间距的唯一真相源 */
+  --post-gap: 40rpx;
+  
+  display: grid;
+  grid-template-columns: 50rpx 1fr; /* 第一列：时间线+节点，第二列：内容 */
+  grid-template-rows: auto 1fr; /* 第一行：头部，第二行：内容 */
+  column-gap: 20rpx; /* 列间距：让右侧内容距离时间线更远 */
+  row-gap: 0;
+  margin-bottom: var(--post-gap); /* 使用变量 */
+  position: relative;
+  align-items: center; /* 关键：让第一行的所有元素垂直居中对齐 */
+}
+
+/* 时间线背景 - 跨越所有行 */
+.timeline-line {
+  grid-column: 1;
+  grid-row: 1 / -1; /* 跨越所有行 */
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* 时间线（伪元素） - 自动连接到上下帖子 */
+.timeline-line::before {
+  content: '';
+  position: absolute;
+  width: 2rpx;
+  /* 🎯 正确逻辑：向上/下各延伸间距的一半，在中间相接 */
+  top: calc(var(--post-gap) / -2); /* 向上延伸一半间距 */
+  bottom: calc(var(--post-gap) / -2); /* 向下延伸一半间距 */
+  left: 50%; /* 水平居中 */
+  transform: translateX(-50%);
+  background: linear-gradient(to bottom, 
+    rgba(26, 115, 232, 0.15) 0%, 
+    rgba(26, 115, 232, 0.08) 50%, 
+    rgba(26, 115, 232, 0.15) 100%);
+  z-index: 1;
+}
+
+/* 第一个帖子：时间线不向上延伸 */
+.post-item.first-item .timeline-line::before {
+  top: 0;
+}
+
+/* 最后一个帖子：时间线不向下延伸 */
+.post-item.last-item .timeline-line::before {
+  bottom: 0;
+}
+
+/* 节点圆点 - Grid 直接子元素，第1列第1行 */
+.node-dot {
+  grid-column: 1;
+  grid-row: 1; /* 🎯 第1行，与 timeline-header 同行 */
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background-color: #1A73E8;
+  box-shadow: 0 0 0 4rpx rgba(26, 115, 232, 0.1);
+  justify-self: center; /* 🎯 在第1列中水平居中 */
+  z-index: 2;
+  transition: all 0.3s ease;
+  /* 🎯 Grid 的 align-items: center 会自动让圆点和 timeline-header 垂直居中 */
+}
+
+/* 时间轴模式下隐藏分割线 */
+.post-item.timeline-mode::after {
+  display: none;
+}
+
+/* 时间轴模式下的内容区域定位 */
+.post-item.timeline-mode .post-right-content {
+  grid-column: 2;
+  grid-row: 2; /* 第二行 */
+  align-self: start; /* 内容区域从顶部开始，不受 align-items: center 影响 */
+}
+
+/* 时间轴头部：时间 + 头像 + 用户名 + 操作按钮 */
+.timeline-header {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.timeline-info {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.timeline-time {
+  font-size: 28rpx;
+  color: #999999;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.timeline-separator {
+  font-size: 24rpx;
+  color: #d0d0d0;
+  flex-shrink: 0;
+}
+
+.timeline-avatar {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.timeline-username {
+  font-size: 28rpx;
+  color: #333333;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200rpx; /* 限制最大宽度，避免挤压时间 */
+  flex-shrink: 1; /* 允许收缩 */
+}
+
+/* ===== 普通模式样式 ===== */
 .post-item {
   background-color: #ffffff;
-  margin: 20rpx 30rpx 70rpx 25rpx;
+  margin: 20rpx 30rpx 70rpx 0rpx;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
@@ -332,7 +460,7 @@
 .images-grid-2 {
   display: grid;
   width: 100%;
-  max-width: 500rpx; /* 与单张横向照片最大宽度一致 */
+  max-width: 500rpx;
   gap: 16rpx;
   box-sizing: border-box;
   grid-template-columns: 1fr 1fr;
@@ -341,7 +469,6 @@
 
 .images-grid-2 .grid-item {
   width: 100%;
-  aspect-ratio: 1;
   height: 0;
   padding-bottom: 100%; /* 创建正方形 */
 }

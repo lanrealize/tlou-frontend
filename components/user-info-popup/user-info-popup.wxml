@@ -27,7 +27,7 @@
       <view class="form-content">
         <!-- 头像选择行 -->
         <button 
-          class="setting-item" 
+          class="setting-item {{isUploadingAvatar ? 'disabled' : ''}}" 
           open-type="chooseAvatar" 
           bind:chooseavatar="onChooseAvatar"
           disabled="{{isUploadingAvatar}}">

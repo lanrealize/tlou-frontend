@@ -24,8 +24,18 @@ Component({
       type: Boolean,
       value: false
     },
+    // 是否是列表中的第一个
+    isFirst: {
+      type: Boolean,
+      value: false
+    },
     // 🎬 分享动画相关：是否隐藏图片（用于动画过渡）
     hideImage: {
+      type: Boolean,
+      value: false
+    },
+    // 🕐 时间轴模式：启用紧凑布局（时间+头像+用户名在第一行）
+    timelineMode: {
       type: Boolean,
       value: false
     }

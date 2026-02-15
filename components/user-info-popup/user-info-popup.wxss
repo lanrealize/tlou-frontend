@@ -140,13 +140,6 @@
   background: none !important;
 }
 
-/* 覆盖微信button的默认样式 */
-.action-btn[disabled] {
-  background: none !important;
-  color: #BDBDBD !important;
-  opacity: 0.6;
-}
-
 /* ========== 表单内容区域 - 列表样式 ========== */
 .form-content {
   padding: 0 40rpx;
@@ -174,11 +167,11 @@
 }
 
 /* 禁用状态下不变色 */
-.setting-item[disabled] {
+.setting-item.disabled {
   background: transparent !important;
 }
 
-.setting-item[disabled]:active {
+.setting-item.disabled:active {
   background: transparent !important;
 }
 

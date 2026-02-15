@@ -38,7 +38,7 @@
 }
 
 /* home 图标特殊样式 - 缩小为原来的 2/3 */
-.back-icon[src*="home.svg"] {
+.back-icon.home-icon {
   width: 18.67px;  /* 28 * 2/3 = 18.67 */
   height: 18.67px;
 }
