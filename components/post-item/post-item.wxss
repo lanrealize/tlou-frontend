@@ -3,7 +3,7 @@
 /* ===== 时间轴模式样式 - Grid 布局 ===== */
 .post-item.timeline-mode {
   /* 🎯 CSS 变量：帖子间距的唯一真相源 */
-  --post-gap: 75rpx;
+  --post-gap: 80rpx;
   --header-height: 50rpx; /* 头部固定高度，用于精确计算时间线位置 */
 
   display: grid;
@@ -44,11 +44,12 @@
 
 /* 第一个帖子：时间线向上延伸并渐隐 */
 .post-item.first-item .timeline-line::before {
-  top: -25rpx; /* 向上延伸 25rpx，让圆点上方有 50rpx 的线 */
+  top: calc(var(--header-height) / -2 - 13rpx); /* 从圆点中心向上延伸 13rpx */
   background: linear-gradient(to bottom,
-    transparent 0%,                              /* 顶部透明 */
-    rgba(26, 115, 232, 0.15) 40rpx,             /* 在圆点前变实色 */
-    rgba(26, 115, 232, 0.08) 50%,               /* 保持原来的渐变 */
+    transparent 0%,                                      /* 顶部完全透明 */
+    rgba(26, 115, 232, 0.05) 8rpx,                      /* 开始显现 */
+    rgba(26, 115, 232, 0.15) calc(var(--header-height) / 2 + 13rpx), /* 到达圆点位置 */
+    rgba(26, 115, 232, 0.08) 50%,
     rgba(26, 115, 232, 0.15) 100%
   );
 }
@@ -70,6 +71,7 @@
   justify-self: center; /* 🎯 在第1列中水平居中 */
   z-index: 2;
   transition: all 0.3s ease;
+  margin-bottom: 2rpx;
   /* 🎯 Grid 的 align-items: center 会自动让圆点和 timeline-header 垂直居中 */
 }
 
