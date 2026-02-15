@@ -3,8 +3,9 @@
 /* ===== 时间轴模式样式 - Grid 布局 ===== */
 .post-item.timeline-mode {
   /* 🎯 CSS 变量：帖子间距的唯一真相源 */
-  --post-gap: 40rpx;
-  
+  --post-gap: 75rpx;
+  --header-height: 50rpx; /* 头部固定高度，用于精确计算时间线位置 */
+
   display: grid;
   grid-template-columns: 50rpx 1fr; /* 第一列：时间线+节点，第二列：内容 */
   grid-template-rows: auto 1fr; /* 第一行：头部，第二行：内容 */
@@ -41,9 +42,15 @@
   z-index: 1;
 }
 
-/* 第一个帖子：时间线不向上延伸 */
+/* 第一个帖子：时间线向上延伸并渐隐 */
 .post-item.first-item .timeline-line::before {
-  top: 0;
+  top: -25rpx; /* 向上延伸 25rpx，让圆点上方有 50rpx 的线 */
+  background: linear-gradient(to bottom,
+    transparent 0%,                              /* 顶部透明 */
+    rgba(26, 115, 232, 0.15) 40rpx,             /* 在圆点前变实色 */
+    rgba(26, 115, 232, 0.08) 50%,               /* 保持原来的渐变 */
+    rgba(26, 115, 232, 0.15) 100%
+  );
 }
 
 /* 最后一个帖子：时间线不向下延伸 */
@@ -86,6 +93,7 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  height: var(--header-height); /* 固定高度，用于精确计算时间线位置 */
 }
 
 .timeline-info {
