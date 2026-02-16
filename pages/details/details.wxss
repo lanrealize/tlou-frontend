@@ -517,13 +517,13 @@ view, text, image {
   /* 复用 post-item 的 Grid 布局 */
   --post-gap: 80rpx;
   --header-height: 50rpx;
-  --end-marker-top-gap: 20rpx; /* 结束标记与上一个帖子的间距 */
+  --end-marker-top-gap: 50rpx; /* 结束标记与上一个帖子的间距 */
 
   display: grid;
   grid-template-columns: 50rpx 1fr;
   grid-template-rows: auto;
   column-gap: 24rpx;
-  margin-top: calc(var(--end-marker-top-gap) - var(--post-gap)); /* 20rpx - 80rpx = -60rpx */
+  margin-top: calc(var(--end-marker-top-gap) - var(--post-gap)); /* 50rpx - 80rpx = -30rpx */
   margin-bottom: 0; /* 去掉底部间距，避免 scroll-view 底部空白 */
   padding-bottom: 40rpx; /* 用 padding 提供视觉呼吸空间，不影响布局计算 */
   position: relative;
@@ -539,12 +539,14 @@ view, text, image {
   height: 100%;
 }
 
-/* 时间线（伪元素） - 只向上延伸 */
+/* 时间线（伪元素） - 向上延伸到与最后帖子的时间线相接 */
 .timeline-end-marker .timeline-line::before {
   content: '';
   position: absolute;
   width: 2rpx;
-  top: calc(var(--post-gap) / -2);
+  /* 向上延伸到最后帖子时间线的终点 */
+  /* 最后帖子向下延伸 40rpx，间距 50rpx，所以需要向上延伸 10rpx */
+  top: calc(var(--post-gap) / 2 - var(--end-marker-top-gap)); /* 40rpx - 50rpx = -10rpx */
   bottom: calc(var(--header-height) / 2);
   left: 50%;
   transform: translateX(-50%);
@@ -577,7 +579,7 @@ view, text, image {
   display: flex;
   align-items: center;
   height: var(--header-height);
-  padding-left: 5rpx; /* 向右移动一点 */
+  padding-left: 4rpx; /* 向右移动一点 */
 }
 
 .timeline-end-marker .end-text {
@@ -585,7 +587,7 @@ view, text, image {
   color: #666666;
   line-height: 1;
   position: relative;
-  top: -4rpx; /* 微调向上，视觉居中 */
+  top: -3rpx; /* 微调向上，视觉居中 */
 }
 
 /* ===== 加载提示 ===== */
