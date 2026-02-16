@@ -44,11 +44,11 @@
 
 /* 第一个帖子：时间线向上延伸并渐隐 */
 .post-item.first-item .timeline-line::before {
-  top: calc(var(--header-height) / -2 - 13rpx); /* 从圆点中心向上延伸 13rpx */
+  top: calc(var(--header-height) / -2 - 26rpx); /* 从圆点中心向上延伸 26rpx（13 * 2 = 26，极端测试） */
   background: linear-gradient(to bottom,
     transparent 0%,                                      /* 顶部完全透明 */
-    rgba(26, 115, 232, 0.08) 8rpx,                      /* 开始显现 */
-    rgba(26, 115, 232, 0.2) calc(var(--header-height) / 2 + 13rpx), /* 到达圆点位置 */
+    rgba(26, 115, 232, 0.08) 16rpx,                     /* 开始显现（8 * 2 = 16） */
+    rgba(26, 115, 232, 0.2) calc(var(--header-height) / 2 + 26rpx), /* 到达圆点位置 */
     rgba(26, 115, 232, 0.12) 50%,
     rgba(26, 115, 232, 0.2) 100%
   );
