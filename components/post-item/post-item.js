@@ -19,11 +19,6 @@ Component({
       type: Boolean,
       value: true
     },
-    // 是否是列表中的最后一个
-    isLast: {
-      type: Boolean,
-      value: false
-    },
     // 是否是列表中的第一个
     isFirst: {
       type: Boolean,

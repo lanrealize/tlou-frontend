@@ -155,7 +155,6 @@
                 post="{{post}}"
                 current-user="{{currentUser}}"
                 show-actions="{{true}}"
-                is-last="{{index === posts.length - 1}}"
                 is-first="{{index === 0}}"
                 hide-image="{{index === 0 && hideFirstPostImage}}"
                 timeline-mode="{{true}}"
@@ -168,6 +167,15 @@
                 bind:tapAvatar="onTapAvatar"
               ></post-item>
             </block>
+
+            <!-- 时间轴结束标记 -->
+            <view class="timeline-end-marker" wx:if="{{!hasMore && posts.length > 0}}">
+              <view class="timeline-line"></view>
+              <view class="node-dot"></view>
+              <view class="end-content">
+                <text class="end-text">无更多内容</text>
+              </view>
+            </view>
 
             <!-- 加载更多提示 -->
             <view class="load-more" wx:if="{{hasMore && posts.length > 0}}">

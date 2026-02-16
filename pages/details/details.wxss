@@ -512,6 +512,82 @@ view, text, image {
   position: relative;
 }
 
+/* ===== 时间轴结束标记 ===== */
+.timeline-end-marker {
+  /* 复用 post-item 的 Grid 布局 */
+  --post-gap: 80rpx;
+  --header-height: 50rpx;
+  --end-marker-top-gap: 20rpx; /* 结束标记与上一个帖子的间距 */
+
+  display: grid;
+  grid-template-columns: 50rpx 1fr;
+  grid-template-rows: auto;
+  column-gap: 24rpx;
+  margin-top: calc(var(--end-marker-top-gap) - var(--post-gap)); /* 20rpx - 80rpx = -60rpx */
+  margin-bottom: 0; /* 去掉底部间距，避免 scroll-view 底部空白 */
+  padding-bottom: 40rpx; /* 用 padding 提供视觉呼吸空间，不影响布局计算 */
+  position: relative;
+  align-items: center;
+}
+
+/* 时间线背景 */
+.timeline-end-marker .timeline-line {
+  grid-column: 1;
+  grid-row: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* 时间线（伪元素） - 只向上延伸 */
+.timeline-end-marker .timeline-line::before {
+  content: '';
+  position: absolute;
+  width: 2rpx;
+  top: calc(var(--post-gap) / -2);
+  bottom: calc(var(--header-height) / 2);
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(to bottom,
+    rgba(26, 115, 232, 0.2) 0%,
+    rgba(26, 115, 232, 0.12) 50%,
+    rgba(26, 115, 232, 0.08) 90%,
+    transparent 100%);
+  z-index: 1;
+}
+
+/* 结束节点圆点 */
+.timeline-end-marker .node-dot {
+  grid-column: 1;
+  grid-row: 1;
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background-color: #1A73E8;
+  box-shadow: 0 0 0 4rpx rgba(26, 115, 232, 0.1);
+  justify-self: center;
+  z-index: 2;
+  margin-bottom: 2rpx; /* 与 post-item 的圆点保持一致 */
+}
+
+/* 结束文字内容 */
+.timeline-end-marker .end-content {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  height: var(--header-height);
+  padding-left: 5rpx; /* 向右移动一点 */
+}
+
+.timeline-end-marker .end-text {
+  font-size: 28rpx;
+  color: #666666;
+  line-height: 1;
+  position: relative;
+  top: -4rpx; /* 微调向上，视觉居中 */
+}
+
 /* ===== 加载提示 ===== */
 .load-more {
   text-align: center;

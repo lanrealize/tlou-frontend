@@ -1,5 +1,5 @@
 <!--components/post-item/post-item.wxml-->
-<view class="post-item {{isLast ? 'last-item' : ''}} {{isFirst ? 'first-item' : ''}} {{timelineMode ? 'timeline-mode' : ''}}" id="post-{{post._id}}">
+<view class="post-item {{isFirst ? 'first-item' : ''}} {{timelineMode ? 'timeline-mode' : ''}}" id="post-{{post._id}}">
   
   <!-- 时间轴模式：时间线背景 -->
   <view class="timeline-line" wx:if="{{timelineMode}}"></view>

@@ -54,11 +54,6 @@
   );
 }
 
-/* 最后一个帖子：时间线不向下延伸 */
-.post-item.last-item .timeline-line::before {
-  bottom: 0;
-}
-
 /* 节点圆点 - Grid 直接子元素，第1列第1行 */
 .node-dot {
   grid-column: 1;
@@ -165,15 +160,6 @@
   );
   transform: scaleY(0.5);
   transform-origin: center;
-}
-
-/* 最后一个帖子的底部边距调整，不显示分割线 */
-.post-item.last-item {
-  margin-bottom: 25rpx;
-}
-
-.post-item.last-item::after {
-  display: none;
 }
 
 .user-avatar {
