@@ -208,13 +208,14 @@
 .actions-menu-btn {
   width: 90rpx;
   height: 45rpx;
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
   background-color: transparent;
   border-radius: 5rpx;
   transition: all 0.2s ease;
   position: relative;
+  top: -3rpx; /* 向上微调 */
   z-index: 5;
 }
 
