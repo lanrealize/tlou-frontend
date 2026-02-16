@@ -175,7 +175,7 @@
             </view>
 
             <!-- 没有更多数据提示 -->
-            <view class="no-more-tip" wx:if="{{!hasMore && posts.length > 0}}">
+            <view class="no-more-tip" wx:if="{{false}}">
               <view class="no-more-line"></view>
               <text class="no-more-text">没有更多动态了</text>
               <view class="no-more-line"></view>

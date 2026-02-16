@@ -222,10 +222,10 @@
 .actions-menu-btn {
   width: 90rpx;
   height: 45rpx;
-  display: none; /* 临时隐藏 */
+  display: none;
   align-items: center;
   justify-content: center;
-  background-color: #F0F5FF;
+  background-color: transparent;
   border-radius: 5rpx;
   transition: all 0.2s ease;
   position: relative;
@@ -453,13 +453,13 @@
 /* 纵向图片样式 - heightFix模式，高度固定460rpx */
 .post-image-single.portrait {
   height: 460rpx;
-  max-width: 500rpx;
+  max-width: 550rpx;
   width: auto;
 }
 
-/* 横向图片样式 - widthFix模式，宽度固定500rpx */
+/* 横向图片样式 - widthFix模式，宽度固定550rpx */
 .post-image-single.landscape {
-  width: 500rpx;
+  width: 550rpx;
   max-height: 460rpx;
   height: auto;
 }
@@ -470,7 +470,7 @@
 .images-grid-2 {
   display: grid;
   width: 100%;
-  max-width: 500rpx;
+  max-width: 550rpx;
   gap: 16rpx;
   box-sizing: border-box;
   grid-template-columns: 1fr 1fr;
@@ -497,7 +497,7 @@
   row-gap: 16rpx; /* 显式设置行间距 */
   column-gap: 16rpx; /* 显式设置列间距 */
   width: 100%;
-  max-width: 500rpx; /* 与单张横向照片最大宽度一致 */
+  max-width: 550rpx; /* 与单张横向照片最大宽度一致 */
   box-sizing: border-box;
   margin-bottom: 10rpx;
   padding: 0;
@@ -945,7 +945,7 @@
 @media (max-width: 400px) {
   /* 2张图片的小屏幕适配 */
   .images-grid-2 {
-    gap: 14rpx;
+    gap: 16rpx;
   }
   
   .images-grid-2 .grid-item {
