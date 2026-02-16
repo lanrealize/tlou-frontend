@@ -208,7 +208,7 @@
     </view>
 
       <!-- 帖子底部：点赞和评论 -->
-      <view class="post-footer">
+      <view class="post-footer" wx:if="{{(post.likes && post.likes.length > 0) || (post.comments && post.comments.length > 0)}}">
         <!-- 点赞列表 -->
         <view class="likes-section" wx:if="{{post.likes && post.likes.length > 0}}">
           <view class="likes-container">
