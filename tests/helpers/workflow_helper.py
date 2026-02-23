@@ -34,7 +34,7 @@ from .post_helper import (
 
 # 未注册用户操作的预期消息文本
 EXPECTED_MESSAGES = {
-    'loginButton': '请完善您的个人信息',
+    'loginButton': '您需要登录才能创建朋友圈',
     'enterListPage': '您需要登录才能查看朋友圈列表',
     'createCircle': '您需要登录才能创建朋友圈',
     'acceptInvite': '请先完成注册后加入朋友圈',
@@ -84,11 +84,11 @@ def check_actions_unregistered_main(mini):
         print('-'*60)
         
         page = mini.app.current_page
-        browse_tip = page.get_element('.browse-tip-card')
+        browse_tip = page.get_element('.empty-state-card')
         if not browse_tip:
-            print('⚠️  未找到浏览提示卡片')
-            return {'success': False, 'message': 'MAIN_001失败：未找到浏览提示卡片'}
-        print('✅ 找到浏览提示卡片')
+            print('⚠️  未找到空状态卡片')
+            return {'success': False, 'message': 'MAIN_001失败：未找到空状态卡片'}
+        print('✅ 找到空状态卡片')
         
         login_btn = page.get_element('.create-btn')
         if not login_btn:
@@ -226,7 +226,7 @@ def check_actions_unregistered_main(mini):
         return {'success': False, 'message': f'测试异常: {str(e)}'}
 
 
-def check_actions_unregistered_details(mini, test_circle_id='68ff34ecc7f96a66e395cc33'):
+def check_actions_unregistered_details(mini, test_circle_id='69097e93b88209834a86462b'):
     """验证未注册用户在 details 页面的所有动作是否有正确反馈
     
     前置条件：
@@ -274,7 +274,9 @@ def check_actions_unregistered_details(mini, test_circle_id='68ff34ecc7f96a66e39
             if current_page.path != '/pages/details/details':
                 print(f'❌ 未能进入 details 页面，当前在: {current_page.path}')
                 return {'success': False, 'message': '未能进入 details 页面'}
-            print('✅ 已进入 details 页面')
+            entered_circle_id = current_page.data.get('circleId') or current_page.data.get('circle_id', '未知')
+            print(f'✅ 已进入 details 页面，circle_id: {entered_circle_id}')
+            print(f'   page data keys: {list(current_page.data.keys())[:10]}')
         except Exception as e:
             error_msg = str(e).lower()
             if 'not found' in error_msg:
@@ -297,40 +299,35 @@ def check_actions_unregistered_details(mini, test_circle_id='68ff34ecc7f96a66e39
             page = mini.app.current_page
             post_item = page.get_element('post-item')
             if not post_item:
-                print('⚠️  未找到帖子，跳过点赞测试')
-            else:
-                print('✅ 找到帖子')
-                
-                # 找到三点按钮并点击展开菜单
-                menu_btn = page.get_element('post-item>>>.actions-menu-btn')
-                if not menu_btn:
-                    print('⚠️  未找到操作菜单按钮')
-                else:
-                    print('✅ 找到操作菜单按钮')
-                    menu_btn.tap()
-                    time.sleep(0.3)
-                    
-                    # 在下拉菜单中找到点赞按钮（第一个dropdown-item）
-                    like_items = page.get_elements('post-item>>>.dropdown-item')
-                    if not like_items or len(like_items) == 0:
-                        print('⚠️  未找到下拉菜单项')
-                    else:
-                        like_btn = like_items[0]
-                        print('✅ 找到点赞按钮')
-                        like_btn.tap()
-                        time.sleep(0.3)
-                        
-                        result = check_register_popup_visible(mini, expected_reason='登录后才能点赞')
-                        if not result['visible']:
-                            print('❌ 未弹出注册弹窗')
-                            return {'success': False, 'message': 'DETAILS_002失败：未弹出注册弹窗'}
-                        
-                        if not result['match']:
-                            print('❌ 弹窗文字不匹配')
-                            return {'success': False, 'message': 'DETAILS_002失败：弹窗文字不匹配'}
-                        
-                        print(f'✅ 弹窗正确显示且文字验证通过')
-                        close_register_popup_by_mask(mini, wait_visible=0.4)
+                return {'success': False, 'message': 'DETAILS_002失败：未找到帖子'}
+            print('✅ 找到帖子')
+
+            menu_btn = page.get_element('post-item>>>.actions-menu-btn')
+            if not menu_btn:
+                return {'success': False, 'message': 'DETAILS_002失败：未找到操作菜单按钮'}
+            print('✅ 找到操作菜单按钮')
+            menu_btn.tap()
+            time.sleep(0.3)
+
+            like_items = page.get_elements('post-item>>>.dropdown-item')
+            if not like_items or len(like_items) == 0:
+                return {'success': False, 'message': 'DETAILS_002失败：未找到下拉菜单项'}
+            like_btn = like_items[0]
+            print('✅ 找到点赞按钮')
+            like_btn.tap()
+            time.sleep(0.3)
+
+            result = check_register_popup_visible(mini, expected_reason='登录后才能点赞')
+            if not result['visible']:
+                print('❌ 未弹出注册弹窗')
+                return {'success': False, 'message': 'DETAILS_002失败：未弹出注册弹窗'}
+
+            if not result['match']:
+                print('❌ 弹窗文字不匹配')
+                return {'success': False, 'message': 'DETAILS_002失败：弹窗文字不匹配'}
+
+            print(f'✅ 弹窗正确显示且文字验证通过')
+            close_register_popup_by_mask(mini, wait_visible=0.4)
         except Exception as e:
             error_msg = str(e).lower()
             if 'not found' in error_msg:
@@ -348,40 +345,35 @@ def check_actions_unregistered_details(mini, test_circle_id='68ff34ecc7f96a66e39
             page = mini.app.current_page
             post_item = page.get_element('post-item')
             if not post_item:
-                print('⚠️  未找到帖子，跳过评论测试')
-            else:
-                print('✅ 找到帖子')
-                
-                # 找到三点按钮并点击展开菜单
-                menu_btn = page.get_element('post-item>>>.actions-menu-btn')
-                if not menu_btn:
-                    print('⚠️  未找到操作菜单按钮')
-                else:
-                    print('✅ 找到操作菜单按钮')
-                    menu_btn.tap()
-                    time.sleep(0.3)
-                    
-                    # 在下拉菜单中找到评论按钮（第二个dropdown-item）
-                    comment_items = page.get_elements('post-item>>>.dropdown-item')
-                    if not comment_items or len(comment_items) < 2:
-                        print('⚠️  未找到下拉菜单项或评论按钮')
-                    else:
-                        comment_btn = comment_items[1]
-                        print('✅ 找到评论按钮')
-                        comment_btn.tap()
-                        time.sleep(0.3)
-                        
-                        result = check_register_popup_visible(mini, expected_reason='登录后才能发表评论')
-                        if not result['visible']:
-                            print('❌ 未弹出注册弹窗')
-                            return {'success': False, 'message': 'DETAILS_003失败：未弹出注册弹窗'}
-                        
-                        if not result['match']:
-                            print('❌ 弹窗文字不匹配')
-                            return {'success': False, 'message': 'DETAILS_003失败：弹窗文字不匹配'}
-                        
-                        print(f'✅ 弹窗正确显示且文字验证通过')
-                        close_register_popup_by_mask(mini, wait_visible=0.4)
+                return {'success': False, 'message': 'DETAILS_003失败：未找到帖子'}
+            print('✅ 找到帖子')
+
+            menu_btn = page.get_element('post-item>>>.actions-menu-btn')
+            if not menu_btn:
+                return {'success': False, 'message': 'DETAILS_003失败：未找到操作菜单按钮'}
+            print('✅ 找到操作菜单按钮')
+            menu_btn.tap()
+            time.sleep(0.3)
+
+            comment_items = page.get_elements('post-item>>>.dropdown-item')
+            if not comment_items or len(comment_items) < 2:
+                return {'success': False, 'message': 'DETAILS_003失败：未找到评论按钮'}
+            comment_btn = comment_items[1]
+            print('✅ 找到评论按钮')
+            comment_btn.tap()
+            time.sleep(0.3)
+
+            result = check_register_popup_visible(mini, expected_reason='登录后才能发表评论')
+            if not result['visible']:
+                print('❌ 未弹出注册弹窗')
+                return {'success': False, 'message': 'DETAILS_003失败：未弹出注册弹窗'}
+
+            if not result['match']:
+                print('❌ 弹窗文字不匹配')
+                return {'success': False, 'message': 'DETAILS_003失败：弹窗文字不匹配'}
+
+            print(f'✅ 弹窗正确显示且文字验证通过')
+            close_register_popup_by_mask(mini, wait_visible=0.4)
         except Exception as e:
             error_msg = str(e).lower()
             if 'not found' in error_msg:
@@ -397,26 +389,24 @@ def check_actions_unregistered_details(mini, test_circle_id='68ff34ecc7f96a66e39
         
         try:
             page = mini.app.current_page
-            # 设置按钮在右上角的.setting-btn
-            settings_btn = page.get_element('.setting-btn')
+            settings_btn = page.get_element('#setting-btn')
             if not settings_btn:
-                print('⚠️  未找到设置按钮')
-            else:
-                print('✅ 找到设置按钮')
-                settings_btn.tap()
-                time.sleep(0.3)
-                
-                result = check_register_popup_visible(mini, expected_reason='您需要登录才能修改设置')
-                if not result['visible']:
-                    print('❌ 未弹出注册弹窗')
-                    return {'success': False, 'message': 'DETAILS_004失败：未弹出注册弹窗'}
-                
-                if not result['match']:
-                    print('❌ 弹窗文字不匹配')
-                    return {'success': False, 'message': 'DETAILS_004失败：弹窗文字不匹配'}
-                
-                print(f'✅ 弹窗正确显示且文字验证通过')
-                close_register_popup_by_mask(mini, wait_visible=0.4)
+                return {'success': False, 'message': 'DETAILS_004失败：未找到设置按钮'}
+            print('✅ 找到设置按钮')
+            settings_btn.tap()
+            time.sleep(0.3)
+
+            result = check_register_popup_visible(mini, expected_reason='您需要登录才能修改设置')
+            if not result['visible']:
+                print('❌ 未弹出注册弹窗')
+                return {'success': False, 'message': 'DETAILS_004失败：未弹出注册弹窗'}
+
+            if not result['match']:
+                print('❌ 弹窗文字不匹配')
+                return {'success': False, 'message': 'DETAILS_004失败：弹窗文字不匹配'}
+
+            print(f'✅ 弹窗正确显示且文字验证通过')
+            close_register_popup_by_mask(mini, wait_visible=0.4)
         except Exception as e:
             error_msg = str(e).lower()
             if 'not found' in error_msg:
@@ -426,7 +416,47 @@ def check_actions_unregistered_details(mini, test_circle_id='68ff34ecc7f96a66e39
                 traceback.print_exc()
                 return {'success': False, 'message': f'DETAILS_004异常：{str(e)}'}
 
-        
+        # DETAILS_005: 发布按钮检查弹窗
+        print('\n📝 测试 DETAILS_005: 发布按钮检查弹窗')
+        print('-'*60)
+
+        try:
+            page = mini.app.current_page
+            publish_btn = page.get_element('#publish-btn')
+            if not publish_btn:
+                return {'success': False, 'message': 'DETAILS_005失败：未找到发布按钮'}
+            print('✅ 找到发布按钮')
+
+            # 验证按钮没有 disabled class
+            btn_class = ' '.join(publish_btn.attribute('class') or [])
+            if 'disabled' in btn_class:
+                print('❌ 发布按钮有 disabled class，未登录用户应该可以点击')
+                return {'success': False, 'message': 'DETAILS_005失败：发布按钮不应该有 disabled class'}
+            print('✅ 发布按钮无 disabled class')
+
+            publish_btn.tap()
+            time.sleep(0.3)
+
+            result = check_register_popup_visible(mini, expected_reason='您需要登录才能发布动态')
+            if not result['visible']:
+                print('❌ 未弹出注册弹窗')
+                return {'success': False, 'message': 'DETAILS_005失败：未弹出注册弹窗'}
+
+            if not result['match']:
+                print('❌ 弹窗文字不匹配')
+                return {'success': False, 'message': 'DETAILS_005失败：弹窗文字不匹配'}
+
+            print(f'✅ 弹窗正确显示且文字验证通过')
+            close_register_popup_by_mask(mini, wait_visible=0.4)
+        except Exception as e:
+            error_msg = str(e).lower()
+            if 'not found' in error_msg:
+                print(f'⚠️  未找到相关元素，跳过测试')
+            else:
+                print(f'❌ 测试异常: {str(e)}')
+                traceback.print_exc()
+                return {'success': False, 'message': f'DETAILS_005异常：{str(e)}'}
+
         # DETAILS_006: 回复评论检查弹窗
         print('\n📝 测试 DETAILS_006: 回复评论检查弹窗')
         print('-'*60)
@@ -776,6 +806,32 @@ def check_actions_noaccess_details(mini, circle_id, toast_text):
                 print(f'   ❌ Toast 验证失败')
                 failed_checks.append(f'设置 Toast 不匹配（期望: {toast_text}, 实际: {toast_result.get("text", "无")}）')
         
+        # 等待下一个操作
+        time.sleep(1.0)
+
+        # 步骤5：尝试点击发布按钮
+        print('\n5️⃣ 尝试点击发布按钮（预期失败）...')
+        before_action_time = time.time()
+
+        try:
+            page = mini.app.current_page
+            publish_btn = page.get_element('#publish-btn')
+            if not publish_btn:
+                print(f'   ❌ 未找到发布按钮')
+                failed_checks.append('未找到发布按钮')
+            else:
+                publish_btn.tap()
+                time.sleep(0.5)
+                toast_result = check_toast(mini, expected_text=toast_text, since=before_action_time)
+                if toast_result['success'] and toast_result['match']:
+                    print(f'   ✅ Toast 验证通过: "{toast_result["text"]}"')
+                else:
+                    print(f'   ❌ Toast 验证失败')
+                    failed_checks.append(f'发布按钮 Toast 不匹配（期望: {toast_text}, 实际: {toast_result.get("text", "无")}）')
+        except Exception as e:
+            print(f'   ❌ 发布按钮测试异常: {str(e)}')
+            failed_checks.append(f'发布按钮测试异常: {str(e)}')
+
         # 总结
         print('\n' + '='*60)
         if len(failed_checks) == 0:
@@ -794,12 +850,12 @@ def check_actions_noaccess_details(mini, circle_id, toast_text):
                 'message': f'{len(failed_checks)} 项检查失败',
                 'failed_checks': failed_checks
             }
-        
+
     except Exception as e:
         print(f'\n❌ 工作流异常: {str(e)}')
         traceback.print_exc()
         return {
-            'success': False, 
+            'success': False,
             'message': f'工作流异常: {str(e)}',
             'failed_checks': failed_checks
         }

@@ -35,14 +35,14 @@ def publish_post_with_single_image(mini, circle_id, content, image_path, test_im
             print(f'   📍 点击发布按钮...')
             page = mini.app.current_page
             
-            # 查找 circle-status-action 组件中的发布按钮
-            action_btn = page.get_element('circle-status-action>>>#actionBtn')
+            # 查找顶部发布按钮
+            action_btn = page.get_element('#publish-btn')
             if not action_btn:
                 raise Exception('未找到发布按钮')
             
             action_btn.tap()
-            time.sleep(0.8)
-            
+            time.sleep(1.5)
+
             # 验证是否成功进入发布页面
             page = mini.app.current_page
             if 'publish' not in page.path:

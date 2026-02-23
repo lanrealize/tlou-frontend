@@ -7,17 +7,22 @@
 
 import time
 import re
+import datetime
+from .common_helper import check_toast
+from .auth_helper import check_register_popup_visible, close_register_popup_by_mask
 
-# Circle Status Action 组件状态配置
+# Circle Status Action 组件状态配置（member 状态底部组件不显示，单独处理）
+# publish_btn_disabled: 顶部发布按钮是否 disabled
+# publish_reject: 点击发布按钮的拒绝方式 'toast' | 'popup'
+# publish_toast: toast 文字（publish_reject='toast' 时有效）
 CIRCLE_STATUS_CONFIG = {
-    'member': {'main_title': '发布新动态', 'sub_title': '分享你的精彩瞬间', 'button_text': '发布'},
-    'applied': {'main_title': '申请已提交', 'sub_title': '等待朋友圈主人审核中', 'button_text': '审核中'},
-    'invited_applied': {'main_title': '你收到了邀请', 'sub_title': '点击右侧按钮可直接加入（无需等待审核）', 'button_text': '接受邀请'},
-    'invited': {'main_title': '你收到了邀请', 'sub_title': '点击右侧按钮加入这个朋友圈', 'button_text': '接受邀请'},
-    'can_apply': {'main_title': '公开朋友圈', 'sub_title': '你可以申请加入这个朋友圈', 'button_text': '申请加入'},
-    'no_access': {'main_title': '无法访问', 'sub_title': '无权查看此朋友圈', 'button_text': '无权限'},
-    'guest_invited': {'main_title': '你收到了邀请', 'sub_title': '点击右侧按钮加入这个朋友圈', 'button_text': '接受邀请'},
-    'guest_can_apply': {'main_title': '公开朋友圈', 'sub_title': '你可以申请加入这个朋友圈', 'button_text': '申请加入'},
+    'applied':        {'main_title': '申请已提交', 'sub_title': '等待朋友圈主人审核中', 'button_text': '审核中', 'publish_btn_disabled': True, 'publish_reject': 'toast', 'publish_toast': '请等待审核通过'},
+    'invited_applied':{'main_title': '你收到了邀请', 'sub_title': '点击右侧按钮可直接加入（无需等待审核）', 'button_text': '接受邀请', 'publish_btn_disabled': True, 'publish_reject': 'toast', 'publish_toast': '请先接受邀请'},
+    'invited':        {'main_title': '你收到了邀请', 'sub_title': '点击右侧按钮加入这个朋友圈', 'button_text': '接受邀请', 'publish_btn_disabled': True, 'publish_reject': 'toast', 'publish_toast': '请先接受邀请'},
+    'can_apply':      {'main_title': '公开朋友圈', 'sub_title': '你可以申请加入这个朋友圈', 'button_text': '申请加入', 'publish_btn_disabled': True, 'publish_reject': 'toast', 'publish_toast': '请先申请加入'},
+    'no_access':      {'main_title': '无法访问', 'sub_title': '无权查看此朋友圈', 'button_text': '无权限', 'publish_btn_disabled': True, 'publish_reject': 'toast', 'publish_toast': '请先申请加入'},
+    'guest_invited':  {'main_title': '你收到了邀请', 'sub_title': '点击右侧按钮加入这个朋友圈', 'button_text': '接受邀请', 'publish_btn_disabled': False, 'publish_reject': 'popup'},
+    'guest_can_apply':{'main_title': '公开朋友圈', 'sub_title': '你可以申请加入这个朋友圈', 'button_text': '申请加入', 'publish_btn_disabled': False, 'publish_reject': 'popup'},
 }
 
 
@@ -177,9 +182,22 @@ def create_circle(mini):
         try:
             from .common_helper import evaluate_js
             js_code = f'''
-                const api = require('/utils/api.js');
-                const result = await api.circles.getInviteCode('{circle_id}');
-                return result.data.inviteCode || '';
+                return (async function() {{
+                    const app = getApp();
+                    const result = await new Promise((resolve) => {{
+                        wx.request({{
+                            url: app.globalData.baseUrl + '/circles/{circle_id}/invite-code',
+                            method: 'GET',
+                            header: {{
+                                'Content-Type': 'application/json',
+                                'x-openid': app.getUserStore().userInfo._id
+                            }},
+                            success: resolve,
+                            fail: resolve
+                        }});
+                    }});
+                    return result.data && result.data.data && result.data.data.inviteCode || '';
+                }})();
             '''
             invite_code = evaluate_js(mini, js_code) or ''
             if invite_code:
@@ -188,7 +206,7 @@ def create_circle(mini):
                 print(f'   ⚠️  未获取到邀请码')
         except Exception as e:
             print(f'   ⚠️  获取邀请码失败: {e}')
-        
+
         return {
             'success': True,
             'circle_id': circle_id,
@@ -207,7 +225,7 @@ def create_circle(mini):
 
 def check_circle_status_action(mini, expected_user_status):
     """检查 details 页面底部 circle-status-action 组件的 UI 显示内容
-    
+
     Args:
         mini: Minium 实例
         expected_user_status: 期望的用户状态 (如 'guest_can_apply', 'member' 等)
@@ -215,7 +233,7 @@ def check_circle_status_action(mini, expected_user_status):
     try:
         page = mini.app.current_page
         actual_user_status = page.data.get('userStatus', '')
-        
+
         # 验证 userStatus 是否正确
         if actual_user_status != expected_user_status:
             return {
@@ -223,7 +241,20 @@ def check_circle_status_action(mini, expected_user_status):
                 'user_status': actual_user_status,
                 'errors': [f'userStatus不匹配: 期望"{expected_user_status}", 实际"{actual_user_status}"']
             }
-        
+
+        # member 状态：底部组件不显示，验证顶部发布按钮是 enabled
+        if expected_user_status == 'member':
+            try:
+                publish_btn = page.get_element('#publish-btn')
+                if not publish_btn:
+                    return {'match': False, 'user_status': actual_user_status, 'errors': ['未找到顶部发布按钮']}
+                classes = ' '.join(publish_btn.attribute('class') or [])
+                if 'disabled' in classes:
+                    return {'match': False, 'user_status': actual_user_status, 'errors': ['发布按钮应为 enabled，但含有 disabled class']}
+                return {'match': True, 'user_status': actual_user_status, 'errors': []}
+            except Exception as e:
+                return {'match': False, 'user_status': actual_user_status, 'errors': [f'无法读取发布按钮: {str(e)}']}
+
         # 从配置读取期望值
         expected_config = CIRCLE_STATUS_CONFIG.get(expected_user_status, {})
         if not expected_config:
@@ -232,7 +263,7 @@ def check_circle_status_action(mini, expected_user_status):
                 'user_status': actual_user_status,
                 'errors': [f'配置中不存在状态: {expected_user_status}']
             }
-        
+
         expected_main_title = expected_config['main_title']
         expected_sub_title = expected_config['sub_title']
         expected_button_text = expected_config['button_text']
@@ -253,7 +284,7 @@ def check_circle_status_action(mini, expected_user_status):
                 'errors': [f'无法读取UI元素: {str(e)}']
             }
         
-        # 比对
+        # 比对底部组件
         errors = []
         if actual_main_title != expected_main_title:
             errors.append(f'主标题不匹配: 期望"{expected_main_title}", 实际"{actual_main_title}"')
@@ -261,7 +292,47 @@ def check_circle_status_action(mini, expected_user_status):
             errors.append(f'副标题不匹配: 期望"{expected_sub_title}", 实际"{actual_sub_title}"')
         if actual_button_text != expected_button_text:
             errors.append(f'按钮文本不匹配: 期望"{expected_button_text}", 实际"{actual_button_text}"')
-        
+
+        # 验证顶部发布按钮状态
+        try:
+            # 轮询等待按钮状态更新（最多5秒）
+            expected_disabled = expected_config['publish_btn_disabled']
+            publish_btn = None
+            btn_disabled = not expected_disabled  # 初始值设为不符合期望
+            for _ in range(10):
+                publish_btn = page.get_element('#publish-btn')
+                if publish_btn:
+                    classes = ' '.join(publish_btn.attribute('class') or [])
+                    btn_disabled = 'disabled' in classes
+                    if btn_disabled == expected_disabled:
+                        break
+                time.sleep(0.5)
+
+            if not publish_btn:
+                errors.append('未找到顶部发布按钮')
+            else:
+                if btn_disabled != expected_disabled:
+                    errors.append(f'发布按钮 disabled 状态不符: 期望{"disabled" if expected_disabled else "enabled"}, 实际{"disabled" if btn_disabled else "enabled"}')
+                else:
+                    # 点击发布按钮验证反馈
+                    click_time = time.time()
+                    publish_btn.tap()
+                    time.sleep(0.3)
+                    if expected_config['publish_reject'] == 'toast':
+                        toast_result = check_toast(mini, expected_text=expected_config['publish_toast'], since=click_time)
+                        if not toast_result.get('success'):
+                            errors.append(f'点击发布按钮未出现 toast')
+                        elif not toast_result.get('match'):
+                            errors.append(f'发布按钮 toast 文字不符: 期望"{expected_config["publish_toast"]}"')
+                    else:  # popup
+                        popup_result = check_register_popup_visible(mini)
+                        if not popup_result.get('visible'):
+                            errors.append('点击发布按钮未弹出注册弹窗')
+                        else:
+                            close_register_popup_by_mask(mini, wait_visible=0.4)
+        except Exception as e:
+            errors.append(f'发布按钮验证异常: {str(e)}')
+
         return {
             'match': len(errors) == 0,
             'user_status': actual_user_status,
@@ -339,7 +410,7 @@ def enter_circle_settings(mini, circle_id=None, expect_success=True):
                 circle_id = page_query.get('circleId', '')
         
         # 步骤2：点击设置按钮
-        setting_btn_wrapper = page.get_element('#setting-btn-wrapper')
+        setting_btn_wrapper = page.get_element('#setting-btn')
         if not setting_btn_wrapper:
             return {
                 'success': False,
@@ -437,7 +508,7 @@ def set_circle_public(mini, circle_id=None):
                 circle_id = page_query.get('circleId', '')
         
         # 步骤2：点击设置按钮进入 settings 页面
-        setting_btn_wrapper = page.get_element('#setting-btn-wrapper')
+        setting_btn_wrapper = page.get_element('#setting-btn')
         if not setting_btn_wrapper:
             return {
                 'success': False,
@@ -707,7 +778,7 @@ def process_unique_join_application(mini, circle_id=None, action='approve'):
             }
         
         # 步骤4：点击设置按钮进入 settings 页面
-        setting_btn_wrapper = page.get_element('#setting-btn-wrapper')
+        setting_btn_wrapper = page.get_element('#setting-btn')
         if not setting_btn_wrapper:
             return {
                 'success': False,
@@ -716,11 +787,15 @@ def process_unique_join_application(mini, circle_id=None, action='approve'):
         
         setting_btn_wrapper.tap()
         print('   ✅ 已点击设置按钮')
-        
-        # 等待进入 settings 页面
-        time.sleep(0.8)
-        
+
+        # 轮询等待进入 settings 页面（最多5秒）
         settings_page = mini.app.current_page
+        for _ in range(10):
+            settings_page = mini.app.current_page
+            if 'setting' in settings_page.path:
+                break
+            time.sleep(0.5)
+
         if 'setting' not in settings_page.path:
             return {
                 'success': False,
@@ -1802,9 +1877,22 @@ def verify_create_circle(mini):
         try:
             from .common_helper import evaluate_js
             js_code = f'''
-                const api = require('/utils/api.js');
-                const result = await api.circles.getInviteCode('{circle_id}');
-                return result.data.inviteCode || '';
+                return (async function() {{
+                    const app = getApp();
+                    const result = await new Promise((resolve) => {{
+                        wx.request({{
+                            url: app.globalData.baseUrl + '/circles/{circle_id}/invite-code',
+                            method: 'GET',
+                            header: {{
+                                'Content-Type': 'application/json',
+                                'x-openid': app.getUserStore().userInfo._id
+                            }},
+                            success: resolve,
+                            fail: resolve
+                        }});
+                    }});
+                    return result.data && result.data.data && result.data.data.inviteCode || '';
+                }})();
             '''
             invite_code = evaluate_js(mini, js_code) or ''
             if invite_code:

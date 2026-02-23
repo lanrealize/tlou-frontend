@@ -9,7 +9,7 @@ import time
 
 # 配置
 CONFIG = {
-    'project_path': r'D:\Codes\Cursor\tlou-frontend',
+    'project_path': r'D:\Codes\Cursor\tl-frontend',
     'dev_tool_path': r'D:\Apps\IDEs\微信web开发者工具\cli.bat',
     # 配置自动授权：自动点击所有 showModal 的确认按钮
     'auto_authorize': True  # 自动确认所有弹窗

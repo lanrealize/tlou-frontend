@@ -14,26 +14,28 @@
 """
 
 import sys
+import io
 import os
 
 # 添加项目根目录到 Python 路径
 # 文件路径: tests/tests/productions/test_unregistered_e2e.py
-# 需要向上4层到达项目根目录
+# 需要向上3层到达 tests/ 目录
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-sys.path.insert(0, project_root)
+tests_root = os.path.join(project_root, 'tests')
+sys.path.insert(0, tests_root)
 
-from tests.helpers.system_helper import launch_miniprogram, close_miniprogram, enter_test_mode, exit_test_mode
-from tests.helpers.workflow_helper import (
+from helpers.system_helper import launch_miniprogram, close_miniprogram, enter_test_mode, exit_test_mode
+from helpers.workflow_helper import (
     check_actions_unregistered_main,
     check_actions_unregistered_details,
     check_actions_member_details,
     check_actions_registered_main
 )
-from tests.helpers.auth_helper import complete_user_login
-from tests.helpers.navigation_helper import navigate_to_main
-from tests.helpers.element_helper import click_create_circle_button
-from tests.helpers.circle_helper import wait_and_get_created_circle_id
-from tests.helpers.circle_helper import check_circle_status_action
+from helpers.auth_helper import complete_user_login
+from helpers.navigation_helper import navigate_to_main
+from helpers.element_helper import click_create_circle_button
+from helpers.circle_helper import wait_and_get_created_circle_id
+from helpers.circle_helper import check_circle_status_action
 import time
 
 
@@ -45,7 +47,8 @@ TEST_CONFIG = {
         os.path.join(project_root, 'tests', 'resources', 'test.jpg'),
         os.path.join(project_root, 'tests', 'resources', 'test1.jpg'),
         os.path.join(project_root, 'tests', 'resources', 'test2.jpg')
-    ]
+    ],
+    'test_circle_id': '69097e93b88209834a86462b'  # 用于 DETAILS_006 回复评论测试（需要有评论）
 }
 
 
@@ -94,7 +97,7 @@ def test_unregistered_e2e():
         # 步骤3：验证未注册用户在 details 页面的操作
         print('\n【步骤3】验证未注册用户在 details 页面的操作')
         print('-'*60)
-        result = check_actions_unregistered_details(mini, discover_circle_id)
+        result = check_actions_unregistered_details(mini, TEST_CONFIG['test_circle_id'])
         if not result['success']:
             print(f'❌ 步骤3失败：{result["message"]}')
             return False

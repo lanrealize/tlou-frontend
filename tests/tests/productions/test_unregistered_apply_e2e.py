@@ -37,25 +37,29 @@
 """
 
 import sys
+import io
 import os
 import time
 
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+
 # 添加项目根目录到Python路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-sys.path.insert(0, project_root)
+tests_root = os.path.join(project_root, 'tests')
+sys.path.insert(0, tests_root)
 
-from tests.helpers.system_helper import launch_miniprogram, close_miniprogram, enter_test_mode, exit_test_mode
-from tests.helpers.auth_helper import get_user_state, complete_user_login, switch_to_identity
-from tests.helpers.navigation_helper import navigate_to_details, navigate_to_main
-from tests.helpers.circle_helper import (
+from helpers.system_helper import launch_miniprogram, close_miniprogram, enter_test_mode, exit_test_mode
+from helpers.auth_helper import get_user_state, complete_user_login, switch_to_identity
+from helpers.navigation_helper import navigate_to_details, navigate_to_main
+from helpers.circle_helper import (
     create_circle,
     set_circle_public,
     check_circle_status_action,
     process_unique_join_application,
     delete_circle_by_api
 )
-from tests.helpers.element_helper import click_apply_join_button
-from tests.helpers.workflow_helper import check_actions_member_details, check_actions_registered_main
+from helpers.element_helper import click_apply_join_button
+from helpers.workflow_helper import check_actions_member_details, check_actions_registered_main
 
 
 # 测试配置

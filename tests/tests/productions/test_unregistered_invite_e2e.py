@@ -21,18 +21,22 @@
 """
 
 import sys
+import io
 import os
 import time
 
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+
 # 添加项目根目录到Python路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-sys.path.insert(0, project_root)
+tests_root = os.path.join(project_root, 'tests')
+sys.path.insert(0, tests_root)
 
-from tests.helpers.system_helper import launch_miniprogram, close_miniprogram, enter_test_mode, exit_test_mode
-from tests.helpers.auth_helper import get_user_state, complete_user_login
-from tests.helpers.navigation_helper import navigate_to_details_from_share, navigate_to_main
-from tests.helpers.circle_helper import check_circle_status_action, accept_to_join_circle
-from tests.helpers.workflow_helper import check_actions_member_details, check_actions_registered_main
+from helpers.system_helper import launch_miniprogram, close_miniprogram, enter_test_mode, exit_test_mode
+from helpers.auth_helper import get_user_state, complete_user_login
+from helpers.navigation_helper import navigate_to_details_from_share, navigate_to_main
+from helpers.circle_helper import check_circle_status_action, accept_to_join_circle
+from helpers.workflow_helper import check_actions_member_details, check_actions_registered_main
 
 
 # 测试配置
@@ -47,8 +51,8 @@ TEST_CONFIG = {
     # 测试数据：暂时只测试公开朋友圈（私有朋友圈需要后端支持未登录用户通过邀请码访问）
     'circles': [
         {
-            'circle_id': '6900ec7520ac2a3520677c34',
-            'invite_code': '1687F5',
+            'circle_id': '69097e93b88209834a86462b',
+            'invite_code': '2F5835',
             'type': '公开',
             'description': '公开朋友圈邀请测试'
         }

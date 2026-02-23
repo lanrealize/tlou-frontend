@@ -101,12 +101,14 @@ Page({
     this.setupStoreBindings();
     
     const { circleId, inviteCode, preloaded, preloadFailed, source, showCreateSuccess, shared, enableAnim, shareTs } = options;
-    
+
     if (!circleId) {
       util.showToast('朋友圈ID不能为空');
       wx.navigateBack();
       return;
     }
+
+    console.log('[details] circleId:', circleId);
     
     const isFromShare = shared === 'true';
     

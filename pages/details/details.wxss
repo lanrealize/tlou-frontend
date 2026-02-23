@@ -460,7 +460,6 @@ view, text, image {
 .top-btn.disabled {
   color:rgb(135, 135, 135);
   opacity: 0.5;
-  pointer-events: none;
 }
 
 /* 顶部按钮分隔符 */

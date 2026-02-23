@@ -131,7 +131,7 @@ def navigate_to_details(mini, circle_id, source='discover'):
         except Exception as check_error:
             print(f'⚠️  检查页面状态时出错: {str(check_error)}')
         
-        print('✅ 已进入 details 页面')
+        print(f'✅ 已进入 details 页面，circle_id: {circle_id}')
         return {
             'success': True,
             'circle_id': circle_id,
