@@ -414,7 +414,6 @@ view, text, image {
 .add-icon {
   width: 56rpx;
   height: 56rpx;
-  filter: brightness(0) saturate(100%) invert(42%) sepia(55%) saturate(3611%) hue-rotate(205deg) brightness(96%) contrast(94%);
   opacity: 1;
 }
 
