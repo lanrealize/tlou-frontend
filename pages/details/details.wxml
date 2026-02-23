@@ -116,8 +116,9 @@
                 bindtap="openSettings">设置</text>
           
           <!-- 待处理申请数角标 -->
-          <text id="pending-count" class="setting-count" 
-                wx:if="{{isCircleOwner && pendingApplicationsCount > 0}}">({{pendingApplicationsCount}})</text>
+          <text id="pending-count" class="setting-count"
+                wx:if="{{isCircleOwner && pendingApplicationsCount > 0}}"
+                bindtap="openSettings">({{pendingApplicationsCount}})</text>
         </view>
       </view>
     </view>
