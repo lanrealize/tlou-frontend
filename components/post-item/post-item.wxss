@@ -284,14 +284,14 @@
 /* 窄菜单样式 - 用于"点赞"状态，居中对齐 */
 .dropdown-menu.narrow-menu .dropdown-item {
   justify-content: center;
-  padding: 24rpx 34rpx;
+  padding: 24rpx 40rpx 24rpx 34rpx;
   min-width: 160rpx;
 }
 
 /* 宽菜单样式 - 用于"取消点赞"状态，左对齐 */
 .dropdown-menu.wide-menu .dropdown-item {
   justify-content: flex-start;
-  padding: 24rpx 36rpx;
+  padding: 24rpx 40rpx 24rpx 36rpx;
   min-width: 200rpx;
 }
 
@@ -310,11 +310,20 @@
   background-color: #ffebee;
 }
 
+.dropdown-icon-wrap {
+  width: 40rpx;
+  height: 40rpx;
+  flex-shrink: 0;
+  margin-right: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .dropdown-icon {
   width: 34rpx;
   height: 34rpx;
   flex-shrink: 0;
-  margin-right: 24rpx;
 }
 
 /* 点赞图标 - 向下微调以视觉居中 */
@@ -339,6 +348,8 @@
 
 .dropdown-item.delete-item .dropdown-text {
   color: #f44336;
+  position: relative;
+  left: 3rpx;
 }
 
 /* 帖子内容区域 */
