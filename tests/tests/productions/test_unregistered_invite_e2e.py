@@ -67,7 +67,7 @@ TEST_CONFIG = {
 }
 
 
-def test_invite_workflow_for_circle(mini, real_user_info, circle_config):
+def run_invite_workflow_for_circle(mini, real_user_info, circle_config):
     """测试未注册用户通过邀请链接加入朋友圈的完整流程"""
     circle_id = circle_config['circle_id']
     invite_code = circle_config['invite_code']
@@ -94,8 +94,7 @@ def test_invite_workflow_for_circle(mini, real_user_info, circle_config):
         print('-'*60)
         nav_result = navigate_to_details_from_share(mini, circle_id=circle_id, invite_code=invite_code)
         if not nav_result['success']:
-            print(f'❌ 步骤3a失败：{nav_result["error"]}')
-            return False
+            raise AssertionError(f'步骤3a失败：{nav_result["error"]}')
         print('✅ 步骤3a完成')
 
         # 步骤3b: circle_helper.py -> check_circle_status_action(mini, expected_user_status) "guest_invited"
@@ -103,10 +102,8 @@ def test_invite_workflow_for_circle(mini, real_user_info, circle_config):
         print('-'*60)
         status_result = check_circle_status_action(mini, expected_user_status='guest_invited')
         if not status_result['match']:
-            print(f'❌ 步骤3b失败：状态验证失败')
-            for error in status_result.get('errors', []):
-                print(f'   {error}')
-            return False
+            errors = '\n   '.join(status_result.get('errors', []))
+            raise AssertionError(f'步骤3b失败：状态验证失败\n   {errors}')
         print('✅ 步骤3b完成：状态为 guest_invited')
 
         # 步骤4: circle_helper.py -> accept_to_join_circle(mini)
@@ -114,8 +111,7 @@ def test_invite_workflow_for_circle(mini, real_user_info, circle_config):
         print('-'*60)
         accept_result = accept_to_join_circle(mini)
         if not accept_result['success']:
-            print(f'❌ 步骤4失败：{accept_result["message"]}')
-            return False
+            raise AssertionError(f'步骤4失败：{accept_result["message"]}')
         print('✅ 步骤4完成')
 
         # 步骤5a: auth_helper.py -> complete_user_login(mini, nickname='测试用户', avatar_url='...')
@@ -127,8 +123,7 @@ def test_invite_workflow_for_circle(mini, real_user_info, circle_config):
             avatar_url=TEST_CONFIG['test_avatar']
         )
         if not login_result['success']:
-            print(f'❌ 步骤5a失败：{login_result["message"]}')
-            return False
+            raise AssertionError(f'步骤5a失败：{login_result["message"]}')
         print(f'✅ 步骤5a完成：用户登录成功（{login_result["user_info"]["username"]}）')
 
         # 步骤5b: auth_helper.py -> get_user_state(mini) 记录测试身份userinfo
@@ -144,10 +139,8 @@ def test_invite_workflow_for_circle(mini, real_user_info, circle_config):
         print('-'*60)
         status_result = check_circle_status_action(mini, expected_user_status='member')
         if not status_result['match']:
-            print(f'❌ 步骤6失败：状态验证失败')
-            for error in status_result.get('errors', []):
-                print(f'   {error}')
-            return False
+            errors = '\n   '.join(status_result.get('errors', []))
+            raise AssertionError(f'步骤6失败：状态验证失败\n   {errors}')
         print('✅ 步骤6完成：状态为 member')
 
         # 步骤7: workflow_helper.py -> check_actions_member_details(mini, circle_id, test_images)
@@ -155,8 +148,7 @@ def test_invite_workflow_for_circle(mini, real_user_info, circle_config):
         print('-'*60)
         member_details_result = check_actions_member_details(mini, circle_id, TEST_CONFIG['test_images'])
         if not member_details_result['success']:
-            print(f'❌ 步骤7失败：{member_details_result["message"]}')
-            return False
+            raise AssertionError(f'步骤7失败：{member_details_result["message"]}')
         print('✅ 步骤7完成')
 
         # 步骤8: navigation_helper.py -> navigate_to_main(mini, use_relaunch=False)
@@ -164,8 +156,7 @@ def test_invite_workflow_for_circle(mini, real_user_info, circle_config):
         print('-'*60)
         nav_main_result = navigate_to_main(mini, use_relaunch=False)
         if not nav_main_result['success']:
-            print(f'❌ 步骤8失败：{nav_main_result["message"]}')
-            return False
+            raise AssertionError(f'步骤8失败：{nav_main_result["message"]}')
         print('✅ 步骤8完成')
 
         # 步骤9: workflow_helper.py -> check_actions_registered_main(mini, check_recent_circle='enter', recent_circle_id=circle_id)
@@ -173,8 +164,7 @@ def test_invite_workflow_for_circle(mini, real_user_info, circle_config):
         print('-'*60)
         registered_main_result = check_actions_registered_main(mini, check_recent_circle='enter', recent_circle_id=circle_id)
         if not registered_main_result['success']:
-            print(f'❌ 步骤9失败：{registered_main_result["message"]}')
-            return False
+            raise AssertionError(f'步骤9失败：{registered_main_result["message"]}')
         print('✅ 步骤9完成')
 
         # 步骤10: system_helper.py -> exit_test_mode(mini)
@@ -185,13 +175,12 @@ def test_invite_workflow_for_circle(mini, real_user_info, circle_config):
         print('✅ 步骤10完成')
 
         print(f'\n✅ {description} 测试成功！')
-        return True
 
     except Exception as e:
         print(f'\n❌ {description} 测试失败！')
         import traceback
         traceback.print_exc()
-        return False
+        raise
 
 
 def test_unregistered_invite_e2e():
@@ -201,7 +190,6 @@ def test_unregistered_invite_e2e():
     print('='*60)
 
     mini = None
-    all_passed = True
 
     try:
         # 步骤1a: system_helper.py -> launch_miniprogram()
@@ -220,25 +208,20 @@ def test_unregistered_invite_e2e():
 
         # 对每个测试圈子执行流程
         for circle_config in TEST_CONFIG['circles']:
-            result = test_invite_workflow_for_circle(mini, real_user_info, circle_config)
-            if not result:
-                all_passed = False
+            run_invite_workflow_for_circle(mini, real_user_info, circle_config)
 
         # 输出最终结果
         print('\n' + '='*60)
         print('📊 测试结果')
         print('='*60)
-        if all_passed:
-            print('✅ 所有测试通过')
-        else:
-            print('❌ 部分测试失败')
+        print('✅ 所有测试通过')
         print('='*60)
 
     except Exception as e:
         print(f'\n❌ 测试执行异常: {str(e)}')
         import traceback
         traceback.print_exc()
-        all_passed = False
+        raise
 
     finally:
         # 清理
@@ -252,10 +235,6 @@ def test_unregistered_invite_e2e():
             close_miniprogram(mini)
             print('✅ 清理完成')
 
-    return all_passed
-
 
 if __name__ == '__main__':
-    success = test_unregistered_invite_e2e()
-    sys.exit(0 if success else 1)
-
+    test_unregistered_invite_e2e()

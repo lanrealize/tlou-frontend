@@ -274,3 +274,9 @@
   </view>
 
 </view>
+
+<publish-panel
+  circleId="{{circleId}}"
+  show="{{showPublish}}"
+  bind:close="onPublishClose"
+></publish-panel>

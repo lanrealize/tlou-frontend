@@ -105,8 +105,7 @@ def test_unregistered_apply_e2e():
         print('-'*60)
         create_result = create_circle(mini)
         if not create_result['success']:
-            print(f'❌ 步骤2a失败：{create_result["message"]}')
-            return False
+            raise AssertionError(f'步骤2a失败：{create_result["message"]}')
         circle_id = create_result['circle_id']
         print(f'✅ 步骤2a完成：圈子ID = {circle_id}')
 
@@ -115,8 +114,7 @@ def test_unregistered_apply_e2e():
         print('-'*60)
         set_public_result = set_circle_public(mini, circle_id=None)
         if not set_public_result['success']:
-            print(f'❌ 步骤2b失败：{set_public_result["message"]}')
-            return False
+            raise AssertionError(f'步骤2b失败：{set_public_result["message"]}')
         print('✅ 步骤2b完成')
 
         # 步骤3: navigation_helper.py -> navigate_to_main(mini, use_relaunch=True)
@@ -124,8 +122,7 @@ def test_unregistered_apply_e2e():
         print('-'*60)
         nav_result = navigate_to_main(mini, use_relaunch=True)
         if not nav_result['success']:
-            print(f'❌ 步骤3失败：{nav_result["message"]}')
-            return False
+            raise AssertionError(f'步骤3失败：{nav_result["message"]}')
         print('✅ 步骤3完成')
 
         # 步骤4a: system_helper.py -> enter_test_mode(mini) 切换为未登录状态
@@ -140,8 +137,7 @@ def test_unregistered_apply_e2e():
         print('-'*60)
         nav_details_result = navigate_to_details(mini, circle_id, source='discover')
         if not nav_details_result['success']:
-            print(f'❌ 步骤5失败：{nav_details_result["error"]}')
-            return False
+            raise AssertionError(f'步骤5失败：{nav_details_result["error"]}')
         print('✅ 步骤5完成')
 
         # 步骤6: circle_helper.py -> check_circle_status_action(mini, expected_user_status) "guest_can_apply"
@@ -149,10 +145,8 @@ def test_unregistered_apply_e2e():
         print('-'*60)
         status_result = check_circle_status_action(mini, expected_user_status='guest_can_apply')
         if not status_result['match']:
-            print(f'❌ 步骤6失败：状态验证失败')
-            for error in status_result.get('errors', []):
-                print(f'   {error}')
-            return False
+            errors = '\n   '.join(status_result.get('errors', []))
+            raise AssertionError(f'步骤6失败：状态验证失败\n   {errors}')
         print('✅ 步骤6完成：状态为 guest_can_apply')
 
         # 步骤7: element_helper.py -> click_apply_join_button(mini)
@@ -160,8 +154,7 @@ def test_unregistered_apply_e2e():
         print('-'*60)
         click_result = click_apply_join_button(mini)
         if not click_result['success']:
-            print(f'❌ 步骤7失败：{click_result["message"]}')
-            return False
+            raise AssertionError(f'步骤7失败：{click_result["message"]}')
         print('✅ 步骤7完成')
 
         # 步骤8a: auth_helper.py -> complete_user_login(mini, nickname='测试用户', avatar_url='...')
@@ -173,8 +166,7 @@ def test_unregistered_apply_e2e():
             avatar_url=TEST_CONFIG['test_avatar']
         )
         if not login_result['success']:
-            print(f'❌ 步骤8a失败：{login_result["message"]}')
-            return False
+            raise AssertionError(f'步骤8a失败：{login_result["message"]}')
         print(f'✅ 步骤8a完成：用户登录成功（{login_result["user_info"]["username"]}）')
 
         # 步骤8b: auth_helper.py -> get_user_state(mini) 记录测试身份 userinfo
@@ -190,10 +182,8 @@ def test_unregistered_apply_e2e():
         print('-'*60)
         status_result = check_circle_status_action(mini, expected_user_status='applied')
         if not status_result['match']:
-            print(f'❌ 步骤9失败：状态验证失败')
-            for error in status_result.get('errors', []):
-                print(f'   {error}')
-            return False
+            errors = '\n   '.join(status_result.get('errors', []))
+            raise AssertionError(f'步骤9失败：状态验证失败\n   {errors}')
         print('✅ 步骤9完成：状态为 applied')
 
         # 步骤10: navigation_helper.py -> navigate_to_main(mini, use_relaunch=True)
@@ -201,8 +191,7 @@ def test_unregistered_apply_e2e():
         print('-'*60)
         nav_result = navigate_to_main(mini, use_relaunch=True)
         if not nav_result['success']:
-            print(f'❌ 步骤10失败：{nav_result["message"]}')
-            return False
+            raise AssertionError(f'步骤10失败：{nav_result["message"]}')
         print('✅ 步骤10完成')
 
         # 步骤11: auth_helper.py -> switch_to_identity(mini, user_info, identity_type='test')
@@ -210,8 +199,7 @@ def test_unregistered_apply_e2e():
         print('-'*60)
         switch_result = switch_to_identity(mini, real_user_info['user_info'], identity_type='test')
         if not switch_result['success']:
-            print(f'❌ 步骤11失败：{switch_result["message"]}')
-            return False
+            raise AssertionError(f'步骤11失败：{switch_result["message"]}')
         print(f'✅ 步骤11完成：切换到 {real_user_info["user_info"]["username"]}')
 
         # 步骤12: navigation_helper.py -> navigate_to_details(mini, circle_id, source='discover')
@@ -219,8 +207,7 @@ def test_unregistered_apply_e2e():
         print('-'*60)
         nav_details_result = navigate_to_details(mini, circle_id, source='discover')
         if not nav_details_result['success']:
-            print(f'❌ 步骤12失败：{nav_details_result["error"]}')
-            return False
+            raise AssertionError(f'步骤12失败：{nav_details_result["error"]}')
         print('✅ 步骤12完成')
 
         # 步骤13: circle_helper.py -> check_circle_status_action(mini, expected_user_status) "member"
@@ -228,10 +215,8 @@ def test_unregistered_apply_e2e():
         print('-'*60)
         status_result = check_circle_status_action(mini, expected_user_status='member')
         if not status_result['match']:
-            print(f'❌ 步骤13失败：状态验证失败')
-            for error in status_result.get('errors', []):
-                print(f'   {error}')
-            return False
+            errors = '\n   '.join(status_result.get('errors', []))
+            raise AssertionError(f'步骤13失败：状态验证失败\n   {errors}')
         print('✅ 步骤13完成：状态为 member')
 
         # 步骤14: circle_helper.py -> process_unique_join_application(mini, circle_id=circle_id, action='approve')
@@ -239,8 +224,7 @@ def test_unregistered_apply_e2e():
         print('-'*60)
         approve_result = process_unique_join_application(mini, circle_id=circle_id, action='approve')
         if not approve_result['success']:
-            print(f'❌ 步骤14失败：{approve_result["message"]}')
-            return False
+            raise AssertionError(f'步骤14失败：{approve_result["message"]}')
         print('✅ 步骤14完成')
 
         # 步骤15: navigation_helper.py -> navigate_to_main(mini, use_relaunch=True)
@@ -248,8 +232,7 @@ def test_unregistered_apply_e2e():
         print('-'*60)
         nav_result = navigate_to_main(mini, use_relaunch=True)
         if not nav_result['success']:
-            print(f'❌ 步骤15失败：{nav_result["message"]}')
-            return False
+            raise AssertionError(f'步骤15失败：{nav_result["message"]}')
         print('✅ 步骤15完成')
 
         # 步骤16: auth_helper.py -> switch_to_identity(mini, user_info, identity_type='test')
@@ -257,8 +240,7 @@ def test_unregistered_apply_e2e():
         print('-'*60)
         switch_result = switch_to_identity(mini, test_user_info['user_info'], identity_type='test')
         if not switch_result['success']:
-            print(f'❌ 步骤16失败：{switch_result["message"]}')
-            return False
+            raise AssertionError(f'步骤16失败：{switch_result["message"]}')
         print(f'✅ 步骤16完成：切换到 {test_user_info["user_info"]["username"]}')
 
         # 步骤17: navigation_helper.py -> navigate_to_details(mini, circle_id, source='discover')
@@ -266,8 +248,7 @@ def test_unregistered_apply_e2e():
         print('-'*60)
         nav_details_result = navigate_to_details(mini, circle_id, source='discover')
         if not nav_details_result['success']:
-            print(f'❌ 步骤17失败：{nav_details_result["error"]}')
-            return False
+            raise AssertionError(f'步骤17失败：{nav_details_result["error"]}')
         print('✅ 步骤17完成')
 
         # 步骤18: circle_helper.py -> check_circle_status_action(mini, expected_user_status) "member"
@@ -275,10 +256,8 @@ def test_unregistered_apply_e2e():
         print('-'*60)
         status_result = check_circle_status_action(mini, expected_user_status='member')
         if not status_result['match']:
-            print(f'❌ 步骤18失败：状态验证失败')
-            for error in status_result.get('errors', []):
-                print(f'   {error}')
-            return False
+            errors = '\n   '.join(status_result.get('errors', []))
+            raise AssertionError(f'步骤18失败：状态验证失败\n   {errors}')
         print('✅ 步骤18完成：状态为 member')
 
         # 步骤19: workflow_helper.py -> check_actions_member_details(mini, circle_id, test_images)
@@ -286,8 +265,7 @@ def test_unregistered_apply_e2e():
         print('-'*60)
         member_details_result = check_actions_member_details(mini, circle_id, TEST_CONFIG['test_images'])
         if not member_details_result['success']:
-            print(f'❌ 步骤19失败：{member_details_result["message"]}')
-            return False
+            raise AssertionError(f'步骤19失败：{member_details_result["message"]}')
         print('✅ 步骤19完成')
 
         # 步骤20: navigation_helper.py -> navigate_to_main(mini, use_relaunch=False)
@@ -295,8 +273,7 @@ def test_unregistered_apply_e2e():
         print('-'*60)
         nav_result = navigate_to_main(mini, use_relaunch=False)
         if not nav_result['success']:
-            print(f'❌ 步骤20失败：{nav_result["message"]}')
-            return False
+            raise AssertionError(f'步骤20失败：{nav_result["message"]}')
         print('✅ 步骤20完成')
 
         # 步骤21: workflow_helper.py -> check_actions_registered_main(mini, check_recent_circle='enter', recent_circle_id=circle_id)
@@ -304,23 +281,20 @@ def test_unregistered_apply_e2e():
         print('-'*60)
         registered_main_result = check_actions_registered_main(mini, check_recent_circle='enter', recent_circle_id=circle_id)
         if not registered_main_result['success']:
-            print(f'❌ 步骤21失败：{registered_main_result["message"]}')
-            return False
+            raise AssertionError(f'步骤21失败：{registered_main_result["message"]}')
         print('✅ 步骤21完成')
 
-        # 输出最终结果
         print('\n' + '='*60)
         print('📊 测试结果')
         print('='*60)
         print('✅ 所有测试通过')
         print('='*60)
-        return True
 
     except Exception as e:
         print(f'\n❌ 测试执行异常: {str(e)}')
         import traceback
         traceback.print_exc()
-        return False
+        raise
 
     finally:
         # 清理

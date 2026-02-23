@@ -43,32 +43,35 @@ def publish_post_with_single_image(mini, circle_id, content, image_path, test_im
             action_btn.tap()
             time.sleep(1.5)
 
-            # 验证是否成功进入发布页面
+            # 验证是否成功打开发布面板
             page = mini.app.current_page
-            if 'publish' not in page.path:
-                raise Exception(f'点击后未进入发布页面，当前页面: {page.path}')
-                
-            print(f'   ✅ 已进入发布页面')
+            if 'details' not in page.path:
+                raise Exception(f'点击后页面异常，当前页面: {page.path}')
+            publish_panel = page.get_element('publish-panel')
+            if not publish_panel:
+                raise Exception('未找到发布面板组件')
+
+            print(f'   ✅ 已打开发布面板')
         except Exception as e:
             print(f'   ❌ 进入发布页面失败: {str(e)[:100]}...')
             raise Exception(f'无法进入发布页面: {str(e)}')
         
         page = mini.app.current_page
-        
+
         # 输入帖子内容
-        content_textarea = page.get_element('#contentTextarea')
+        content_textarea = page.get_element('publish-panel>>>#contentTextarea')
         if not content_textarea:
             raise Exception('未找到内容输入框')
-        
+
         content_textarea.input(content)
         time.sleep(0.5)
         print(f'   ✅ 已输入帖子内容: {content}')
-        
+
         # 添加图片 - 使用JavaScript模拟
         _add_images(mini, [image_path])
-        
+
         # 点击发布按钮
-        publish_btn = page.get_element('#publishBtn')
+        publish_btn = page.get_element('publish-panel>>>#publishBtn')
         if not publish_btn:
             raise Exception('未找到发布按钮')
         
@@ -167,29 +170,32 @@ def publish_post_with_multi_images(mini, circle_id, content, image_paths):
         action_btn.tap()
         time.sleep(0.8)
         
-        # 验证是否成功进入发布页面
+        # 验证是否成功打开发布面板
         page = mini.app.current_page
-        if 'publish' not in page.path:
-            raise Exception(f'点击后未进入发布页面，当前页面: {page.path}')
-            
-        print(f'   ✅ 已进入发布页面')
+        if 'details' not in page.path:
+            raise Exception(f'点击后页面异常，当前页面: {page.path}')
+        publish_panel = page.get_element('publish-panel')
+        if not publish_panel:
+            raise Exception('未找到发布面板组件')
+
+        print(f'   ✅ 已打开发布面板')
         
         page = mini.app.current_page
-        
+
         # 输入帖子内容
-        content_textarea = page.get_element('#contentTextarea')
+        content_textarea = page.get_element('publish-panel>>>#contentTextarea')
         if not content_textarea:
             raise Exception('未找到内容输入框')
-        
+
         content_textarea.input(content)
         time.sleep(0.5)
         print(f'   ✅ 已输入帖子内容: {content}')
-        
+
         # 添加多张图片
         _add_images(mini, image_paths)
-        
+
         # 发布帖子
-        publish_btn = page.get_element('#publishBtn')
+        publish_btn = page.get_element('publish-panel>>>#publishBtn')
         if not publish_btn:
             raise Exception('未找到发布按钮')
         
@@ -664,7 +670,7 @@ def _add_images(mini, image_paths):
     result = upload_multiple_images_with_button(
         mini, 
         image_paths, 
-        button_selector='#addImagesBtn',
+        button_selector='publish-panel>>>#addImagesBtn',
         wait_after=0.5  # 缩短为原来的 1/4
     )
     

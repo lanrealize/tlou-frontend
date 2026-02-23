@@ -117,10 +117,14 @@ const userStore = observable({
     // 清除本地存储
     wx.removeStorageSync('openid');
     wx.removeStorageSync('userInfo');
-    
+
     // 重置身份状态
     this.currentIdentityType = IDENTITY_TYPE.REAL;
-    
+
+    // 重置朋友圈数据（避免新用户看到旧用户数据）
+    const { circleStore } = require('./circleStore');
+    if (circleStore) circleStore.reset();
+
     this.setStatus(USER_STATUS.UNREGISTERED);
     wx.showToast({ title: '已退出登录', icon: 'success' });
   },

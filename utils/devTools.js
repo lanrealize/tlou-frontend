@@ -67,6 +67,10 @@ function startTestMode() {
     const userStore = app.getUserStore();
     const { USER_STATUS } = require('../store/userStore');
     userStore.setStatus(USER_STATUS.UNREGISTERED, {});
+
+    // 5. 重置 circleStore（避免测试用户看到真实用户数据）
+    const { circleStore } = require('../store/circleStore');
+    if (circleStore) circleStore.reset();
     
     console.log('========================================');
     console.log('🎭 测试模式已开启');
@@ -149,7 +153,11 @@ async function endTestMode() {
     // 5. 触发重新初始化（复用 app.onLaunch 逻辑）
     console.log('🔄 触发重新初始化...');
     const app = getApp();
-    
+
+    // 重置 circleStore（避免真实用户看到测试用户数据）
+    const { circleStore } = require('../store/circleStore');
+    if (circleStore) circleStore.reset();
+
     // 重置初始化状态
     app._initCompleted = false;
     

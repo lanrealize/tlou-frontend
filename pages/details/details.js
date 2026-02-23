@@ -93,7 +93,8 @@ Page({
     shareAnimationCompleted: false, // 动画是否完成
     shareAnimationEnabled: true,  // 🧪 动画开关（测试用，生产环境设为 true）
     shareAnimationTransform: '',  // 动画过渡的 CSS 变量
-    transitionActive: false       // 是否激活过渡动画
+    transitionActive: false,      // 是否激活过渡动画
+    showPublish: false
   },
 
   onLoad(options) {
@@ -1039,15 +1040,15 @@ Page({
 
   // 导航到发布页面
   navigateToPublish() {
-    // 使用统一的权限检查：登录 + 成员资格
     const { circle, inviteCode } = this.data;
     if (!checkAndHandle('publishPost', { circle, inviteCode })) {
       return;
     }
+    this.setData({ showPublish: true });
+  },
 
-    wx.navigateTo({
-      url: `/pages/publish/publish?circleId=${this.data.circleId}`
-    });
+  onPublishClose() {
+    this.setData({ showPublish: false });
   },
 
 

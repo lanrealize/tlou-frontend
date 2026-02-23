@@ -4,9 +4,9 @@
   <view class="custom-navigation" style="height: {{navigationData.totalNavigationHeight || 88}}px;">
     <!-- 第一行：基础导航 -->
     <view class="navigation-content" style="height: {{navigationData.navigationBarHeight || 44}}px; margin-top: {{navigationData.statusBarHeight || 44}}px;">
-      <!-- 左侧返回按钮 -->
-      <view class="nav-back-btn" bindtap="goBack">
-        <image class="back-icon" src="/assets/icons/back.svg" mode="aspectFit"></image>
+      <!-- 左侧取消按钮 -->
+      <view class="nav-cancel-btn" bindtap="goBack">
+        <text class="nav-cancel-text">取消</text>
       </view>
       
       <!-- 中间标题 -->

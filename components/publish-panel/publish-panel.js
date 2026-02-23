@@ -1,94 +1,67 @@
-// pages/publish/publish.js
+// components/publish-panel/publish-panel.js
 const { storeBindingsBehavior } = require('mobx-miniprogram-bindings');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const api = require('../../utils/api');
 const util = require('../../utils/util');
 const { getCurrentUser, isUserLoggedIn, getCurrentUserId } = require('../../utils/checkUserActionPermission');
 
-Page({
-  // 使用MobX状态管理行为
+Component({
   behaviors: [storeBindingsBehavior],
-  
+
+  properties: {
+    circleId: { type: String, value: '' },
+    show: { type: Boolean, value: false }
+  },
+
+  observers: {
+    'show': function(val) {
+      if (val) {
+        this.setData({ circleId: this.properties.circleId });
+        this.loadCircleInfo();
+        this.setData({ userInfo: getCurrentUser(), isLoggedIn: isUserLoggedIn() });
+        setTimeout(() => this.setData({ slideIn: true }), 50);
+      } else {
+        this.setData({ slideIn: false });
+      }
+    }
+  },
+
   data: {
     slideIn: false,
-    circleId: '',           // 朋友圈ID
-    circle: null,           // 朋友圈信息
-    content: '',            // 发布内容
-    images: [],             // 选择的图片列表
-    tempImages: [],         // 临时图片路径（用于预览）
-    isPublishing: false,    // 发布状态
-    maxImages: 9,           // 最大图片数量
-    // 图片违规检查相关状态
-    violationDetails: null, // 违规图片详情
-    showViolationAlert: false, // 是否显示违规提示
-    violationTimeout: null, // 违规超时时间戳
-    // 导航栏信息
-    navigationData: {
-      totalNavigationHeight: 88
-    },
-    // 倒计时显示
+    circleId: '',
+    circle: null,
+    content: '',
+    images: [],
+    tempImages: [],
+    isPublishing: false,
+    maxImages: 9,
+    violationDetails: null,
+    showViolationAlert: false,
+    violationTimeout: null,
+    navigationData: { totalNavigationHeight: 88 },
     remainingTimeText: ''
   },
 
-  onLoad(options) {
-    // 触发从底部滑入动画
-    setTimeout(() => this.setData({ slideIn: true }), 50);
-
-    this.setupStoreBindings();
-    this.getNavigationData(); // 获取导航栏数据
-    
-    const { circleId } = options;
-    
-    if (circleId) {
-      this.setData({ circleId });
-      this.loadCircleInfo();
-    } else {
-      util.showToast('朋友圈ID不能为空');
-      wx.navigateBack();
-      return;
-    }
-
-    // ✅ 修复：使用统一的用户状态获取函数，无需setTimeout
-    const currentUser = getCurrentUser();
-    const isLoggedIn = isUserLoggedIn();
-    
-    this.setData({
-      userInfo: currentUser,
-      isLoggedIn: isLoggedIn
-    });
-  },
-
-  onShow() {
-    
-    // ✅ 修复：使用统一的用户状态获取函数
-    const currentUser = getCurrentUser();
-    const isLoggedIn = isUserLoggedIn();
-    
-    // 更新当前用户信息（可能在其他页面发生了变化）
-    this.setData({
-      userInfo: currentUser,
-      isLoggedIn: isLoggedIn
-    });
-
-  },
-
-  onUnload() {
-    // 清理MobX绑定
-    if (this.storeBindings) {
-      this.storeBindings.destroyStoreBindings();
-    }
-    
-    // 清理违规状态相关的定时器
-    if (this.violationTimer) {
-      clearTimeout(this.violationTimer);
-    }
-    if (this.violationFinalTimer) {
-      clearTimeout(this.violationFinalTimer);
-    }
-    if (this.countdownTimer) {
-      clearInterval(this.countdownTimer);
+  lifetimes: {
+    attached() {
+      this.setupStoreBindings();
+      this.getNavigationData();
+    },
+    detached() {
+      if (this.storeBindings) this.storeBindings.destroyStoreBindings();
+      if (this.violationTimer) clearTimeout(this.violationTimer);
+      if (this.violationFinalTimer) clearTimeout(this.violationFinalTimer);
+      if (this.countdownTimer) clearInterval(this.countdownTimer);
     }
   },
+
+  pageLifetimes: {
+    show() {
+      this.setData({ userInfo: getCurrentUser(), isLoggedIn: isUserLoggedIn() });
+    }
+  },
+
+  methods: {
 
   // 设置MobX Store绑定
   setupStoreBindings() {
@@ -109,7 +82,7 @@ Page({
 
   // 返回按钮处理
   goBack() {
-    wx.navigateBack();
+    this.triggerEvent('close');
   },
 
   // 获取导航栏数据
@@ -161,7 +134,7 @@ Page({
 
       util.showToast('朋友圈信息加载失败');
       setTimeout(() => {
-        wx.navigateBack();
+        this.triggerEvent('close');
       }, 1500);
     }
   },
@@ -447,8 +420,8 @@ Page({
           app.globalData.shouldScrollToTopAfterPost = true;
         }
         
-        wx.navigateBack();
-        
+        this.triggerEvent('close');
+
         // 🔥 在后台继续上传（不阻塞UI）
         this.uploadPostInBackground(tempId, circleId, contentToUpload, imagesToUpload, postStore);
       }, 500);
@@ -580,19 +553,18 @@ Page({
 
   // 返回上一页
   navigateBack() {
-    // 如果有未保存的内容，给出提示
     if (this.data.content.trim() || this.data.tempImages.length > 0) {
       wx.showModal({
         title: '提示',
         content: '当前有未保存的内容，确定要离开吗？',
         success: (res) => {
           if (res.confirm) {
-            wx.navigateBack();
+            this.triggerEvent('close');
           }
         }
       });
     } else {
-      wx.navigateBack();
+      this.triggerEvent('close');
     }
   },
 
@@ -816,8 +788,9 @@ Page({
     });
     
     this.clearViolationState();
-    
+
     // 重新调用发布
     this.publishPost();
+  }
   }
 });

@@ -79,7 +79,7 @@
 通过 API 快速删除朋友圈，不使用 UI 操作。直接调用后端 DELETE /circles/:id 接口删除。
 
 ### circle_helper.py → `check_circle_status_action(mini, expected_user_status)`
-检查 details 页面底部 circle-status-action 组件的UI显示内容。
+检查 details 页面的状态UI显示内容。`member` 状态时只验证顶部发布按钮为 enabled；其他状态验证底部 circle-status-action 组件的主标题、副标题、按钮文字，以及顶部发布按钮的 disabled 状态和点击反馈（toast 或注册弹窗）。
 
 ### circle_helper.py → `enter_circle_settings(mini, circle_id=None, expect_success=True)`
 从 details 页面进入 settings 页面。
