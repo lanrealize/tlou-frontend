@@ -664,7 +664,7 @@
   width: 32rpx;
   height: 28rpx;
   margin-right: 25rpx;
-  margin-left: 5rpx;
+  margin-left: 4rpx;
 }
 
 .likes-text {
