@@ -212,6 +212,18 @@
       bind:acceptInvite="acceptInvite"
     ></circle-status-action>
 
+    <!-- 全屏 Loading Overlay -->
+    <view class="unified-loading-overlay" wx:if="{{loading && posts.length === 0}}">
+      <view class="loading-overlay-bg"></view>
+      <view class="loading-overlay-content">
+        <view class="loading-overlay-spinner">
+          <view class="spinner-circle"></view>
+        </view>
+        <view class="loading-overlay-title">加载朋友圈</view>
+        <view class="loading-overlay-subtitle">正在加载中...</view>
+      </view>
+    </view>
+
     <!-- 评论输入框 -->
     <view class="comment-input-modal" wx:if="{{showCommentInput}}">
       <view class="comment-input-overlay" bindtap="cancelComment"></view>

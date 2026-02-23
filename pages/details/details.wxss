@@ -513,6 +513,72 @@ view, text, image {
   height: 180rpx;
 }
 
+/* ===== 全屏 Loading Overlay ===== */
+.unified-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-overlay-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10rpx);
+}
+
+.loading-overlay-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.loading-overlay-spinner {
+  position: relative;
+  width: 80rpx;
+  height: 80rpx;
+  margin-bottom: 40rpx;
+}
+
+.spinner-circle {
+  width: 80rpx;
+  height: 80rpx;
+  border: 6rpx solid #f0f0f0;
+  border-top: 6rpx solid #1A73E8;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-overlay-title {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #333333;
+  margin-bottom: 16rpx;
+  text-align: center;
+}
+
+.loading-overlay-subtitle {
+  font-size: 26rpx;
+  color: #808080;
+  text-align: center;
+}
+
 /* ===== 时间轴结束标记 ===== */
 .timeline-end-marker {
   /* 复用 post-item 的 Grid 布局 */
