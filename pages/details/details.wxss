@@ -506,6 +506,10 @@ view, text, image {
 
 /* ===== 底部占位块 ===== */
 .scroll-bottom-spacer {
+  height: 100rpx;
+}
+
+.scroll-bottom-spacer.has-action-bar {
   height: 180rpx;
 }
 
@@ -783,10 +787,7 @@ view, text, image {
   .setting-btn {
     font-size: 28rpx;
   }
-  
-  .posts-container {
-    padding-bottom: 170rpx;
-  }
+
 }
 
 /* ===== 添加新分享部分样式 - 已移至circle-status-action组件 ===== */

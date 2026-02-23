@@ -152,7 +152,7 @@
             <!-- 直接遍历所有帖子 -->
             <block wx:for="{{posts}}" wx:key="_id" wx:for-item="post">
               <post-item
-                id="post-item-{{post._id}}"
+                id="{{index === 0 ? 'first-post-item' : 'post-item-' + post._id}}"
                 post="{{post}}"
                 current-user="{{currentUser}}"
                 show-actions="{{true}}"
@@ -193,8 +193,8 @@
           </view>
         </view>
 
-      <!-- 底部占位：仅在有底部卡片时显示，高度与卡片相等 -->
-      <view class="scroll-bottom-spacer" wx:if="{{userStatus !== 'member'}}"></view>
+      <!-- 底部占位：member时30rpx，有底部卡片时180rpx -->
+      <view class="scroll-bottom-spacer {{userStatus !== 'member' ? 'has-action-bar' : ''}}"></view>
 
       <!-- 发布按钮和邀请提示 - 已移至底部统一组件 -->
     </scroll-view>

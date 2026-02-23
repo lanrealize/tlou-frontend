@@ -914,7 +914,8 @@
 
 /* 展开和收起状态：统一保持 30rpx */
 .comments-toggle {
-  margin-top: 30rpx;
+  margin-top: 25rpx;
+  margin-bottom: 15rpx;
   /* 不需要动画，完全依赖评论的动画 */
   transition: none;
 }
