@@ -464,6 +464,17 @@ Page({
     });
   },
 
+  onScrollToComment(e) {
+    const { commentTop, viewportHeight } = e.detail;
+    const currentScrollTop = this._currentScrollTop || 0;
+    const targetScrollTop = currentScrollTop + commentTop - viewportHeight / 2;
+    this.setData({ scrollTopValue: Math.max(0, targetScrollTop) });
+  },
+
+  onScroll(e) {
+    this._currentScrollTop = e.detail.scrollTop;
+  },
+
   // 滚动到顶部
   scrollToTop() {
     console.log('📜 开始滚动到顶部');

@@ -346,6 +346,20 @@ Component({
       if (commentIndex >= maxCommentsShow && !commentsExpanded) {
         this.setData({ commentsExpanded: true });
       }
+
+      // 渲染完成后查询评论节点位置，通知页面滚动
+      wx.nextTick(() => {
+        wx.createSelectorQuery()
+          .in(this)
+          .select(`#comment-${newComment._id}`)
+          .boundingClientRect()
+          .selectViewport()
+          .boundingClientRect()
+          .exec(([commentRect, viewportRect]) => {
+            if (!commentRect || !viewportRect) return;
+            this.triggerEvent('scrollToComment', { commentTop: commentRect.top, viewportHeight: viewportRect.height });
+          });
+      });
     },
 
     // 更新显示的评论列表（兼容旧逻辑，现在只是空函数）

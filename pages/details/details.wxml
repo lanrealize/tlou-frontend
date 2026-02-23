@@ -124,12 +124,13 @@
     </view>
 
     <!-- 可滚动内容区域 -->
-    <scroll-view 
+    <scroll-view
       class="moment-scroll-view"
       scroll-y="{{true}}"
       scroll-top="{{scrollTopValue}}"
       scroll-with-animation="{{true}}"
       bindscrolltolower="onReachBottom"
+      bindscroll="onScroll"
       enhanced="{{false}}"
       show-scrollbar="{{false}}"
       enable-back-to-top="{{true}}"
@@ -151,7 +152,7 @@
             <!-- 直接遍历所有帖子 -->
             <block wx:for="{{posts}}" wx:key="_id" wx:for-item="post">
               <post-item
-                id="{{index === 0 ? 'first-post-item' : ''}}"
+                id="post-item-{{post._id}}"
                 post="{{post}}"
                 current-user="{{currentUser}}"
                 show-actions="{{true}}"
@@ -165,6 +166,7 @@
                 bind:deleteComment="onCommentDelete"
                 bind:previewImage="onPreviewImage"
                 bind:tapAvatar="onTapAvatar"
+                bind:scrollToComment="onScrollToComment"
               ></post-item>
             </block>
 
