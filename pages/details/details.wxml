@@ -138,7 +138,8 @@
       <!-- 申请加入朋友圈区域 - 已移至底部统一组件 -->
 
       <!-- 帖子列表区域 - 时间轴布局 -->
-      <view class="posts-container {{userStatus === 'member' ? 'posts-container-member' : ''}}">
+      <view class="posts-container">
+        <view class="posts-top-spacer"></view>
         <!-- 空状态 -->
         <view class="empty-content" wx:if="{{posts.length === 0 && !loading}}">
           <view class="empty-title">朋友圈内容为空</view>
@@ -146,9 +147,7 @@
         </view>
 
         <!-- 时间轴布局 -->
-        <view class="timeline-container" wx:else>
-          <!-- 帖子列表 -->
-          <view class="timeline-posts">
+        <view class="timeline-posts" wx:else>
             <!-- 直接遍历所有帖子 -->
             <block wx:for="{{posts}}" wx:key="_id" wx:for-item="post">
               <post-item
@@ -191,7 +190,9 @@
             </view>
           </view>
         </view>
-      </view>
+
+      <!-- 底部占位：仅在有底部卡片时显示，高度与卡片相等 -->
+      <view class="scroll-bottom-spacer" wx:if="{{userStatus !== 'member'}}"></view>
 
       <!-- 发布按钮和邀请提示 - 已移至底部统一组件 -->
     </scroll-view>

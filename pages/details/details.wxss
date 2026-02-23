@@ -475,14 +475,11 @@ view, text, image {
 
 /* ===== 帖子列表区域 - 时间轴布局 ===== */
 .posts-container {
-  margin-top: 70rpx;
-  padding-bottom: 180rpx; /* 为底部统一组件留出空间（非成员状态） */
   position: relative;
 }
 
-/* 成员状态：减少底部 padding（因为没有底部卡片） */
-.posts-container-member {
-  padding-bottom: 50rpx;
+.posts-top-spacer {
+  height: 50rpx;
 }
 
 .empty-content {
@@ -502,15 +499,15 @@ view, text, image {
   line-height: 1.5;
 }
 
-/* ===== 时间轴容器 ===== */
-.timeline-container {
+/* ===== 时间轴帖子列表 ===== */
+.timeline-posts {
   position: relative;
   padding: 0 10rpx;
 }
 
-/* ===== 时间轴帖子列表 ===== */
-.timeline-posts {
-  position: relative;
+/* ===== 底部占位块 ===== */
+.scroll-bottom-spacer {
+  height: 180rpx;
 }
 
 /* ===== 时间轴结束标记 ===== */
