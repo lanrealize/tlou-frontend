@@ -2,7 +2,7 @@
   "navigationStyle": "custom",
   "backgroundColor": "#ffffff",
   "enablePullDownRefresh": false,
-  "disableScroll": true,
+  "disableScroll": false,
   "usingComponents": {
     "custom-navigation": "/components/custom-navigation/custom-navigation"
   }
