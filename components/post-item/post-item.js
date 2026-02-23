@@ -79,12 +79,12 @@ Component({
   observers: {
     'post.comments': function(comments) {
       if (!comments || !Array.isArray(comments)) return;
-      
+
       // 检查是否有新评论（未处理过的）
       const newComment = comments.find(c => {
         return c._isNew && !this._isProcessingComment(c._id);
       });
-      
+
       if (newComment) {
         this._markCommentAsProcessing(newComment._id);
         this.handleNewComment(newComment);
@@ -99,6 +99,15 @@ Component({
       }
       // post 对象变化时也需要更新点赞状态
       this.updateLikedStatus();
+
+      // post 整体替换时，post.comments observer 不会触发，手动检查新评论
+      if (post && Array.isArray(post.comments)) {
+        const newComment = post.comments.find(c => c._isNew && !this._isProcessingComment(c._id));
+        if (newComment) {
+          this._markCommentAsProcessing(newComment._id);
+          this.handleNewComment(newComment);
+        }
+      }
     },
     // 监听用户变化，更新点赞状态
     'currentUser._id': function() {
@@ -328,20 +337,15 @@ Component({
     // 处理新评论（自动展开）
     handleNewComment(newComment) {
       const { post, commentsExpanded, maxCommentsShow } = this.data;
-      
+
       if (!newComment || !post || !post.comments) return;
-      
-      // 找到新评论的索引位置
+
       const commentIndex = post.comments.findIndex(c => c._id === newComment._id);
       if (commentIndex === -1) return;
-      
-      // 逻辑：如果新评论在第4条及以上（被折叠），自动展开
+
       if (commentIndex >= maxCommentsShow && !commentsExpanded) {
         this.setData({ commentsExpanded: true });
       }
-      
-      // 注意：_isNew 标记会由 postStore 在 2.5 秒后自动清除
-      // 这里不需要手动清除，避免触发 observer 循环
     },
 
     // 更新显示的评论列表（兼容旧逻辑，现在只是空函数）

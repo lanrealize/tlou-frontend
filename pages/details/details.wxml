@@ -79,14 +79,14 @@
             <!-- 用户头像组（包含头像和添加按钮） -->
             <view class="avatar-group">
               <!-- 如果没有任何成员，显示一个默认头像作为占位 -->
-              <image class="member-avatar" wx:if="{{!circle.members || circle.members.length === 0}}" src="/images/default_avatar.png" mode="aspectFill"></image>
-              
+              <image class="member-avatar" wx:if="{{!circle.members || circle.members.length === 0}}" src="/images/default_avatar.png" mode="aspectFill" bindtap="openSettings"></image>
+
               <!-- 成员≤2：显示实际数量的头像 -->
-              <image class="member-avatar" wx:for="{{circle.members || []}}" wx:for-item="member" wx:key="_id" wx:if="{{circle.members.length <= 2 && index < 2}}" src="{{member.avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
-              
+              <image class="member-avatar" wx:for="{{circle.members || []}}" wx:for-item="member" wx:key="_id" wx:if="{{circle.members.length <= 2 && index < 2}}" src="{{member.avatar || '/images/default_avatar.png'}}" mode="aspectFill" bindtap="openSettings"></image>
+
               <!-- 成员>2：显示1个头像 + 1个+N徽章 -->
               <block wx:if="{{circle.members && circle.members.length > 2}}">
-                <image class="member-avatar" src="{{circle.members[0].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
+                <image class="member-avatar" src="{{circle.members[0].avatar || '/images/default_avatar.png'}}" mode="aspectFill" bindtap="openSettings"></image>
                 <view class="member-count-badge" bindtap="openSettings">
                   <image class="member-count-bg" src="{{circle.members[1].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
                   <view class="member-count-overlay"></view>

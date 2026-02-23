@@ -228,7 +228,7 @@
         </view>
         <view class="create-text-container">
           <view class="create-title card-main-title">创建新的朋友圈</view>
-          <view class="create-desc card-sub-title">邀请朋友"扫一扫"一起开始吧</view>
+          <view class="create-desc card-sub-title">邀请朋友，或让 AI 陪你开始</view>
         </view>
       </view>
     </view>

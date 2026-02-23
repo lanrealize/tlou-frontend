@@ -148,9 +148,7 @@ Page({
     
     // 如果是创建成功后跳转过来，显示成功提示
     if (showCreateSuccess === 'true') {
-      setTimeout(() => {
-        wx.showToast({ title: '创建成功', icon: 'success', duration: 1000 });
-      }, 1000);
+      wx.showToast({ title: '创建成功', icon: 'success', duration: 1000 });
     }
     
     // 加载朋友圈数据
@@ -1102,6 +1100,11 @@ Page({
       };
 
       await this.addComment(selectedPostId, data);
+
+      // 手动同步 postStore.posts 到页面 data，确保 post-item 收到更新
+      const { postStore } = require('../../store/postStore');
+      const plainPosts = JSON.parse(JSON.stringify(postStore.posts));
+      this.setData({ posts: plainPosts });
 
       util.showToast('评论成功');
 

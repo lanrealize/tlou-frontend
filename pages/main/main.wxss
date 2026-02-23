@@ -85,6 +85,11 @@ view, text, image {
   background-size: cover;
   background-repeat: no-repeat;
   flex-shrink: 0;
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .avatar-main.error-avatar {
@@ -731,6 +736,7 @@ view, text, image {
   width: 100%;
   max-width: 540rpx;
   margin-top: 20rpx;
+  text-align: center;
   transition: color 2s ease, text-shadow 2s ease;
 }
 

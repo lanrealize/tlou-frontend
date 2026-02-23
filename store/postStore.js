@@ -229,22 +229,17 @@ const postStore = observable({
     this._pendingComments.add(commentKey);
 
     try {
-
-      
       const response = await api.posts.addComment(postId, commentData);
 
-      
       // 本地更新：构建新评论并添加到对应帖子中
       const postIndex = this.posts.findIndex(p => p._id === postId);
 
-      
       if (postIndex !== -1) {
         try {
           // 获取当前用户信息
           const app = getApp();
           const currentUser = app.getUserStore?.()?.userInfo;
 
-          
           if (currentUser) {
             // 获取回复目标用户信息
             let replyToUser = null;
@@ -285,17 +280,13 @@ const postStore = observable({
               formattedTime: util.formatRelativeTime(new Date()),
               _isNew: true  // 标记为新评论，用于高亮
             };
-            
-
-            
             // 更新本地帖子数据
             const updatedPosts = [...this.posts];
             const post = updatedPosts[postIndex];
-            post.comments = post.comments || [];
-            post.comments.push(newComment);
-            
+            const updatedComments = [...(post.comments || []), newComment];
+            updatedPosts[postIndex] = { ...post, comments: updatedComments };
             this.posts = updatedPosts;
-            
+
             // 2.5秒后自动清除 _isNew 标记
             const commentId = newComment._id;
             setTimeout(() => {
