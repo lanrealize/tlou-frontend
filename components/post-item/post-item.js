@@ -286,6 +286,7 @@ Component({
       
       let displayWidth, displayHeight;
       
+      let needsCrop = false;
       if (isPortrait) {
         // 纵向图片：固定高度460rpx，宽度按比例缩放
         displayHeight = 460;
@@ -294,6 +295,12 @@ Component({
         if (displayWidth > 500) {
           displayWidth = 500;
           displayHeight = Math.round(500 * (originalHeight / originalWidth));
+        }
+        // 限制最小宽高比 2:3，过窄时裁剪填充
+        const minWidth = Math.round(displayHeight * 2 / 3);
+        needsCrop = displayWidth < minWidth;
+        if (needsCrop) {
+          displayWidth = minWidth;
         }
       } else {
         // 横向图片：固定宽度500rpx，高度按比例缩放
@@ -310,8 +317,8 @@ Component({
       this.setData({
         singleImageInfo: {
           isPortrait: isPortrait,
-          mode: isPortrait ? 'heightFix' : 'widthFix',
-          styleClass: isPortrait ? 'portrait' : 'landscape',
+          mode: isPortrait ? (needsCrop ? 'aspectFill' : 'heightFix') : 'widthFix',
+          styleClass: isPortrait ? (needsCrop ? 'portrait-crop' : 'portrait') : 'landscape',
           displayWidth: displayWidth,
           displayHeight: displayHeight
         }

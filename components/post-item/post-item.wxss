@@ -455,6 +455,12 @@
   width: auto;
 }
 
+/* 纵向图片裁剪模式 - aspectFill，填满容器 */
+.post-image-single.portrait-crop {
+  width: 100%;
+  height: 100%;
+}
+
 /* 横向图片样式 - widthFix模式，宽度固定550rpx */
 .post-image-single.landscape {
   width: 550rpx;
