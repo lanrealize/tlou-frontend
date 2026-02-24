@@ -71,6 +71,7 @@ Page({
     recommendedCircles: [],         // 推荐的公开朋友圈列表
     isLoadingRecommendations: false, // 是否正在加载推荐
     recommendationsLoaded: false,   // 是否已经加载过推荐内容（用于控制只在首次自动加载）
+    discoverVisible: false,         // 下方发现卡片区域是否可见
     
     // 🎯 统一的全屏 Loading Overlay
     showLoadingOverlay: false,      // 是否显示 loading overlay
@@ -708,7 +709,12 @@ Page({
     if (userStore.isLoggedIn) {
       circlePromise = this.loadRecentCircle();  // 保存 Promise
     }
-    
+
+    // 上方卡片 ready 后 600ms 显示下方发现区域
+    circlePromise.then(() => {
+      setTimeout(() => this.setData({ discoverVisible: true }), 150);
+    });
+
     // 📌 公开朋友圈推荐加载（无需登录，任何用户都可以浏览）
     // 只在首次自动加载，之后需要用户手动点击刷新按钮
     if (!this.data.recommendationsLoaded) {

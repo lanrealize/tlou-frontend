@@ -242,34 +242,36 @@
     </view>
   </view>
 
-  <!-- 发现有趣朋友圈 - 加载状态 -->
-  <view class="discover-loading" wx:if="{{isLoadingRecommendations}}">
-    <view class="loading-bg"></view>
-    <view class="loading-title card-main-title">发现有趣朋友圈</view>
-    <view class="loading-content">
-      <view class="loading-spinner"></view>
-      <text class="loading-text">正在为你寻找有趣的朋友圈...</text>
+  <!-- 发现有趣朋友圈区域 -->
+  <view class="discover-section {{discoverVisible ? 'discover-section-visible' : ''}}">
+
+    <!-- 加载状态 -->
+    <view class="discover-loading" wx:if="{{isLoadingRecommendations}}">
+      <view class="loading-bg"></view>
+      <view class="loading-title card-main-title">发现有趣朋友圈</view>
+      <view class="loading-content">
+        <view class="loading-spinner"></view>
+        <text class="loading-text">正在为你寻找有趣的朋友圈...</text>
+      </view>
     </view>
-  </view>
 
-  <!-- 发现有趣朋友圈 - 有推荐内容 -->
-  <discover-circle-card 
-    wx:elif="{{recommendedCircles.length > 0}}"
-    mode="discover"
-    title="发现有趣朋友圈"
-    circle-data="{{recommendedCircles[0]}}"
-    circle-id="{{recommendedCircles[0]._id}}"
-    creator-avatar="{{recommendedCircles[0].postAuthorAvatar || '/images/default_avatar.png'}}"
-    content="{{recommendedCircles[0].latestPost.content}}"
-    has-content="{{recommendedCircles[0].hasLatestPost}}"
-    post-image="{{recommendedCircles[0].postImageUrl || ''}}"
-    bind:cardTap="viewRecommendedCircle"
-    bind:refresh="refreshRecommendations">
-  </discover-circle-card>
+    <!-- 有推荐内容 -->
+    <discover-circle-card
+      wx:elif="{{recommendedCircles.length > 0}}"
+      mode="discover"
+      title="发现有趣朋友圈"
+      circle-data="{{recommendedCircles[0]}}"
+      circle-id="{{recommendedCircles[0]._id}}"
+      creator-avatar="{{recommendedCircles[0].postAuthorAvatar || '/images/default_avatar.png'}}"
+      content="{{recommendedCircles[0].latestPost.content}}"
+      has-content="{{recommendedCircles[0].hasLatestPost}}"
+      post-image="{{recommendedCircles[0].postImageUrl || ''}}"
+      bind:cardTap="viewRecommendedCircle"
+      bind:refresh="refreshRecommendations">
+    </discover-circle-card>
 
-  <!-- 暂无推荐时的占位 - 允许未登录用户刷新 -->
-  <!-- 移除 recommendationsLoaded 条件，确保空状态始终显示 -->
-  <view class="discover-empty" wx:elif="{{!isLoadingRecommendations && recommendedCircles.length === 0}}" bindtap="refreshRecommendations">
+    <!-- 暂无推荐 -->
+    <view class="discover-empty" wx:elif="{{!isLoadingRecommendations && recommendedCircles.length === 0}}" bindtap="refreshRecommendations">
     <text class="card-main-title">暂无可推荐的朋友圈</text>
     <text class="card-sub-title">请稍后再试或者{{isLoggedIn ? '创建一个新的公开朋友圈吧' : '登录后可创建朋友圈'}}</text>
     <view class="refresh-hint">
@@ -277,6 +279,8 @@
       <text>点击刷新</text>
     </view>
   </view>
+
+  </view><!-- /discover-section -->
 
   <!-- 用户信息弹出层 -->
   <user-info-popup

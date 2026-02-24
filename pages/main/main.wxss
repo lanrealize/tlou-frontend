@@ -1255,3 +1255,19 @@ view, text, image {
     padding: 45rpx 30rpx;
   }
 }
+
+.discover-section {
+  opacity: 0;
+  transform: translateY(30rpx);
+}
+
+.discover-section-visible {
+  animation: discoverFadeIn 0.5s ease-out forwards;
+}
+
+@keyframes discoverFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
