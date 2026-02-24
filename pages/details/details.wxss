@@ -472,6 +472,27 @@ view, text, image {
   font-weight: 400;
 }
 
+/* 发布按钮炫彩动画 */
+@keyframes publish-btn-rainbow {
+  0%   { color: #1A73E8; }
+  10%  { color: #5B4FE8; }
+  18%  { color: #AF52DE; }
+  26%  { color: #E8407A; }
+  34%  { color: #FF6B6B; }
+  42%  { color: #FF8C5A; }
+  50%  { color: #2ECC8F; }
+  58%  { color: #5AC8FA; }
+  66%  { color: #4A7FE8; }
+  74%  { color: #5B4FE8; }
+  82%  { color: #AF52DE; }
+  90%  { color: #4A7FE8; }
+  100% { color: #1A73E8; }
+}
+
+.top-btn.rainbow {
+  animation: publish-btn-rainbow 8s ease-in-out 1 forwards;
+}
+
 /* 顶部按钮 disabled 状态 */
 .top-btn.disabled {
   color:rgb(135, 135, 135);

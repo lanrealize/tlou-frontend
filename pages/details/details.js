@@ -95,7 +95,8 @@ Page({
     shareAnimationEnabled: true,  // 🧪 动画开关（测试用，生产环境设为 true）
     shareAnimationTransform: '',  // 动画过渡的 CSS 变量
     transitionActive: false,      // 是否激活过渡动画
-    showPublish: false
+    showPublish: false,
+    publishBtnRainbow: false
   },
 
   onLoad(options) {
@@ -521,6 +522,7 @@ Page({
       const { currentUser } = this.data;
       const userId = currentUser?._id || null;
       const relation = getUserStatusWithRole(targetCircle, userId, this.data.inviteCode);
+      const prevUserStatus = this.data.userStatus;
 
       this.setData({
         circle: targetCircle,
@@ -533,6 +535,11 @@ Page({
         showPublishButton: relation.status === 'member',
         userStatus: relation.status // 设置统一状态
       });
+
+      // 🌈 发布按钮炫彩：首次确认成员身份时触发
+      if (relation.status === 'member' && prevUserStatus !== 'member') {
+        this.triggerPublishBtnRainbow();
+      }
 
       // 🔑 根据权限设置分享菜单
       this.setupShareMenu(targetCircle, currentUser);
@@ -608,6 +615,7 @@ Page({
       // 🔑 使用全局状态管理判断用户关系
       const userId = currentUser?._id || null;
       const relation = getUserStatusWithRole(targetCircle, userId, this.data.inviteCode);
+      const prevUserStatus = this.data.userStatus;
 
       this.setData({
         circle: targetCircle,
@@ -620,6 +628,11 @@ Page({
         showPublishButton: relation.status === 'member',
         userStatus: relation.status // 设置统一状态
       });
+
+      // 🌈 发布按钮炫彩：首次确认成员身份时触发
+      if (relation.status === 'member' && prevUserStatus !== 'member') {
+        this.triggerPublishBtnRainbow();
+      }
 
       // 🔑 根据权限设置分享菜单
       this.setupShareMenu(targetCircle, currentUser);
@@ -1048,7 +1061,29 @@ Page({
 
 
 
-  // 导航到发布页面
+  // 🌈 发布按钮炫彩动画冷却配置（0 = 每次都触发，生产环境改为 6 * 60 * 60 * 1000）
+  PUBLISH_BTN_RAINBOW_INTERVAL: 0,
+
+  // 🌈 触发发布按钮炫彩动画
+  triggerPublishBtnRainbow() {
+    const { circleId } = this.data;
+    const storageKey = `publish_btn_rainbow_ts_${circleId}`;
+    const interval = this.PUBLISH_BTN_RAINBOW_INTERVAL;
+
+    if (interval > 0) {
+      const lastTs = wx.getStorageSync(storageKey) || 0;
+      if (Date.now() - lastTs < interval) return;
+    }
+
+    wx.setStorageSync(storageKey, Date.now());
+    setTimeout(() => {
+      this.setData({ publishBtnRainbow: true });
+      setTimeout(() => {
+        this.setData({ publishBtnRainbow: false });
+      }, 8000);
+    }, 2000);
+  },
+
   navigateToPublish() {
     const { circle, inviteCode } = this.data;
     if (!checkAndHandle('publishPost', { circle, inviteCode })) {
