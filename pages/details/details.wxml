@@ -249,7 +249,10 @@
               disable-default-padding="{{true}}"
               auto-height="{{false}}"
             ></textarea>
-            <button id="sendCommentBtn" class="send-btn theme-btn-small" bindtap="sendComment">发送</button>
+            <button id="sendCommentBtn" class="send-btn theme-btn-small" bindtap="sendComment" wx:if="{{!isSendingComment}}">发送</button>
+            <view class="send-btn-placeholder" wx:else>
+              <view class="comment-sending-spinner"></view>
+            </view>
           </view>
         </view>
       </view>

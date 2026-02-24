@@ -20,6 +20,7 @@ Page({
     commentText: '',      // 评论内容
     replyToUser: null,    // 回复的用户
     selectedPostId: '',   // 当前选中的帖子ID（用于评论）
+    isSendingComment: false, // 是否正在发送评论
     showCommentInput: false, // 是否显示评论输入框
     focusInput: false,    // 是否聚焦输入框
     pendingApplicationsCount: 0, // 待处理申请数量
@@ -1090,7 +1091,9 @@ Page({
 
   // 发送评论
   async sendComment() {
-    const { commentText, replyToUser, selectedPostId } = this.data;
+    const { commentText, replyToUser, selectedPostId, isSendingComment } = this.data;
+
+    if (isSendingComment) return;
 
     if (util.isEmpty(commentText)) {
       util.showToast('请输入评论内容');
@@ -1101,6 +1104,8 @@ Page({
       util.showToast('未选择帖子');
       return;
     }
+
+    this.setData({ isSendingComment: true });
 
     try {
       // ✅ 后端参数名：replyToUserOpenid
@@ -1125,11 +1130,13 @@ Page({
         commentText: '',
         replyToUser: null,
         selectedPostId: '',
-        focusInput: false
+        focusInput: false,
+        isSendingComment: false
       });
 
     } catch (error) {
       util.showToast('评论失败');
+      this.setData({ isSendingComment: false });
     }
   },
 
