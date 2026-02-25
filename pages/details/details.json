@@ -8,7 +8,8 @@
     "custom-navigation": "/components/custom-navigation/custom-navigation",
     "circle-status-action": "/components/circle-status-action/circle-status-action",
     "user-info-popup": "/components/user-info-popup/user-info-popup",
-    "publish-panel": "/components/publish-panel/publish-panel"
+    "publish-panel": "/components/publish-panel/publish-panel",
+    "onboarding-guide": "/components/onboarding-guide/onboarding-guide"
   },
   "backgroundColor": "#f5f5f5"
 }

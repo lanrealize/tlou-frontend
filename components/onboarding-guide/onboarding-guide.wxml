@@ -1,0 +1,64 @@
+<!-- components/onboarding-guide/onboarding-guide.wxml -->
+<view class="onboarding-container">
+
+  <!-- 顶部标题 -->
+  <view class="onboarding-header" style="padding-top: {{headerTop}}px;">
+    <text class="onboarding-title">拍下此刻，\nAI 陪你记录生活</text>
+    <text class="onboarding-subtitle">发一张照片，看看 AI 怎么说</text>
+  </view>
+
+  <!-- 示例帖子 -->
+  <view class="demo-post">
+    <!-- 作者行 -->
+    <view class="demo-author-row">
+      <image class="demo-avatar" src="/assets/onboarding/demo-avatar.jpg" mode="aspectFill"></image>
+      <view class="demo-author-info">
+        <text class="demo-author-name">你</text>
+        <text class="demo-author-time">刚刚</text>
+      </view>
+    </view>
+
+    <!-- 示例图片 -->
+    <view class="demo-image-wrap">
+      <video
+        class="demo-video"
+        src="https://tlou.images.wltech-service.site/videos/tlou-onboarding-vedio.mp4"
+        autoplay
+        muted
+        show-play-btn="{{false}}"
+        show-center-play-btn="{{false}}"
+        controls="{{false}}"
+        objectFit="cover"
+      ></video>
+      <view class="demo-video-blur"></view>
+    </view>
+
+    <!-- AI 评论 -->
+    <view class="demo-comments">
+      <view class="demo-comment">
+        <image class="comment-avatar" src="/assets/onboarding/ai-avatar.png" mode="aspectFill"></image>
+        <view class="comment-body">
+          <text class="comment-name">小圈</text>
+          <text class="comment-text">这个光线真的太美了，你在哪里拍的？🌅</text>
+        </view>
+      </view>
+      <view class="demo-comment">
+        <image class="comment-avatar" src="/assets/onboarding/ai-avatar.png" mode="aspectFill"></image>
+        <view class="comment-body">
+          <text class="comment-name">小圈</text>
+          <text class="comment-text">感觉很安静，分享更多给我看看吧 ✨</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部引导 -->
+  <view class="onboarding-footer">
+    <text class="guide-text">你的照片，AI 会认真回应</text>
+    <view class="camera-btn" bindtap="onTakePhoto">
+      <image class="camera-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
+      <text class="camera-btn-text">拍一张</text>
+    </view>
+  </view>
+
+</view>
