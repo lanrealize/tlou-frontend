@@ -1,11 +1,11 @@
 <!-- components/ai-avatar/ai-avatar.wxml -->
 <view class="ai-avatar-wrap" style="width:{{wrapSize}}rpx;height:{{wrapSize}}rpx;">
   <!-- 动态层 -->
-  <view class="ai-avatar-layer" style="opacity:{{dynamicOpacity}};transition:opacity 0.5s ease;">
+  <view class="ai-avatar-layer" style="opacity:{{dynamicOpacity}};transition:opacity 0.25s ease;">
     <view class="avatar-demo-{{dynamicIndex}}" style="width:{{size}}rpx;height:{{size}}rpx;"></view>
   </view>
   <!-- 静态层 -->
-  <view class="ai-avatar-layer" style="opacity:{{staticOpacity}};transition:opacity 0.5s ease;">
+  <view class="ai-avatar-layer" style="opacity:{{staticOpacity}};transition:opacity 0.25s ease;">
     <view class="avatar-static-wrap" style="width:{{wrapSize}}rpx;height:{{wrapSize}}rpx;">
       <view class="avatar-static-{{staticIndex}}" style="width:{{size}}rpx;height:{{size}}rpx;"></view>
     </view>

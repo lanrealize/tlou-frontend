@@ -245,7 +245,7 @@
               wx:key="_id"
             >
               <!-- 评论头像 -->
-              <ai-avatar wx:if="{{comment.author._id === 'ai'}}" mode="{{aiAvatarModes[comment._id] || 'static'}}" size="28" bindtap="onTapAiAvatar" data-comment-id="{{comment._id}}" style="{{onboardingMode ? 'margin-top:5rpx;transform:translateY(0.5px);' : ''}}"></ai-avatar>
+              <ai-avatar wx:if="{{comment.author._id === 'ai'}}" mode="{{aiAvatarModes[comment._id] || 'static'}}" size="28" bindtap="onTapAiAvatar" data-comment-id="{{comment._id}}"></ai-avatar>
               <image
                 wx:else
                 class="comment-avatar"
@@ -256,9 +256,9 @@
               ></image>
               
               <!-- 评论内容区域 -->
-              <view class="comment-content-wrapper" style="{{onboardingMode && comment.author._id === 'ai' ? 'display:flex;align-items:center;' : ''}}">
+              <view class="comment-content-wrapper">
                 <!-- 用户名和时间 -->
-                <view wx:if="{{!(onboardingMode && comment.author._id === 'ai')}}" class="comment-header">
+                <view class="comment-header">
                   <text wx:if="{{comment.author._id !== 'ai'}}" class="comment-author">{{comment.author ? (comment.author.username || comment.author.name || '匿名用户') : '匿名用户'}}</text>
                   <!-- 如果是回复用户的评论，在用户名后显示回复目标 -->
                   <text wx:if="{{comment.replyTo}}" class="reply-indicator">·</text>

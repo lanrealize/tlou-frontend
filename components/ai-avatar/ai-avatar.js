@@ -32,12 +32,12 @@ Component({
         this.setData({ dynamicOpacity: 0 });
         setTimeout(() => {
           this.setData({ staticOpacity: 1 });
-        }, 800);
+        }, 250);
       } else {
         this.setData({ staticOpacity: 0 });
         setTimeout(() => {
           this.setData({ dynamicOpacity: 1 });
-        }, 800);
+        }, 250);
       }
     }
   },
