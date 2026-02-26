@@ -1,5 +1,5 @@
 <!--components/post-item/post-item.wxml-->
-<view class="post-item {{isFirst ? 'first-item' : ''}} {{timelineMode ? 'timeline-mode' : ''}}" id="post-{{post._id}}">
+<view class="post-item {{isFirst ? 'first-item' : ''}} {{timelineMode ? 'timeline-mode' : ''}} {{onboardingMode ? 'onboarding-mode' : ''}}" id="post-{{post._id}}">
   
   <!-- 时间轴模式：时间线背景 -->
   <view class="timeline-line" wx:if="{{timelineMode}}"></view>
@@ -16,13 +16,13 @@
         mode="aspectFill"
         bindtap="onTapAvatar"
       ></image>
-      <text class="timeline-separator">·</text>
+      <text class="timeline-separator" wx:if="{{!onboardingMode}}">·</text>
       <text class="timeline-username">{{post.author.username || post.author.name || '未知用户'}}</text>
       <text class="timeline-separator">·</text>
       <text class="timeline-time">{{post.formattedTime || '刚刚'}}</text>
     </view>
     
-    <view class="actions-menu-container">
+    <view class="actions-menu-container" wx:if="{{!onboardingMode}}">
       <view id="postActionsBtn" class="actions-menu-btn" bindtap="toggleActionsMenu">
         <image class="menu-dots-icon" src="/assets/icons/more.svg" mode="aspectFit"></image>
       </view>
@@ -108,7 +108,20 @@
 
     <!-- 图片内容 -->
     <!-- ✅ 使用 class 控制 opacity，而不是 wx:if，确保图片能加载 -->
-    <view class="post-images {{hideImage ? 'post-images-hidden' : ''}}" wx:if="{{post.images && post.images.length > 0}}">
+    <!-- onboarding 模式：视频替代图片 -->
+    <view class="post-images" wx:if="{{onboardingMode && post.videoUrl}}">
+      <video
+        src="{{post.videoUrl}}"
+        autoplay
+        muted
+        show-play-btn="{{false}}"
+        show-center-play-btn="{{false}}"
+        controls="{{false}}"
+        objectFit="cover"
+        style="width: 100%; height: 400rpx; border-radius: 20rpx; display: block;"
+      ></video>
+    </view>
+    <view class="post-images {{hideImage ? 'post-images-hidden' : ''}}" wx:elif="{{post.images && post.images.length > 0}}">
       <!-- 单张图片 -->
       <view class="single-image" wx:if="{{post.images.length === 1}}" 
             style="width: {{singleImageInfo.displayWidth}}rpx; height: {{singleImageInfo.displayHeight}}rpx;">

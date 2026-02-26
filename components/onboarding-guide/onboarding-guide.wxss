@@ -38,7 +38,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0 56rpx;
+  padding: 0 56rpx 0 45rpx;
   overflow: hidden;
 }
 
@@ -145,7 +145,248 @@
   line-height: 1.6;
 }
 
-/* 底部按钮区 */
+/* 头像动画 demo */
+.avatar-demo-row {
+  display: flex;
+  flex-direction: row;
+  gap: 24rpx;
+  justify-content: center;
+  margin-bottom: 24rpx;
+}
+
+.avatar-canvas {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.avatar-demo-1,
+.avatar-demo-2,
+.avatar-demo-3,
+.avatar-demo-4,
+.avatar-demo-5,
+.avatar-demo-6,
+.avatar-demo-7,
+.avatar-demo-8 {
+  width: 28rpx;
+  height: 28rpx;
+  border-radius: 50%;
+}
+
+/* 1. 模糊光斑漂移 - 蓝紫，scale+位移 */
+@keyframes exist-1 {
+  0%, 100% { transform: scale(1) translate(0, 0); opacity: 0.6; }
+  33%       { transform: scale(1.1) translate(2rpx, -2rpx); opacity: 1; }
+  66%       { transform: scale(0.95) translate(-2rpx, 2rpx); opacity: 0.8; }
+}
+.avatar-demo-1 {
+  background: radial-gradient(circle, #AF52DE 0%, #1A73E8 60%, transparent 100%);
+  filter: blur(3px);
+  animation: exist-1 4s ease-in-out infinite;
+}
+
+/* 2. 蓝紫渐变色相缓慢偏移 - 不变大小 */
+@keyframes exist-2 {
+  0%   { filter: blur(3px) hue-rotate(0deg); opacity: 0.7; }
+  50%  { filter: blur(3px) hue-rotate(40deg); opacity: 1; }
+  100% { filter: blur(3px) hue-rotate(0deg); opacity: 0.7; }
+}
+.avatar-demo-2 {
+  background: radial-gradient(circle, #AF52DE 0%, #1A73E8 70%);
+  animation: exist-2 5s ease-in-out infinite;
+}
+
+/* 3. 灰度呼吸 - 黑白径向渐变，opacity 深呼吸 */
+@keyframes exist-3 {
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 1; }
+}
+.avatar-demo-3 {
+  background: radial-gradient(circle, #e0e0e0 0%, #888 50%, #222 100%);
+  filter: blur(2.5px);
+  animation: exist-3 4s ease-in-out infinite;
+}
+
+/* 4. 暖金光斑漂移 */
+@keyframes exist-4 {
+  0%, 100% { transform: scale(1) translate(0, 0); opacity: 0.55; }
+  40%       { transform: scale(1.12) translate(-2rpx, -2rpx); opacity: 1; }
+  70%       { transform: scale(0.92) translate(2rpx, 1rpx); opacity: 0.75; }
+}
+.avatar-demo-4 {
+  background: radial-gradient(circle, #FFD060 0%, #FF6B6B 55%, transparent 100%);
+  filter: blur(3px);
+  animation: exist-4 4.5s ease-in-out infinite;
+}
+
+/* 5. 蓝紫光斑 - 无漂移，纯呼吸 */
+@keyframes exist-5 {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50%       { transform: scale(1.08); opacity: 1; }
+}
+.avatar-demo-5 {
+  background: radial-gradient(circle, #AF52DE 0%, #1A73E8 60%, transparent 100%);
+  filter: blur(3px);
+  animation: exist-5 4s ease-in-out infinite;
+}
+
+/* 6. 黑白 - 中心亮，边缘暗，缓慢淡入淡出 */
+@keyframes exist-6 {
+  0%, 100% { opacity: 0.3; filter: blur(2px) brightness(0.7); }
+  50%       { opacity: 1; filter: blur(2px) brightness(1.3); }
+}
+.avatar-demo-6 {
+  background: radial-gradient(circle, #fff 0%, #aaa 40%, #333 100%);
+  animation: exist-6 4.5s ease-in-out infinite;
+}
+
+/* 7. 黑白 - 边缘亮环，中心暗，呼吸 */
+@keyframes exist-7 {
+  0%, 100% { opacity: 0.35; filter: blur(2.5px); }
+  50%       { opacity: 1; filter: blur(1.5px); }
+}
+.avatar-demo-7 {
+  background: radial-gradient(circle, #111 0%, #555 50%, #ddd 80%, #111 100%);
+  animation: exist-7 5s ease-in-out infinite;
+}
+
+/* 8. 蓝紫色彩液态流动 */
+@keyframes exist-8-a {
+  0%   { transform: translate(30%, 0%) scale(1); }
+  18%  { transform: translate(20%, -28%) scale(0.95); }
+  32%  { transform: translate(-25%, -20%) scale(0.9); }
+  50%  { transform: translate(0%, 0%) scale(2); }
+  68%  { transform: translate(25%, 28%) scale(0.9); }
+  82%  { transform: translate(-28%, 20%) scale(0.95); }
+  100% { transform: translate(30%, 0%) scale(1); }
+}
+@keyframes exist-8-b {
+  0%   { transform: translate(0%, -30%) scale(1); }
+  20%  { transform: translate(28%, 15%) scale(0.95); }
+  38%  { transform: translate(15%, 28%) scale(0.9); }
+  50%  { transform: translate(0%, 0%) scale(1.8); }
+  62%  { transform: translate(-20%, -25%) scale(0.9); }
+  80%  { transform: translate(-28%, 10%) scale(0.95); }
+  100% { transform: translate(0%, -30%) scale(1); }
+}
+.avatar-demo-8 {
+  background: #2040C8;
+  filter: blur(1.5px);
+  position: relative;
+  overflow: hidden;
+}
+.avatar-demo-8::before {
+  content: '';
+  position: absolute;
+  top: -25%; left: -25%;
+  width: 150%; height: 150%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(175,82,222,1) 0%, rgba(175,82,222,0.85) 40%, rgba(175,82,222,0.4) 65%, transparent 85%);
+  animation: exist-8-a 11s ease-in-out infinite;
+}
+.avatar-demo-8::after {
+  content: '';
+  position: absolute;
+  top: -25%; left: -25%;
+  width: 150%; height: 150%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(80,160,255,0.8) 0%, rgba(26,115,232,0.4) 45%, transparent 70%);
+  animation: exist-8-b 7s ease-in-out infinite;
+}
+
+/* 静态头像 demo */
+.avatar-static-wrap {
+  width: 38rpx;
+  height: 38rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-static-1,
+.avatar-static-2,
+.avatar-static-3,
+.avatar-static-4,
+.avatar-static-5 {
+  width: 28rpx;
+  height: 28rpx;
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+  filter: blur(5px);
+}
+
+/* 1. linear-gradient 蓝紫 + 高光 */
+.avatar-static-1 {
+  background: linear-gradient(135deg, #1A73E8 0%, #AF52DE 100%);
+  filter: blur(1.5px);
+}
+.avatar-static-1::before {
+  content: '';
+  position: absolute;
+  top: 10%; left: 10%;
+  width: 45%; height: 45%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 100%);
+}
+
+/* 2. 蓝底 + 紫圆右上叠加 */
+.avatar-static-2 {
+  background: #1A73E8;
+  filter: blur(1.5px);
+}
+.avatar-static-2::before {
+  content: '';
+  position: absolute;
+  top: -20%; left: 20%;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(175,82,222,0.9) 0%, rgba(175,82,222,0.3) 60%, transparent 100%);
+}
+
+/* 3. conic 双色 */
+.avatar-static-3 {
+  background: conic-gradient(from 180deg, #1A73E8 0deg, #AF52DE 180deg, #1A73E8 360deg);
+  filter: blur(1.5px);
+}
+.avatar-static-3::before {
+  content: '';
+  position: absolute;
+  top: 10%; left: 10%;
+  width: 40%; height: 40%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 100%);
+}
+
+/* 4. 紫底 + 蓝圆左下叠加 */
+.avatar-static-4 {
+  background: #AF52DE;
+  filter: blur(1.5px);
+}
+.avatar-static-4::before {
+  content: '';
+  position: absolute;
+  top: -20%; left: -20%;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(26,115,232,0.9) 0%, rgba(26,115,232,0.3) 60%, transparent 100%);
+}
+
+/* 5. 蓝底 + 紫圆左下叠加 */
+.avatar-static-5 {
+  background: #1A73E8;
+  filter: blur(1.5px);
+}
+.avatar-static-5::before {
+  content: '';
+  position: absolute;
+  top: -20%; left: -20%;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(175,82,222,0.9) 0%, rgba(175,82,222,0.3) 60%, transparent 100%);
+}
+
 .onboarding-footer {
   padding: 40rpx 56rpx 80rpx;
   display: flex;

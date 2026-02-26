@@ -28,6 +28,7 @@
       <view class="avatar-demo-5"></view>
       <view class="avatar-demo-6"></view>
       <view class="avatar-demo-7"></view>
+      <view class="avatar-demo-8"></view>
     </view>
     <!-- 静态头像 demo -->
     <view class="avatar-demo-row">

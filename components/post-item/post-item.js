@@ -33,6 +33,11 @@ Component({
     timelineMode: {
       type: Boolean,
       value: false
+    },
+    // 🎬 onboarding 模式：用于引导页展示，样式微调
+    onboardingMode: {
+      type: Boolean,
+      value: false
     }
   },
 
