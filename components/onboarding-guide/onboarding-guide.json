@@ -2,6 +2,6 @@
   "component": true,
   "usingComponents": {
     "post-item": "/components/post-item/post-item",
-    "exist-avatar": "/components/exist-avatar/exist-avatar"
+    "ai-avatar": "/components/ai-avatar/ai-avatar"
   }
 }

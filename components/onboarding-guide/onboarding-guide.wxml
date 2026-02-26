@@ -19,30 +19,6 @@
 
   <!-- 底部引导 -->
   <view class="onboarding-footer">
-    <!-- 头像样式 demo -->
-    <view class="avatar-demo-row">
-      <view class="avatar-demo-1"></view>
-      <view class="avatar-demo-2"></view>
-      <view class="avatar-demo-3"></view>
-      <view class="avatar-demo-4"></view>
-      <view class="avatar-demo-5"></view>
-      <view class="avatar-demo-6"></view>
-      <view class="avatar-demo-7"></view>
-      <view class="avatar-demo-8"></view>
-    </view>
-    <!-- 静态头像 demo -->
-    <view class="avatar-demo-row">
-      <view class="avatar-static-wrap"><view class="avatar-static-1"></view></view>
-      <view class="avatar-static-wrap"><view class="avatar-static-2"></view></view>
-      <view class="avatar-static-wrap"><view class="avatar-static-3"></view></view>
-      <view class="avatar-static-wrap"><view class="avatar-static-4"></view></view>
-      <view class="avatar-static-wrap"><view class="avatar-static-5"></view></view>
-    </view>
-    <!-- 封装组件演示：静态第4个 + 动态第2个 -->
-    <view class="avatar-demo-row">
-      <exist-avatar type="static" index="{{4}}" size="{{28}}"></exist-avatar>
-      <exist-avatar type="dynamic" index="{{2}}" size="{{28}}"></exist-avatar>
-    </view>
     <text class="guide-text">你的照片，AI 会认真回应</text>
     <view class="camera-btn" bindtap="onTakePhoto">
       <image class="camera-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>

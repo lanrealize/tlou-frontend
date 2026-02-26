@@ -47,6 +47,8 @@ Component({
   data: {
     // 图片预览相关
     imageMode: 'aspectFill',
+    // AI 头像模式（按评论id独立控制）
+    aiAvatarModes: {},
     // 评论展开状态
     commentsExpanded: false,
     // 最多显示的评论数量
@@ -466,6 +468,14 @@ Component({
         commentId,
         post: this.data.post
       });
+    },
+
+    // 点击 AI 头像切换动态/静态
+    onTapAiAvatar(e) {
+      const id = e.currentTarget.dataset.commentId;
+      const current = this.data.aiAvatarModes[id] || 'static';
+      const next = current === 'static' ? 'dynamic' : 'static';
+      this.setData({ [`aiAvatarModes.${id}`]: next });
     },
 
     // 点击用户头像

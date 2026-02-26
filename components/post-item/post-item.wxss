@@ -774,6 +774,12 @@
   margin-right: 25rpx;
 }
 
+.comment-item ai-avatar {
+  flex-shrink: 0;
+  margin-right: 15rpx;
+  transform: translateY(0.5px);
+}
+
 /* 评论内容包装器 */
 .comment-content-wrapper {
   flex: 1;

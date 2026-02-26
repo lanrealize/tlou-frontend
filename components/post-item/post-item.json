@@ -1,4 +1,6 @@
 {
   "component": true,
-  "usingComponents": {}
+  "usingComponents": {
+    "ai-avatar": "/components/ai-avatar/ai-avatar"
+  }
 }

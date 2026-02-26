@@ -6,6 +6,7 @@ Component({
 
   data: {
     headerTop: 0,
+    avatarMode: 'dynamic',
     demoPost: {
       _id: 'demo',
       author: {
@@ -21,12 +22,12 @@ Component({
         {
           _id: 'c1',
           author: { _id: 'ai', username: '小圈', avatar: '/assets/onboarding/ai-avatar.png' },
-          content: '这个光线真的太美了，你在哪里拍的？🌅'
+          content: '这个光线真的太美了，你在哪里拍的？'
         },
         {
           _id: 'c2',
           author: { _id: 'ai', username: '小圈', avatar: '/assets/onboarding/ai-avatar.png' },
-          content: '感觉很安静，分享更多给我看看吧 ✨'
+          content: '感觉很安静，分享更多给我看看吧'
         }
       ],
       likes: []
@@ -46,6 +47,10 @@ Component({
   methods: {
     onTakePhoto() {
       this.triggerEvent('takePhoto');
+    },
+
+    onToggleAvatarMode() {
+      this.setData({ avatarMode: this.data.avatarMode === 'dynamic' ? 'static' : 'dynamic' });
     },
 
     _initAvatarCanvases() {
