@@ -1,0 +1,15 @@
+<!-- components/exist-avatar/exist-avatar.wxml -->
+
+<!-- 动态头像 -->
+<block wx:if="{{type === 'dynamic'}}">
+  <view class="avatar-dynamic-wrap" style="width: {{wrapSize}}rpx; height: {{wrapSize}}rpx;">
+    <view class="avatar-demo-{{index}}" style="width: {{size}}rpx; height: {{size}}rpx;"></view>
+  </view>
+</block>
+
+<!-- 静态头像 -->
+<block wx:if="{{type === 'static'}}">
+  <view class="avatar-static-wrap" style="width: {{wrapSize}}rpx; height: {{wrapSize}}rpx;">
+    <view class="avatar-static-{{index}}" style="width: {{size}}rpx; height: {{size}}rpx;"></view>
+  </view>
+</block>

@@ -1,4 +1,7 @@
 {
   "component": true,
-  "usingComponents": {}
+  "usingComponents": {
+    "post-item": "/components/post-item/post-item",
+    "exist-avatar": "/components/exist-avatar/exist-avatar"
+  }
 }

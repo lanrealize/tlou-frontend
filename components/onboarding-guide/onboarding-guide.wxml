@@ -9,51 +9,39 @@
 
   <!-- 示例帖子 -->
   <view class="demo-post">
-    <!-- 作者行 -->
-    <view class="demo-author-row">
-      <image class="demo-avatar" src="/assets/onboarding/demo-avatar.jpg" mode="aspectFill"></image>
-      <view class="demo-author-info">
-        <text class="demo-author-name">你</text>
-        <text class="demo-author-time">刚刚</text>
-      </view>
-    </view>
-
-    <!-- 示例图片 -->
-    <view class="demo-image-wrap">
-      <video
-        class="demo-video"
-        src="https://tlou.images.wltech-service.site/videos/tlou-onboarding-vedio.mp4"
-        autoplay
-        muted
-        show-play-btn="{{false}}"
-        show-center-play-btn="{{false}}"
-        controls="{{false}}"
-        objectFit="cover"
-      ></video>
-      <view class="demo-video-blur"></view>
-    </view>
-
-    <!-- AI 评论 -->
-    <view class="demo-comments">
-      <view class="demo-comment">
-        <image class="comment-avatar" src="/assets/onboarding/ai-avatar.png" mode="aspectFill"></image>
-        <view class="comment-body">
-          <text class="comment-name">小圈</text>
-          <text class="comment-text">这个光线真的太美了，你在哪里拍的？🌅</text>
-        </view>
-      </view>
-      <view class="demo-comment">
-        <image class="comment-avatar" src="/assets/onboarding/ai-avatar.png" mode="aspectFill"></image>
-        <view class="comment-body">
-          <text class="comment-name">小圈</text>
-          <text class="comment-text">感觉很安静，分享更多给我看看吧 ✨</text>
-        </view>
-      </view>
-    </view>
+    <post-item
+      post="{{demoPost}}"
+      showActions="{{false}}"
+      timelineMode="{{true}}"
+      onboardingMode="{{true}}"
+    ></post-item>
   </view>
 
   <!-- 底部引导 -->
   <view class="onboarding-footer">
+    <!-- 头像样式 demo -->
+    <view class="avatar-demo-row">
+      <view class="avatar-demo-1"></view>
+      <view class="avatar-demo-2"></view>
+      <view class="avatar-demo-3"></view>
+      <view class="avatar-demo-4"></view>
+      <view class="avatar-demo-5"></view>
+      <view class="avatar-demo-6"></view>
+      <view class="avatar-demo-7"></view>
+    </view>
+    <!-- 静态头像 demo -->
+    <view class="avatar-demo-row">
+      <view class="avatar-static-wrap"><view class="avatar-static-1"></view></view>
+      <view class="avatar-static-wrap"><view class="avatar-static-2"></view></view>
+      <view class="avatar-static-wrap"><view class="avatar-static-3"></view></view>
+      <view class="avatar-static-wrap"><view class="avatar-static-4"></view></view>
+      <view class="avatar-static-wrap"><view class="avatar-static-5"></view></view>
+    </view>
+    <!-- 封装组件演示：静态第4个 + 动态第2个 -->
+    <view class="avatar-demo-row">
+      <exist-avatar type="static" index="{{4}}" size="{{28}}"></exist-avatar>
+      <exist-avatar type="dynamic" index="{{2}}" size="{{28}}"></exist-avatar>
+    </view>
     <text class="guide-text">你的照片，AI 会认真回应</text>
     <view class="camera-btn" bindtap="onTakePhoto">
       <image class="camera-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
