@@ -8,8 +8,9 @@
   </view>
 
   <!-- 示例帖子 -->
-  <view class="demo-post">
+  <view class="demo-post" bindtap="onTapDemoPost">
     <post-item
+      id="demo-post-item"
       post="{{demoPost}}"
       showActions="{{false}}"
       timelineMode="{{true}}"

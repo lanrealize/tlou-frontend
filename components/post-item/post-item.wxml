@@ -270,8 +270,18 @@
                 
                 <!-- 评论内容 -->
                 <view class="comment-content {{commentTextStates[comment._id] && commentTextStates[comment._id].animating ? 'comment-text-animating' : ''}}">
-                  <text class="comment-text-flow">
-                    <text 
+                  <!-- AI 评论：逐字 fadeIn -->
+                  <view wx:if="{{comment.author._id === 'ai' && aiCommentChars[comment._id]}}" class="comment-text-flow" catchtap="onTapAiCommentText" data-comment-id="{{comment._id}}">
+                    <text
+                      wx:for="{{aiCommentChars[comment._id]}}"
+                      wx:key="index"
+                      class="comment-char-animated"
+                      style="animation-delay:{{item.delay}};"
+                    >{{item.char}}</text>
+                  </view>
+                  <!-- 普通评论 -->
+                  <text wx:else class="comment-text-flow">
+                    <text
                       class="comment-main-text"
                       catchtap="onReplyComment"
                       data-user-id="{{comment.author ? comment.author._id : ''}}"

@@ -835,6 +835,19 @@
   margin-right: 32rpx;
 }
 
+@keyframes charFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.comment-char-animated {
+  font-size: 26rpx;
+  color: #000000;
+  line-height: inherit;
+  opacity: 0;
+  animation: charFadeIn 0.3s ease forwards;
+}
+
 .comment-space {
   white-space: pre;
 }

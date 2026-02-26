@@ -1,4 +1,5 @@
 // components/post-item/post-item.js
+const { buildCharList } = require('../../utils/animatedText');
 Component({
   /**
    * 组件的属性列表
@@ -77,7 +78,9 @@ Component({
     // 文本切换动画状态
     textAnimating: false,
     // 评论展开状态 - 使用对象存储每条评论的状态
-    commentTextStates: {} // { commentId: { expanded, needToggle, collapsedText, animating } }
+    commentTextStates: {}, // { commentId: { expanded, needToggle, collapsedText, animating } }
+    // AI 评论逐字动画字符列表
+    aiCommentChars: {} // { commentId: [{char, delay}] }
   },
 
   /**
@@ -361,6 +364,12 @@ Component({
         this.setData({ commentsExpanded: true });
       }
 
+      // AI 评论生成逐字动画字符列表
+      if (newComment.author && newComment.author._id === 'ai' && newComment.content) {
+        const chars = buildCharList(newComment.content, 40, 0);
+        this.setData({ [`aiCommentChars.${newComment._id}`]: chars });
+      }
+
       // 渲染完成后查询评论节点位置，通知页面滚动
       wx.nextTick(() => {
         wx.createSelectorQuery()
@@ -379,6 +388,37 @@ Component({
     // 更新显示的评论列表（兼容旧逻辑，现在只是空函数）
     updateDisplayComments() {
       // 不再需要 displayComments，所有评论通过 CSS 控制显示/隐藏
+    },
+
+    // 点击单条 AI 评论文字重播动画
+    onTapAiCommentText(e) {
+      const id = e.currentTarget.dataset.commentId;
+      const comments = this.data.post && this.data.post.comments;
+      const comment = comments && comments.find(c => c._id === id);
+      if (!comment) return;
+      this.setData({ [`aiCommentChars.${id}`]: null }, () => {
+        wx.nextTick(() => {
+          this.setData({ [`aiCommentChars.${id}`]: buildCharList(comment.content, 40, 0) });
+        });
+      });
+    },
+
+    // 外部调用：触发所有 AI 评论的逐字动画（用于 onboarding）
+    animateAiComments() {
+      const comments = this.data.post && this.data.post.comments;
+      if (!comments) return;
+      // 先清空，下一帧再填入，确保 DOM 节点重建触发动画
+      this.setData({ aiCommentChars: {} }, () => {
+        wx.nextTick(() => {
+          const fresh = {};
+          comments.forEach(c => {
+            if (c.author && c.author._id === 'ai' && c.content) {
+              fresh[c._id] = buildCharList(c.content, 40, 0);
+            }
+          });
+          this.setData({ aiCommentChars: fresh });
+        });
+      });
     },
 
     // 点赞/取消点赞

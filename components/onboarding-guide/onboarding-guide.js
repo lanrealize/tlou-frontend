@@ -41,6 +41,7 @@ Component({
     },
     ready() {
       setTimeout(() => this._initAvatarCanvases(), 100);
+      setTimeout(() => this._animateDemoComments(), 300);
     }
   },
 
@@ -51,6 +52,13 @@ Component({
 
     onToggleAvatarMode() {
       this.setData({ avatarMode: this.data.avatarMode === 'dynamic' ? 'static' : 'dynamic' });
+    },
+
+    onTapDemoPost() {},
+
+    _animateDemoComments() {
+      const postItem = this.selectComponent('#demo-post-item');
+      if (postItem) postItem.animateAiComments();
     },
 
     _initAvatarCanvases() {
