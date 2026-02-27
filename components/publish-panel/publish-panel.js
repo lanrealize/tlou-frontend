@@ -269,9 +269,9 @@ Component({
         });
       }
       
-      // ✅ 修复：使用统一的用户ID获取函数，替换多重fallback
-      const userId = getCurrentUserId();
-      
+      // 已登录用户用 userId，未登录（trial 模式）用 Storage 里的 openid
+      const userId = getCurrentUserId() || wx.getStorageSync('openid');
+
       // 如果没有获取到用户ID，说明用户未登录
       if (!userId) {
         console.error('❌ 获取用户ID失败：用户未登录');
