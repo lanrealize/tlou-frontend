@@ -55,7 +55,15 @@ Component({
 
   methods: {
     onTakePhoto() {
-      this.triggerEvent('takePhoto');
+      wx.chooseMedia({
+        count: 1,
+        mediaType: ['image'],
+        sourceType: ['camera'],
+        success: (res) => {
+          const tempFile = res.tempFiles[0];
+          this.triggerEvent('takePhoto', { tempFilePath: tempFile.tempFilePath });
+        }
+      });
     },
 
     onVideoEnded() {

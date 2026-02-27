@@ -302,5 +302,6 @@
   circleId="{{circleId}}"
   show="{{showPublish}}"
   anonymousMode="{{showOnboarding}}"
+  initialImage="{{onboardingInitialImage}}"
   bind:close="onPublishClose"
 ></publish-panel>

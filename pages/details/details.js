@@ -97,7 +97,8 @@ Page({
     transitionActive: false,      // 是否激活过渡动画
     showPublish: false,
     publishBtnRainbow: false,
-    showOnboarding: false,  // onboarding 引导层是否显示
+    showOnboarding: false,
+    onboardingInitialImage: '',  // onboarding 拍照后预填充到 publish-panel 的图片
   },
 
   onLoad(options) {
@@ -1106,9 +1107,9 @@ Page({
     this.setData({ showPublish: true });
   },
 
-  onOnboardingTakePhoto() {
-    // onboarding 模式下直接拉起 publish-panel（跳过权限检查，匿名发布）
-    this.setData({ showPublish: true });
+  onOnboardingTakePhoto(e) {
+    const { tempFilePath } = e.detail;
+    this.setData({ showPublish: true, onboardingInitialImage: tempFilePath });
   },
 
   onPublishClose(e) {

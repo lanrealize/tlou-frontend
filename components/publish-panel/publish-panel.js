@@ -11,7 +11,8 @@ Component({
   properties: {
     circleId: { type: String, value: '' },
     show: { type: Boolean, value: false },
-    anonymousMode: { type: Boolean, value: false },  // onboarding 匿名发布模式
+    anonymousMode: { type: Boolean, value: false },
+    initialImage: { type: String, value: '' },  // 预填充图片（onboarding 拍照传入）
   },
 
   observers: {
@@ -22,9 +23,13 @@ Component({
           this.loadCircleInfo();
         }
         this.setData({ userInfo: getCurrentUser(), isLoggedIn: isUserLoggedIn() });
+        // 预填充 onboarding 拍摄的图片
+        if (this.properties.initialImage) {
+          this.setData({ tempImages: [this.properties.initialImage] });
+        }
         setTimeout(() => this.setData({ slideIn: true }), 50);
       } else {
-        this.setData({ slideIn: false });
+        this.setData({ slideIn: false, tempImages: [], images: [] });
       }
     }
   },
