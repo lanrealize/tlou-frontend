@@ -7,11 +7,13 @@
  * @param {number} startDelay - 整体起始延迟（ms），默认 0
  * @returns {Array<{char: string, delay: string}>}
  */
-function buildCharList(text, perCharDelay = 40, startDelay = 0) {
+const PER_CHAR_DELAY = 85; // ms，调整这一处即可改变所有逐字动画速度
+
+function buildCharList(text, perCharDelay = PER_CHAR_DELAY, startDelay = 0) {
   return text.split('').map((char, i) => ({
     char,
     delay: `${startDelay + i * perCharDelay}ms`
   }));
 }
 
-module.exports = { buildCharList };
+module.exports = { buildCharList, PER_CHAR_DELAY };

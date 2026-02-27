@@ -1,5 +1,5 @@
 // components/post-item/post-item.js
-const { buildCharList } = require('../../utils/animatedText');
+const { buildCharList, PER_CHAR_DELAY } = require('../../utils/animatedText');
 Component({
   /**
    * 组件的属性列表
@@ -157,9 +157,11 @@ Component({
   methods: {
     // ─── onboarding 视频控制 ───
     startOnboardingVideo() {
+      // 每次调用都强制从头播，确保退出再进入时视频重置
+      this.setData({ videoReady: false, showVideoLoading: false });
       const ctx = wx.createVideoContext('onboarding-video', this);
+      ctx.seek(0);
       ctx.play();
-      // 1s 后还没触发 bindplay，显示 loading
       this._videoLoadTimer = setTimeout(() => {
         if (!this.data.videoReady) {
           this.setData({ showVideoLoading: true });
@@ -403,7 +405,7 @@ Component({
 
       // AI 评论生成逐字动画字符列表
       if (newComment.author && newComment.author._id === 'ai' && newComment.content) {
-        const chars = buildCharList(newComment.content, 40, 0);
+        const chars = buildCharList(newComment.content);
         this.setData({ [`aiCommentChars.${newComment._id}`]: chars });
       }
 
@@ -435,7 +437,7 @@ Component({
       if (!comment) return;
       this.setData({ [`aiCommentChars.${id}`]: null }, () => {
         wx.nextTick(() => {
-          this.setData({ [`aiCommentChars.${id}`]: buildCharList(comment.content, 40, 0) });
+          this.setData({ [`aiCommentChars.${id}`]: buildCharList(comment.content) });
         });
       });
     },
@@ -458,8 +460,8 @@ Component({
       }
       const c = comments[index];
       const hasContent = !!c.content;
-      const chars = hasContent ? buildCharList(c.content, 40, 0) : [];
-      const duration = hasContent ? chars.length * 40 + 400 : null; // null = 不自动推进
+      const chars = hasContent ? buildCharList(c.content) : [];
+      const duration = hasContent ? chars.length * PER_CHAR_DELAY + 400 : null;
 
       const update = {
         [`visibleCommentIds.${c._id}`]: true,
@@ -491,8 +493,8 @@ Component({
      * @param {string} content
      */
     startAiReply(commentId, content) {
-      const chars = buildCharList(content, 40, 0);
-      const duration = chars.length * 40 + 1400; // +1000ms 额外间隔再推进下一条
+      const chars = buildCharList(content);
+      const duration = chars.length * PER_CHAR_DELAY + 1400;
       this.setData({ [`aiCommentChars.${commentId}`]: chars }, () => {
         // 逐字动画结束后，继续推进后续评论
         if (this._pendingComments) {
