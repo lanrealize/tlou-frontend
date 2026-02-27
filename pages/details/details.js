@@ -294,8 +294,9 @@ Page({
   onShow() {
     console.log('📱 details 页面 onShow 被触发');
 
-    // onboarding 模式：每次 onShow 重置动画（确保重入时从头播放）
-    if (this.data.showOnboarding) {
+    // onboarding 模式：仅首次进入时播放动画，相机/panel 退出不重置
+    if (this.data.showOnboarding && !this._onboardingAnimationStarted) {
+      this._onboardingAnimationStarted = true;
       const guide = this.selectComponent('#onboarding-guide');
       if (guide) guide._startAnimation();
     }
