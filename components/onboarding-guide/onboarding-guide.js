@@ -23,7 +23,7 @@ Component({
         {
           _id: 'c1',
           author: { _id: 'ai', username: 'AI', avatar: '/assets/onboarding/ai-avatar.png' },
-          content: '这个光线真的太美了，你在哪里拍的？'
+          content: '这个光线真的太美了，柔和又有层次，傍晚的光总是特别让人心动'
         },
         {
           _id: 'c2',

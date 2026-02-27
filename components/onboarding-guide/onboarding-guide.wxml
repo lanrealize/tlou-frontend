@@ -27,8 +27,12 @@
       <view class="fn3-g2"></view>
       <view class="fn3-g3"></view>
       <view class="fn-cta">
-        <text class="fn-sub">AI 马上回应你</text>
-        <text class="fn-main">拍下来 →</text>
+        <text class="fn-title">点击按钮，拍下此刻</text>
+        <text class="fn-sub">发一张照片，AI 会在几秒内认真回应你</text>
+        <view class="fn-btn" bindtap="onTakePhoto">
+          <text class="fn-btn-text">点击拍摄</text>
+        </view>
+        <view class="fn-line"></view>
       </view>
     </view>
 
