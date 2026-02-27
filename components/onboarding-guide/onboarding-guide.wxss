@@ -416,7 +416,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
-  padding: 24rpx 56rpx 80rpx 48rpx;
+  padding: 54rpx 56rpx 80rpx 48rpx;
   min-height: 260rpx;
   background: #fff;
 }
@@ -435,27 +435,27 @@
   letter-spacing: 2rpx;
 }
 .fn-sub {
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: #666;
   letter-spacing: 0.5rpx;
   text-align: right;
 }
 .fn-btn {
-  margin-top: 30rpx;
+  margin-top: 35rpx;
   width: 240rpx;
-  padding: 18rpx 0;
+  padding: 20rpx 0;
   background: rgba(255,255,255,0.95);
   border-radius: 100rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.12);
+  box-shadow: 0 8rpx 24rpx rgba(25, 55, 115, 0.20);
 }
 .fn-btn-text {
   font-size: 30rpx;
   font-weight: 700;
   color: #1A73E8;
-  letter-spacing: 4rpx;
+  letter-spacing: 1rpx;
 }
 
 /* ─── 光晕图案 ─── */
