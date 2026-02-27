@@ -29,7 +29,7 @@ Component({
         }
         setTimeout(() => this.setData({ slideIn: true }), 50);
       } else {
-        this.setData({ slideIn: false, tempImages: [], images: [] });
+        this.setData({ slideIn: false });
       }
     }
   },
