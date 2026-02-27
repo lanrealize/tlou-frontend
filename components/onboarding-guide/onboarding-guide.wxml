@@ -25,7 +25,7 @@
   <view class="onboarding-footer {{footerVisible ? 'footer-visible' : ''}}">
     <view class="footer-fade"></view>
 
-    <view class="footer-n" bindtap="onTakePhoto">
+    <view class="footer-n">
       <view class="fn3-g1"></view>
       <view class="fn3-g2"></view>
       <view class="fn3-g3"></view>
