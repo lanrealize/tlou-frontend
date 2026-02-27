@@ -18,13 +18,20 @@
     ></post-item>
   </view>
 
-  <!-- 底部引导 -->
-  <view class="onboarding-footer">
-    <text class="guide-text">你的照片，AI 会认真回应</text>
-    <view class="camera-btn" bindtap="onTakePhoto">
-      <image class="camera-icon" src="/assets/icons/camera.svg" mode="aspectFit"></image>
-      <text class="camera-btn-text">拍一张</text>
+  <!-- 底部浮层 -->
+  <view class="onboarding-footer footer-visible">
+    <view class="footer-fade"></view>
+
+    <view class="footer-n" bindtap="onTakePhoto">
+      <view class="fn3-g1"></view>
+      <view class="fn3-g2"></view>
+      <view class="fn3-g3"></view>
+      <view class="fn-cta">
+        <text class="fn-sub">AI 马上回应你</text>
+        <text class="fn-main">拍下来 →</text>
+      </view>
     </view>
+
   </view>
 
 </view>

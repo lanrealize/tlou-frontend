@@ -7,6 +7,7 @@ Component({
   data: {
     headerTop: 0,
     avatarMode: 'dynamic',
+    footerVisible: false,
     demoPost: {
       _id: 'demo',
       author: {
@@ -21,12 +22,12 @@ Component({
       comments: [
         {
           _id: 'c1',
-          author: { _id: 'ai', username: '小圈', avatar: '/assets/onboarding/ai-avatar.png' },
+          author: { _id: 'ai', username: 'AI', avatar: '/assets/onboarding/ai-avatar.png' },
           content: '这个光线真的太美了，你在哪里拍的？'
         },
         {
           _id: 'c2',
-          author: { _id: 'ai', username: '小圈', avatar: '/assets/onboarding/ai-avatar.png' },
+          author: { _id: 'ai', username: 'AI', avatar: '/assets/onboarding/ai-avatar.png' },
           content: '感觉很安静，分享更多给我看看吧'
         }
       ],
@@ -42,6 +43,7 @@ Component({
     ready() {
       setTimeout(() => this._initAvatarCanvases(), 100);
       setTimeout(() => this._animateDemoComments(), 300);
+      setTimeout(() => this.setData({ footerVisible: true }), 600);
     }
   },
 
@@ -56,7 +58,7 @@ Component({
 
     onTapDemoPost() {},
 
-    _animateDemoComments() {
+_animateDemoComments() {
       const postItem = this.selectComponent('#demo-post-item');
       if (postItem) postItem.animateAiComments();
     },

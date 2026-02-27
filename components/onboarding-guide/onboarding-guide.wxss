@@ -388,37 +388,87 @@
 }
 
 .onboarding-footer {
-  padding: 40rpx 56rpx 80rpx;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  transform: translateY(100%);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.onboarding-footer.footer-visible {
+  transform: translateY(0);
+}
+
+.footer-fade {
+  position: absolute;
+  top: -80rpx;
+  left: 0;
+  width: 100%;
+  height: 80rpx;
+  background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%);
+  pointer-events: none;
+}
+
+/* ─── footer 结构 ─── */
+.footer-n {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 24rpx 56rpx 80rpx 48rpx;
+  min-height: 260rpx;
+  background: #fff;
+}
+.fn-cta {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 28rpx;
+  align-items: flex-end;
+  gap: 8rpx;
 }
-
-.guide-text {
-  font-size: 26rpx;
-  color: #bbb;
-  text-align: center;
+.fn-sub {
+  font-size: 22rpx;
+  color: #aaa;
+  letter-spacing: 0.5rpx;
 }
-
-.camera-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16rpx;
-  background-color: #1A73E8;
-  border-radius: 100rpx;
-  padding: 32rpx 0;
-}
-
-.camera-icon {
-  width: 40rpx;
-  height: 40rpx;
-}
-
-.camera-btn-text {
+.fn-main {
   font-size: 32rpx;
-  color: #ffffff;
   font-weight: 600;
+  color: #111;
+  letter-spacing: 1rpx;
 }
+
+/* ─── 光晕图案 ─── */
+.fn3-g1 {
+  position: absolute;
+  width: 660rpx;
+  height: 660rpx;
+  right: -160rpx;
+  bottom: -220rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(175,82,222,0.65) 0%, rgba(26,115,232,0.3) 45%, transparent 68%);
+  filter: blur(45rpx);
+}
+.fn3-g2 {
+  position: absolute;
+  width: 460rpx;
+  height: 460rpx;
+  right: 200rpx;
+  bottom: -160rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(26,115,232,0.55) 0%, transparent 68%);
+  filter: blur(50rpx);
+}
+.fn3-g3 {
+  position: absolute;
+  width: 320rpx;
+  height: 320rpx;
+  left: -20rpx;
+  bottom: 0rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(175,82,222,0.35) 0%, transparent 68%);
+  filter: blur(40rpx);
+}
+
