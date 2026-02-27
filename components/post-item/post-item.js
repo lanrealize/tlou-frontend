@@ -156,6 +156,18 @@ Component({
    */
   methods: {
     // ─── onboarding 视频控制 ───
+    resetOnboarding() {
+      clearTimeout(this._videoLoadTimer);
+      this._pendingComments = null;
+      this.setData({
+        videoReady: false,
+        showVideoLoading: false,
+        visibleCommentIds: {},
+        aiCommentChars: {},
+        aiHeaderStates: {},
+      });
+    },
+
     startOnboardingVideo() {
       // 每次调用都强制从头播，确保退出再进入时视频重置
       this.setData({ videoReady: false, showVideoLoading: false });

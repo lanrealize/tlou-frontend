@@ -46,18 +46,10 @@ Component({
     },
     ready() {
       setTimeout(() => this._initAvatarCanvases(), 100);
-
-      // 200ms: header 滑入
-      setTimeout(() => this.setData({ headerVisible: true }), 200);
-
-      // 900ms: post 滑入，滑入完成后 play
-      setTimeout(() => {
-        this.setData({ postVisible: true });
-        setTimeout(() => {
-          const postItem = this.selectComponent('#demo-post-item');
-          if (postItem) postItem.startOnboardingVideo();
-        }, 600);
-      }, 900);
+      this._startAnimation();
+    },
+    detached() {
+      this._clearTimers();
     }
   },
 
@@ -70,16 +62,16 @@ Component({
       this.setData({ hideComments: false });
       this._animateDemoComments();
 
-      setTimeout(() => {
+      this._t_aiReply = setTimeout(() => {
         const postItem = this.selectComponent('#demo-post-item');
         if (!postItem) return;
         postItem.transitionAiHeader('c1');
-        setTimeout(() => postItem.startAiReply('c1', '小时候过年放烟花，又兴奋又怕烫。守岁的时候困得睁不开眼，但就是不肯睡'), 250);
+        this._t_startReply = setTimeout(() => postItem.startAiReply('c1', '小时候过年放烟花，又兴奋又怕烫。守岁的时候困得睁不开眼，但就是不肯睡'), 250);
       }, 5000);
     },
 
     onCommentsDone() {
-      setTimeout(() => this.setData({ footerVisible: true }), 800);
+      this._t_footer = setTimeout(() => this.setData({ footerVisible: true }), 800);
     },
 
     onToggleAvatarMode() {
@@ -88,7 +80,32 @@ Component({
 
     onTapDemoPost() {},
 
-_animateDemoComments() {
+    _startAnimation() {
+      this._clearTimers();
+      // 重置动画状态
+      this.setData({ headerVisible: false, postVisible: false, hideComments: true, footerVisible: false });
+      const postItem = this.selectComponent('#demo-post-item');
+      if (postItem) postItem.resetOnboarding();
+
+      // 200ms: header 滑入
+      this._t_header = setTimeout(() => this.setData({ headerVisible: true }), 200);
+
+      // 900ms: post 滑入，滑入完成后 play
+      this._t_post = setTimeout(() => {
+        this.setData({ postVisible: true });
+        this._t_video = setTimeout(() => {
+          const pi = this.selectComponent('#demo-post-item');
+          if (pi) pi.startOnboardingVideo();
+        }, 600);
+      }, 900);
+    },
+
+    _clearTimers() {
+      [this._t_header, this._t_post, this._t_video, this._t_aiReply, this._t_startReply, this._t_footer]
+        .forEach(t => clearTimeout(t));
+    },
+
+    _animateDemoComments() {
       const postItem = this.selectComponent('#demo-post-item');
       if (postItem) postItem.animateAiComments();
     },
