@@ -282,6 +282,15 @@ class API {
     deleteComment: (postId, commentId) => this.delete(`/posts/${postId}/comments/${commentId}`)
   };
 
+  // 🆕 Trial（游客试用）相关API
+  trial = {
+    // 创建试用朋友圈（自动创建 TempUser）
+    createCircle: (data = {}) => this.post('/public/trial/circle', data),
+
+    // 在试用朋友圈发帖
+    createPost: (data) => this.post('/public/trial/post', data),
+  };
+
   // 微信认证相关API
   wechat = {
     // 获取openid

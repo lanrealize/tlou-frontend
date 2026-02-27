@@ -10,14 +10,17 @@ Component({
 
   properties: {
     circleId: { type: String, value: '' },
-    show: { type: Boolean, value: false }
+    show: { type: Boolean, value: false },
+    anonymousMode: { type: Boolean, value: false },  // onboarding 匿名发布模式
   },
 
   observers: {
     'show': function(val) {
       if (val) {
         this.setData({ circleId: this.properties.circleId });
-        this.loadCircleInfo();
+        if (!this.properties.anonymousMode) {
+          this.loadCircleInfo();
+        }
         this.setData({ userInfo: getCurrentUser(), isLoggedIn: isUserLoggedIn() });
         setTimeout(() => this.setData({ slideIn: true }), 50);
       } else {
@@ -364,11 +367,16 @@ Component({
   // 发布动态
   async publishPost() {
 
-    
+
     // 验证输入
     if (!this.data.content.trim() && this.data.tempImages.length === 0) {
       util.showToast('请输入内容或选择图片');
       return;
+    }
+
+    // anonymousMode 下跳过登录检查，走 trial 接口
+    if (this.properties.anonymousMode) {
+      return this._publishTrialPost();
     }
 
     // ✅ 修复：使用统一的登录状态检查函数
@@ -419,8 +427,8 @@ Component({
         if (app.globalData) {
           app.globalData.shouldScrollToTopAfterPost = true;
         }
-        
-        this.triggerEvent('close');
+
+        this.triggerEvent('close', { published: true });
 
         // 🔥 在后台继续上传（不阻塞UI）
         this.uploadPostInBackground(tempId, circleId, contentToUpload, imagesToUpload, postStore);
@@ -430,6 +438,48 @@ Component({
       this.setData({ isPublishing: false });
       console.error('发布失败:', error);
       util.showToast(error.message || '发布失败，请重试');
+    }
+  },
+
+  // 🆕 Trial 匿名发布流程（onboarding 专用）
+  async _publishTrialPost() {
+    if (this.data.isPublishing) return;
+    this.setData({ isPublishing: true });
+
+    try {
+      // 1. 上传图片
+      let uploadedImages = [];
+      if (this.data.tempImages.length > 0) {
+        uploadedImages = await this.uploadImages();
+      }
+
+      // 2. 创建试用朋友圈（后端自动创建 TempUser，已有则复用）
+      const circleRes = await api.trial.createCircle();
+      const circleId = circleRes.data.circle._id;
+
+      // 3. 发帖
+      const postRes = await api.trial.createPost({
+        circleId,
+        content: this.data.content.trim(),
+        images: uploadedImages,
+      });
+      const post = postRes.data.post;
+
+      // 4. 插入 postStore，让 details 页面立即看到帖子
+      const { postStore } = require('../../store/postStore');
+      postStore.prependPost(circleId, post);
+
+      wx.showToast({ title: '发布成功', icon: 'success', duration: 1500 });
+      setTimeout(() => {
+        this.triggerEvent('close', { published: true, circleId });
+      }, 500);
+
+    } catch (error) {
+      console.error('Trial 发布失败:', error);
+      const msg = error?.response?.data?.message || error.message || '发布失败，请重试';
+      util.showToast(msg);
+    } finally {
+      this.setData({ isPublishing: false });
     }
   },
 

@@ -289,11 +289,18 @@
       <view class="overlay-hint">点击任意位置返回首页</view>
     </view>
   </view>
+  <!-- 🎬 Onboarding 引导层（全屏覆盖，仅在 onboarding 模式下显示） -->
+  <onboarding-guide
+    wx:if="{{showOnboarding}}"
+    id="onboarding-guide"
+    bind:takePhoto="onOnboardingTakePhoto"
+  ></onboarding-guide>
 
 </view>
 
 <publish-panel
   circleId="{{circleId}}"
   show="{{showPublish}}"
+  anonymousMode="{{showOnboarding}}"
   bind:close="onPublishClose"
 ></publish-panel>

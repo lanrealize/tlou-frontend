@@ -480,6 +480,13 @@ const postStore = observable({
     console.log('✅ 帖子替换成功');
   },
 
+  // 🆕 Trial 发布：将真实帖子插入列表顶部（无乐观更新，发布完成后直接插入）
+  prependPost(circleId, post) {
+    if (this.currentCircleId !== circleId) return;
+    const formatted = this._formatSinglePost(post);
+    this.posts = [formatted, ...this.posts];
+  },
+
   // 🚀 标记临时帖子上传失败
   markPostUploadFailed(tempId, errorMessage, keepMask = false) {
     console.log('❌ 标记帖子上传失败:', tempId, '保持遮罩:', keepMask);

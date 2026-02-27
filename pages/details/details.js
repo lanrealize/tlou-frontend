@@ -96,14 +96,15 @@ Page({
     shareAnimationTransform: '',  // 动画过渡的 CSS 变量
     transitionActive: false,      // 是否激活过渡动画
     showPublish: false,
-    publishBtnRainbow: false
+    publishBtnRainbow: false,
+    showOnboarding: false,  // onboarding 引导层是否显示
   },
 
   onLoad(options) {
     this.getSafeAreaInfo();
     this.setupStoreBindings();
     
-    const { circleId, inviteCode, preloaded, preloadFailed, source, showCreateSuccess, shared, enableAnim, shareTs } = options;
+    const { circleId, inviteCode, preloaded, preloadFailed, source, showCreateSuccess, shared, enableAnim, shareTs, onboarding } = options;
 
     if (!circleId) {
       util.showToast('朋友圈ID不能为空');
@@ -112,8 +113,9 @@ Page({
     }
 
     console.log('[details] circleId:', circleId);
-    
+
     const isFromShare = shared === 'true';
+    const showOnboarding = onboarding === 'true';
     
     // 🏠 判断显示 home 还是 back 图标
     const pages = getCurrentPages();
@@ -134,10 +136,11 @@ Page({
     this.shareAnimationController = new ShareAnimationController(this);
     
     // 🎬 只有真正要播放动画时才显示黑色背景
-    this.setData({ 
+    this.setData({
       circleId,
       inviteCode: inviteCode || '',
       isFromShare,
+      showOnboarding,
       backIconType,  // 设置导航栏图标类型
       shareAnimationState: shouldShowAnimation ? 'ready' : 'idle',
       showShareAnimation: shouldShowAnimation,  // 只有要播放才显示黑屏
@@ -284,6 +287,12 @@ Page({
 
   onShow() {
     console.log('📱 details 页面 onShow 被触发');
+
+    // onboarding 模式：每次 onShow 重置动画（确保重入时从头播放）
+    if (this.data.showOnboarding) {
+      const guide = this.selectComponent('#onboarding-guide');
+      if (guide) guide._startAnimation();
+    }
     
     // 注册用户信息弹出层回调
     const app = getApp();
@@ -1092,8 +1101,17 @@ Page({
     this.setData({ showPublish: true });
   },
 
-  onPublishClose() {
+  onOnboardingTakePhoto() {
+    // onboarding 模式下直接拉起 publish-panel（跳过权限检查，匿名发布）
+    this.setData({ showPublish: true });
+  },
+
+  onPublishClose(e) {
     this.setData({ showPublish: false });
+    // onboarding 模式下，用户成功发布后退出引导层
+    if (this.data.showOnboarding && e.detail && e.detail.published) {
+      this.setData({ showOnboarding: false });
+    }
   },
 
 
