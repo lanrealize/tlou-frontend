@@ -12,6 +12,19 @@
   flex-direction: column;
 }
 
+/* ─── 入场动画 ─── */
+.onboarding-header,
+.demo-post {
+  opacity: 0;
+  transform: translateY(24rpx);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.onboarding-header.slide-in,
+.demo-post.slide-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* 顶部标题区 */
 .onboarding-header {
   padding: 0 56rpx 48rpx;

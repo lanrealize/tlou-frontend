@@ -2,24 +2,26 @@
 <view class="onboarding-container">
 
   <!-- 顶部标题 -->
-  <view class="onboarding-header" style="padding-top: {{headerTop}}px;">
+  <view class="onboarding-header {{headerVisible ? 'slide-in' : ''}}" style="padding-top: {{headerTop}}px;">
     <text class="onboarding-title">拍下此刻，\nAI 陪你记录生活</text>
     <text class="onboarding-subtitle">发一张照片，看看 AI 怎么说</text>
   </view>
 
   <!-- 示例帖子 -->
-  <view class="demo-post" bindtap="onTapDemoPost">
+  <view class="demo-post {{postVisible ? 'slide-in' : ''}}" bindtap="onTapDemoPost">
     <post-item
       id="demo-post-item"
       post="{{demoPost}}"
       showActions="{{false}}"
       timelineMode="{{true}}"
       onboardingMode="{{true}}"
+      hideComments="{{hideComments}}"
+      bindvideoended="onVideoEnded"
     ></post-item>
   </view>
 
   <!-- 底部浮层 -->
-  <view class="onboarding-footer footer-visible">
+  <view class="onboarding-footer {{footerVisible ? 'footer-visible' : ''}}">
     <view class="footer-fade"></view>
 
     <view class="footer-n" bindtap="onTakePhoto">

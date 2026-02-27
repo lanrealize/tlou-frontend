@@ -8,6 +8,9 @@ Component({
     headerTop: 0,
     avatarMode: 'dynamic',
     footerVisible: false,
+    headerVisible: false,
+    postVisible: false,
+    hideComments: true,
     demoPost: {
       _id: 'demo',
       author: {
@@ -17,13 +20,14 @@ Component({
       },
       formattedTime: '刚刚',
       images: [],
-      videoUrl: 'https://tlou.images.wltech-service.site/videos/tlou-onboarding-vedio.mp4',
+      videoUrl: 'https://tlou.images.wltech-service.site/videos/onboarding-vedio-slides.mp4',
       content: '',
       comments: [
         {
           _id: 'c1',
           author: { _id: 'ai', username: 'AI', avatar: '/assets/onboarding/ai-avatar.png' },
-          content: '这个光线真的太美了，柔和又有层次，傍晚的光总是特别让人心动'
+          content: '这个光线真的太美了，柔和又有层次，傍晚的光总是特别让人心动',
+          aiStatus: '让我看看你发的图片'
         },
         {
           _id: 'c2',
@@ -42,14 +46,30 @@ Component({
     },
     ready() {
       setTimeout(() => this._initAvatarCanvases(), 100);
-      setTimeout(() => this._animateDemoComments(), 300);
-      setTimeout(() => this.setData({ footerVisible: true }), 600);
+
+      // 200ms: header 滑入
+      setTimeout(() => this.setData({ headerVisible: true }), 200);
+
+      // 900ms: post 滑入，滑入完成后 play
+      setTimeout(() => {
+        this.setData({ postVisible: true });
+        setTimeout(() => {
+          const postItem = this.selectComponent('#demo-post-item');
+          if (postItem) postItem.startOnboardingVideo();
+        }, 600);
+      }, 900);
     }
   },
 
   methods: {
     onTakePhoto() {
       this.triggerEvent('takePhoto');
+    },
+
+    onVideoEnded() {
+      this.setData({ hideComments: false });
+      this._animateDemoComments();
+      setTimeout(() => this.setData({ footerVisible: true }), 1500);
     },
 
     onToggleAvatarMode() {

@@ -39,6 +39,11 @@ Component({
     onboardingMode: {
       type: Boolean,
       value: false
+    },
+    // 🎬 onboarding 动画：隐藏评论区（用于分阶段动画引导）
+    hideComments: {
+      type: Boolean,
+      value: false
     }
   },
 
@@ -80,7 +85,12 @@ Component({
     // 评论展开状态 - 使用对象存储每条评论的状态
     commentTextStates: {}, // { commentId: { expanded, needToggle, collapsedText, animating } }
     // AI 评论逐字动画字符列表
-    aiCommentChars: {} // { commentId: [{char, delay}] }
+    aiCommentChars: {}, // { commentId: [{char, delay}] }
+    // onboarding 模式下已显示的评论 id 集合
+    visibleCommentIds: {},
+    // onboarding 视频状态
+    videoReady: false,
+    showVideoLoading: false,
   },
 
   /**
@@ -143,6 +153,31 @@ Component({
    * 组件的方法列表
    */
   methods: {
+    // ─── onboarding 视频控制 ───
+    startOnboardingVideo() {
+      const ctx = wx.createVideoContext('onboarding-video', this);
+      ctx.play();
+      // 1s 后还没触发 bindplay，显示 loading
+      this._videoLoadTimer = setTimeout(() => {
+        if (!this.data.videoReady) {
+          this.setData({ showVideoLoading: true });
+        }
+      }, 1000);
+    },
+
+    onVideoCanPlay() {
+      clearTimeout(this._videoLoadTimer);
+      this.setData({ videoReady: true, showVideoLoading: false });
+    },
+
+    onVideoEnded() {
+      this.triggerEvent('videoended');
+    },
+
+    onVideoError(e) {
+      console.error('[video] error:', e.detail);
+    },
+
     /**
      * 🎬 获取图片位置信息（供分享动画使用）
      * @returns {Promise<Object>} 图片的 boundingClientRect 信息
@@ -405,19 +440,29 @@ Component({
 
     // 外部调用：触发所有 AI 评论的逐字动画（用于 onboarding）
     animateAiComments() {
-      const comments = this.data.post && this.data.post.comments;
-      if (!comments) return;
-      // 先清空，下一帧再填入，确保 DOM 节点重建触发动画
+      const comments = (this.data.post && this.data.post.comments || [])
+        .filter(c => c.author && c.author._id === 'ai' && c.content);
+      if (!comments.length) return;
+
       this.setData({ aiCommentChars: {} }, () => {
-        wx.nextTick(() => {
-          const fresh = {};
-          comments.forEach(c => {
-            if (c.author && c.author._id === 'ai' && c.content) {
-              fresh[c._id] = buildCharList(c.content, 40, 0);
-            }
-          });
-          this.setData({ aiCommentChars: fresh });
-        });
+        wx.nextTick(() => this._animateCommentAt(comments, 0));
+      });
+    },
+
+    _animateCommentAt(comments, index) {
+      if (index >= comments.length) return;
+      const c = comments[index];
+      const chars = buildCharList(c.content, 40, 0);
+      const duration = chars.length * 40;
+
+      // 先让这条评论可见，再填入动画字符
+      this.setData({
+        [`visibleCommentIds.${c._id}`]: true,
+        [`aiCommentChars.${c._id}`]: chars,
+      }, () => {
+        setTimeout(() => {
+          this._animateCommentAt(comments, index + 1);
+        }, duration + 400);
       });
     },
 
