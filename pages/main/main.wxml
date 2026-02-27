@@ -306,7 +306,4 @@
     </view>
   </view>
 
-  <!-- 🎬 AI 陪伴引导页 -->
-  <onboarding-guide bind:takePhoto="onOnboardingTakePhoto"></onboarding-guide>
-
 </view>

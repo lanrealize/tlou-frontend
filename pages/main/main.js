@@ -1554,11 +1554,6 @@ Page({
     app.clearUserInfoPopupConfig();
   },
 
-  onOnboardingTakePhoto() {
-    // TODO: 调起相机，上传照片，发帖，触发AI回复
-    console.log('onboarding: 用户点击拍照');
-  },
-
   // 处理待处理的意图
   async handlePendingIntent(intentType, circleId) {
     try {

@@ -106,16 +106,18 @@ Page({
     
     const { circleId, inviteCode, preloaded, preloadFailed, source, showCreateSuccess, shared, enableAnim, shareTs, onboarding } = options;
 
-    if (!circleId) {
+    const showOnboarding = onboarding === 'true';
+
+    // onboarding 模式下不需要 circleId（发布时动态创建）
+    if (!circleId && !showOnboarding) {
       util.showToast('朋友圈ID不能为空');
       wx.navigateBack();
       return;
     }
 
-    console.log('[details] circleId:', circleId);
+    console.log('[details] circleId:', circleId, 'onboarding:', showOnboarding);
 
     const isFromShare = shared === 'true';
-    const showOnboarding = onboarding === 'true';
     
     // 🏠 判断显示 home 还是 back 图标
     const pages = getCurrentPages();
@@ -155,7 +157,10 @@ Page({
     if (showCreateSuccess === 'true') {
       wx.showToast({ title: '创建成功', icon: 'success', duration: 1000 });
     }
-    
+
+    // onboarding 模式下不加载任何朋友圈数据，等发布完成后再加载
+    if (showOnboarding) return;
+
     // 加载朋友圈数据
     if (preloaded === 'true') {
       this.loadWithPreloadedData(circleId);
@@ -1110,7 +1115,11 @@ Page({
     this.setData({ showPublish: false });
     // onboarding 模式下，用户成功发布后退出引导层
     if (this.data.showOnboarding && e.detail && e.detail.published) {
-      this.setData({ showOnboarding: false });
+      const newCircleId = e.detail.circleId;
+      this.setData({ showOnboarding: false, circleId: newCircleId });
+      // 用真实 circleId 加载朋友圈数据，让帖子正常显示
+      this.loadCircleDetail();
+      this.refreshPosts(newCircleId);
     }
   },
 
