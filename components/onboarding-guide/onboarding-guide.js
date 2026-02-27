@@ -26,13 +26,13 @@ Component({
         {
           _id: 'c1',
           author: { _id: 'ai', username: 'AI', avatar: '/assets/onboarding/ai-avatar.png' },
-          content: '这个光线真的太美了，柔和又有层次，傍晚的光总是特别让人心动',
+          content: '',
           aiStatus: '让我看看你发的图片'
         },
         {
           _id: 'c2',
           author: { _id: 'ai', username: 'AI', avatar: '/assets/onboarding/ai-avatar.png' },
-          content: '感觉很安静，分享更多给我看看吧'
+          content: '每张照片都很漂亮，再拍一张试试？'
         }
       ],
       likes: []
@@ -69,7 +69,17 @@ Component({
     onVideoEnded() {
       this.setData({ hideComments: false });
       this._animateDemoComments();
-      setTimeout(() => this.setData({ footerVisible: true }), 1500);
+
+      setTimeout(() => {
+        const postItem = this.selectComponent('#demo-post-item');
+        if (!postItem) return;
+        postItem.transitionAiHeader('c1');
+        setTimeout(() => postItem.startAiReply('c1', '小时候过年放烟花，又兴奋又怕烫。守岁的时候困得睁不开眼，但就是不肯睡'), 250);
+      }, 5000);
+    },
+
+    onCommentsDone() {
+      setTimeout(() => this.setData({ footerVisible: true }), 800);
     },
 
     onToggleAvatarMode() {

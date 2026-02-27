@@ -17,6 +17,7 @@
       onboardingMode="{{true}}"
       hideComments="{{hideComments}}"
       bindvideoended="onVideoEnded"
+      bindcommentsdone="onCommentsDone"
     ></post-item>
   </view>
 
@@ -32,7 +33,7 @@
         <text class="fn-title">点击按钮，拍下此刻</text>
         <text class="fn-sub">在这里分享的每一张照片，都会得到用心的回应</text>
         <view class="fn-btn" bindtap="onTakePhoto">
-          <text class="fn-btn-text">点击拍摄</text>
+          <text class="fn-btn-text">拍一张</text>
         </view>
         <view class="fn-line"></view>
       </view>

@@ -253,7 +253,7 @@
               wx:if="{{!onboardingMode || visibleCommentIds[comment._id]}}"
             >
               <!-- 评论头像 -->
-              <ai-avatar wx:if="{{comment.author._id === 'ai'}}" mode="{{aiAvatarModes[comment._id] || 'static'}}" size="28" bindtap="onTapAiAvatar" data-comment-id="{{comment._id}}"></ai-avatar>
+              <ai-avatar wx:if="{{comment.author._id === 'ai'}}" mode="{{aiAvatarModes[comment._id] || 'dynamic'}}" size="28" bindtap="onTapAiAvatar" data-comment-id="{{comment._id}}"></ai-avatar>
               <image
                 wx:else
                 class="comment-avatar"
@@ -275,8 +275,16 @@
                   <text wx:if="{{comment.author._id !== 'ai'}}">·</text>
                   <!-- AI 评论：状态文字 或 时间 -->
                   <block wx:if="{{comment.author._id === 'ai'}}">
-                    <view wx:if="{{comment.aiStatus}}" class="ai-shimmer">{{comment.aiStatus}}</view>
-                    <text wx:else class="comment-time">{{comment.formattedTime || '刚刚'}}</text>
+                    <view class="ai-status-wrap">
+                      <view
+                        wx:if="{{aiHeaderStates[comment._id].showStatus}}"
+                        class="ai-shimmer {{aiHeaderStates[comment._id].statusAnim}}"
+                      >{{comment.aiStatus}}</view>
+                      <view
+                        wx:if="{{aiHeaderStates[comment._id].showTime}}"
+                        class="comment-time {{aiHeaderStates[comment._id].timeAnim}}"
+                      >{{comment.formattedTime || '刚刚'}}</view>
+                    </view>
                   </block>
                   <!-- 普通评论：时间 -->
                   <text wx:else class="comment-time">{{comment.formattedTime || '刚刚'}}</text>
@@ -293,8 +301,8 @@
                       style="animation-delay:{{item.delay}};"
                     >{{item.char}}</text>
                   </view>
-                  <!-- 普通评论 -->
-                  <text wx:else class="comment-text-flow">
+                  <!-- 普通评论（AI 无内容时不渲染） -->
+                  <text wx:elif="{{comment.author._id !== 'ai' || comment.content}}" class="comment-text-flow">
                     <text
                       class="comment-main-text"
                       catchtap="onReplyComment"

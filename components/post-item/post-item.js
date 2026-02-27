@@ -88,6 +88,8 @@ Component({
     aiCommentChars: {}, // { commentId: [{char, delay}] }
     // onboarding 模式下已显示的评论 id 集合
     visibleCommentIds: {},
+    // AI 评论头部状态：{ commentId: { showStatus, showTime, statusAnim, timeAnim } }
+    aiHeaderStates: {},
     // onboarding 视频状态
     videoReady: false,
     showVideoLoading: false,
@@ -441,7 +443,7 @@ Component({
     // 外部调用：触发所有 AI 评论的逐字动画（用于 onboarding）
     animateAiComments() {
       const comments = (this.data.post && this.data.post.comments || [])
-        .filter(c => c.author && c.author._id === 'ai' && c.content);
+        .filter(c => c.author && c.author._id === 'ai' && (c.content || c.aiStatus));
       if (!comments.length) return;
 
       this.setData({ aiCommentChars: {} }, () => {
@@ -450,20 +452,73 @@ Component({
     },
 
     _animateCommentAt(comments, index) {
-      if (index >= comments.length) return;
+      if (index >= comments.length) {
+        this.triggerEvent('commentsdone');
+        return;
+      }
       const c = comments[index];
-      const chars = buildCharList(c.content, 40, 0);
-      const duration = chars.length * 40;
+      const hasContent = !!c.content;
+      const chars = hasContent ? buildCharList(c.content, 40, 0) : [];
+      const duration = hasContent ? chars.length * 40 + 400 : null; // null = 不自动推进
 
-      // 先让这条评论可见，再填入动画字符
-      this.setData({
+      const update = {
         [`visibleCommentIds.${c._id}`]: true,
-        [`aiCommentChars.${c._id}`]: chars,
-      }, () => {
-        setTimeout(() => {
-          this._animateCommentAt(comments, index + 1);
-        }, duration + 400);
+        [`aiHeaderStates.${c._id}`]: c.aiStatus ? {
+          showStatus: true, showTime: false,
+          statusAnim: 'slide-up-in', timeAnim: '',
+        } : {
+          showStatus: false, showTime: true,
+          statusAnim: '', timeAnim: 'slide-up-in',
+        },
+      };
+      if (hasContent) update[`aiCommentChars.${c._id}`] = chars;
+
+      this.setData(update, () => {
+        if (duration !== null) {
+          setTimeout(() => this._animateCommentAt(comments, index + 1), duration);
+        }
+        // content 为空时（思考中），由 startAiReply 结束后手动触发下一条
+        else {
+          this._pendingComments = { comments, nextIndex: index + 1 };
+        }
       });
+    },
+
+    /**
+     * 开始 AI 逐字回复（header 切换后调用）
+     * 产品中：后端开始流式返回时调用
+     * @param {string} commentId
+     * @param {string} content
+     */
+    startAiReply(commentId, content) {
+      const chars = buildCharList(content, 40, 0);
+      const duration = chars.length * 40 + 1400; // +1000ms 额外间隔再推进下一条
+      this.setData({ [`aiCommentChars.${commentId}`]: chars }, () => {
+        // 逐字动画结束后，继续推进后续评论
+        if (this._pendingComments) {
+          const { comments, nextIndex } = this._pendingComments;
+          this._pendingComments = null;
+          setTimeout(() => this._animateCommentAt(comments, nextIndex), duration);
+        }
+      });
+    },
+
+    /**
+     * 切换 AI 头部：shimmer 滑出，时间滑入
+     * 在后端开始回复时调用（产品中）或 mock setTimeout 后调用
+     * @param {string} commentId
+     */
+    transitionAiHeader(commentId) {
+      // shimmer 滑出
+      this.setData({ [`aiHeaderStates.${commentId}.statusAnim`]: 'slide-up-out' });
+      // 0.25s 后（滑出完成）：隐藏 shimmer，时间滑入
+      setTimeout(() => {
+        this.setData({
+          [`aiHeaderStates.${commentId}.showStatus`]: false,
+          [`aiHeaderStates.${commentId}.showTime`]: true,
+          [`aiHeaderStates.${commentId}.timeAnim`]: 'slide-up-in',
+        });
+      }, 250);
     },
 
     // 点赞/取消点赞

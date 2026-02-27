@@ -844,6 +844,36 @@
   color: #808080;
 }
 
+/* ─── 通用滑入滑出动画 ─── */
+@keyframes slide-up-in {
+  from { opacity: 0; transform: translateY(10rpx); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-up-out {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-10rpx); }
+}
+.slide-up-in {
+  animation: slide-up-in 0.3s ease forwards;
+}
+.slide-up-out {
+  animation: slide-up-out 0.25s ease forwards;
+}
+
+/* ─── AI 评论头部状态区 ─── */
+.ai-status-wrap {
+  position: relative;
+  display: inline-block;
+  height: 32rpx;
+}
+.ai-status-wrap .ai-shimmer,
+.ai-status-wrap .comment-time {
+  position: absolute;
+  top: 0;
+  left: 0;
+  white-space: nowrap;
+}
+
 /* ─── AI shimmer 状态文字 ─── */
 /* 用法：任何 view 加上 ai-shimmer class 即可 */
 .ai-shimmer {
