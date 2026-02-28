@@ -27,7 +27,7 @@ Component({
           _id: 'c1',
           author: { _id: 'ai', username: 'AI', avatar: '/assets/onboarding/ai-avatar.png' },
           content: '',
-          aiStatus: '让我看看你发的图片'
+          aiStatus: '让我看看你发的照片'
         },
         {
           _id: 'c2',

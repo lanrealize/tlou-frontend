@@ -816,7 +816,7 @@
 .comment-item ai-avatar {
   flex-shrink: 0;
   margin-right: 15rpx;
-  transform: translateY(-0.3rpx);
+  transform: translateY(0rpx);
 }
 
 /* 评论内容包装器 */

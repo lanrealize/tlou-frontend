@@ -57,7 +57,7 @@
       <textarea
         id="contentTextarea"
         class="content-textarea"
-        placeholder="写点什么..."
+        placeholder="说点什么..."
         value="{{content}}"
         bindinput="onContentInput"
         auto-height
