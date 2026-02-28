@@ -88,6 +88,82 @@ function startTestMode() {
 }
 
 /**
+ * 💪 强制开始测试模式
+ * 
+ * 与 startTestMode() 的区别：
+ * - 即使已在测试模式，也会先清理旧的测试数据，再创建新的测试身份
+ * - 适用于需要快速重置测试环境的场景
+ * 
+ * 功能：
+ * 1. 如果已在测试模式，先清理旧的测试数据
+ * 2. 生成新的测试 openid
+ * 3. 重置所有状态
+ * 
+ * 使用场景：
+ * - 快速重置测试环境
+ * - 连续测试多个场景
+ * - 测试状态异常时强制重新开始
+ */
+async function forceStartTestMode() {
+  if (!DEV_MODE) {
+    console.warn('⚠️ 开发者模式未启用');
+    return false;
+  }
+
+  try {
+    console.log('========================================');
+    console.log('💪 强制开始测试模式');
+    console.log('========================================');
+
+    // 1. 如果已在测试模式，先清理旧的测试数据
+    if (isTestMode()) {
+      const oldTestOpenid = wx.getStorageSync('openid');
+      console.log('🗑️ 检测到旧的测试身份，先清理...');
+      console.log('旧测试 openid:', oldTestOpenid);
+      
+      // 清理后端数据（不等待结果，继续执行）
+      cleanupTestUser(oldTestOpenid).catch(err => {
+        console.warn('⚠️ 清理旧测试数据失败（已忽略）:', err);
+      });
+    }
+
+    // 2. 生成新的测试 openid
+    const testOpenid = `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // 3. Storage 操作：写入测试 openid，删除用户信息
+    wx.setStorageSync('openid', testOpenid);
+    wx.removeStorageSync('userInfo');
+    
+    // 4. 更新 userStore
+    const app = getApp();
+    const userStore = app.getUserStore();
+    const { USER_STATUS } = require('../store/userStore');
+    userStore.setStatus(USER_STATUS.UNREGISTERED, {});
+
+    // 5. 重置 circleStore（避免测试用户看到真实用户数据）
+    const { circleStore } = require('../store/circleStore');
+    if (circleStore) circleStore.reset();
+    
+    console.log('✅ 新测试身份已创建');
+    console.log('测试 openid:', testOpenid);
+    console.log('💡 可以开始测试注册流程了');
+    console.log('💡 测试完成后请调用: getApp().devTools.endTestMode()');
+    console.log('========================================');
+    
+    wx.showToast({
+      title: '测试模式已重置',
+      icon: 'success',
+      duration: 2000
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('❌ 强制开启测试模式失败:', error);
+    return false;
+  }
+}
+
+/**
  * 🔙 结束测试模式
  * 
  * 设计原则：
@@ -460,6 +536,7 @@ function installDevTools(appInstance) {
   appInstance.devTools = {
     // 🎭 核心功能
     startTestMode,
+    forceStartTestMode,
     endTestMode,
     getTestStatus,
     
@@ -479,8 +556,10 @@ function installDevTools(appInstance) {
   console.log('🎭 测试注册流程：');
   console.log('  1. 开始测试:');
   console.log('     getApp().devTools.startTestMode()');
-  console.log('  2. 测试注册、加入朋友圈等功能...');
-  console.log('  3. 结束测试（自动清理并恢复真实身份）:');
+  console.log('  2. 强制重新开始（即使已在测试模式）:');
+  console.log('     await getApp().devTools.forceStartTestMode()');
+  console.log('  3. 测试注册、加入朋友圈等功能...');
+  console.log('  4. 结束测试（自动清理并恢复真实身份）:');
   console.log('     await getApp().devTools.endTestMode()');
   console.log('');
   console.log('📊 查看状态：');
@@ -497,6 +576,7 @@ function installDevTools(appInstance) {
 module.exports = {
   DEV_MODE,
   startTestMode,
+  forceStartTestMode,
   endTestMode,
   getTestStatus,
   emergencyCleanup,

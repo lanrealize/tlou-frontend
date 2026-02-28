@@ -5,9 +5,8 @@ const { when } = require('mobx-miniprogram');
 const api = require('../../utils/api');
 const util = require('../../utils/util');
 const navigationHelper = require('../../utils/navigationHelper');
-const { getUserStatusWithRole, checkAndHandle, canShareCircle } = require('../../utils/checkUserActionPermission');
+const { checkAndHandle } = require('../../utils/checkUserActionPermission');
 const { ShareAnimationController, SHARE_ANIMATION_CONFIG } = require('./shareAnimationController');
-const { shouldPlayShareAnimation, recordShareAnimationPlay } = require('../../utils/shareAnimationHelper');
 
 Page({
   // 使用MobX状态管理行为
@@ -23,30 +22,7 @@ Page({
     isSendingComment: false, // 是否正在发送评论
     showCommentInput: false, // 是否显示评论输入框
     focusInput: false,    // 是否聚焦输入框
-    pendingApplicationsCount: 0, // 待处理申请数量
     scrollTopValue: 0,    // 滚动位置
-    
-    // 导航栏图标控制
-    backIconType: 'back', // 'back' 或 'home'
-    
-    // 🆕 邀请码访问
-    inviteCode: '',       // 邀请码（从URL参数获取）
-    
-    // 用户状态
-    showJoinButton: false, // 是否显示加入按钮
-    isJoining: false,     // 是否正在加入中
-    isCircleOwner: false, // 当前用户是否为朋友圈主人
-    
-    // 申请加入相关状态
-    isMember: false,      // 当前用户是否为朋友圈成员
-    isInvited: false,     // 当前用户是否被邀请
-    hasApplied: false,    // 当前用户是否已经申请过
-    isApplying: false,    // 是否正在申请中
-    showApplyButton: false, // 是否显示申请按钮
-    showPublishButton: false, // 是否显示发布按钮
-    
-    // 统一状态（传递给circle-status-action组件）
-    userStatus: 'not_logged_in', // not_logged_in | member | invited | applied | can_apply | no_access
     
     // 数据缓存相关
     lastDataLoadTime: 0,  // 上次数据加载时间
@@ -59,23 +35,6 @@ Page({
     
     // 朋友圈不存在状态
     circleNotFound: false, // 朋友圈是否不存在
-    
-    // 安全区域信息
-    safeAreaInfo: {
-      statusBarHeight: 44
-    },
-    safeAreaBottom: 160,  // 底部安全区域 + 发布按钮区域
-    
-    // 导航栏数据
-    navigationData: {
-      statusBarHeight: 44,
-      navigationBarHeight: 44,
-      totalNavigationHeight: 88,
-      capsuleVerticalCenter: 22
-    },
-    
-    // card 高度（动态计算）
-    cardHeight: 0,
     
     // 用户信息弹出层
     userInfoPopupVisible: false,
@@ -96,78 +55,53 @@ Page({
     shareAnimationTransform: '',  // 动画过渡的 CSS 变量
     transitionActive: false,      // 是否激活过渡动画
     showPublish: false,
-    publishBtnRainbow: false,
     showOnboarding: null,  // 🎯 初始为 null，避免触发 CSS 显示逻辑
     onboardingInitialImage: '',  // onboarding 拍照后预填充到 publish-panel 的图片
+    
+    // 顶部间距（基于胶囊按钮位置计算）
+    topSpacing: 0,  // 帖子列表顶部间距
   },
 
   onLoad(options) {
-    this.getSafeAreaInfo();
     this.setupStoreBindings();
+    this.calculateTopSpacing();
     
-    const { circleId, inviteCode, preloaded, preloadFailed, source, showCreateSuccess, shared, enableAnim, shareTs, onboarding } = options;
+    const { circleId, onboarding } = options;
 
     const showOnboarding = onboarding === 'true';
 
     // onboarding 模式下不需要 circleId（发布时动态创建）
     if (!circleId && !showOnboarding) {
-      util.showToast('朋友圈ID不能为空');
+      util.showToast('ID不能为空');
       wx.navigateBack();
       return;
     }
 
     console.log('[details] circleId:', circleId, 'onboarding:', showOnboarding);
 
-    const isFromShare = shared === 'true';
-    
-    // 🏠 判断显示 home 还是 back 图标
-    const pages = getCurrentPages();
-    const backIconType = pages.length <= 1 ? 'home' : 'back';
-    
-    // 🎯 完整判断是否应该播放动画（只有两种状态：播放或不播放）
-    // enableAnim: 分享时的快照设置，代表分享者的意愿（默认 true，兼容老链接）
-    // shareTs: 分享时间戳，用于标识每次独特的分享
-    const shareTimeEnabled = enableAnim !== 'false';
-    const shouldShowAnimation = isFromShare && 
-                                shareTimeEnabled &&
-                                shouldPlayShareAnimation(circleId, shareTs);  // 智能播放判断
-    
-    // 🎬 保存分享时间戳（用于记录动画播放）
-    this.shareTimestamp = shareTs;
+    const isFromShare = false;
     
     // 🎬 创建动画控制器
     this.shareAnimationController = new ShareAnimationController(this);
     
-    // 🎬 只有真正要播放动画时才显示黑色背景
     this.setData({
       circleId,
-      inviteCode: inviteCode || '',
       isFromShare,
       showOnboarding,
-      backIconType,  // 设置导航栏图标类型
-      shareAnimationState: shouldShowAnimation ? 'ready' : 'idle',
-      showShareAnimation: shouldShowAnimation,  // 只有要播放才显示黑屏
-      hideFirstPostImage: shouldShowAnimation,  // 同时隐藏第一个帖子的图片
+      shareAnimationState: 'idle',
+      showShareAnimation: false,
+      hideFirstPostImage: false,
       shareAnimationClass: '',
       shareGradientClass: '',
       shareAnimationImageUrl: '',
       shareAnimationCompleted: false
     });
-    
-    // 如果是创建成功后跳转过来，显示成功提示
-    if (showCreateSuccess === 'true') {
-      wx.showToast({ title: '创建成功', icon: 'success', duration: 1000 });
-    }
 
     // onboarding 模式下不加载任何朋友圈数据，等发布完成后再加载
     if (showOnboarding) return;
 
     // 加载朋友圈数据
-    if (preloaded === 'true') {
-      this.loadWithPreloadedData(circleId);
-    } else {
-      this.loadCircleDetail();
-    }
+    this.loadCircleDetail();
   },
 
   onUnload() {
@@ -226,69 +160,35 @@ Page({
     });
   },
   
-  // 🆕 包装方法：自动传递 inviteCode
+  // 🆕 包装方法：自动传递参数
   async loadPosts(circleId, loadMore = false, extraParams = {}) {
-    const params = this.data.inviteCode ? { inviteCode: this.data.inviteCode, ...extraParams } : extraParams;
-    return this.loadPostsRaw(circleId, loadMore, params);
+    return this.loadPostsRaw(circleId, loadMore, extraParams);
   },
   
   async refreshPosts(circleId) {
-    const params = this.data.inviteCode ? { inviteCode: this.data.inviteCode } : {};
-    return this.refreshPostsRaw(circleId, params);
+    return this.refreshPostsRaw(circleId, {});
   },
   
   async loadMorePosts() {
-    const params = this.data.inviteCode ? { inviteCode: this.data.inviteCode } : {};
-    return this.loadMorePostsRaw(params);
+    return this.loadMorePostsRaw({});
   },
 
-  // 获取安全区域信息
-  getSafeAreaInfo() {
-    const app = getApp();
-    if (app && app.globalData.safeAreaInfo) {
-      // 计算底部安全区域
-      const safeAreaInfo = navigationHelper.getSafeAreaInfo();
-      const bottomSafeArea = safeAreaInfo.bottomSafeArea;
+  // 计算顶部间距（基于胶囊按钮位置）
+  calculateTopSpacing() {
+    try {
+      const menuButtonInfo = wx.getMenuButtonBoundingClientRect();
+      const { top, height } = menuButtonInfo;
       
-      // 计算实际需要的底部空间：发布按钮(120rpx) + 底部安全区域 + 额外边距
-      const publishButtonHeight = 120; // rpx转px大约是60px
-      const calculatedBottom = bottomSafeArea + publishButtonHeight + 20;
+      // 胶囊按钮底部位置 + 额外的 padding（例如 20px）
+      const topSpacing = top + height + 20;
       
-      this.setData({
-        safeAreaInfo: app.globalData.safeAreaInfo,
-        safeAreaBottom: calculatedBottom
-      });
+      this.setData({ topSpacing });
+      console.log('📏 计算顶部间距:', topSpacing, 'px');
+    } catch (error) {
+      console.error('计算顶部间距失败:', error);
+      // 使用默认值
+      this.setData({ topSpacing: 88 });
     }
-  },
-
-  // 处理导航栏准备完成事件
-  onNavigationReady(event) {
-    const { navigationData } = event.detail;
-    // 确保 navigationData 存在且包含必要字段
-    if (navigationData && navigationData.totalNavigationHeight) {
-      this.setData({
-        navigationData: navigationData
-      }, () => {
-        // 导航栏高度确定后，计算 card 高度
-        this.calculateCardHeight();
-      });
-    } else {
-      // 如果事件数据有问题，使用当前 data 中的默认值
-      console.warn('导航栏数据不完整，使用默认值');
-    }
-  },
-
-  // 计算 card 的实际高度
-  calculateCardHeight() {
-    const query = wx.createSelectorQuery();
-    query.select('.card-content-fixed').boundingClientRect();
-    query.exec((res) => {
-      if (res && res[0]) {
-        const cardHeight = this.data.navigationData.totalNavigationHeight + res[0].height;
-        this.setData({ cardHeight });
-        console.log('📏 Card 高度计算完成:', cardHeight);
-      }
-    });
   },
 
   onShow() {
@@ -517,102 +417,28 @@ Page({
     this.loadMorePosts();
   },
 
-  // 使用预加载数据加载朋友圈详情
-  async loadWithPreloadedData(circleId) {
-    try {
-      const app = getApp();
-      const preloadedData = app.globalData.preloadedCircleData;
-      
-      // 验证预加载数据的有效性
-      if (!preloadedData || 
-          preloadedData.circleId !== circleId ||
-          !preloadedData.circleData ||
-          (Date.now() - preloadedData.timestamp) > 10000) {
-        this.loadCircleDetail();
-        return;
-      }
-
-      const targetCircle = preloadedData.circleData;
-      
-      // 🔑 使用全局状态管理判断用户关系
-      const { currentUser } = this.data;
-      const userId = currentUser?._id || null;
-      const relation = getUserStatusWithRole(targetCircle, userId, this.data.inviteCode);
-      const prevUserStatus = this.data.userStatus;
-
-      this.setData({
-        circle: targetCircle,
-        isCircleOwner: relation.isOwner || false,
-        isMember: relation.status === 'member',
-        isInvited: relation.status === 'invited',
-        hasApplied: relation.status === 'applied',
-        showApplyButton: relation.status === 'can_apply',
-        showJoinButton: relation.status === 'invited',
-        showPublishButton: relation.status === 'member',
-        userStatus: relation.status // 设置统一状态
-      });
-
-      // 🌈 发布按钮炫彩：首次确认成员身份时触发
-      if (relation.status === 'member' && prevUserStatus !== 'member') {
-        this.triggerPublishBtnRainbow();
-      }
-
-      // 🔑 根据权限设置分享菜单
-      this.setupShareMenu(targetCircle, currentUser);
-
-      // 直接通过setData同步设置帖子数据，确保页面切换时立即有数据
-      const { postStore } = require('../../store/postStore');
-      
-      if (postStore.currentCircleId === circleId && postStore.posts && postStore.posts.length >= 0) {
-        this.setData({
-          posts: postStore.posts,
-          hasMore: postStore.hasMore,
-          loading: false
-        });
-        // 🎬 直接检查动画（无需延迟，从 postStore 读取）
-        this.checkAndTriggerShareAnimation();
-      }
-
-      // 清理全局预加载数据
-      app.globalData.preloadedCircleData = null;
-
-      // 如果是朋友圈主人，加载待处理申请数量
-      if (relation.isOwner) {
-        await this.loadPendingApplicationsCount();
-      }
-
-    } catch (error) {
-      // 回退到常规加载
-      this.loadCircleDetail();
-    }
-  },
-
   // 加载朋友圈详情
   async loadCircleDetail() {
     try {
-      let targetCircle = null;
-      const { currentUser } = this.data;
+      const { currentUser, circleId } = this.data;
       const isLoggedIn = currentUser && currentUser._id;
       
-      // ✅ 优雅方案：API 层会自动判断调用认证API还是公开API
+      let targetCircle = null;
       
-      // 已登录用户：先从我的朋友圈中查找（判断是否是成员）
+      // 已登录用户：先从我的朋友圈中查找
       if (isLoggedIn) {
         try {
           const circlesRes = await api.circles.getMy();
-          targetCircle = circlesRes.data.circles.find(c => c._id === this.data.circleId);
+          targetCircle = circlesRes.data.circles.find(c => c._id === circleId);
         } catch (error) {
           console.log('📝 从我的朋友圈中未找到，尝试获取详情');
         }
       }
       
-      // 如果没找到（或未登录），获取朋友圈详情
-      // API 层会自动判断：已登录 → /circles/:id，未登录 → /public/circles/:id
+      // 如果没找到，获取朋友圈详情
       if (!targetCircle) {
         try {
-          // 🆕 传递 inviteCode 参数（如果有）
-          const params = this.data.inviteCode ? { inviteCode: this.data.inviteCode } : {};
-          const detailRes = await api.circles.getDetail(this.data.circleId, params);
+          const detailRes = await api.circles.getDetail(circleId, {});
           targetCircle = detailRes.data.circle;
         } catch (error) {
           this.handleCircleLoadError(error);
@@ -621,57 +447,20 @@ Page({
       }
       
       if (!targetCircle) {
-        throw new Error('朋友圈不存在或无权访问');
+        throw new Error('内容不存在或无权访问');
       }
 
       // 格式化数据
       targetCircle.formattedTime = util.formatRelativeTime(targetCircle.createdAt);
-      targetCircle.memberCount = targetCircle.members ? targetCircle.members.length : 0;
-
-      // 🔑 使用全局状态管理判断用户关系
-      const userId = currentUser?._id || null;
-      const relation = getUserStatusWithRole(targetCircle, userId, this.data.inviteCode);
-      const prevUserStatus = this.data.userStatus;
 
       this.setData({
-        circle: targetCircle,
-        isCircleOwner: relation.isOwner || false,
-        isMember: relation.status === 'member',
-        isInvited: relation.status === 'invited',
-        hasApplied: relation.status === 'applied',
-        showApplyButton: relation.status === 'can_apply',
-        showJoinButton: relation.status === 'invited',
-        showPublishButton: relation.status === 'member',
-        userStatus: relation.status // 设置统一状态
+        circle: targetCircle
       });
 
-      // 🌈 发布按钮炫彩：首次确认成员身份时触发
-      if (relation.status === 'member' && prevUserStatus !== 'member') {
-        this.triggerPublishBtnRainbow();
-      }
-
-      // 🔑 根据权限设置分享菜单
-      this.setupShareMenu(targetCircle, currentUser);
-
-      // 帖子查看权限：公开朋友圈所有人可看，私密朋友圈只有成员和被邀请者可看
-      const canViewPosts = targetCircle.isPublic || // 公开朋友圈任何人都能看
-                          relation.status === 'member' ||   // 私密朋友圈的成员能看
-                          relation.status === 'invited';   // 私密朋友圈的被邀请者能看
-                          // 注意：私密朋友圈的申请者不能看（可能是之前公开时申请，后来改为私密）
-      
-      if (canViewPosts) {
-        // 包装方法会自动处理 inviteCode
-        await this.loadPosts(this.data.circleId, false);
-        // 🎬 直接检查动画（无需延迟，从 postStore 读取）
-        this.checkAndTriggerShareAnimation();
-        // 🖼️ 初始化分享封面
-        this.updateShareImage();
-      }
-
-      // 如果是朋友圈主人，加载待处理申请数量
-      if (relation.isOwner) {
-        await this.loadPendingApplicationsCount();
-      }
+      // 加载帖子
+      await this.loadPosts(circleId, false);
+      // 🎬 检查分享动画
+      this.checkAndTriggerShareAnimation();
 
     } catch (error) {
       util.showToast('加载失败');
@@ -700,283 +489,16 @@ Page({
 
   // 返回首页
   goToMainPage() {
-    wx.reLaunch({
-      url: '/pages/main/main'
-    });
+    // 暂时关闭小程序
+    wx.navigateBack();
   },
-
-
-
-  // 加载待处理申请数量
-  async loadPendingApplicationsCount() {
-    try {
-      const res = await api.circles.getAppliers(this.data.circleId);
-      if (res.success) {
-        const appliers = res.data.appliers || [];
-        this.setData({
-          pendingApplicationsCount: appliers.length
-        });
-      }
-    } catch (error) {
-      console.error('加载待处理申请数量失败:', error);
-      // 静默失败，不影响主要功能
-      this.setData({
-        pendingApplicationsCount: 0
-      });
-    }
-  },
-
-  // 打开设置
-  openSettings() {
-    const { circleId, circle } = this.data;
-    
-    if (!circleId) {
-      wx.showToast({
-        title: '朋友圈信息不完整',
-        icon: 'none'
-      });
-      return;
-    }
-    
-    // 使用统一的权限检查：只有朋友圈成员才能进入设置页面
-    if (!checkAndHandle('enterSettingsPage', { circle, inviteCode: this.data.inviteCode })) {
-      return; // checkAndHandle 会自动处理未登录（弹窗）或非成员（Toast）
-    }
-    
-    // 导航到朋友圈设置页面，传递朋友圈ID
-    wx.navigateTo({
-      url: `/pages/setting/setting?circleId=${circleId}`,
-      fail: (err) => {
-        wx.showToast({
-          title: '打开设置失败',
-          icon: 'none'
-        });
-      }
-    });
-  },
-
-  // 设置分享菜单的显示/隐藏
-  setupShareMenu(circle, currentUser) {
-    const canShare = canShareCircle(circle, currentUser, this.data.inviteCode);
-    
-    if (canShare) {
-      // 可以分享：显示分享菜单
-      wx.showShareMenu({
-        withShareTicket: false,
-        menus: ['shareAppMessage']
-      });
-      console.log('✅ 分享菜单已显示');
-    } else {
-      // 不能分享：隐藏分享菜单（彻底阻止分享）
-      wx.hideShareMenu();
-      console.log('🔒 分享菜单已隐藏');
-    }
-  },
-
-  // 🖼️ 更新分享封面图片
-  async updateShareImage() {
-    const { postStore } = require('../../store/postStore');
-    
-    // 使用 MobX when() 等待数据就绪（优雅方式）
-    try {
-      await when(
-        () => postStore.posts && postStore.posts.length > 0,
-        { timeout: 3000 }
-      );
-    } catch (error) {
-      // 超时或无数据
-      this._localShareImagePath = null;
-      this._lastDownloadedImageUrl = null;
-      console.log('⏭️ 无图片，清空分享封面');
-      return;
-    }
-    
-    const posts = postStore.posts;
-    const firstImage = posts[0]?.images?.[0];
-    
-    // 没有图片，清空状态
-    if (!firstImage) {
-      this._localShareImagePath = null;
-      this._lastDownloadedImageUrl = null;
-      console.log('⏭️ 无图片，清空分享封面');
-      return;
-    }
-    
-    const imageUrl = typeof firstImage === 'object' ? firstImage.url : firstImage;
-    
-    // URL未变化，跳过下载
-    if (this._lastDownloadedImageUrl === imageUrl && this._localShareImagePath) {
-      console.log('📌 封面未变化，跳过下载');
-      return;
-    }
-    
-    // URL变化，立即清空（防止用错的图）
-    this._localShareImagePath = null;
-    
-    // 使用七牛缩略图（宽度400px，质量85）
-    const downloadUrl = imageUrl.includes('images.wltech-service.site')
-      ? `${imageUrl}?imageView2/2/w/400/q/85`
-      : imageUrl;
-    
-    try {
-      console.log('🔽 下载分享封面...');
-      const startTime = Date.now();
-      const res = await new Promise((resolve, reject) => {
-        wx.downloadFile({ url: downloadUrl, success: resolve, fail: reject });
-      });
-      
-      if (res.statusCode === 200) {
-        this._localShareImagePath = res.tempFilePath;
-        this._lastDownloadedImageUrl = imageUrl; // 记录原图URL
-        console.log(`✅ 封面更新成功 (${Date.now() - startTime}ms)`);
-      } else {
-        console.warn(`❌ 下载失败 (${res.statusCode})，将使用默认封面`);
-      }
-    } catch (error) {
-      console.warn('❌ 下载失败:', error.errMsg, '，将使用默认封面');
-    }
-  },
-
-  // 🛡️ 分享时验证封面URL（最后保险）
-  checkShareImageUrl() {
-    const { postStore } = require('../../store/postStore');
-    const posts = postStore.posts;
-    const firstImage = posts?.[0]?.images?.[0];
-    
-    if (!firstImage || !this._localShareImagePath || !this._lastDownloadedImageUrl) {
-      return null; // 无封面或未下载，返回null使用默认
-    }
-    
-    const currentUrl = typeof firstImage === 'object' ? firstImage.url : firstImage;
-    
-    // URL吻合，使用下载的封面
-    if (this._lastDownloadedImageUrl === currentUrl) {
-      console.log('✅ 封面URL吻合，使用自定义封面');
-      return this._localShareImagePath;
-    }
-    
-    // URL不吻合，不能用（防止错图）
-    console.warn('⚠️ 封面URL不吻合，使用默认封面');
-    return null;
-  },
-
-  // 微信分享处理
-  async onShareAppMessage() {
-    const { circle, circleId, currentUser, posts } = this.data;
-    
-    // 🔑 使用统一的权限管理检查分享权限
-    const canShare = canShareCircle(circle, currentUser, this.data.inviteCode);
-    
-    if (!canShare) {
-      console.warn('⚠️ 无权限分享，这不应该发生（分享菜单应该已隐藏）');
-      return null;
-    }
-    
-    // 🆕 所有分享都获取邀请码（不论公开/私有）
-    // 原因：防止朋友圈从公开改为私有后，之前的分享链接失效
-    let inviteCodeParam = '';
-    try {
-      const res = await api.circles.getInviteCode(circleId);
-      const inviteCode = res.data.inviteCode;
-      if (inviteCode) {
-        inviteCodeParam = `&inviteCode=${inviteCode}`;
-      }
-    } catch (error) {
-      console.error('获取邀请码失败:', error);
-      wx.showToast({ title: '分享失败，请稍后重试', icon: 'none' });
-      return null;
-    }
-    
-    // 🎬 分享时的动画设置快照（代表分享者的意愿）
-    const enableAnimParam = circle?.enableShareAnimation !== false ? 'true' : 'false';
-    // 🆕 生成分享时间戳，用于标识这次独特的分享
-    const shareTimestamp = Date.now();
-    
-    const shareConfig = {
-      title: `点击加入状态分享`,
-      path: `/pages/details/details?circleId=${circleId}${inviteCodeParam}&shared=true&enableAnim=${enableAnimParam}&shareTs=${shareTimestamp}`
-    };
-    
-    // 🛡️ 分享时验证并使用封面（最后保险）
-    const imageUrl = this.checkShareImageUrl();
-    if (imageUrl) {
-      shareConfig.imageUrl = imageUrl;
-    }
-    
-    return shareConfig;
-  },
-
-  // 接受邀请加入朋友圈
-  async acceptInvite() {
-    const { circleId, circle, isJoining } = this.data;
-    
-    // 访问控制：检查是否登录
-    if (!checkAndHandle('acceptInvite', { circle, inviteCode: this.data.inviteCode, circleId })) {
-      return; // checkAndHandle 会自动处理跳转和意图保存
-    }
-    
-    if (isJoining) return;
-    
-    this.setData({ isJoining: true });
-    
-    try {
-      wx.showLoading({ title: '正在加入...' });
-      await api.circles.acceptInvite(circleId);
-      
-      wx.hideLoading();
-      wx.showToast({ title: '加入成功！', icon: 'success' });
-      
-      // 重置加入状态
-      this.setData({ isJoining: false });
-      
-      // 重新加载朋友圈详情，setupShareMenu 会根据用户权限自动设置分享菜单
-      await this.loadCircleDetail();
-    } catch (error) {
-      wx.hideLoading();
-      this.setData({ isJoining: false });
-      console.error('加入朋友圈失败:', error);
-      wx.showModal({
-        title: '加入失败',
-        content: error.message || '无法加入朋友圈，请稍后重试',
-        showCancel: false
-      });
-    }
-  },
-
-
-
-  // 打开相机
-  openCamera() {
-    wx.chooseMedia({
-      count: 9,
-      mediaType: ['image'],
-      sourceType: ['album', 'camera'],
-      camera: 'back',
-      success: (res) => {
-        wx.showToast({
-          title: '选择了' + res.tempFiles.length + '张图片',
-          icon: 'success'
-        });
-        // 这里可以添加图片上传和发布逻辑
-      },
-              fail: (err) => {
-          wx.showToast({
-            title: '选择媒体失败',
-            icon: 'none'
-          });
-        }
-    });
-  },
-
-  // ===== 帖子组件事件处理 =====
 
   // 点赞/取消点赞
   async onPostLike(e) {
     const { postId } = e.detail;
 
-    // 使用统一的权限检查：登录 + 成员资格
-    const { circle, inviteCode } = this.data;
-    if (!checkAndHandle('likePost', { circle, inviteCode })) {
+    // 权限检查：点赞需要注册
+    if (!checkAndHandle('likePost', { circleId: this.data.circleId })) {
       return;
     }
 
@@ -992,9 +514,8 @@ Page({
   onPostComment(e) {
     const { postId } = e.detail;
 
-    // 使用统一的权限检查：登录 + 成员资格
-    const { circle, inviteCode } = this.data;
-    if (!checkAndHandle('commentPost', { circle, inviteCode })) {
+    // 权限检查：评论需要注册
+    if (!checkAndHandle('commentPost', { circleId: this.data.circleId })) {
       return;
     }
 
@@ -1012,9 +533,8 @@ Page({
   onPostReplyComment(e) {
     const { postId, replyToUser } = e.detail;
 
-    // 使用统一的权限检查：登录 + 成员资格
-    const { circle, inviteCode } = this.data;
-    if (!checkAndHandle('commentPost', { circle, inviteCode })) {
+    // 权限检查：回复需要注册
+    if (!checkAndHandle('commentPost', { circleId: this.data.circleId })) {
       return;
     }
 
@@ -1038,8 +558,6 @@ Page({
     try {
       await this.deletePost(postId);
       util.showToast('删除成功');
-      // 🖼️ 删帖成功后更新分享封面
-      this.updateShareImage();
     } catch (error) {
       console.error('删除帖子失败:', error);
       util.showToast('删除失败');
@@ -1075,34 +593,9 @@ Page({
     util.showToast('功能开发中');
   },
 
-
-
-  // 🌈 发布按钮炫彩动画冷却配置（0 = 每次都触发，生产环境改为 6 * 60 * 60 * 1000）
-  PUBLISH_BTN_RAINBOW_INTERVAL: 0,
-
-  // 🌈 触发发布按钮炫彩动画
-  triggerPublishBtnRainbow() {
-    const { circleId } = this.data;
-    const storageKey = `publish_btn_rainbow_ts_${circleId}`;
-    const interval = this.PUBLISH_BTN_RAINBOW_INTERVAL;
-
-    if (interval > 0) {
-      const lastTs = wx.getStorageSync(storageKey) || 0;
-      if (Date.now() - lastTs < interval) return;
-    }
-
-    wx.setStorageSync(storageKey, Date.now());
-    setTimeout(() => {
-      this.setData({ publishBtnRainbow: true });
-      setTimeout(() => {
-        this.setData({ publishBtnRainbow: false });
-      }, 8000);
-    }, 2000);
-  },
-
   navigateToPublish() {
-    const { circle, inviteCode } = this.data;
-    if (!checkAndHandle('publishPost', { circle, inviteCode })) {
+    // 权限检查：第二次发帖需要注册
+    if (!checkAndHandle('publishPost', { circleId: this.data.circleId })) {
       return;
     }
     this.setData({ showPublish: true });
@@ -1114,38 +607,31 @@ Page({
   },
 
   onPublishClose(e) {
-    this.setData({ showPublish: false });
     // onboarding 模式下，用户成功发布后退出引导层
     if (this.data.showOnboarding && e.detail && e.detail.published) {
       const newCircleId = e.detail.circleId;
-      // 先关闭 onboarding，触发淡入动画
-      this.setData({ showOnboarding: false, circleId: newCircleId });
+      
+      // 🎯 方案：先切换背景（onboarding → details），再隐藏 publish-panel
+      // 这样 publish-panel 下滑时，背景已经是 details 了
+      this.setData({ 
+        showOnboarding: false, 
+        circleId: newCircleId 
+      });
+      
+      // 等待一帧，确保 DOM 更新完成
+      setTimeout(() => {
+        this.setData({ showPublish: false });
+      }, 16);
+      
       // 等待淡入动画完成后再加载数据（避免加载时的闪烁）
       setTimeout(() => {
         this.loadCircleDetail();
         this.refreshPosts(newCircleId);
       }, 100);
+    } else {
+      // 非 onboarding 模式，直接隐藏
+      this.setData({ showPublish: false });
     }
-  },
-
-
-
-  // 回复评论
-  replyComment(e) {
-    // 使用统一的权限检查：登录 + 成员资格
-    const { circle, inviteCode } = this.data;
-    if (!checkAndHandle('commentPost', { circle, inviteCode })) {
-      return;
-    }
-
-    const { userId, username, postId } = e.currentTarget.dataset;
-    this.setData({
-      showCommentInput: true,
-      selectedPostId: postId,
-      replyToUser: { id: userId, username },
-      commentText: '',
-      focusInput: true  // 恢复同时弹出评论框和键盘
-    });
   },
 
   // 评论输入
@@ -1266,20 +752,6 @@ Page({
     }
   },
 
-  // 分享到朋友圈（分享到微信朋友圈，不是分享给朋友）
-  onShareTimeline() {
-    const { circle } = this.data;
-    if (!circle) return {};
-
-    return {
-      title: '查看状态分享',
-      query: `circleId=${this.data.circleId}`,
-      imageUrl: circle.coverImage || '/assets/pics/newShare.png'
-    };
-  },
-
-  // === 申请加入功能 ===
-  
   // 去登录（由组件触发）
   goToLogin() {
     const app = getApp();
@@ -1290,88 +762,12 @@ Page({
 
   // 统一的朋友圈加载错误处理
   handleCircleLoadError(error) {
-    console.error('加载朋友圈失败:', error);
+    console.error('加载失败:', error);
     
-    // 401/403: 权限问题，引导登录
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      wx.showModal({
-        title: '需要登录',
-        content: '请先登录后再查看朋友圈详情',
-        confirmText: '去登录',
-        cancelText: '返回',
-        success: (res) => {
-          if (res.confirm) {
-            const app = getApp();
-            app.showUserInfoPopup({
-              reason: '登录后可以查看朋友圈详情'
-            });
-          } else {
-            wx.navigateBack();
-          }
-        }
-      });
-    } else {
-      // 其他错误：显示全屏overlay
-      this.setData({ circleNotFound: true });
-    }
+    // 显示全屏overlay
+    this.setData({ circleNotFound: true });
   },
 
-  // 申请加入朋友圈
-  async applyToJoin() {
-    const { circleId, circle, isApplying, currentUser, inviteCode } = this.data;
-    
-    // 访问控制：检查是否登录
-    if (!checkAndHandle('applyToJoin', { circle, inviteCode, circleId })) {
-      return; // checkAndHandle 会自动处理跳转和意图保存
-    }
-    
-    if (isApplying) return;
-
-    this.setData({ isApplying: true });
-
-    try {
-      wx.showLoading({ title: '申请中...' });
-      const res = await api.circles.applyToJoin(circleId);
-      
-      wx.hideLoading();
-
-      if (res.success) {
-        wx.showToast({ title: '申请已提交', icon: 'success' });
-        
-        // 更新本地状态（后端已返回 currentUserStatus，重新加载即可获取最新状态）
-        const updatedCircle = { ...circle };
-        if (!updatedCircle.currentUserStatus) {
-          updatedCircle.currentUserStatus = {
-            isMember: false,
-            isOwner: false,
-            hasApplied: true
-          };
-        } else {
-          updatedCircle.currentUserStatus.hasApplied = true;
-        }
-        
-        this.setData({ 
-          userStatus: 'applied', 
-          isApplying: false,
-          circle: updatedCircle,
-          hasApplied: true
-        });
-      } else {
-        throw new Error(res.message || '申请失败');
-      }
-    } catch (error) {
-      wx.hideLoading();
-      wx.showModal({
-        title: '申请失败',
-        content: error.message || '申请加入朋友圈失败，请稍后重试',
-        showCancel: false
-      });
-      this.setData({ isApplying: false });
-    }
-  },
-
-  // === 用户信息弹出层相关方法 ===
-  
   // 用户信息注册成功
   async onUserInfoSuccess(e) {
     const { pendingIntent, circleId } = e.detail;
@@ -1417,16 +813,17 @@ Page({
   // 处理待处理的意图
   async handlePendingIntent(intentType, circleId) {
     try {
-      if (intentType === 'acceptInvite' || intentType === 'invited') {
-        // 接受邀请
-        await this.acceptInvite();
-      } else if (intentType === 'applyToJoin' || intentType === 'can_apply') {
-        // 申请加入
-        await this.applyToJoin();
+      // AI-only 模式下，主要处理发帖、点赞、评论等意图
+      if (intentType === 'publishPost') {
+        // 打开发布面板
+        this.setData({ showPublish: true });
+      } else if (intentType === 'likePost' || intentType === 'commentPost') {
+        // 点赞和评论意图：刷新页面，用户可以重新操作
+        this.loadCircleDetail();
       }
     } catch (error) {
       console.error('处理意图失败:', error);
-      util.showToast(error.message || '操作失败', 'error');
+      util.showToast(error.message || '操作失败');
     }
   },
 

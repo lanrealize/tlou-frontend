@@ -39,92 +39,9 @@
       catchlongpress="preventTap"
     ></view>
 
-    <!-- 自定义导航栏 -->
-    <custom-navigation 
-      title="{{circle.name || '两个人的朋友圈'}}" 
-      customBack="{{true}}"
-      backIconType="{{backIconType}}"
-      bindnavigationReady="onNavigationReady" 
-      bind:back="navigateBack"
-    ></custom-navigation>
-
-    <!-- 🔧 移除了整体的"加载中..."显示，改为在main page预加载 -->
-
     <!-- 朋友圈详情页面 -->
-  <view 
-    class="moment-page" 
-    style="padding-top: {{navigationData.totalNavigationHeight}}px;"
-  >
+    <view class="moment-page">
     
-    <!-- 朋友圈信息卡片 - 固定在顶部 -->
-    <view class="card-content-fixed">
-      <view class="card-content">
-        <!-- 左侧内容区域：文字 + 头像按钮 -->
-        <view class="left-content">
-          <!-- 左侧用户信息 -->
-          <view class="circle-info">
-            <!-- 四个条件都满足时显示简化文案 -->
-            <block wx:if="{{circle.memberCount > 1 && pendingApplicationsCount > 0 && userStatus === 'member' && isCircleOwner}}">
-              <view class="member-count">{{circle.memberCount || 1}} 名成员在内</view>
-              <view class="circle-status">点击设置按钮移除用户</view>
-            </block>
-            
-            <!-- 默认文案 -->
-            <block wx:else>
-              <view class="member-count">{{circle.memberCount || 1}} 名成员在内</view>
-              <view class="circle-status">点击设置按钮可移除用户</view>
-            </block>
-          </view>
-          
-          <!-- 中间头像和添加按钮 -->
-          <view class="avatars-section">
-            <!-- 用户头像组（包含头像和添加按钮） -->
-            <view class="avatar-group">
-              <!-- 如果没有任何成员，显示一个默认头像作为占位 -->
-              <image class="member-avatar" wx:if="{{!circle.members || circle.members.length === 0}}" src="/images/default_avatar.png" mode="aspectFill" bindtap="openSettings"></image>
-
-              <!-- 成员≤2：显示实际数量的头像 -->
-              <image class="member-avatar" wx:for="{{circle.members || []}}" wx:for-item="member" wx:key="_id" wx:if="{{circle.members.length <= 2 && index < 2}}" src="{{member.avatar || '/images/default_avatar.png'}}" mode="aspectFill" bindtap="openSettings"></image>
-
-              <!-- 成员>2：显示1个头像 + 1个+N徽章 -->
-              <block wx:if="{{circle.members && circle.members.length > 2}}">
-                <image class="member-avatar" src="{{circle.members[0].avatar || '/images/default_avatar.png'}}" mode="aspectFill" bindtap="openSettings"></image>
-                <view class="member-count-badge" bindtap="openSettings">
-                  <image class="member-count-bg" src="{{circle.members[1].avatar || '/images/default_avatar.png'}}" mode="aspectFill"></image>
-                  <view class="member-count-overlay"></view>
-                  <text class="count-text">{{circle.members.length - 1}}+</text>
-                </view>
-              </block>
-              
-              <!-- 添加按钮 -->
-              <button class="add-member-btn" open-type="share" wx:if="{{isCircleOwner}}" hover-class="add-member-hover">
-                <image class="add-icon" src="/assets/icons/add.svg" mode="aspectFit"></image>
-              </button>
-            </view>
-          </view>
-        </view>
-        
-        <!-- 右侧按钮组 -->
-        <view id="action-btn-group" class="top-btn-group">
-          <!-- 发布按钮 - 始终显示，非成员时 disabled -->
-          <text id="publish-btn" class="top-btn {{(userStatus !== 'member' && isLoggedIn) ? 'disabled' : ''}} {{publishBtnRainbow ? 'rainbow' : ''}}"
-                bindtap="navigateToPublish">发布</text>
-          
-          <!-- 分隔符 - 始终显示 -->
-          <text class="top-btn-divider">|</text>
-          
-          <!-- 设置按钮 - 所有人都能看到 -->
-          <text id="setting-btn" class="top-btn" 
-                bindtap="openSettings">设置</text>
-          
-          <!-- 待处理申请数角标 -->
-          <text id="pending-count" class="setting-count"
-                wx:if="{{isCircleOwner && pendingApplicationsCount > 0}}"
-                bindtap="openSettings">({{pendingApplicationsCount}})</text>
-        </view>
-      </view>
-    </view>
-
     <!-- 可滚动内容区域 -->
     <scroll-view
       class="moment-scroll-view"
@@ -141,8 +58,7 @@
       <!-- 申请加入朋友圈区域 - 已移至底部统一组件 -->
 
       <!-- 帖子列表区域 - 时间轴布局 -->
-      <view class="posts-container">
-        <view class="posts-top-spacer"></view>
+      <view class="posts-container" style="padding-top: {{topSpacing}}px;">
         <!-- 空状态 -->
         <view class="empty-content" wx:if="{{posts.length === 0 && !loading}}">
           <view class="empty-title">朋友圈内容为空</view>
@@ -172,47 +88,17 @@
               ></post-item>
             </block>
 
-            <!-- 时间轴结束标记 -->
-            <view class="timeline-end-marker" wx:if="{{!hasMore && posts.length > 0}}">
-              <view class="timeline-line"></view>
-              <view class="node-dot"></view>
-              <view class="end-content">
-                <text class="end-text">无更多内容</text>
-              </view>
-            </view>
-
             <!-- 加载更多提示 -->
             <view class="load-more" wx:if="{{hasMore && posts.length > 0}}">
               <text class="load-more-text">上拉加载更多</text>
             </view>
-
-            <!-- 没有更多数据提示 -->
-            <view class="no-more-tip" wx:if="{{false}}">
-              <view class="no-more-line"></view>
-              <text class="no-more-text">没有更多动态了</text>
-              <view class="no-more-line"></view>
-            </view>
           </view>
         </view>
 
-      <!-- 底部占位：member时30rpx，有底部卡片时180rpx -->
-      <view class="scroll-bottom-spacer {{userStatus !== 'member' ? 'has-action-bar' : ''}}"></view>
+      <!-- 底部占位 -->
+      <view class="scroll-bottom-spacer"></view>
 
-      <!-- 发布按钮和邀请提示 - 已移至底部统一组件 -->
     </scroll-view>
-
-    <!-- 统一的底部状态操作组件 -->
-    <circle-status-action
-      status="{{userStatus}}"
-      circle="{{circle}}"
-      isApplying="{{isApplying}}"
-      isJoining="{{isJoining}}"
-      isOwner="{{isCircleOwner}}"
-      hidden="{{userInfoPopupVisible}}"
-      bind:publish="navigateToPublish"
-      bind:apply="applyToJoin"
-      bind:acceptInvite="acceptInvite"
-    ></circle-status-action>
 
     <!-- 全屏 Loading Overlay -->
     <view class="unified-loading-overlay" wx:if="{{loading && posts.length === 0}}">
@@ -221,8 +107,8 @@
         <view class="loading-overlay-spinner">
           <view class="spinner-circle"></view>
         </view>
-        <view class="loading-overlay-title">加载朋友圈</view>
-        <view class="loading-overlay-subtitle">正在加载中...</view>
+        <view class="loading-overlay-title">加载中</view>
+        <view class="loading-overlay-subtitle">正在加载...</view>
       </view>
     </view>
 
@@ -288,7 +174,7 @@
     <view class="overlay-content">
       <view class="overlay-title">内容不存在</view>
       <view class="overlay-subtitle">可能已被删除</view>
-      <view class="overlay-hint">点击任意位置返回首页</view>
+      <view class="overlay-hint">点击任意位置关闭</view>
     </view>
   </view>
   </view>
