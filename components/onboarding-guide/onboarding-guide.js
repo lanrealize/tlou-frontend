@@ -79,7 +79,7 @@ Component({
     },
 
     onCommentsDone() {
-      this._t_footer = setTimeout(() => this.setData({ footerVisible: true }), 800);
+      this._t_footer = setTimeout(() => this.setData({ footerVisible: true }), 1300);
     },
 
     onToggleAvatarMode() {
@@ -95,17 +95,17 @@ Component({
       const postItem = this.selectComponent('#demo-post-item');
       if (postItem) postItem.resetOnboarding();
 
-      // 200ms: header 滑入
-      this._t_header = setTimeout(() => this.setData({ headerVisible: true }), 200);
+      // 700ms: header 滑入
+      this._t_header = setTimeout(() => this.setData({ headerVisible: true }), 700);
 
-      // 900ms: post 滑入，滑入完成后 play
+      // 1700ms: post 滑入（header 滑入后再等 500ms），滑入完成后 play
       this._t_post = setTimeout(() => {
         this.setData({ postVisible: true });
         this._t_video = setTimeout(() => {
           const pi = this.selectComponent('#demo-post-item');
           if (pi) pi.startOnboardingVideo();
         }, 600);
-      }, 900);
+      }, 1700);
     },
 
     _clearTimers() {

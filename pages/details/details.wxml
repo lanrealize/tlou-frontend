@@ -1,54 +1,56 @@
 <!--pages/details/details.wxml-->
 <view class="page-container {{showShareAnimation && !shareAnimationCompleted ? 'page-black-bg' : ''}}">
-  <!-- 🎬 分享入场动画容器（页面级） -->
-  <view 
-    class="share-animation-container {{shareAnimationClass}} {{showShareAnimation ? 'share-animation-container-appear' : ''}}"
-    style="{{shareAnimationTransform}}"
-    data-transition-active="{{transitionActive}}"
-    wx:if="{{showShareAnimation}}"
-  >
-    <!-- 全屏图片（只在有URL时显示） -->
-    <image 
-      class="share-animation-image"
-      src="{{shareAnimationImageUrl}}" 
-      mode="aspectFill"
-      bindload="onShareAnimationImageLoad"
-      wx:if="{{shareAnimationImageUrl}}"
-    ></image>
-    
-    <!-- 渐变遮罩层 -->
-    <view class="share-gradient-overlay {{shareGradientClass}}"></view>
-  </view>
+  <!-- 🎯 Details 内容容器：用 wx:if 控制显示 -->
+  <view class="details-container" wx:if="{{showOnboarding === false}}">
+    <!-- 🎬 分享入场动画容器（页面级） -->
+    <view 
+      class="share-animation-container {{shareAnimationClass}} {{showShareAnimation ? 'share-animation-container-appear' : ''}}"
+      style="{{shareAnimationTransform}}"
+      data-transition-active="{{transitionActive}}"
+      wx:if="{{showShareAnimation}}"
+    >
+      <!-- 全屏图片（只在有URL时显示） -->
+      <image 
+        class="share-animation-image"
+        src="{{shareAnimationImageUrl}}" 
+        mode="aspectFill"
+        bindload="onShareAnimationImageLoad"
+        wx:if="{{shareAnimationImageUrl}}"
+      ></image>
+      
+      <!-- 渐变遮罩层 -->
+      <view class="share-gradient-overlay {{shareGradientClass}}"></view>
+    </view>
 
-  <!-- 🎬 白色遮罩层：用于控制内容淡入效果 -->
-  <view 
-    class="content-fade-mask {{shareAnimationCompleted ? 'fade-out' : ''}}"
-    wx:if="{{showShareAnimation}}"
-  ></view>
+    <!-- 🎬 白色遮罩层：用于控制内容淡入效果 -->
+    <view 
+      class="content-fade-mask {{shareAnimationCompleted ? 'fade-out' : ''}}"
+      wx:if="{{showShareAnimation}}"
+    ></view>
 
-  <!-- 🚫 交互阻止层：在动画期间阻止所有用户交互 -->
-  <view 
-    class="animation-interaction-blocker"
-    wx:if="{{showShareAnimation}}"
-    catchtouchmove="preventTouchMove"
-    catchtouchstart="preventTap"
-    catchtouchend="preventTap"
-    catchtap="preventTap"
-    catchlongpress="preventTap"
-  ></view>
+    <!-- 🚫 交互阻止层：在动画期间阻止所有用户交互 -->
+    <view 
+      class="animation-interaction-blocker"
+      wx:if="{{showShareAnimation}}"
+      catchtouchmove="preventTouchMove"
+      catchtouchstart="preventTap"
+      catchtouchend="preventTap"
+      catchtap="preventTap"
+      catchlongpress="preventTap"
+    ></view>
 
-  <!-- 自定义导航栏 -->
-  <custom-navigation 
-    title="{{circle.name || '两个人的朋友圈'}}" 
-    customBack="{{true}}"
-    backIconType="{{backIconType}}"
-    bindnavigationReady="onNavigationReady" 
-    bind:back="navigateBack"
-  ></custom-navigation>
+    <!-- 自定义导航栏 -->
+    <custom-navigation 
+      title="{{circle.name || '两个人的朋友圈'}}" 
+      customBack="{{true}}"
+      backIconType="{{backIconType}}"
+      bindnavigationReady="onNavigationReady" 
+      bind:back="navigateBack"
+    ></custom-navigation>
 
-  <!-- 🔧 移除了整体的"加载中..."显示，改为在main page预加载 -->
+    <!-- 🔧 移除了整体的"加载中..."显示，改为在main page预加载 -->
 
-  <!-- 朋友圈详情页面 -->
+    <!-- 朋友圈详情页面 -->
   <view 
     class="moment-page" 
     style="padding-top: {{navigationData.totalNavigationHeight}}px;"
@@ -289,9 +291,12 @@
       <view class="overlay-hint">点击任意位置返回首页</view>
     </view>
   </view>
+  </view>
+  <!-- 🎯 Details 内容容器结束 -->
+
   <!-- 🎬 Onboarding 引导层（全屏覆盖，仅在 onboarding 模式下显示） -->
   <onboarding-guide
-    wx:if="{{showOnboarding}}"
+    wx:if="{{showOnboarding === true}}"
     id="onboarding-guide"
     bind:takePhoto="onOnboardingTakePhoto"
   ></onboarding-guide>

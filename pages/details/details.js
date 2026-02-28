@@ -97,7 +97,7 @@ Page({
     transitionActive: false,      // 是否激活过渡动画
     showPublish: false,
     publishBtnRainbow: false,
-    showOnboarding: false,
+    showOnboarding: null,  // 🎯 初始为 null，避免触发 CSS 显示逻辑
     onboardingInitialImage: '',  // onboarding 拍照后预填充到 publish-panel 的图片
   },
 
@@ -1118,10 +1118,13 @@ Page({
     // onboarding 模式下，用户成功发布后退出引导层
     if (this.data.showOnboarding && e.detail && e.detail.published) {
       const newCircleId = e.detail.circleId;
+      // 先关闭 onboarding，触发淡入动画
       this.setData({ showOnboarding: false, circleId: newCircleId });
-      // 用真实 circleId 加载朋友圈数据，让帖子正常显示
-      this.loadCircleDetail();
-      this.refreshPosts(newCircleId);
+      // 等待淡入动画完成后再加载数据（避免加载时的闪烁）
+      setTimeout(() => {
+        this.loadCircleDetail();
+        this.refreshPosts(newCircleId);
+      }, 100);
     }
   },
 
