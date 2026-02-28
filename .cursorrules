@@ -1,0 +1,87 @@
+# Cursor AI 项目规则
+
+## Git 操作规范（Windows PowerShell 环境）
+
+### 命令分隔符
+- ✅ 使用分号 `;` 分隔多个命令
+- ❌ 不要使用 `&&`（这是 bash 语法，PowerShell 不支持）
+
+### Commit Message 格式
+- **语言**：使用中文
+- **格式**：遵循 Conventional Commits
+  - `feat: 新功能描述`
+  - `fix: 修复问题描述`
+  - `refactor: 重构描述`
+  - `docs: 文档更新`
+  - `style: 样式调整`
+  - `test: 测试相关`
+  - `chore: 构建/工具相关`
+
+### 单行 Commit
+```powershell
+cd d:/Codes/Cursor/tl-frontend; git add -A; git commit -m "feat: 添加新功能"; git push
+```
+
+### 多行详细 Commit（推荐）
+使用多个 `-m` 参数，每个参数一行：
+```powershell
+cd d:/Codes/Cursor/tl-frontend; git commit -m "refactor: 重构 details 页面" -m "- 删除社交功能相关组件" -m "- 保留核心时间轴功能" -m "- 添加注册引导逻辑"
+```
+
+### 标准工作流
+```powershell
+# 1. 查看状态
+cd d:/Codes/Cursor/tl-frontend; git status
+
+# 2. 添加所有更改
+cd d:/Codes/Cursor/tl-frontend; git add -A
+
+# 3. 提交（中文 message）
+cd d:/Codes/Cursor/tl-frontend; git commit -m "feat: 功能描述" -m "- 详细说明1" -m "- 详细说明2"
+
+# 4. 推送
+cd d:/Codes/Cursor/tl-frontend; git push
+```
+
+### 注意事项
+1. 每次操作前先 `cd` 到项目目录
+2. Commit message 必须使用中文
+3. 详细说明使用 `-` 开头的列表形式
+4. 推送前可以用 `git log --oneline -1` 检查最后一次提交
+
+---
+
+## 代码风格
+
+### 微信小程序开发
+- 使用 ES6+ 语法
+- 组件化开发，保持单一职责
+- 合理使用 MobX 进行状态管理
+- 注释使用中文，清晰说明意图
+
+### 命名规范
+- 文件名：kebab-case（如 `user-info-popup.js`）
+- 变量/函数：camelCase（如 `getUserInfo`）
+- 常量：UPPER_SNAKE_CASE（如 `API_BASE_URL`）
+- 组件：PascalCase（如 `UserInfoPopup`）
+
+---
+
+## 项目特定规则
+
+### AI-only 架构
+- 移除所有社交功能（成员管理、邀请、申请加入等）
+- 保留核心时间轴功能（发帖、点赞、评论）
+- 保留注册引导逻辑（第二次操作时弹出注册）
+- 保留意图处理（注册完成后执行保存的操作）
+
+### 权限检查
+- 使用 `checkAndHandle()` 进行统一权限检查
+- 第一次发帖（onboarding）允许匿名
+- 第二次发帖、点赞、评论需要注册
+
+### 动画和交互
+- 保留分享入场动画
+- 使用 `navigationHelper` 计算系统元素位置
+- 动态适配不同设备的安全区域
+
