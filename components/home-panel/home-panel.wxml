@@ -1,0 +1,14 @@
+<!--components/home-panel/home-panel.wxml-->
+<!-- 遮罩层 -->
+<view class="home-panel-mask" wx:if="{{visible}}" bindtap="onMaskTap" catchtouchmove="preventMove"></view>
+
+<!-- 弹出层 -->
+<view class="home-panel {{visible ? 'show' : ''}}">
+  <view class="panel-content" catchtouchmove="preventMove">
+    <!-- 内容区域 - 预留给未来的 thread 列表 -->
+    <view class="content-area">
+      <!-- 这里将来会放置多个 thread -->
+    </view>
+  </view>
+</view>
+

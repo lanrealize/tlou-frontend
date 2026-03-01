@@ -1,0 +1,73 @@
+/* components/top-nav-bar/top-nav-bar.wxss */
+
+/* 导航栏容器 - 宽度 100%，space-between 布局 */
+.top-nav-bar-root {
+  position: fixed;
+  left: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40rpx;
+  z-index: 3;
+}
+
+/* 标题样式 - 靠左 */
+.top-nav-bar-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #111;
+  white-space: nowrap;
+}
+
+/* 按钮组容器 - 靠右，使用 right 定位 */
+.top-nav-bar-buttons {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 按钮样式 */
+.top-nav-bar-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
+}
+
+.top-nav-bar-button:active {
+  opacity: 0.6;
+}
+
+/* 文字按钮样式 */
+.top-nav-bar-text-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 0 24rpx;
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
+}
+
+.top-nav-bar-text-button:active {
+  opacity: 0.6;
+}
+
+.button-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #111;
+}
+
+/* 图标样式 - 黑色 */
+.top-nav-bar-icon {
+  width: 80%;
+  height: 80%;
+  filter: brightness(0);
+}

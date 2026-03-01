@@ -60,6 +60,9 @@ Page({
     
     // 顶部间距（基于胶囊按钮位置计算）
     topSpacing: 0,  // 帖子列表顶部间距
+    
+    // Home Panel
+    showHomePanel: false,  // 是否显示 home panel
   },
 
   onLoad(options) {
@@ -924,6 +927,28 @@ Page({
       // 超时或其他错误（可能是网络问题）
       this.cancelShareAnimation();
     }
+  },
+
+  // ===== Home Panel 控制方法 =====
+
+  /**
+   * 点击顶部导航栏的 Home 按钮
+   */
+  onHomeClick() {
+    console.log('Home button clicked');
+    this.setData({
+      showHomePanel: true
+    });
+  },
+
+  /**
+   * 关闭 Home Panel
+   */
+  onHomePanelClose() {
+    console.log('Home panel closed');
+    this.setData({
+      showHomePanel: false
+    });
   }
 
 });

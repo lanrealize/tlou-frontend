@@ -1,0 +1,12 @@
+<!--components/top-nav-bar/top-nav-bar.wxml-->
+<view class="top-nav-bar-root" style="top: {{menuTop}}px; line-height: {{menuHeight}}px;">
+  <text class="top-nav-bar-title">我的朋友圈</text>
+  <view class="top-nav-bar-buttons" style="line-height: {{menuHeight}}px; right: {{menuLeft + 10}}px; top: {{menuTop}}px;">
+    <view class="top-nav-bar-text-button" style="line-height: {{menuHeight}}px; border-radius: {{menuHeight / 2}}px; height: {{menuHeight}}px;" bindtap="onAddClick">
+      <text class="button-text">添加</text>
+    </view>
+    <view class="top-nav-bar-button" style="line-height: {{menuHeight}}px; border-radius: {{menuHeight / 2}}px; height: {{menuHeight}}px; width: {{menuHeight}}px;" bindtap="onHomeClick">
+      <image src="/assets/icons/albums.svg" class="top-nav-bar-icon"></image>
+    </view>
+  </view>
+</view>

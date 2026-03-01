@@ -2,6 +2,9 @@
 <view class="page-container {{showShareAnimation && !shareAnimationCompleted ? 'page-black-bg' : ''}}">
   <!-- 🎯 Details 内容容器：用 wx:if 控制显示 -->
   <view class="details-container" wx:if="{{showOnboarding === false}}">
+    <!-- 顶部导航栏 -->
+    <top-nav-bar bind:homeclick="onHomeClick" />
+    
     <!-- 🎬 分享入场动画容器（页面级） -->
     <view 
       class="share-animation-container {{shareAnimationClass}} {{showShareAnimation ? 'share-animation-container-appear' : ''}}"
@@ -177,6 +180,9 @@
       <view class="overlay-hint">点击任意位置关闭</view>
     </view>
   </view>
+
+  <!-- Home Panel -->
+  <home-panel visible="{{showHomePanel}}" bind:close="onHomePanelClose" />
   </view>
   <!-- 🎯 Details 内容容器结束 -->
 

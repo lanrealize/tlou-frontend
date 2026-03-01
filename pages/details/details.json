@@ -9,7 +9,9 @@
     "circle-status-action": "/components/circle-status-action/circle-status-action",
     "user-info-popup": "/components/user-info-popup/user-info-popup",
     "publish-panel": "/components/publish-panel/publish-panel",
-    "onboarding-guide": "/components/onboarding-guide/onboarding-guide"
+    "onboarding-guide": "/components/onboarding-guide/onboarding-guide",
+    "top-nav-bar": "/components/top-nav-bar/top-nav-bar",
+    "home-panel": "/components/home-panel/home-panel"
   },
   "backgroundColor": "#f5f5f5"
 }

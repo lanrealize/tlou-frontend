@@ -11,8 +11,15 @@ const navigationHelper = {
   },
 
   /**
-   * 获取导航栏信息
+   * 获取导航栏信息（包含胶囊按钮位置）
    * @returns {Object} 导航栏信息对象
+   * {
+   *   menuHeight: 胶囊按钮高度,
+   *   menuTop: 胶囊按钮距离顶部距离,
+   *   menuLeft: 胶囊按钮左边距离右边缘的距离（用于定位左侧按钮）,
+   *   menuRight: 胶囊按钮右边距离右边缘的距离,
+   *   screenWidth: 屏幕宽度
+   * }
    */
   getNavigationInfo() {
     const windowInfo = this.getWindowInfo();
@@ -23,8 +30,8 @@ const navigationHelper = {
     return {
       menuHeight: menuInfo.height,
       menuTop: menuInfo.top,
-      menuLeft: screenWidth - menuInfo.left,
-      menuRight: screenWidth - menuInfo.right,
+      menuLeft: screenWidth - menuInfo.left,  // 胶囊左边距离右边缘的距离
+      menuRight: screenWidth - menuInfo.right, // 胶囊右边距离右边缘的距离
       screenWidth: screenWidth
     };
   },
