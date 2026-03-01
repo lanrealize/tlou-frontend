@@ -334,8 +334,8 @@ Component({
             isPortrait: false,
             mode: 'widthFix',
             styleClass: 'landscape',
-            displayWidth: 500,
-            displayHeight: 375  // 4:3 比例作为最后的默认值
+            displayWidth: 550,
+            displayHeight: 412  // 4:3 比例作为最后的默认值
           }
         });
       }
@@ -349,24 +349,24 @@ Component({
       
       let needsCrop = false;
       if (isPortrait) {
-        // 纵向图片：固定高度460rpx，宽度按比例缩放
-        displayHeight = 460;
-        displayWidth = Math.round(460 * (originalWidth / originalHeight));
-        // 限制最大宽度500rpx
-        if (displayWidth > 500) {
-          displayWidth = 500;
-          displayHeight = Math.round(500 * (originalHeight / originalWidth));
+        // 纵向图片：固定高度550rpx，宽度按比例缩放
+        displayHeight = 550;
+        displayWidth = Math.round(550 * (originalWidth / originalHeight));
+        // 限制最大宽度550rpx
+        if (displayWidth > 550) {
+          displayWidth = 550;
+          displayHeight = Math.round(550 * (originalHeight / originalWidth));
         }
-        // 限制最小宽高比 2:3，过窄时裁剪填充
-        const minWidth = Math.round(displayHeight * 2 / 3);
+        // 限制最小宽高比 3:4，过窄时裁剪填充
+        const minWidth = Math.round(displayHeight * 3 / 4);
         needsCrop = displayWidth < minWidth;
         if (needsCrop) {
           displayWidth = minWidth;
         }
       } else {
-        // 横向图片：固定宽度500rpx，高度按比例缩放
-        displayWidth = 500;
-        displayHeight = Math.round(500 * (originalHeight / originalWidth));
+        // 横向图片：固定宽度550rpx，高度按比例缩放
+        displayWidth = 550;
+        displayHeight = Math.round(550 * (originalHeight / originalWidth));
         // 限制最大高度460rpx
         if (displayHeight > 460) {
           displayHeight = 460;
@@ -632,22 +632,9 @@ Component({
       this.setData({ [`aiAvatarModes.${id}`]: next });
     },
 
-    // 点击用户头像
-    onTapAvatar() {
-      this.triggerEvent('tapAvatar', {
-        user: this.data.post.author,
-        post: this.data.post
-      });
-    },
-
-    // 点击评论头像
-    onTapCommentAvatar(e) {
-      const { user } = e.currentTarget.dataset;
-      this.triggerEvent('tapAvatar', {
-        user: user,
-        post: this.data.post
-      });
-    },
+    // 🗑️ 已移除：用户头像点击事件（AI-only 模式不需要查看用户资料）
+    // onTapAvatar() { ... }
+    // onTapCommentAvatar(e) { ... }
 
     // 切换操作菜单显示状态
     toggleActionsMenu() {

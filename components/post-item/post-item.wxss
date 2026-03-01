@@ -171,43 +171,8 @@
   flex-shrink: 1; /* 允许收缩 */
 }
 
-/* ===== 普通模式样式 ===== */
-.post-item {
-  background-color: #ffffff;
-  margin: 20rpx 30rpx 70rpx 0rpx;
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 20rpx;
-  position: relative;
-}
-
-/* 帖子之间的分割线 */
-.post-item::after {
-  content: '';
-  position: absolute;
-  bottom: -35rpx;
-  left: 50rpx;
-  right: 50rpx;
-  height: 2rpx;
-  background: linear-gradient(to right, 
-    transparent 0%, 
-    rgba(200, 200, 200, 0.4) 15%, 
-    rgba(180, 180, 180, 0.5) 50%, 
-    rgba(200, 200, 200, 0.4) 85%, 
-    transparent 100%
-  );
-  transform: scaleY(0.5);
-  transform-origin: center;
-}
-
-.user-avatar {
-  width: 76rpx;
-  height: 76rpx;
-  border-radius: 10rpx;
-  flex-shrink: 0;
-  margin-right: 15rpx;
-}
+/* ===== 🗑️ 已移除：普通模式样式（AI-only 模式只使用时间轴布局） ===== */
+/* 保留通用样式和操作菜单样式（时间轴模式也需要） */
 
 /* 右侧内容区域 */
 .post-right-content {
@@ -215,27 +180,6 @@
   min-width: 0; /* 防止flex子元素溢出 */
   display: flex;
   flex-direction: column;
-}
-
-.username {
-  font-size: 32rpx;
-  color: #000000;
-  margin-bottom: 8rpx;
-}
-
-.post-meta {
-  display: flex;
-  align-items: center;
-}
-
-.post-time {
-  font-size: 28rpx;
-  color: #808080;
-}
-
-.post-location {
-  font-size: 26rpx;
-  color: #808080;
 }
 
 /* 三点操作按钮容器 */
@@ -469,7 +413,7 @@
 
 /* 单张图片容器 */
 .single-image {
-  border-radius: 6rpx;
+  border-radius: 16rpx;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -480,16 +424,16 @@
 }
 
 .post-image-single {
-  border-radius: 10rpx;
+  border-radius: 16rpx;
   display: block;
   /* 图片在容器内居中显示 */
   max-width: 100%;
   max-height: 100%;
 }
 
-/* 纵向图片样式 - heightFix模式，高度固定460rpx */
+/* 纵向图片样式 - heightFix模式，高度固定550rpx */
 .post-image-single.portrait {
-  height: 460rpx;
+  height: 550rpx;
   max-width: 550rpx;
   width: auto;
 }
@@ -657,12 +601,12 @@
 
 /* 单张图片骨架屏 */
 .single-skeleton {
-  border-radius: 6rpx;
+  border-radius: 16rpx;
 }
 
 /* 网格图片骨架屏 */
 .grid-skeleton {
-  border-radius: 6rpx;
+  border-radius: 16rpx;
 }
 
 /* 图片加载状态样式 */
