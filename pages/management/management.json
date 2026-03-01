@@ -1,9 +1,0 @@
-{
-  "navigationBarTitleText": "身份管理",
-  "navigationStyle": "custom",
-  "backgroundColor": "#f5f5f5",
-  "enablePullDownRefresh": false,
-  "usingComponents": {
-    "custom-navigation": "/components/custom-navigation/custom-navigation"
-  }
-}
