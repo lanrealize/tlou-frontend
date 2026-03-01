@@ -177,14 +177,14 @@ Component({
       try {
         const result = await this.submitUserInfo(nickname, avatarUrl);
         
-        if (result.status === 'loggedIn') {
+        if (result.status === 'complete') {
           util.showToast('注册成功！', 'success');
           
           // 更新用户状态
           const app = getApp();
           const userStore = app.getUserStore();
           const { USER_STATUS } = require('../../store/userStore');
-          userStore.setStatus(USER_STATUS.LOGGEDIN, { userInfo: result.userInfo });
+          userStore.setStatus(USER_STATUS.COMPLETE, { userInfo: result.userInfo });
           
           // 重置表单
           this.resetForm();
@@ -257,7 +257,7 @@ Component({
         wx.setStorageSync('userInfo', finalUserInfo);
         
         return { 
-          status: 'loggedIn', 
+          status: 'complete', 
           userInfo: finalUserInfo 
         };
         
