@@ -66,7 +66,7 @@ function startTestMode() {
     const app = getApp();
     const userStore = app.getUserStore();
     const { USER_STATUS } = require('../store/userStore');
-    userStore.setStatus(USER_STATUS.UNREGISTERED, {});
+    userStore.setStatus(USER_STATUS.INCOMPLETE, {});
 
     // 5. 重置 circleStore（避免测试用户看到真实用户数据）
     const { circleStore } = require('../store/circleStore');
@@ -138,7 +138,7 @@ async function forceStartTestMode() {
     const app = getApp();
     const userStore = app.getUserStore();
     const { USER_STATUS } = require('../store/userStore');
-    userStore.setStatus(USER_STATUS.UNREGISTERED, {});
+    userStore.setStatus(USER_STATUS.INCOMPLETE, {});
 
     // 5. 重置 circleStore（避免测试用户看到真实用户数据）
     const { circleStore } = require('../store/circleStore');

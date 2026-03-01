@@ -416,7 +416,7 @@ Component({
       }
 
       // AI 评论生成逐字动画字符列表
-      if (newComment.author && newComment.author._id === 'ai' && newComment.content) {
+      if (newComment.author && newComment.author.isAI && newComment.content) {
         const chars = buildCharList(newComment.content);
         this.setData({ [`aiCommentChars.${newComment._id}`]: chars });
       }
@@ -457,7 +457,7 @@ Component({
     // 外部调用：触发所有 AI 评论的逐字动画（用于 onboarding）
     animateAiComments() {
       const comments = (this.data.post && this.data.post.comments || [])
-        .filter(c => c.author && c.author._id === 'ai' && (c.content || c.aiStatus));
+        .filter(c => c.author && c.author.isAI && (c.content || c.aiStatus));
       if (!comments.length) return;
 
       this.setData({ aiCommentChars: {} }, () => {

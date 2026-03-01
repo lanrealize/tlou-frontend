@@ -10,16 +10,35 @@
   <!-- 时间轴模式：头部信息 -->
   <view class="timeline-header" wx:if="{{timelineMode}}">
     <view class="timeline-info">
-      <image 
-        class="timeline-avatar" 
-        src="{{post.author.avatar || '/images/default_avatar.png'}}" 
-        mode="aspectFill"
-        bindtap="onTapAvatar"
-      ></image>
-      <text class="timeline-separator" wx:if="{{!onboardingMode}}">·</text>
-      <text class="timeline-username">{{post.author.username || post.author.name || '未知用户'}}</text>
-      <text class="timeline-separator">·</text>
-      <text class="timeline-time">{{post.formattedTime || '刚刚'}}</text>
+
+      <!-- 模式1：AI 帖子 → 只有 AI 头像 + 时间 -->
+      <block wx:if="{{post.author.isAI}}">
+        <ai-avatar mode="static" size="28"></ai-avatar>
+        <text class="timeline-separator">·</text>
+        <text class="timeline-time">{{post.formattedTime || '刚刚'}}</text>
+      </block>
+
+      <!-- 模式2：资料完整的已登录用户 → 头像 + 用户名 + 时间 -->
+      <block wx:elif="{{post.author.username && post.author.avatar}}">
+        <image
+          class="timeline-avatar"
+          src="{{post.author.avatar}}"
+          mode="aspectFill"
+          bindtap="onTapAvatar"
+        ></image>
+        <text class="timeline-separator">·</text>
+        <text class="timeline-username">{{post.author.username}}</text>
+        <text class="timeline-separator">·</text>
+        <text class="timeline-time">{{post.formattedTime || '刚刚'}}</text>
+      </block>
+
+      <!-- 模式3：资料未完善 → "你" + 时间，无头像 -->
+      <block wx:else>
+        <text class="timeline-username">你</text>
+        <text class="timeline-separator">·</text>
+        <text class="timeline-time">{{post.formattedTime || '刚刚'}}</text>
+      </block>
+
     </view>
     
     <view class="actions-menu-container" wx:if="{{!onboardingMode}}">
@@ -253,7 +272,7 @@
               wx:if="{{!onboardingMode || visibleCommentIds[comment._id]}}"
             >
               <!-- 评论头像 -->
-              <ai-avatar wx:if="{{comment.author._id === 'ai'}}" mode="{{aiAvatarModes[comment._id] || 'dynamic'}}" size="28" bindtap="onTapAiAvatar" data-comment-id="{{comment._id}}"></ai-avatar>
+              <ai-avatar wx:if="{{comment.author.isAI}}" mode="{{aiAvatarModes[comment._id] || 'dynamic'}}" size="28" bindtap="onTapAiAvatar" data-comment-id="{{comment._id}}"></ai-avatar>
               <image
                 wx:else
                 class="comment-avatar"
@@ -274,7 +293,7 @@
                   <text wx:if="{{comment.replyTo}}" class="reply-target">@{{comment.replyTo.username || comment.replyTo.name || '未知用户'}}</text>
                   <text wx:if="{{comment.author._id !== 'ai'}}">·</text>
                   <!-- AI 评论：状态文字 或 时间 -->
-                  <block wx:if="{{comment.author._id === 'ai'}}">
+                  <block wx:if="{{comment.author.isAI}}">
                     <view class="ai-status-wrap">
                       <view
                         wx:if="{{aiHeaderStates[comment._id].showStatus}}"
@@ -293,7 +312,7 @@
                 <!-- 评论内容 -->
                 <view class="comment-content {{commentTextStates[comment._id] && commentTextStates[comment._id].animating ? 'comment-text-animating' : ''}}">
                   <!-- AI 评论：逐字 fadeIn -->
-                  <view wx:if="{{comment.author._id === 'ai' && aiCommentChars[comment._id]}}" class="comment-text-flow" catchtap="onTapAiCommentText" data-comment-id="{{comment._id}}">
+                  <view wx:if="{{comment.author.isAI && aiCommentChars[comment._id]}}" class="comment-text-flow" catchtap="onTapAiCommentText" data-comment-id="{{comment._id}}">
                     <text
                       wx:for="{{aiCommentChars[comment._id]}}"
                       wx:key="index"

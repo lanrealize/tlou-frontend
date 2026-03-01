@@ -121,9 +121,9 @@ const initUserAuthInStorage = async () => {
       };
     }
     
-    // 6. 用户未注册
+    // 6. 用户资料未完善
     return {
-      status: 'unregistered'
+      status: 'incomplete'
     };
     
   } catch (error) {

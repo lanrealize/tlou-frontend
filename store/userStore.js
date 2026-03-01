@@ -5,7 +5,7 @@ const { initUserAuthInStorage, registerUser } = require('../utils/auth');
 const USER_STATUS = {
   LOGGEDIN: 'loggedIn',
   ERROR: 'error', 
-  UNREGISTERED: 'unregistered'
+  INCOMPLETE: 'incomplete'
 };
 
 // 🎭 身份类型常量
@@ -18,7 +18,7 @@ const IDENTITY_TYPE = {
 // 用户状态管理Store
 const userStore = observable({
   // 🔥 核心状态数据
-  loginStatus: USER_STATUS.UNREGISTERED,
+  loginStatus: USER_STATUS.INCOMPLETE,
   userInfo: null,
   errorMessage: '',
   isLoading: false,
@@ -47,7 +47,7 @@ const userStore = observable({
         this._syncToGlobal(status, null);
         break;
         
-      case USER_STATUS.UNREGISTERED:
+      case USER_STATUS.INCOMPLETE:
         this.userInfo = null;
         this.errorMessage = data.message || '';
         this._syncToGlobal(status, null);
@@ -80,8 +80,8 @@ const userStore = observable({
         this._checkAndFixStateConsistency();
         
         // 设置当前用户信息（无需额外处理）
-      } else if (result.status === 'unregistered') {
-        this.setStatus(USER_STATUS.UNREGISTERED);
+      } else if (result.status === 'incomplete') {
+        this.setStatus(USER_STATUS.INCOMPLETE);
       } else {
         this.setStatus(USER_STATUS.ERROR, { message: result.message || '登录检查失败' });
       }
@@ -125,7 +125,7 @@ const userStore = observable({
     const { circleStore } = require('./circleStore');
     if (circleStore) circleStore.reset();
 
-    this.setStatus(USER_STATUS.UNREGISTERED);
+    this.setStatus(USER_STATUS.INCOMPLETE);
     wx.showToast({ title: '已退出登录', icon: 'success' });
   },
 

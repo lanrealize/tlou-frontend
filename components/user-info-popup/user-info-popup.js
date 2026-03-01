@@ -220,7 +220,7 @@ Component({
 
         const registerResult = await new Promise((resolve, reject) => {
           wx.request({
-            url: `${this.getBaseUrl()}/wechat/register`,
+            url: `${this.getBaseUrl()}/wechat/complete-profile`,
             method: 'POST',
             data: { 
               openid, 

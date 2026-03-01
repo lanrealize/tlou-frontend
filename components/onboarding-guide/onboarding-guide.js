@@ -25,13 +25,13 @@ Component({
       comments: [
         {
           _id: 'c1',
-          author: { _id: 'ai', username: 'AI', avatar: '/assets/onboarding/ai-avatar.png' },
+          author: { _id: 'ai', username: 'AI', avatar: '/assets/onboarding/ai-avatar.png', isAI: true },
           content: '',
           aiStatus: '让我看看你发的照片'
         },
         {
           _id: 'c2',
-          author: { _id: 'ai', username: 'AI', avatar: '/assets/onboarding/ai-avatar.png' },
+          author: { _id: 'ai', username: 'AI', avatar: '/assets/onboarding/ai-avatar.png', isAI: true },
           content: '每张照片都很漂亮，再拍一张试试？'
         }
       ],

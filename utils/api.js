@@ -299,8 +299,8 @@ class API {
     // 获取用户信息
     getUserInfo: (openid) => this.post('/wechat/get-user-info', { openid }),
     
-    // 用户注册
-    register: (openid, username, avatar) => this.post('/wechat/register', { openid, username, avatar })
+    // 完善用户资料
+    register: (openid, username, avatar) => this.post('/wechat/complete-profile', { openid, username, avatar })
   };
 
   // 🎭 管理员相关API (虚拟用户管理)
