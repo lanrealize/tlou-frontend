@@ -71,7 +71,8 @@ Page({
     
     const { circleId, onboarding } = options;
 
-    const showOnboarding = onboarding === 'true';
+    // 没有任何参数时（直接从首页启动），默认进入 onboarding
+    const showOnboarding = onboarding === 'true' || (!circleId && !onboarding);
 
     // onboarding 模式下不需要 circleId（发布时动态创建）
     if (!circleId && !showOnboarding) {
@@ -939,6 +940,10 @@ Page({
     this.setData({
       showHomePanel: true
     });
+  },
+
+  onAddClick() {
+    this.setData({ showPublish: true });
   },
 
   /**

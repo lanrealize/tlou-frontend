@@ -93,6 +93,14 @@ Component({
     this.triggerEvent('close');
   },
 
+  onMaskTap() {
+    this.triggerEvent('close');
+  },
+
+  preventMove() {
+    return false;
+  },
+
   // 获取导航栏数据
   getNavigationData() {
     try {

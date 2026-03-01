@@ -3,7 +3,7 @@
   <!-- 🎯 Details 内容容器：用 wx:if 控制显示 -->
   <view class="details-container" wx:if="{{showOnboarding === false}}">
     <!-- 顶部导航栏 -->
-    <top-nav-bar bind:homeclick="onHomeClick" />
+    <top-nav-bar bind:homeclick="onHomeClick" bind:addclick="onAddClick" />
     
     <!-- 🎬 分享入场动画容器（页面级） -->
     <view 
