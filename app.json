@@ -1,11 +1,6 @@
 {
   "pages": [
-    "pages/main/main",
-    "pages/list/list",
-    "pages/details/details",
-    "pages/setting/setting",
-    "pages/publish/publish",
-    "pages/management/management"
+    "pages/details/details"
   ],
   "window": {
     "backgroundTextStyle": "light",

@@ -485,7 +485,7 @@ Page({
     } else {
       // 页面栈只有当前页，使用 reLaunch 回到首页
       wx.reLaunch({
-        url: '/pages/main/main'
+        url: '/pages/details/details'
       });
     }
   },
