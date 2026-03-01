@@ -3,9 +3,9 @@ const { initUserAuthInStorage, registerUser } = require('../utils/auth');
 
 // 🎯 状态常量定义
 const USER_STATUS = {
-  LOGGEDIN: 'loggedIn',
-  ERROR: 'error', 
-  INCOMPLETE: 'incomplete'
+  INCOMPLETE: 'incomplete',  // 资料未完善（有 openid，没有 username/avatar）
+  COMPLETE: 'complete',      // 资料完整（有 openid + username + avatar）
+  ERROR: 'error'             // 错误状态
 };
 
 // 🎭 身份类型常量
@@ -34,7 +34,7 @@ const userStore = observable({
     this.isLoading = false;
     
     switch (status) {
-      case USER_STATUS.LOGGEDIN:
+      case USER_STATUS.COMPLETE:
         this.userInfo = data.userInfo;
         this.errorMessage = '';
         // MobX 状态不写入 storage，storage 只由后端返回数据直接写入
@@ -73,8 +73,8 @@ const userStore = observable({
       // 🔑 从 Storage 初始化真实用户认证信息
       const result = await initUserAuthInStorage();
       
-      if (result.status === 'loggedIn') {
-        this.setStatus(USER_STATUS.LOGGEDIN, { userInfo: result.userInfo });
+      if (result.status === 'complete') {
+        this.setStatus(USER_STATUS.COMPLETE, { userInfo: result.userInfo });
         
         // 🔧 检查和修复状态一致性
         this._checkAndFixStateConsistency();
@@ -100,8 +100,8 @@ const userStore = observable({
       
       if (result.status === 'redirected') {
         this.setLoading(false); // 等待用户在弹出层完成注册
-      } else if (result.status === 'loggedIn') {
-        this.setStatus(USER_STATUS.LOGGEDIN, { userInfo: result.userInfo });
+      } else if (result.status === 'complete') {
+        this.setStatus(USER_STATUS.COMPLETE, { userInfo: result.userInfo });
         wx.showToast({ title: '注册成功！', icon: 'success' });
       } else {
         this.setStatus(USER_STATUS.ERROR, { message: result.reason || '注册失败' });
@@ -130,9 +130,9 @@ const userStore = observable({
   },
 
   updateUserInfo(newUserInfo) {
-    if (this.loginStatus === USER_STATUS.LOGGEDIN) {
+    if (this.loginStatus === USER_STATUS.COMPLETE) {
       const updatedUserInfo = { ...this.userInfo, ...newUserInfo };
-      this.setStatus(USER_STATUS.LOGGEDIN, { userInfo: updatedUserInfo });
+      this.setStatus(USER_STATUS.COMPLETE, { userInfo: updatedUserInfo });
     } else {
 
     }
@@ -154,7 +154,7 @@ const userStore = observable({
 
     // 切换到临时身份：只更新MobX状态，不修改Storage
     this.currentIdentityType = identityType;
-    this.setStatus(USER_STATUS.LOGGEDIN, { userInfo: userInfo });
+    this.setStatus(USER_STATUS.COMPLETE, { userInfo: userInfo });
     
     console.log('✅ 身份切换成功:', {
       currentUser: userInfo.username,
@@ -290,7 +290,7 @@ const userStore = observable({
   // 📊 计算属性 (Getters)
   
   get isLoggedIn() {
-    return this.loginStatus === USER_STATUS.LOGGEDIN;
+    return this.loginStatus === USER_STATUS.COMPLETE;
   },
 
   get hasError() {

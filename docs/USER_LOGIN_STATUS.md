@@ -8,6 +8,21 @@
 - 获取后存入本地 storage
 - **OpenID 是用户的核心 identity，应用中始终有效**
 
+## 用户状态定义
+
+```javascript
+const USER_STATUS = {
+  INCOMPLETE: 'incomplete',  // 资料未完善（有 openid，没有 username/avatar）
+  COMPLETE: 'complete',      // 资料完整（有 openid + username + avatar）
+  ERROR: 'error'             // 错误状态
+};
+```
+
+**重要说明**：
+- 应用中**不存在"未登录"状态**，因为 openid 在应用启动时就会获取
+- 只有两种核心状态：资料完整 vs 资料未完善
+- 状态转换：`incomplete` → `complete`（用户完善资料后）
+
 ## 用户信息结构
 
 Storage 中的 `userInfo` 对象包含（后端返回的完整用户数据）：
@@ -45,7 +60,7 @@ app.js: onLaunch()
 
 2. **检查本地 Storage**
    - 读取 `userInfo`
-   - 如果包含 `username` && `avatar` && `_id` → 直接返回 **已登录状态**
+   - 如果包含 `username` && `avatar` && `_id` → 直接返回 **资料完整状态** (`complete`)
    - **无需通过后端验证有效性**（因为暂不支持修改昵称/头像）
 
 3. **本地无数据时，调用后端**
@@ -54,12 +69,12 @@ app.js: onLaunch()
 4. **后端返回完整信息**
    - 如果 `username` && `avatar` 都有值：
      - 存入本地 storage
-     - 设置 MobX 状态为 `loggedIn`
+     - 设置 MobX 状态为 `complete`
      - 用户昵称和头像显示在页面
 
 5. **后端返回空信息**
    - 如果 `username` 和 `avatar` 都为空：
-     - 用户标记为 `unregistered` 状态
+     - 用户标记为 `incomplete` 状态
      - 不存储到 storage
 
 ## 数据访问规则 ✅
