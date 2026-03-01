@@ -13,13 +13,13 @@ function checkAuthState() {
       timestamp: new Date().toISOString(),
       hasApp: !!app,
       hasUserStore: !!userStore,
-      isLoggedIn: userStore?.isLoggedIn || false,
+      isProfileComplete: userStore?.isProfileComplete || false,
       hasUserInfo: !!userStore?.userInfo,
       hasUserId: !!userStore?.userInfo?._id,
       userId: userStore?.userInfo?._id || 'null',
       username: userStore?.userInfo?.username || 'null',
-      loginStatus: userStore?.loginStatus || 'unknown',
-      globalDataLoginStatus: app?.globalData?.loginStatus || 'unknown',
+      profileStatus: userStore?.profileStatus || 'unknown',
+      globalDataProfileStatus: app?.globalData?.profileStatus || 'unknown',
       globalDataHasUserInfo: !!app?.globalData?.userInfo,
       globalDataOpenid: app?.globalData?.openid || 'null',
       storageOpenid: wx.getStorageSync('openid') || 'null',
@@ -59,8 +59,8 @@ function logBeforeRequest(apiName, url) {
     issues.push('⚠️ userStore 不存在');
   }
   
-  if (!state.isLoggedIn) {
-    issues.push('⚠️ userStore.isLoggedIn = false');
+  if (!state.isProfileComplete) {
+    issues.push('⚠️ userStore.isProfileComplete = false');
   }
   
   if (!state.hasUserInfo) {
@@ -104,7 +104,7 @@ function simulateAPIRequest(url, method = 'GET') {
   const header = { 'Content-Type': 'application/json' };
   
   try {
-    if (userStore && userStore.isLoggedIn && userStore.userInfo?._id) {
+    if (userStore && userStore.isProfileComplete && userStore.userInfo?._id) {
       header['x-openid'] = userStore.userInfo._id;
       console.log('✅ header 中会包含 x-openid:', header['x-openid']);
     } else {
@@ -114,8 +114,8 @@ function simulateAPIRequest(url, method = 'GET') {
       // 分析原因
       if (!userStore) {
         console.error('   原因：userStore 不存在');
-      } else if (!userStore.isLoggedIn) {
-        console.error('   原因：userStore.isLoggedIn = false');
+      } else if (!userStore.isProfileComplete) {
+        console.error('   原因：userStore.isProfileComplete = false');
       } else if (!userStore.userInfo) {
         console.error('   原因：userStore.userInfo 为 null');
       } else if (!userStore.userInfo._id) {

@@ -13,12 +13,12 @@ class API {
     };
   }
 
-  // 🔑 核心方法：检查用户是否登录
-  isUserLoggedIn() {
+  // 🔑 核心方法：检查用户资料是否完整
+  isProfileComplete() {
     try {
       const app = getApp();
       const userStore = app?.getUserStore();
-      return userStore && userStore.isLoggedIn;
+      return userStore && userStore.isProfileComplete;
     } catch (error) {
       return false;
     }
@@ -39,8 +39,8 @@ class API {
       
       let openid = null;
       
-      // 方案1：已登录用户，从 userStore 获取
-      if (userStore && userStore.isLoggedIn && userStore.userInfo?._id) {
+      // 方案1：资料完整用户，从 userStore 获取
+      if (userStore && userStore.isProfileComplete && userStore.userInfo?._id) {
         openid = userStore.userInfo._id;
         if (DEBUG_API) {
           console.log('✅ 从 userStore 获取 openid:', openid);
@@ -180,11 +180,11 @@ class API {
     // 获取我参与的所有朋友圈列表（包含最新帖子）
     getMyParticipated: () => this.get('/circles/my'),
     
-    // ⭐ 获取朋友圈详情（自动适配：已登录用认证API，未登录用公开API）
+    // ⭐ 获取朋友圈详情（自动适配：资料完整用认证API，未完善用公开API）
     getDetail: (circleId, params = {}) => {
-      const url = this.isUserLoggedIn() 
-        ? `/circles/${circleId}`          // 已登录：认证API
-        : `/public/circles/${circleId}`;  // 未登录：公开API
+      const url = this.isProfileComplete()
+        ? `/circles/${circleId}`          // 资料完整：认证API
+        : `/public/circles/${circleId}`;  // 资料未完善：公开API
       return this.get(url, params);       // 支持传递参数（如 inviteCode）
     },
     
@@ -247,7 +247,7 @@ class API {
       const userStore = app?.getUserStore();
       
       // ✅ 后端架构：_id 就是 openid 值
-      if (!userStore || !userStore.isLoggedIn || !userStore.userInfo?._id) {
+      if (!userStore || !userStore.isProfileComplete || !userStore.userInfo?._id) {
         throw new Error('未获取到用户身份信息');
       }
       
@@ -258,11 +258,11 @@ class API {
 
   // 帖子相关API
   posts = {
-    // ⭐ 获取朋友圈的帖子列表（自动适配：已登录用认证API，未登录用公开API）
+    // ⭐ 获取朋友圈的帖子列表（自动适配：资料完整用认证API，未完善用公开API）
     getList: (circleId, params = {}) => {
-      const url = this.isUserLoggedIn() 
-        ? '/posts'          // 已登录：认证API
-        : '/public/posts';  // 未登录：公开API
+      const url = this.isProfileComplete()
+        ? '/posts'          // 资料完整：认证API
+        : '/public/posts';  // 资料未完善：公开API
       return this.get(url, { circleId, ...params });
     },
     

@@ -1,5 +1,5 @@
 const { observable, action } = require('mobx-miniprogram');
-const { initUserAuthInStorage, registerUser } = require('../utils/auth');
+const { initUserAuthInStorage, completeUserProfile } = require('../utils/auth');
 
 // 🎯 状态常量定义
 const USER_STATUS = {
@@ -18,7 +18,7 @@ const IDENTITY_TYPE = {
 // 用户状态管理Store
 const userStore = observable({
   // 🔥 核心状态数据
-  loginStatus: USER_STATUS.INCOMPLETE,
+  profileStatus: USER_STATUS.INCOMPLETE,
   userInfo: null,
   errorMessage: '',
   isLoading: false,
@@ -30,7 +30,7 @@ const userStore = observable({
 
   // 🎯 统一状态更新接口
   setStatus(status, data = {}) {
-    this.loginStatus = status;
+    this.profileStatus = status;
     this.isLoading = false;
     
     switch (status) {
@@ -83,33 +83,33 @@ const userStore = observable({
       } else if (result.status === 'incomplete') {
         this.setStatus(USER_STATUS.INCOMPLETE);
       } else {
-        this.setStatus(USER_STATUS.ERROR, { message: result.message || '登录检查失败' });
+        this.setStatus(USER_STATUS.ERROR, { message: result.message || '状态检查失败' });
       }
     } catch (error) {
       this.setStatus(USER_STATUS.ERROR, { message: error.message || '网络异常' });
     }
   },
 
-  async performUserRegistration() {
+  async completeProfile() {
     if (this.isLoading) return;
     
-    this.setLoading(true, '执行注册流程...');
+    this.setLoading(true, '完善资料中...');
     
     try {
-      const result = await registerUser();
+      const result = await completeUserProfile();
       
       if (result.status === 'redirected') {
-        this.setLoading(false); // 等待用户在弹出层完成注册
+        this.setLoading(false); // 等待用户在弹出层完成资料完善
       } else if (result.status === 'complete') {
         this.setStatus(USER_STATUS.COMPLETE, { userInfo: result.userInfo });
-        wx.showToast({ title: '注册成功！', icon: 'success' });
+        wx.showToast({ title: '资料完善成功！', icon: 'success' });
       } else {
-        this.setStatus(USER_STATUS.ERROR, { message: result.reason || '注册失败' });
+        this.setStatus(USER_STATUS.ERROR, { message: result.reason || '资料完善失败' });
         wx.showToast({ title: this.errorMessage, icon: 'error' });
       }
     } catch (error) {
-      this.setStatus(USER_STATUS.ERROR, { message: error.message || '注册异常' });
-      wx.showToast({ title: '注册失败，请重试', icon: 'error' });
+      this.setStatus(USER_STATUS.ERROR, { message: error.message || '资料完善异常' });
+      wx.showToast({ title: '资料完善失败，请重试', icon: 'error' });
     }
   },
 
@@ -126,11 +126,11 @@ const userStore = observable({
     if (circleStore) circleStore.reset();
 
     this.setStatus(USER_STATUS.INCOMPLETE);
-    wx.showToast({ title: '已退出登录', icon: 'success' });
+    wx.showToast({ title: '已退出', icon: 'success' });
   },
 
   updateUserInfo(newUserInfo) {
-    if (this.loginStatus === USER_STATUS.COMPLETE) {
+    if (this.profileStatus === USER_STATUS.COMPLETE) {
       const updatedUserInfo = { ...this.userInfo, ...newUserInfo };
       this.setStatus(USER_STATUS.COMPLETE, { userInfo: updatedUserInfo });
     } else {
@@ -282,23 +282,23 @@ const userStore = observable({
   _syncToGlobal(status, userInfo) {
     const app = getApp();
     if (app && app.globalData) {
-      app.globalData.loginStatus = status;
+      app.globalData.profileStatus = status;
       app.globalData.userInfo = userInfo;
     }
   },
 
   // 📊 计算属性 (Getters)
   
-  get isLoggedIn() {
-    return this.loginStatus === USER_STATUS.COMPLETE;
+  get isProfileComplete() {
+    return this.profileStatus === USER_STATUS.COMPLETE;
   },
 
   get hasError() {
-    return this.loginStatus === USER_STATUS.ERROR;
+    return this.profileStatus === USER_STATUS.ERROR;
   },
 
   get displayName() {
-    return this.userInfo?.username || '未登录用户';
+    return this.userInfo?.username || '访客';
   },
 
   get avatarUrl() {

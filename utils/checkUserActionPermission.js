@@ -53,13 +53,13 @@ function checkHasApplied(circle, userId) {
   return false;
 }
 
-// ===== 辅助函数：获取当前用户登录状态 =====
-function getUserLoginStatus() {
+// ===== 辅助函数：获取当前用户状态 =====
+function getProfileStatus() {
   const app = getApp();
   const userStore = app.getUserStore();
   
   return {
-    isLoggedIn: !!userStore.userInfo && !!userStore.userInfo._id,
+    isProfileComplete: !!userStore.userInfo && !!userStore.userInfo._id,
     userId: userStore.userInfo?._id || null,
     userInfo: userStore.userInfo
   };
@@ -204,16 +204,16 @@ function checkActionPermission(action, options = {}) {
   // 获取用户ID（自动或手动）
   let userId = options.userId;
   if (userId === undefined) {
-    const loginStatus = getUserLoginStatus();
-    userId = loginStatus.userId;
+    const profileStatus = getProfileStatus();
+    userId = profileStatus.userId;
   }
-  
+
   // 对于不需要 circle 的动作，简化处理逻辑
   if (!needsCircle) {
-    // 检查是否登录
-    const isLoggedIn = userId !== null;
+    // 检查资料是否完整
+    const isComplete = userId !== null;
     
-    if (isLoggedIn) {
+    if (isComplete) {
       return {
         allowed: true,
         status: 'member',  // 简化状态
@@ -221,16 +221,16 @@ function checkActionPermission(action, options = {}) {
         rejectAction: null
       };
     } else {
-      // 未登录，需要弹出注册框
+      // 资料未完善，需要弹出资料完善框
       const message = action === 'createCircle' 
-        ? '您需要登录才能创建朋友圈' 
-        : '您需要登录才能查看朋友圈列表';
+        ? '您需要完善资料才能创建朋友圈' 
+        : '您需要完善资料才能查看朋友圈列表';
       
       return {
         allowed: false,
         status: 'guest_no_access',
         message,
-        rejectAction: 'showRegisterPopup',
+        rejectAction: 'showProfilePopup',
         saveIntent: false,  // 这些动作不需要保存意图
         intentAction: action,
         circleId,
@@ -285,7 +285,7 @@ function checkActionPermission(action, options = {}) {
     allowed: false,
     status,
     message,
-    rejectAction,  // 'showRegisterPopup' | 'showToast'
+    rejectAction,  // 'showProfilePopup' | 'showToast'
     // 额外信息（用于保存意图）
     saveIntent: Array.isArray(config.saveIntent) && config.saveIntent.includes(action),
     intentAction: action,  // 意图类型就是动作名
@@ -303,8 +303,8 @@ function checkActionPermission(action, options = {}) {
  * @returns {Boolean} 是否允许
  * 
  * 自动处理拒绝情况：
- * - 未登录 → 弹出注册框（如果配置了 showRegisterPopup）
- * - 已登录但无权限 → 显示 Toast 提示
+ * - 资料未完善 → 弹出资料完善框（如果配置了 showProfilePopup）
+ * - 资料完整但无权限 → 显示 Toast 提示
  * - 自动保存意图（如果配置了 saveIntent）
  */
 function checkAndHandle(action, options = {}) {
@@ -333,8 +333,8 @@ function checkAndHandle(action, options = {}) {
   }
   
   // 2. 根据 rejectAction 处理拒绝
-  if (result.rejectAction === 'showRegisterPopup') {
-    // 弹出注册框（未登录用户）
+  if (result.rejectAction === 'showProfilePopup') {
+    // 弹出资料完善框（资料未完善用户）
     const app = getApp();
     app.showUserInfoPopup({
       reason: result.message,
@@ -343,7 +343,7 @@ function checkAndHandle(action, options = {}) {
       saveIntent: result.saveIntent
     });
   } else {
-    // 显示 Toast（默认，已登录但无权限）
+    // 显示 Toast（默认，资料完整但无权限）
     wx.showToast({
       title: result.message,
       icon: 'none',
@@ -383,10 +383,10 @@ function checkAndHandle(action, options = {}) {
 function getUserStatusWithRole(circle, userId = null, inviteCode = '') {
   // 自动获取 userId
   if (userId === undefined || userId === null) {
-    const loginStatus = getUserLoginStatus();
-    userId = loginStatus.userId;
+    const profileStatus = getProfileStatus();
+    userId = profileStatus.userId;
   }
-  
+
   const status = getUserStatus(circle, userId, inviteCode);
   const isOwner = userId ? checkIsOwner(circle, userId) : false;
   
@@ -447,7 +447,7 @@ function getUIConfig(circle, userId = null, inviteCode = '') {
  * - 朋友圈主人可以分享
  * - 成员在 allowInvite 为 true 时可以分享
  * - 邀请模式下不能分享（必须先加入）
- * - 未登录不能分享
+ * - 资料未完善不能分享
  * 
  * @param {Object} circle - 朋友圈对象
  * @param {Object|null} currentUser - 当前用户信息（可选，会自动获取）
@@ -465,11 +465,11 @@ function canShareCircle(circle, currentUser = null, inviteCode = '') {
     return false;
   }
   
-  // 获取用户登录状态
-  const loginStatus = getUserLoginStatus();
-  const userId = currentUser?._id || loginStatus.userId;
+  // 获取用户状态
+  const profileStatus = getProfileStatus();
+  const userId = currentUser?._id || profileStatus.userId;
   
-  // 未登录不能分享
+  // 资料未完善不能分享
   if (!userId) {
     return false;
   }
@@ -493,14 +493,14 @@ function canShareCircle(circle, currentUser = null, inviteCode = '') {
  * 获取当前用户信息
  * 直接从 userStore 获取，避免 MobX 绑定延迟
  * 
- * @returns {Object|null} 当前用户信息，如果未登录则返回 null
+ * @returns {Object|null} 当前用户信息，如果资料未完善则返回 null
  */
 function getCurrentUser() {
   try {
     const app = getApp();
     const userStore = app?.getUserStore();
     
-    if (userStore && userStore.isLoggedIn && userStore.userInfo && userStore.userInfo._id) {
+    if (userStore && userStore.isProfileComplete && userStore.userInfo && userStore.userInfo._id) {
       return userStore.userInfo;
     }
     
@@ -514,7 +514,7 @@ function getCurrentUser() {
 /**
  * 获取当前用户ID（支持多种ID字段格式）
  * 
- * @returns {string|null} 用户ID，如果未登录则返回 null
+ * @returns {string|null} 用户ID，如果资料未完善则返回 null
  */
 function getCurrentUserId() {
   const user = getCurrentUser();
@@ -535,11 +535,11 @@ function isCurrentUserAdmin() {
 }
 
 /**
- * 检查当前用户是否已登录
+ * 检查当前用户资料是否完整
  * 
- * @returns {boolean} 是否已登录
+ * @returns {boolean} 资料是否完整
  */
-function isUserLoggedIn() {
+function isProfileComplete() {
   const user = getCurrentUser();
   return user !== null && user._id !== undefined;
 }
@@ -558,12 +558,12 @@ module.exports = {
   checkIsMember,
   checkIsOwner,
   checkHasApplied,
-  getUserLoginStatus,
+  getProfileStatus,
   
   // 兼容旧 API 的辅助函数
   getCurrentUser,           // 获取当前用户信息
   getCurrentUserId,         // 获取当前用户ID
   isCurrentUserAdmin,       // 检查是否为管理员
-  isUserLoggedIn            // 检查是否已登录
+  isProfileComplete         // 检查资料是否完整
 };
 

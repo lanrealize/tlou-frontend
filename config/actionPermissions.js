@@ -13,15 +13,15 @@
  *    - 对象格式：{ actionName: 'message' }
  *    - 只配置需要提示的动作
  * 
- * 3. saveIntent: 需要保存意图的动作列表（注册后自动执行）
+ * 3. saveIntent: 需要保存意图的动作列表（资料完善后自动执行）
  *    - 数组格式：['acceptInvite', 'applyToJoin']
  *    - 意图类型即为动作名本身
  *    - 空数组 [] 表示无需保存意图
  * 
  * 4. rejectAction: 拒绝时的处理方式
- *    - 字符串格式：'showRegisterPopup' | 'showToast'
- *    - 'showRegisterPopup': 弹出注册框（未登录用户）
- *    - 'showToast': 显示 Toast（已登录用户，默认）
+ *    - 字符串格式：'showProfilePopup' | 'showToast'
+ *    - 'showProfilePopup': 弹出资料完善框（资料未完善用户）
+ *    - 'showToast': 显示 Toast（资料完整用户，默认）
  * 
  * 5. uiConfig: circle-status-action 组件的 UI 配置
  *    - show: 是否显示卡片
@@ -35,7 +35,7 @@
  */
 
 module.exports = {
-  // ==================== 已登录状态 ====================
+  // ==================== 资料完整状态 ====================
   
   member: {
     permissions: {
@@ -258,7 +258,7 @@ module.exports = {
     }
   },
   
-  // ==================== 未登录状态 ====================
+  // ==================== 资料未完善状态 ====================
   
   guest_invited: {
     permissions: {
@@ -274,19 +274,19 @@ module.exports = {
     },
     
     rejectMessages: {
-      enterListPage: '您需要登录才能查看朋友圈列表',
-      enterSettingsPage: '您需要登录才能修改设置',
-      enterPublishPage: '您需要登录才能发布动态',
-      likePost: '登录后才能点赞',
-      commentPost: '登录后才能发表评论',
-      publishPost: '您需要登录才能发布动态',
-      acceptInvite: '请先完成注册后加入朋友圈',
-      applyToJoin: '请先完成注册后提交申请',
-      createCircle: '您需要登录才能创建朋友圈'
+      enterListPage: '您需要完善资料才能查看朋友圈列表',
+      enterSettingsPage: '您需要完善资料才能修改设置',
+      enterPublishPage: '您需要完善资料才能发布动态',
+      likePost: '完善资料后才能点赞',
+      commentPost: '完善资料后才能发表评论',
+      publishPost: '您需要完善资料才能发布动态',
+      acceptInvite: '请先完善资料后加入朋友圈',
+      applyToJoin: '请先完善资料后提交申请',
+      createCircle: '您需要完善资料才能创建朋友圈'
     },
     
     saveIntent: ['acceptInvite'],
-    rejectAction: 'showRegisterPopup',
+    rejectAction: 'showProfilePopup',
     
     uiConfig: {
       show: true,
@@ -315,19 +315,19 @@ module.exports = {
     },
     
     rejectMessages: {
-      enterListPage: '您需要登录才能查看朋友圈列表',
-      enterSettingsPage: '您需要登录才能修改设置',
-      enterPublishPage: '您需要登录才能发布动态',
-      likePost: '登录后才能点赞',
-      commentPost: '登录后才能发表评论',
-      publishPost: '您需要登录才能发布动态',
+      enterListPage: '您需要完善资料才能查看朋友圈列表',
+      enterSettingsPage: '您需要完善资料才能修改设置',
+      enterPublishPage: '您需要完善资料才能发布动态',
+      likePost: '完善资料后才能点赞',
+      commentPost: '完善资料后才能发表评论',
+      publishPost: '您需要完善资料才能发布动态',
       acceptInvite: '这不是邀请链接',
-      applyToJoin: '请先完成注册后提交申请',
-      createCircle: '您需要登录才能创建朋友圈'
+      applyToJoin: '请先完善资料后提交申请',
+      createCircle: '您需要完善资料才能创建朋友圈'
     },
     
     saveIntent: ['applyToJoin'],
-    rejectAction: 'showRegisterPopup',
+    rejectAction: 'showProfilePopup',
     
     uiConfig: {
       show: true,
@@ -356,22 +356,22 @@ module.exports = {
     },
     
     rejectMessages: {
-      enterListPage: '您需要登录才能查看朋友圈列表',
-      enterSettingsPage: '您需要登录才能修改设置',
-      enterPublishPage: '您需要登录才能发布动态',
-      likePost: '登录后才能点赞',
-      commentPost: '登录后才能发表评论',
-      publishPost: '您需要登录才能发布动态',
+      enterListPage: '您需要完善资料才能查看朋友圈列表',
+      enterSettingsPage: '您需要完善资料才能修改设置',
+      enterPublishPage: '您需要完善资料才能发布动态',
+      likePost: '完善资料后才能点赞',
+      commentPost: '完善资料后才能发表评论',
+      publishPost: '您需要完善资料才能发布动态',
       acceptInvite: '这不是邀请链接',
       applyToJoin: '这是私密朋友圈',
-      createCircle: '您需要登录才能创建朋友圈'
+      createCircle: '您需要完善资料才能创建朋友圈'
     },
     
     saveIntent: [],
-    rejectAction: 'showRegisterPopup',
+    rejectAction: 'showProfilePopup',
     
     uiConfig: {
-      show: false,  // 私密朋友圈未登录不显示组件
+      show: false,  // 私密朋友圈资料未完善不显示组件
       mainTitle: '无法访问',
       subTitle: '无权查看此朋友圈',
       button: {

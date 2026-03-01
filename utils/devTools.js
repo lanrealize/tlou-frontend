@@ -307,7 +307,7 @@ function getTestStatus() {
   } else {
     console.log('当前用户状态:');
     console.log('openid:', currentOpenid);
-    console.log('登录状态:', userStore.loginStatus);
+    console.log('资料状态:', userStore.profileStatus);
     console.log('用户信息:', userStore.userInfo);
   }
   
@@ -317,7 +317,7 @@ function getTestStatus() {
     isInTestMode: inTestMode,
     currentOpenid,
     userStore: {
-      loginStatus: userStore.loginStatus,
+      profileStatus: userStore.profileStatus,
       userInfo: userStore.userInfo
     }
   };

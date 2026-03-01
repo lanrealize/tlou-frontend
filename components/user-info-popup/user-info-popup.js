@@ -178,7 +178,7 @@ Component({
         const result = await this.submitUserInfo(nickname, avatarUrl);
         
         if (result.status === 'complete') {
-          util.showToast('注册成功！', 'success');
+          util.showToast('资料完善成功！', 'success');
           
           // 更新用户状态
           const app = getApp();
@@ -196,16 +196,16 @@ Component({
           });
           
         } else {
-          throw new Error(result.reason || '注册失败');
+          throw new Error(result.reason || '资料完善失败');
         }
         
       } catch (error) {
         const app = getApp();
         const userStore = app.getUserStore();
         const { USER_STATUS } = require('../../store/userStore');
-        userStore.setStatus(USER_STATUS.ERROR, { message: error.message || '注册失败，请重试' });
+        userStore.setStatus(USER_STATUS.ERROR, { message: error.message || '资料完善失败，请重试' });
         
-        util.showToast(error.message || '注册失败，请重试', 'error');
+        util.showToast(error.message || '资料完善失败，请重试', 'error');
       } finally {
         this.setData({ isSubmitting: false });
       }
@@ -218,7 +218,7 @@ Component({
       try {
         const openid = await auth.getOpenid();
 
-        const registerResult = await new Promise((resolve, reject) => {
+        const profileResult = await new Promise((resolve, reject) => {
           wx.request({
             url: `${this.getBaseUrl()}/wechat/complete-profile`,
             method: 'POST',
@@ -235,16 +235,16 @@ Component({
           });
         });
 
-        if (registerResult.statusCode !== 201) {
-          throw new Error(`HTTP ${registerResult.statusCode}: ${registerResult.data?.message || '注册失败'}`);
+        if (profileResult.statusCode !== 201) {
+          throw new Error(`HTTP ${profileResult.statusCode}: ${profileResult.data?.message || '资料完善失败'}`);
         }
         
-        if (!registerResult.data?.success) {
-          throw new Error(registerResult.data?.message || '注册失败');
+        if (!profileResult.data?.success) {
+          throw new Error(profileResult.data?.message || '资料完善失败');
         }
 
         // 🔧 修复：后端返回的用户数据在 data.user 中，需要正确提取 _id
-        const backendUser = registerResult.data.data?.user || registerResult.data.data;
+        const backendUser = profileResult.data.data?.user || profileResult.data.data;
         
         // 🔑 关键：确保 userInfo 中包含完整的后端数据（_id）和 openid
         const finalUserInfo = { 

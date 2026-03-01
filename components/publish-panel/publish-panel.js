@@ -3,7 +3,7 @@ const { storeBindingsBehavior } = require('mobx-miniprogram-bindings');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const api = require('../../utils/api');
 const util = require('../../utils/util');
-const { getCurrentUser, isUserLoggedIn, getCurrentUserId } = require('../../utils/checkUserActionPermission');
+const { getCurrentUser, isProfileComplete, getCurrentUserId } = require('../../utils/checkUserActionPermission');
 
 Component({
   behaviors: [storeBindingsBehavior],
@@ -22,7 +22,7 @@ Component({
         if (!this.properties.anonymousMode) {
           this.loadCircleInfo();
         }
-        this.setData({ userInfo: getCurrentUser(), isLoggedIn: isUserLoggedIn() });
+        this.setData({ userInfo: getCurrentUser(), isProfileComplete: isProfileComplete() });
         // 预填充 onboarding 拍摄的图片
         if (this.properties.initialImage) {
           this.setData({ tempImages: [this.properties.initialImage] });
@@ -65,7 +65,7 @@ Component({
 
   pageLifetimes: {
     show() {
-      this.setData({ userInfo: getCurrentUser(), isLoggedIn: isUserLoggedIn() });
+      this.setData({ userInfo: getCurrentUser(), isProfileComplete: isProfileComplete() });
     }
   },
 
@@ -80,7 +80,7 @@ Component({
       store: userStore,
       fields: {
         userInfo: 'userInfo',
-        isLoggedIn: 'isLoggedIn'
+        isProfileComplete: 'isProfileComplete'
       },
       actions: {}
     });
@@ -272,10 +272,10 @@ Component({
       // 已登录用户用 userId，未登录（trial 模式）用 Storage 里的 openid
       const userId = getCurrentUserId() || wx.getStorageSync('openid');
 
-      // 如果没有获取到用户ID，说明用户未登录
+      // 如果没有获取到用户ID，说明资料未完善
       if (!userId) {
-        console.error('❌ 获取用户ID失败：用户未登录');
-        throw new Error('用户未登录，无法上传图片');
+        console.error('❌ 获取用户ID失败：资料未完善');
+        throw new Error('资料未完善，无法上传图片');
       }
       
       console.log('✅ 获取用户ID成功:', userId);
@@ -384,15 +384,15 @@ Component({
       return this._publishTrialPost();
     }
 
-    // ✅ 修复：使用统一的登录状态检查函数
-    const isLoggedIn = isUserLoggedIn();
+    // ✅ 修复：使用统一的状态检查函数
+    const isComplete = isProfileComplete();
 
-    console.log('🔍 登录状态检查:', {
-      isLoggedIn: isLoggedIn
+    console.log('🔍 资料状态检查:', {
+      isProfileComplete: isComplete
     });
 
-    if (!isLoggedIn) {
-      util.showToast('请先登录');
+    if (!isComplete) {
+      util.showToast('请先完善资料');
       return;
     }
 

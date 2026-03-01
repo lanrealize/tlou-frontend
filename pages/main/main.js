@@ -559,11 +559,11 @@ Page({
       store: userStore,
       fields: {
         // 绑定用户状态到页面data
-        loginStatus: 'loginStatus',        // 'loggedIn' | 'unregistered' | 'error' | 'loading'
+        profileStatus: 'profileStatus',        // 'complete' | 'incomplete' | 'error' | 'loading'
         userInfo: 'userInfo',              // 用户信息
         errorMessage: 'errorMessage',      // 错误消息
         isLoading: 'isLoading',            // 是否正在加载
-        isLoggedIn: 'isLoggedIn',          // 是否已登录
+        isProfileComplete: 'isProfileComplete',          // 资料是否完整
         hasError: 'hasError',              // 是否有错误
         displayName: 'displayName',        // 用户显示名称
         avatarUrl: 'avatarUrl',            // 用户头像URL
@@ -576,7 +576,7 @@ Page({
       },
       actions: {
         // 绑定actions到页面方法
-        performUserRegistration: 'performUserRegistration',
+        completeProfile: 'completeProfile',
         logout: 'logout',
         
         // 🎭 虚拟身份管理方法
@@ -624,13 +624,13 @@ Page({
     // 始终检查一次用户状态，以防状态不同步
     const userStore = app.getUserStore();
     const globalUserInfo = app.globalData.userInfo;
-    const globalLoginStatus = app.globalData.loginStatus;
+    const globalProfileStatus = app.globalData.profileStatus;
     
     // 如果全局状态和store状态不一致，同步一下
-    if (globalLoginStatus === 'loggedIn' && globalUserInfo && 
-        (userStore.loginStatus !== 'loggedIn' || !userStore.userInfo)) {
+    if (globalProfileStatus === 'complete' && globalUserInfo && 
+        (userStore.profileStatus !== 'complete' || !userStore.userInfo)) {
       const { USER_STATUS } = require('../../store/userStore');
-      userStore.setStatus(USER_STATUS.LOGGEDIN, { userInfo: globalUserInfo });
+      userStore.setStatus(USER_STATUS.COMPLETE, { userInfo: globalUserInfo });
       
       // 🔧 立即设置朋友圈加载状态，避免状态空窗期
       this.setData({ isLoadingCircles: true });
@@ -648,10 +648,10 @@ Page({
     
     // 3. 如果是空状态卡片，再初始化视频
     // 设计意图：先显示空状态卡片（纯文字），用户看几秒后，视频再慢慢淡入
-    if (this.data.loginStatus !== 'loggedIn' || !this.data.hasRecentCircle) {
+    if (this.data.profileStatus !== 'complete' || !this.data.hasRecentCircle) {
       console.log('🎬 [main] 初始化空状态视频背景');
       this._initEmptyCardVideoAnimation();
-    } else if (this.data.loginStatus === 'loggedIn' && this.data.hasRecentCircle) {
+    } else if (this.data.profileStatus === 'complete' && this.data.hasRecentCircle) {
       // 4. 如果是朋友圈卡片，初始化图片背景
       // 设计意图：复用视频的时间线，先显示纯文字卡片，2秒后图片淡入
       console.log('🖼️ [main] 初始化朋友圈图片背景');
@@ -706,7 +706,7 @@ Page({
     // 但返回朋友圈的 Promise，供调用方等待（推荐不阻塞）
     let circlePromise = Promise.resolve();
     
-    if (userStore.isLoggedIn) {
+    if (userStore.isProfileComplete) {
       circlePromise = this.loadRecentCircle();  // 保存 Promise
     }
 

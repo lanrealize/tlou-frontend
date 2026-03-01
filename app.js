@@ -158,15 +158,15 @@ App({
     return userStore;
   },
 
-  // 触发用户注册（便捷方法）
-  async triggerUserRegistration() {
-    console.log('🎯 触发用户注册流程');
-    await userStore.performUserRegistration();
+  // 触发资料完善（便捷方法）
+  async triggerProfileCompletion() {
+    console.log('🎯 触发资料完善流程');
+    await userStore.completeProfile();
   },
 
-  // 退出登录（便捷方法）
+  // 退出（便捷方法）
   logout() {
-    console.log('👋 执行退出登录');
+    console.log('👋 执行退出');
     userStore.logout();
   },
 

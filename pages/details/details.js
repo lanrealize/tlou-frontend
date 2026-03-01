@@ -133,7 +133,7 @@ Page({
       fields: {
         userInfo: 'userInfo',
         currentUser: 'userInfo', // 直接绑定 currentUser 到 userInfo
-        isLoggedIn: 'isLoggedIn'
+        isProfileComplete: 'isProfileComplete'
       },
       actions: {}
     });
@@ -421,12 +421,12 @@ Page({
   async loadCircleDetail() {
     try {
       const { currentUser, circleId } = this.data;
-      const isLoggedIn = currentUser && currentUser._id;
-      
+      const isProfileComplete = currentUser && currentUser._id;
+
       let targetCircle = null;
-      
-      // 已登录用户：先从我的朋友圈中查找
-      if (isLoggedIn) {
+
+      // 资料完整用户：先从我的朋友圈中查找
+      if (isProfileComplete) {
         try {
           const circlesRes = await api.circles.getMy();
           targetCircle = circlesRes.data.circles.find(c => c._id === circleId);

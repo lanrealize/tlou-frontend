@@ -3,7 +3,7 @@ const { storeBindingsBehavior } = require('mobx-miniprogram-bindings');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const api = require('../../utils/api');
 const util = require('../../utils/util');
-const { getCurrentUser, isUserLoggedIn, getCurrentUserId } = require('../../utils/checkUserActionPermission');
+const { getCurrentUser, isProfileComplete, getCurrentUserId } = require('../../utils/checkUserActionPermission');
 
 Page({
   // 使用MobX状态管理行为
@@ -50,11 +50,11 @@ Page({
 
     // ✅ 修复：使用统一的用户状态获取函数，无需setTimeout
     const currentUser = getCurrentUser();
-    const isLoggedIn = isUserLoggedIn();
+    const isComplete = isProfileComplete();
     
     this.setData({
       userInfo: currentUser,
-      isLoggedIn: isLoggedIn
+      isProfileComplete: isComplete
     });
   },
 
@@ -62,12 +62,12 @@ Page({
     
     // ✅ 修复：使用统一的用户状态获取函数
     const currentUser = getCurrentUser();
-    const isLoggedIn = isUserLoggedIn();
+    const isComplete = isProfileComplete();
     
     // 更新当前用户信息（可能在其他页面发生了变化）
     this.setData({
       userInfo: currentUser,
-      isLoggedIn: isLoggedIn
+      isProfileComplete: isComplete
     });
 
   },

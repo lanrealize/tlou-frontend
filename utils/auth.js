@@ -110,7 +110,7 @@ const initUserAuthInStorage = async () => {
     // 修复：后端返回的用户信息在 data.user 中
     const serverUserInfo = userInfoRes.data.data?.user || userInfoRes.data.data;
     
-    // 5. 判断用户是否已注册
+    // 5. 判断用户资料是否完整
     if (serverUserInfo && serverUserInfo.username && serverUserInfo.avatar) {
       // ✅ 后端架构：_id 就是 openid（openid 值），无需额外字段
       // 用户资料完整：更新本地缓存并返回用户信息
@@ -130,12 +130,12 @@ const initUserAuthInStorage = async () => {
     // 返回错误状态（根据需求可选）
     return {
       status: 'error',
-      message: error.message || '登录检查异常'
+      message: error.message || '状态检查异常'
     };
   }
 };
 
-const registerUser = async () => {
+const completeUserProfile = async () => {
   try {
     // 1. 确保有openid（预先获取）
     await getOpenid();
@@ -144,7 +144,7 @@ const registerUser = async () => {
     const result = await showUserInfoPopup();
     
     if (result.status === 'popup_shown') {
-      // 返回弹出层已显示状态，实际注册会在弹出层中完成
+      // 返回弹出层已显示状态，实际资料完善会在弹出层中完成
       return { status: 'popup_shown' };
     }
     
@@ -158,5 +158,5 @@ const registerUser = async () => {
 module.exports = {
   getOpenid,
   initUserAuthInStorage,
-  registerUser
+  completeUserProfile
 };
