@@ -57,9 +57,10 @@ Component({
     remainingTimeText: '',
     // 图片显示信息（复用 post-item 逻辑）
     imageDisplayInfo: {
-      width: 0,
-      height: 0,
-      styleClass: ''
+      width: 260,
+      height: 260,
+      styleClass: 'square',
+      mode: 'aspectFill'
     }
   },
 
@@ -450,15 +451,28 @@ Component({
     this.setData({ isPublishing: true });
 
     try {
-      // 🚀 乐观更新：立即添加临时帖子到列表
+      // 🚀 乐观更新：先获取所有图片尺寸，再添加临时帖子
       const { postStore } = require('../../store/postStore');
+      const tempImages = this.data.tempImages;
+
+      // 并行获取所有图片尺寸
+      const imageMeta = await Promise.all(
+        tempImages.map(path => new Promise(resolve => {
+          wx.getImageInfo({
+            src: path,
+            success: info => resolve({ width: info.width, height: info.height }),
+            fail: () => resolve({ width: 1, height: 1 })
+          });
+        }))
+      );
+
       const tempPostData = {
         content: this.data.content.trim(),
-        tempImages: this.data.tempImages // 临时图片路径
+        tempImages,
+        imageMeta
       };
-      
+
       const tempId = postStore.addOptimisticPost(this.data.circleId, tempPostData);
-      console.log('🚀 临时帖子已添加，ID:', tempId);
 
       // 保存临时图片路径和内容，用于后台上传
       const contentToUpload = this.data.content.trim();

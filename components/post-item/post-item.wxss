@@ -1049,53 +1049,38 @@
     margin: 0; /* 确保没有额外的margin */
   }
 }
-/* 🚀 上传状态样式 */
-.upload-status-bar {
-  margin-top: 20rpx;
-  padding: 16rpx 0;
-  border-radius: 12rpx;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
-  width: 500rpx;
-  box-sizing: border-box;
-  max-height: 120rpx;
-  opacity: 1;
-  overflow: hidden;
-  transition: max-height 0.35s ease, opacity 0.25s ease, margin 0.35s ease, padding 0.35s ease;
-}
-
-.upload-status-bar.upload-status-bar-hidden {
-  max-height: 0;
-  opacity: 0;
-  padding: 0;
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-/* 当有文字内容时的 margin-bottom */
-.upload-status-bar.has-text {
-  margin-bottom: 23rpx;
-}
-
-/* 当没有文字内容时的 margin-bottom */
-.upload-status-bar.no-text {
-  margin-bottom: 32rpx;
-}
-
-/* 上传中指示器 */
-.uploading-indicator {
+/* 🚀 上传状态遮罩（绝对定位，覆盖图片） */
+.upload-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 16rpx;
-  padding: 0 20rpx;
+  justify-content: center;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.4s ease;
 }
 
-.uploading-spinner {
-  width: 32rpx;
-  height: 32rpx;
-  border: 4rpx solid #e8ecf1;
-  border-top-color: #1890ff;
+.upload-overlay.overlay-visible {
+  opacity: 1;
+}
+
+/* 上传中：spinner */
+.upload-overlay-spinner {
+  width: 56rpx;
+  height: 56rpx;
+  border: 5rpx solid rgba(255, 255, 255, 0.3);
+  border-top-color: rgba(255, 255, 255, 0.95);
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: spin 0.85s linear infinite;
 }
 
 @keyframes spin {
@@ -1103,42 +1088,49 @@
   100% { transform: rotate(360deg); }
 }
 
-.status-text {
-  font-size: 28rpx;
-  color: #1890ff;
-  font-weight: 500;
-}
-
-/* 上传失败指示器 */
-.upload-failed-indicator {
+/* 上传失败：错误区域 */
+.upload-overlay-error {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 16rpx;
-  padding: 0 20rpx;
+  gap: 20rpx;
+  padding: 0 48rpx;
 }
 
-.error-icon {
-  width: 32rpx;
-  height: 32rpx;
-  filter: brightness(0) saturate(100%) invert(32%) sepia(96%) saturate(3213%) hue-rotate(346deg) brightness(91%) contrast(94%);
+.upload-overlay-error-msg {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.85);
+  text-align: center;
+  line-height: 1.5;
 }
 
-.error-text {
-  font-size: 28rpx;
-  color: #ff4d4f;
-  font-weight: 500;
+.upload-overlay-actions {
+  display: flex;
+  gap: 24rpx;
+}
+
+.upload-overlay-btn {
+  padding: 14rpx 44rpx;
+  border-radius: 100rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.upload-overlay-btn-retry {
+  background: rgba(255, 255, 255, 0.95);
+  color: #111;
+}
+
+.upload-overlay-btn-remove {
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.85);
+  border: 1rpx solid rgba(255, 255, 255, 0.3);
 }
 
 /* 上传中的图片样式 */
 .post-image-single,
 .post-image-grid {
   transition: opacity 0.4s ease, filter 0.4s ease;
-}
-
-.post-image-single.uploading,
-.post-image-grid.uploading {
-  opacity: 0.6;
-  filter: blur(1px);
 }
 
 /* ===== Onboarding 模式样式 ===== */

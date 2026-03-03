@@ -89,6 +89,8 @@
                 bind:previewImage="onPreviewImage"
                 bind:tapAvatar="onTapAvatar"
                 bind:scrollToComment="onScrollToComment"
+                bind:retryUpload="onPostRetryUpload"
+                bind:removeFailedPost="onPostRemoveFailedPost"
               ></post-item>
             </block>
 

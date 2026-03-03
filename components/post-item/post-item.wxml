@@ -77,21 +77,6 @@
 
     <!-- 帖子内容区域 -->
     <view class="post-content">
-    <!-- 🚀 上传状态提示 -->
-    <view class="upload-status-bar {{post.content ? 'has-text' : 'no-text'}} {{post._isUploading || post._uploadFailed ? '' : 'upload-status-bar-hidden'}}">
-      <!-- 上传中（只在未失败时显示） -->
-      <view class="uploading-indicator" wx:if="{{post._isUploading && !post._uploadFailed}}">
-        <view class="uploading-spinner"></view>
-        <text class="status-text">正在发布...</text>
-      </view>
-
-      <!-- 上传失败 -->
-      <view class="upload-failed-indicator" wx:if="{{post._uploadFailed}}">
-        <image class="error-icon" src="/assets/icons/delete.svg" mode="aspectFit"></image>
-        <text class="error-text">{{post._errorMessage || '发布失败'}}</text>
-      </view>
-    </view>
-
     <!-- 文字内容 -->
     <view class="post-text-container {{textAnimating ? 'animating' : ''}}" wx:if="{{post.content}}">
       <!-- 展开状态或不需要折叠：完整文字 + inline按钮 -->
@@ -147,7 +132,7 @@
 
         <image
           id="post-image-{{post._id}}-0"
-          class="post-image-single {{singleImageInfo.styleClass}} {{imageLoadStates[post.images[0].url || post.images[0]] === 'show' ? 'loaded' : 'loading'}} {{post._isUploading ? 'uploading' : ''}}"
+          class="post-image-single {{singleImageInfo.styleClass}} {{imageLoadStates[post.images[0].url || post.images[0]] === 'show' ? 'loaded' : 'loading'}}"
           src="{{localImagePath || post.images[0].url || post.images[0]}}"
           mode="{{singleImageInfo.mode}}"
           bindload="onSingleImageLoad"
@@ -157,6 +142,20 @@
           data-src="{{localImagePath || post.images[0].url || post.images[0]}}"
           wx:if="{{post.images[0]}}"
         ></image>
+
+        <!-- 上传状态遮罩 -->
+        <view class="upload-overlay {{(post._isUploading || post._uploadFailed) && imageLoadStates[post.images[0].url || post.images[0]] === 'show' ? 'overlay-visible' : ''}}">
+          <!-- 上传中：居中 spinner -->
+          <view class="upload-overlay-spinner" wx:if="{{post._isUploading && !post._uploadFailed}}"></view>
+          <!-- 上传失败：错误信息 + 操作按钮 -->
+          <view class="upload-overlay-error" wx:if="{{post._uploadFailed}}">
+            <text class="upload-overlay-error-msg">{{post._errorMessage || '发布失败'}}</text>
+            <view class="upload-overlay-actions">
+              <view class="upload-overlay-btn upload-overlay-btn-retry" catchtap="onRetryUpload">重试</view>
+              <view class="upload-overlay-btn upload-overlay-btn-remove" catchtap="onRemoveFailedPost">删除</view>
+            </view>
+          </view>
+        </view>
       </view>
 
       <!-- 多张图片网格（不受hideImage影响，多图模式不会被分享动画使用） -->

@@ -603,6 +603,16 @@ Component({
       });
     },
 
+    // 重试上传失败的帖子
+    onRetryUpload() {
+      this.triggerEvent('retryUpload', { tempId: this.data.post._tempId });
+    },
+
+    // 删除上传失败的临时帖子
+    onRemoveFailedPost() {
+      this.triggerEvent('removeFailedPost', { tempId: this.data.post._tempId });
+    },
+
     // 删除评论
     onDeleteComment(e) {
       // 使用catchtap已经阻止了事件冒泡，无需手动调用stopPropagation

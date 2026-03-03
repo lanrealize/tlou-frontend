@@ -220,11 +220,10 @@ Page({
     // 检查是否需要在发帖后滚动到顶部
     if (app.globalData?.shouldScrollToTopAfterPost) {
       app.globalData.shouldScrollToTopAfterPost = false;
-      // 发帖后不需要刷新（已经有乐观更新），只需要滚动到顶部
       console.log('📜 检测到发帖返回，直接滚动到顶部');
       this.scrollToTop();
-    } else {
-      // 智能刷新：基于场景和数据状态精确判断
+    } else if (!this.data.showPublish) {
+      // publish panel 开着时（用户去相册选照片会触发 onShow）不刷新
       if (this.data.circleId) {
         this.intelligentRefreshData();
       }
@@ -567,6 +566,25 @@ Page({
       console.error('删除帖子失败:', error);
       util.showToast('删除失败');
     }
+  },
+
+  // 重试上传失败的临时帖子
+  async onPostRetryUpload(e) {
+    const { tempId } = e.detail;
+    const { postStore } = require('../../store/postStore');
+    try {
+      const postData = await postStore.retryOptimisticPost(tempId);
+      this._publishOnboardingPost(postData.tempId, postData.tempImages[0], postStore);
+    } catch (error) {
+      console.error('重试失败:', error);
+    }
+  },
+
+  // 删除上传失败的临时帖子
+  onPostRemoveFailedPost(e) {
+    const { tempId } = e.detail;
+    const { postStore } = require('../../store/postStore');
+    postStore.removeOptimisticPost(tempId);
   },
 
   // 删除评论

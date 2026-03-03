@@ -55,7 +55,7 @@
         </view>
         
         <!-- 添加图片按钮（正方形虚线框） -->
-        <view class="add-images-btn-square" bindtap="chooseImages" style="width: {{imageDisplayInfo.width || 240}}rpx; height: {{imageDisplayInfo.height || 240}}rpx;">
+        <view class="add-images-btn-square" bindtap="chooseImages" style="width: {{imageDisplayInfo.width}}rpx; height: {{imageDisplayInfo.height}}rpx;">
           <image class="add-icon-svg-small" src="/assets/icons/add.svg" mode="aspectFit"></image>
           <text class="add-images-label">添加图片</text>
         </view>
