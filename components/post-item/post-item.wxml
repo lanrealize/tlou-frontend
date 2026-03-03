@@ -78,13 +78,13 @@
     <!-- 帖子内容区域 -->
     <view class="post-content">
     <!-- 🚀 上传状态提示 -->
-    <view class="upload-status-bar {{post.content ? 'has-text' : 'no-text'}}" wx:if="{{post._isUploading || post._uploadFailed}}">
+    <view class="upload-status-bar {{post.content ? 'has-text' : 'no-text'}} {{post._isUploading || post._uploadFailed ? '' : 'upload-status-bar-hidden'}}">
       <!-- 上传中（只在未失败时显示） -->
       <view class="uploading-indicator" wx:if="{{post._isUploading && !post._uploadFailed}}">
         <view class="uploading-spinner"></view>
         <text class="status-text">正在发布...</text>
       </view>
-      
+
       <!-- 上传失败 -->
       <view class="upload-failed-indicator" wx:if="{{post._uploadFailed}}">
         <image class="error-icon" src="/assets/icons/delete.svg" mode="aspectFit"></image>
@@ -138,23 +138,23 @@
     </view>
     <view class="post-images {{hideImage ? 'post-images-hidden' : ''}}" wx:elif="{{post.images && post.images.length > 0}}">
       <!-- 单张图片 -->
-      <view class="single-image" wx:if="{{post.images.length === 1}}" 
+      <view class="single-image" wx:if="{{post.images.length === 1}}"
             style="width: {{singleImageInfo.displayWidth}}rpx; height: {{singleImageInfo.displayHeight}}rpx;">
         <!-- 骨架屏占位 -->
         <view class="image-skeleton single-skeleton {{imageLoadStates[post.images[0].url || post.images[0]] === 'show' ? '' : 'show'}}">
           <view class="skeleton-shimmer"></view>
         </view>
-        
-        <image 
+
+        <image
           id="post-image-{{post._id}}-0"
-          class="post-image-single {{singleImageInfo.styleClass}} {{imageLoadStates[post.images[0].url || post.images[0]] === 'show' ? 'loaded' : 'loading'}} {{post._isUploading ? 'uploading' : ''}}" 
-          src="{{post.images[0].url || post.images[0]}}" 
+          class="post-image-single {{singleImageInfo.styleClass}} {{imageLoadStates[post.images[0].url || post.images[0]] === 'show' ? 'loaded' : 'loading'}} {{post._isUploading ? 'uploading' : ''}}"
+          src="{{localImagePath || post.images[0].url || post.images[0]}}"
           mode="{{singleImageInfo.mode}}"
           bindload="onSingleImageLoad"
           binderror="onImageError"
           bindtap="onPreviewImage"
-          data-current="{{post.images[0].url || post.images[0]}}"
-          data-src="{{post.images[0].url || post.images[0]}}"
+          data-current="{{localImagePath || post.images[0].url || post.images[0]}}"
+          data-src="{{localImagePath || post.images[0].url || post.images[0]}}"
           wx:if="{{post.images[0]}}"
         ></image>
       </view>

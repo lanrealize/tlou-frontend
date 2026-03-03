@@ -180,13 +180,8 @@ class API {
     // 获取我参与的所有朋友圈列表（包含最新帖子）
     getMyParticipated: () => this.get('/circles/my'),
     
-    // ⭐ 获取朋友圈详情（自动适配：资料完整用认证API，未完善用公开API）
-    getDetail: (circleId, params = {}) => {
-      const url = this.isProfileComplete()
-        ? `/circles/${circleId}`          // 资料完整：认证API
-        : `/public/circles/${circleId}`;  // 资料未完善：公开API
-      return this.get(url, params);       // 支持传递参数（如 inviteCode）
-    },
+    // 获取朋友圈详情
+    getDetail: (circleId, params = {}) => this.get(`/circles/${circleId}`, params),
     
     // 🆕 获取邀请码（圈主专用）
     getInviteCode: (circleId) => this.get(`/circles/${circleId}/invite-code`),
@@ -233,11 +228,6 @@ class API {
     
     // === 随机公开朋友圈推荐功能 ===
     // ⭐ 获取随机公开朋友圈（使用公开API，支持未登录用户）
-    getRandomPublicCircle: (params = {}) => {
-      const query = Object.keys(params).map(key => `${key}=${encodeURIComponent(params[key])}`).join('&');
-      const fullUrl = query ? `/public/circles/random?${query}` : '/public/circles/random';
-      return this.request({ url: fullUrl, method: 'GET', timeout: 5000 });
-    },
 
     // === 邀请功能 ===
     // 接受邀请（加入朋友圈）
@@ -258,13 +248,8 @@ class API {
 
   // 帖子相关API
   posts = {
-    // ⭐ 获取朋友圈的帖子列表（自动适配：资料完整用认证API，未完善用公开API）
-    getList: (circleId, params = {}) => {
-      const url = this.isProfileComplete()
-        ? '/posts'          // 资料完整：认证API
-        : '/public/posts';  // 资料未完善：公开API
-      return this.get(url, { circleId, ...params });
-    },
+    // 获取朋友圈的帖子列表
+    getList: (circleId, params = {}) => this.get('/posts', { circleId, ...params }),
     
     // 创建帖子
     create: (data) => this.post('/posts', data),

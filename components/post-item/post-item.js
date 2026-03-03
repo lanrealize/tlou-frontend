@@ -40,10 +40,10 @@ Component({
       type: Boolean,
       value: false
     },
-    // 🎬 onboarding 动画：隐藏评论区（用于分阶段动画引导）
-    hideComments: {
-      type: Boolean,
-      value: false
+    // 🖼️ 本地图片路径：发帖乐观更新期间使用，避免替换为CDN URL时的闪烁
+    localImagePath: {
+      type: String,
+      value: ''
     }
   },
 

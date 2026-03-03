@@ -1057,6 +1057,18 @@
   background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
   width: 500rpx;
   box-sizing: border-box;
+  max-height: 120rpx;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 0.35s ease, opacity 0.25s ease, margin 0.35s ease, padding 0.35s ease;
+}
+
+.upload-status-bar.upload-status-bar-hidden {
+  max-height: 0;
+  opacity: 0;
+  padding: 0;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 /* 当有文字内容时的 margin-bottom */
@@ -1118,6 +1130,11 @@
 }
 
 /* 上传中的图片样式 */
+.post-image-single,
+.post-image-grid {
+  transition: opacity 0.4s ease, filter 0.4s ease;
+}
+
 .post-image-single.uploading,
 .post-image-grid.uploading {
   opacity: 0.6;

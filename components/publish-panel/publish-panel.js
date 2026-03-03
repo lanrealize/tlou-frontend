@@ -537,70 +537,38 @@ Component({
 
   // 🚀 在后台上传帖子（不阻塞UI）
   async uploadPostInBackground(tempId, circleId, content, tempImages, postStore) {
-    console.log('🔄 开始后台上传帖子...');
-    
     try {
-      // 上传图片（如果有的话）
+      // 上传图片
       let uploadedImages = [];
-      
       if (tempImages.length > 0) {
-        console.log('📸 需要上传图片，开始上传...');
-        
-        try {
-          // 重新设置数据以便uploadImages可以使用
-          this.setData({ tempImages: tempImages });
-          uploadedImages = await this.uploadImages();
-          
-          // 更新上传进度
-          postStore.updatePostUploadProgress(tempId, 50);
-          
-        } catch (uploadError) {
-          console.error('📸 图片上传失败:', uploadError);
-          
-          // 静默处理：如果图片上传失败，仍然尝试发布文字内容
-          console.log('⚠️ 图片上传失败，尝试仅发布文字内容');
-          uploadedImages = [];
-        }
+        const qiniuUploader = require('../../utils/qiniuUploader');
+        const { getCurrentUserId } = require('../../utils/checkUserActionPermission');
+        const userId = getCurrentUserId() || wx.getStorageSync('openid');
+        uploadedImages = await qiniuUploader.uploadPostImages(tempImages, userId);
+        postStore.updatePostUploadProgress(tempId, 50);
       }
 
-      // 发布帖子到服务器
-      const postData = {
-        circleId: circleId,
-        content: content,
-        images: uploadedImages
-      };
-
-      console.log('📤 发送帖子数据到服务器...');
-      const response = await api.posts.create(postData);
-      
-      console.log('✅ 服务器返回真实帖子数据:', response.data);
-      
-      // 更新进度到100%
+      // 发布帖子
+      const response = await api.posts.create({ circleId, content, images: uploadedImages });
       postStore.updatePostUploadProgress(tempId, 100);
-      
-      // 用真实帖子替换临时帖子
+
       if (response.data && response.data.post) {
-        postStore.replaceOptimisticPost(tempId, response.data.post);
-        console.log('✅ 帖子发布成功，临时帖子已替换为真实帖子');
-        
-        // 🖼️ 直接通知当前的 details 页面更新分享封面
+        // preserveImages: true 保留本地图片路径，避免替换时图片闪烁
+        postStore.replaceOptimisticPost(tempId, response.data.post, true);
+
+        // 通知 details 页面更新分享封面
         const pages = getCurrentPages();
         const detailsPage = pages.find(page => page.route === 'pages/details/details');
         if (detailsPage && typeof detailsPage.updateShareImage === 'function') {
-          console.log('📸 通知 details 页面更新分享封面');
           detailsPage.updateShareImage();
         }
       }
 
     } catch (error) {
       console.error('❌ 后台上传失败:', error);
-      
-      // 🔍 检查是否是图片违规错误
+
       if (error.response?.status === 422 && error.response?.data?.violationDetails) {
-        console.log('⚠️ 检测到图片违规，标记帖子失败（保持遮罩）');
-        postStore.markPostUploadFailed(tempId, '图片内容不符合规范', true); // keepMask = true
-        
-        // 显示违规提示
+        postStore.markPostUploadFailed(tempId, '图片内容不符合规范', true);
         wx.showModal({
           title: '内容审核未通过',
           content: '检测到图片内容不符合平台规范，帖子发布失败。请修改后重新发布。',
@@ -608,19 +576,10 @@ Component({
           confirmText: '我知道了'
         });
       } else {
-        // 标记上传失败
-        const errorMsg = error.message || '上传失败，请重试';
-        postStore.markPostUploadFailed(tempId, errorMsg, false); // keepMask = false，移除遮罩
-        
-        // 显示错误提示
-        wx.showToast({
-          title: '发布失败',
-          icon: 'none',
-          duration: 2000
-        });
+        postStore.markPostUploadFailed(tempId, error.message || '上传失败，请重试', false);
+        wx.showToast({ title: '发布失败', icon: 'none', duration: 2000 });
       }
     } finally {
-      // 重置发布状态
       this.setData({ isPublishing: false });
     }
   },

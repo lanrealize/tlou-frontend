@@ -412,11 +412,13 @@ const postStore = observable({
     const optimisticPost = {
       _id: tempId,
       _tempId: tempId,
+      _stableKey: tempId,  // 替换为真实帖子后保留，确保 wx:key 不变，组件不被重建
       _isUploading: true,
       _uploadProgress: 0,
       circleId: circleId,
       content: tempPostData.content || '',
-      images: normalizedImages, // 统一为对象格式
+      images: normalizedImages,
+      imageMeta: tempPostData.imageMeta || [],
       _tempImagePaths: tempPostData.tempImages || [], // 保存临时路径用于显示
       author: currentUser ? {
         _id: currentUser._id,
@@ -460,22 +462,28 @@ const postStore = observable({
   },
 
   // 🚀 将临时帖子替换为真实帖子
-  replaceOptimisticPost(tempId, realPost) {
+  // preserveImages: true 时保留本地图片路径，避免替换后图片重加载闪烁
+  replaceOptimisticPost(tempId, realPost, preserveImages = false) {
     console.log('🔄 替换临时帖子为真实帖子:', { tempId, realPostId: realPost._id });
-    
+
     const postIndex = this.posts.findIndex(p => p._tempId === tempId);
     if (postIndex === -1) {
       console.warn('⚠️ 未找到临时帖子:', tempId);
       return;
     }
-    
+
     // 格式化真实帖子数据
     const formattedPost = this._formatSinglePost(realPost);
-    
-    // 替换临时帖子
+
+    // preserveImages: 保留本地图片路径和尺寸信息，只更新非图片字段
+    const tempPost = this.posts[postIndex];
+    const finalPost = preserveImages
+      ? { ...formattedPost, images: tempPost.images, imageMeta: tempPost.imageMeta, _stableKey: tempPost._stableKey }
+      : { ...formattedPost, _stableKey: formattedPost._stableKey || formattedPost._id };
+
     const updatedPosts = [...this.posts];
-    updatedPosts[postIndex] = formattedPost;
-    
+    updatedPosts[postIndex] = finalPost;
+
     this.posts = updatedPosts;
     console.log('✅ 帖子替换成功');
   },
@@ -561,6 +569,8 @@ const postStore = observable({
 
   // 格式化单个帖子数据
   _formatSinglePost(post) {
+    // 确保每个帖子都有稳定的 wx:key，避免组件被销毁重建
+    post._stableKey = post._stableKey || post._id;
     // 格式化时间
     post.formattedTime = util.formatRelativeTime(post.createdAt);
     

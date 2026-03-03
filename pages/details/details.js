@@ -607,7 +607,58 @@ Page({
 
   onOnboardingTakePhoto(e) {
     const { tempFilePath } = e.detail;
-    this.setData({ showPublish: true, onboardingInitialImage: tempFilePath });
+    const { postStore } = require('../../store/postStore');
+
+    // 先获取本地图片尺寸，再插临时帖子，确保图片区域尺寸正确
+    wx.getImageInfo({
+      src: tempFilePath,
+      success: (info) => {
+        const tempId = postStore.addOptimisticPost('', {
+          tempImages: [tempFilePath],
+          content: '',
+          imageMeta: [{ width: info.width, height: info.height }]
+        });
+        this.setData({ showOnboarding: false });
+        this._publishOnboardingPost(tempId, tempFilePath, postStore);
+      },
+      fail: () => {
+        // 获取尺寸失败时降级，不传 imageMeta
+        const tempId = postStore.addOptimisticPost('', {
+          tempImages: [tempFilePath],
+          content: ''
+        });
+        this.setData({ showOnboarding: false });
+        this._publishOnboardingPost(tempId, tempFilePath, postStore);
+      }
+    });
+  },
+
+  async _publishOnboardingPost(tempId, tempFilePath, postStore) {
+    const api = require('../../utils/api');
+    const qiniuUploader = require('../../utils/qiniuUploader');
+
+    try {
+      // 1. 上传图片
+      const openid = wx.getStorageSync('openid');
+      const uploadedImages = await qiniuUploader.uploadPostImages([tempFilePath], openid);
+
+      // 2. 创建 circle
+      const circleRes = await api.circles.create({});
+      const circleId = circleRes.data.circle._id;
+
+      // 3. 创建 post
+      const postRes = await api.posts.create({ circleId, content: '', images: uploadedImages });
+      const realPost = postRes.data.post;
+
+      // 4. 替换临时帖子，保留本地图片路径避免闪烁
+      this.setData({ circleId });
+      postStore.replaceOptimisticPost(tempId, realPost, true);
+
+    } catch (error) {
+      console.error('Onboarding 发帖失败:', error);
+      const msg = error?.response?.data?.message || error.message || '发布失败，请重试';
+      postStore.markPostUploadFailed(tempId, msg, false);
+    }
   },
 
   onPublishClose(e) {

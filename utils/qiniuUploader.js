@@ -342,16 +342,42 @@ class QiniuUploader {
   }
 
   /**
-   * 获取当前配置信息（用于调试）
+   * 上传帖子图片（高阶方法）
+   * 自动完成：初始化 → 上传 → 获取尺寸，返回干净的图片对象数组
+   * @param {Array<string>} filePaths 本地图片路径数组
+   * @param {string} userId 用户 openid
+   * @returns {Promise<Array<{url, width, height}>>}
    */
-  getConfig() {
-    return {
-      isInitialized: this.isInitialized,
-      bucket: this.config.bucket,
-      domain: this.config.domain,
-      region: this.config.region,
-      hasToken: !!this.config.upToken
-    };
+  async uploadPostImages(filePaths, userId) {
+    if (!filePaths || filePaths.length === 0) return [];
+
+    // 确保初始化
+    if (!this.isInitialized) {
+      const qiniuConfig = require('./qiniuConfig');
+      const config = qiniuConfig.getQiniuConfig();
+      if (!config.upToken || config.upToken === 'NEED_TO_GET_FROM_BACKEND_API') {
+        config.upToken = await qiniuConfig.getUploadToken();
+      }
+      await this.init(config);
+    }
+
+    const uploadResult = await this.uploadImages(filePaths, userId, { pathType: 'post' });
+    if (!uploadResult.success && uploadResult.results.length === 0) {
+      throw new Error('图片上传失败');
+    }
+
+    // 并行获取所有图片尺寸
+    const imageInfos = await Promise.all(filePaths.map(path =>
+      new Promise(resolve =>
+        wx.getImageInfo({ src: path, success: r => resolve(r), fail: () => resolve(null) })
+      )
+    ));
+
+    return uploadResult.results.map((result, i) => ({
+      url: result.url,
+      width: imageInfos[i]?.width || null,
+      height: imageInfos[i]?.height || null
+    }));
   }
 }
 

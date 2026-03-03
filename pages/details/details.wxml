@@ -71,7 +71,7 @@
         <!-- 时间轴布局 -->
         <view class="timeline-posts" wx:else>
             <!-- 直接遍历所有帖子 -->
-            <block wx:for="{{posts}}" wx:key="_id" wx:for-item="post">
+            <block wx:for="{{posts}}" wx:key="_stableKey" wx:for-item="post">
               <post-item
                 id="{{index === 0 ? 'first-post-item' : 'post-item-' + post._id}}"
                 post="{{post}}"
@@ -80,6 +80,7 @@
                 is-first="{{index === 0}}"
                 hide-image="{{index === 0 && hideFirstPostImage}}"
                 timeline-mode="{{true}}"
+                local-image-path="{{post._tempImagePaths[0] || ''}}"
                 bind:like="onPostLike"
                 bind:comment="onPostComment"
                 bind:replyComment="onPostReplyComment"
@@ -91,12 +92,8 @@
               ></post-item>
             </block>
 
-            <!-- 加载更多提示 -->
-            <view class="load-more" wx:if="{{hasMore && posts.length > 0}}">
-              <text class="load-more-text">上拉加载更多</text>
-            </view>
-          </view>
         </view>
+      </view>
 
       <!-- 底部占位 -->
       <view class="scroll-bottom-spacer"></view>
@@ -186,9 +183,9 @@
   </view>
   <!-- 🎯 Details 内容容器结束 -->
 
-  <!-- 🎬 Onboarding 引导层（全屏覆盖，仅在 onboarding 模式下显示） -->
+  <!-- 🎬 Onboarding 引导层（全屏覆盖，仅在 onboarding 模式下显示，且 publish-panel 未显示时） -->
   <onboarding-guide
-    wx:if="{{showOnboarding === true}}"
+    wx:if="{{showOnboarding === true && !showPublish}}"
     id="onboarding-guide"
     bind:takePhoto="onOnboardingTakePhoto"
   ></onboarding-guide>
