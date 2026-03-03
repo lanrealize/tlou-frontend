@@ -26,6 +26,13 @@ Component({
         // 预填充 onboarding 拍摄的图片
         if (this.properties.initialImage) {
           this.setData({ tempImages: [this.properties.initialImage] });
+          // 计算图片尺寸
+          wx.getImageInfo({
+            src: this.properties.initialImage,
+            success: (info) => {
+              this.calculateImageDisplaySize(info.width, info.height);
+            }
+          });
         }
         setTimeout(() => this.setData({ slideIn: true }), 50);
       } else {
@@ -47,7 +54,13 @@ Component({
     showViolationAlert: false,
     violationTimeout: null,
     navigationData: { totalNavigationHeight: 88 },
-    remainingTimeText: ''
+    remainingTimeText: '',
+    // 图片显示信息（复用 post-item 逻辑）
+    imageDisplayInfo: {
+      width: 0,
+      height: 0,
+      styleClass: ''
+    }
   },
 
   lifetimes: {
@@ -162,26 +175,50 @@ Component({
 
   // 选择图片
   chooseImages() {
-    const remainingCount = this.data.maxImages - this.data.tempImages.length;
-    
-    if (remainingCount <= 0) {
-      util.showToast(`最多只能选择${this.data.maxImages}张图片`);
+    // 只允许选择 1 张图片
+    if (this.data.tempImages.length >= 1) {
+      util.showToast('只能选择1张图片');
       return;
     }
 
     wx.chooseMedia({
-      count: remainingCount,
+      count: 1,
       mediaType: ['image'],
       sourceType: ['album', 'camera'],
       camera: 'back',
       success: (res) => {
         const tempFiles = res.tempFiles.map(file => file.tempFilePath);
         this.setData({
-          tempImages: [...this.data.tempImages, ...tempFiles]
+          tempImages: tempFiles
         });
+        
+        // 获取图片信息并计算显示尺寸
+        if (tempFiles.length > 0) {
+          wx.getImageInfo({
+            src: tempFiles[0],
+            success: (info) => {
+              this.calculateImageDisplaySize(info.width, info.height);
+            }
+          });
+        }
       },
       fail: (err) => {
         // util.showToast('选择图片失败');
+      }
+    });
+  },
+
+  // 🆕 计算图片显示尺寸（固定正方形 200rpx）
+  calculateImageDisplaySize(originalWidth, originalHeight) {
+    // 固定为 260rpx 的正方形
+    const displaySize = 260;
+    
+    this.setData({
+      imageDisplayInfo: {
+        width: displaySize,
+        height: displaySize,
+        styleClass: 'square',
+        mode: 'aspectFill' // 使用 aspectFill 裁剪填充正方形
       }
     });
   },
@@ -200,10 +237,12 @@ Component({
   // 删除图片
   deleteImage(e) {
     const { index } = e.currentTarget.dataset;
-    const tempImages = [...this.data.tempImages];
-    tempImages.splice(index, 1);
-    
-    this.setData({ tempImages });
+    this.setData({ removingImage: true });
+    setTimeout(() => {
+      const tempImages = [...this.data.tempImages];
+      tempImages.splice(index, 1);
+      this.setData({ tempImages, removingImage: false });
+    }, 250);
   },
 
   // 上传图片（使用七牛云）
@@ -612,6 +651,15 @@ Component({
     } catch (error) {
       console.log('ℹ️ PostStore未启用markDataChanged方法');
     }
+  },
+
+  // 获取位置
+  getLocation() {
+    wx.showToast({
+      title: '获取位置功能开发中',
+      icon: 'none',
+      duration: 2000
+    });
   },
 
   // 返回上一页

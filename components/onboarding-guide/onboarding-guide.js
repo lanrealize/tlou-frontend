@@ -58,7 +58,7 @@ Component({
       wx.chooseMedia({
         count: 1,
         mediaType: ['image'],
-        sourceType: ['camera'],
+        sourceType: ['camera', 'album'],
         success: (res) => {
           const tempFile = res.tempFiles[0];
           this.triggerEvent('takePhoto', { tempFilePath: tempFile.tempFilePath });

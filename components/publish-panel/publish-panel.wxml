@@ -42,7 +42,29 @@
           show-confirm-bar="{{false}}"
           adjust-position="{{false}}"
         ></textarea>
-        <view class="char-count" wx:if="{{content.length > 0}}">{{content.length}}/2000</view>
+      </view>
+
+      <!-- 图片展示区域 -->
+      <view class="images-row" wx:if="{{!showViolationAlert}}">
+        <!-- 已选图片 -->
+        <view class="image-wrapper {{removingImage ? 'removing' : ''}}" wx:if="{{tempImages.length > 0}}">
+          <image class="selected-image" src="{{tempImages[0]}}" mode="{{imageDisplayInfo.mode || 'aspectFill'}}" style="width: {{imageDisplayInfo.width}}rpx; height: {{imageDisplayInfo.height}}rpx;" bindtap="previewImage" data-index="0"></image>
+          <view class="delete-badge" bindtap="deleteImage" data-index="0">
+            <text class="delete-icon">×</text>
+          </view>
+        </view>
+        
+        <!-- 添加图片按钮（正方形虚线框） -->
+        <view class="add-images-btn-square" bindtap="chooseImages" style="width: {{imageDisplayInfo.width || 240}}rpx; height: {{imageDisplayInfo.height || 240}}rpx;">
+          <image class="add-icon-svg-small" src="/assets/icons/add.svg" mode="aspectFit"></image>
+          <text class="add-images-label">添加图片</text>
+        </view>
+      </view>
+
+      <!-- 违规模式图片 -->
+      <view class="image-container {{tempImagesWithStatus[0].isViolated ? 'violated' : ''}}" wx:if="{{showViolationAlert && tempImagesWithStatus}}">
+        <image class="selected-image" src="{{tempImagesWithStatus[0].path}}" mode="widthFix" style="width: {{imageDisplayInfo.width}}rpx;" bindtap="previewImage" data-index="0"></image>
+        <view class="violation-badge" wx:if="{{tempImagesWithStatus[0].isViolated}}"><text class="violation-text">违规</text></view>
       </view>
 
       <!-- 违规提示 -->
@@ -54,35 +76,12 @@
         </view>
       </view>
 
-      <!-- 图片网格 -->
-      <view class="images-grid images-grid-{{tempImages.length}}" wx:if="{{tempImages.length > 0 && !showViolationAlert}}">
-        <view class="image-item" wx:for="{{tempImages}}" wx:key="*this">
-          <image class="selected-image" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-index="{{index}}"></image>
-          <view class="delete-image-btn" bindtap="deleteImage" data-index="{{index}}">
-            <image class="delete-icon" src="/assets/icons/delete.svg" mode="aspectFit"></image>
-          </view>
+      <!-- 信息 Badges -->
+      <view class="badges-container">
+        <view class="info-badge" bindtap="getLocation">
+          <image class="badge-icon" src="/assets/icons/location.svg" mode="aspectFit"></image>
+          <text class="badge-text">添加位置</text>
         </view>
-      </view>
-
-      <!-- 违规模式图片 -->
-      <view class="images-grid images-grid-{{tempImages.length}}" wx:if="{{showViolationAlert && tempImagesWithStatus}}">
-        <view class="image-item {{item.isViolated ? 'violated' : ''}}" wx:for="{{tempImagesWithStatus}}" wx:key="originalIndex">
-          <image class="selected-image" src="{{item.path}}" mode="aspectFill" bindtap="previewImage" data-index="{{index}}"></image>
-          <view class="violation-badge" wx:if="{{item.isViolated}}"><text class="violation-text">违规</text></view>
-          <view class="delete-image-btn {{item.isViolated ? 'delete-violated' : ''}}" bindtap="{{item.isViolated ? 'deleteViolatedImage' : 'deleteImage'}}" data-index="{{index}}">
-            <image class="delete-icon" src="/assets/icons/delete.svg" mode="aspectFit"></image>
-          </view>
-        </view>
-      </view>
-
-      <!-- 添加图片按钮 -->
-      <view class="add-image-btn" bindtap="chooseImages" wx:if="{{tempImages.length > 0 && tempImages.length < maxImages && !showViolationAlert}}">
-        <image class="add-icon-svg" src="/assets/icons/add.svg" mode="aspectFit"></image>
-        <text class="add-text">添加图片</text>
-      </view>
-      <view id="addImagesBtn" class="add-images-btn-initial" bindtap="chooseImages" wx:if="{{tempImages.length === 0}}">
-        <image class="add-icon-svg" src="/assets/icons/add.svg" mode="aspectFit"></image>
-        <text class="add-text">添加图片</text>
       </view>
 
     </view>
