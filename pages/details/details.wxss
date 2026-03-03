@@ -1,5 +1,29 @@
 /* pages/details/details.wxss */
 
+/* ─── Onboarding → Details 过渡动画 ─── */
+/* onboarding 淡出 */
+.onboarding-layer {
+  transition: opacity 0.35s ease;
+}
+.onboarding-layer.onboarding-exiting {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* details 淡入：entering 时从透明开始，动画结束后恢复正常 */
+.details-container {
+  opacity: 1;
+  transition: opacity 0.35s ease;
+}
+.details-container.details-entering {
+  opacity: 0;
+  animation: detailsFadeIn 0.35s ease forwards;
+}
+@keyframes detailsFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 /* 基础样式 */
 page {
   background-color: #ffffff;

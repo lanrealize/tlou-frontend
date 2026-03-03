@@ -56,6 +56,7 @@ Page({
     transitionActive: false,      // 是否激活过渡动画
     showPublish: false,
     showOnboarding: null,  // 🎯 初始为 null，避免触发 CSS 显示逻辑
+    onboardingExiting: false, // 过渡动画中：onboarding 正在淡出
     onboardingInitialImage: '',  // onboarding 拍照后预填充到 publish-panel 的图片
     
     // 顶部间距（基于胶囊按钮位置计算）
@@ -618,19 +619,26 @@ Page({
           content: '',
           imageMeta: [{ width: info.width, height: info.height }]
         });
-        this.setData({ showOnboarding: false });
-        this._publishOnboardingPost(tempId, tempFilePath, postStore);
+        this._transitionToDetails(tempId, tempFilePath, postStore);
       },
       fail: () => {
-        // 获取尺寸失败时降级，不传 imageMeta
         const tempId = postStore.addOptimisticPost('', {
           tempImages: [tempFilePath],
           content: ''
         });
-        this.setData({ showOnboarding: false });
-        this._publishOnboardingPost(tempId, tempFilePath, postStore);
+        this._transitionToDetails(tempId, tempFilePath, postStore);
       }
     });
+  },
+
+  _transitionToDetails(tempId, tempFilePath, postStore) {
+    // 第一步：触发 onboarding 淡出 + details 淡入动画
+    this.setData({ onboardingExiting: true });
+    // 第二步：350ms 后销毁 onboarding，动画完成
+    setTimeout(() => {
+      this.setData({ showOnboarding: false, onboardingExiting: false });
+      this._publishOnboardingPost(tempId, tempFilePath, postStore);
+    }, 350);
   },
 
   async _publishOnboardingPost(tempId, tempFilePath, postStore) {

@@ -1,7 +1,7 @@
 <!--pages/details/details.wxml-->
 <view class="page-container {{showShareAnimation && !shareAnimationCompleted ? 'page-black-bg' : ''}}">
   <!-- 🎯 Details 内容容器：用 wx:if 控制显示 -->
-  <view class="details-container" wx:if="{{showOnboarding === false}}">
+  <view class="details-container {{onboardingExiting ? 'details-entering' : ''}}" wx:if="{{showOnboarding === false || onboardingExiting}}">
     <!-- 顶部导航栏 -->
     <top-nav-bar bind:homeclick="onHomeClick" bind:addclick="onAddClick" />
     
@@ -187,6 +187,7 @@
   <onboarding-guide
     wx:if="{{showOnboarding === true && !showPublish}}"
     id="onboarding-guide"
+    class="onboarding-layer {{onboardingExiting ? 'onboarding-exiting' : ''}}"
     bind:takePhoto="onOnboardingTakePhoto"
   ></onboarding-guide>
 
