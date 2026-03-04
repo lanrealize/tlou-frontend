@@ -610,16 +610,23 @@
 }
 
 /* 图片加载状态样式 */
-.post-image-single.loading,
-.post-image-grid.loading {
+.single-image-loading {
   opacity: 0;
-  transition: opacity 0.3s ease;
 }
 
-.post-image-single.loaded,
-.post-image-grid.loaded {
-  opacity: 1;
-  transition: opacity 0.3s ease;
+.single-image-loaded {
+  animation: imageSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes imageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* 帖子时间地点和操作按钮区域 */

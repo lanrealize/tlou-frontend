@@ -37,6 +37,18 @@ Component({
         setTimeout(() => this.setData({ slideIn: true }), 50);
       } else {
         this.setData({ slideIn: false });
+        // 滑出动画结束后清理内容，确保下次打开是干净状态
+        setTimeout(() => {
+          this.setData({
+            content: '',
+            tempImages: [],
+            imageDisplayInfo: { width: 260, height: 260, styleClass: 'square', mode: 'aspectFill' },
+            showViolationAlert: false,
+            violationDetails: null,
+            isPublishing: false,
+            removingImage: false
+          });
+        }, 400);
       }
     }
   },
@@ -479,26 +491,13 @@ Component({
       const imagesToUpload = [...this.data.tempImages];
       const circleId = this.data.circleId;
 
-      // 🎯 立即提示用户并返回上一页，不等待上传完成
-      wx.showToast({
-        title: '正在发布...',
-        icon: 'loading',
-        duration: 1500
-      });
-
-      // 立即返回上一页，让用户看到新帖子
-      setTimeout(() => {
-        // 设置全局标记，告诉 details 页面需要滚动到顶部
-        const app = getApp();
-        if (app.globalData) {
-          app.globalData.shouldScrollToTopAfterPost = true;
-        }
-
-        this.triggerEvent('close', { published: true });
-
-        // 🔥 在后台继续上传（不阻塞UI）
-        this.uploadPostInBackground(tempId, circleId, contentToUpload, imagesToUpload, postStore);
-      }, 500);
+      // 立即关闭 panel，后台继续上传
+      const app = getApp();
+      if (app.globalData) {
+        app.globalData.shouldScrollToTopAfterPost = true;
+      }
+      this.triggerEvent('close', { published: true });
+      this.uploadPostInBackground(tempId, circleId, contentToUpload, imagesToUpload, postStore);
 
     } catch (error) {
       this.setData({ isPublishing: false });

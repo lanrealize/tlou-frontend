@@ -123,7 +123,7 @@
     </view>
     <view class="post-images {{hideImage ? 'post-images-hidden' : ''}}" wx:elif="{{post.images && post.images.length > 0}}">
       <!-- 单张图片 -->
-      <view class="single-image" wx:if="{{post.images.length === 1}}"
+      <view class="single-image {{imageLoadStates[post.images[0].url || post.images[0]] === 'show' ? 'single-image-loaded' : 'single-image-loading'}}" wx:if="{{post.images.length === 1}}"
             style="width: {{singleImageInfo.displayWidth}}rpx; height: {{singleImageInfo.displayHeight}}rpx;">
         <!-- 骨架屏占位 -->
         <view class="image-skeleton single-skeleton {{imageLoadStates[post.images[0].url || post.images[0]] === 'show' ? '' : 'show'}}">
@@ -132,7 +132,7 @@
 
         <image
           id="post-image-{{post._id}}-0"
-          class="post-image-single {{singleImageInfo.styleClass}} {{imageLoadStates[post.images[0].url || post.images[0]] === 'show' ? 'loaded' : 'loading'}}"
+          class="post-image-single {{singleImageInfo.styleClass}}"
           src="{{localImagePath || post.images[0].url || post.images[0]}}"
           mode="{{singleImageInfo.mode}}"
           bindload="onSingleImageLoad"
@@ -144,7 +144,7 @@
         ></image>
 
         <!-- 上传状态遮罩 -->
-        <view class="upload-overlay {{(post._isUploading || post._uploadFailed) && imageLoadStates[post.images[0].url || post.images[0]] === 'show' ? 'overlay-visible' : ''}}">
+        <view class="upload-overlay {{post._isUploading || post._uploadFailed ? 'overlay-visible' : ''}}">
           <!-- 上传中：居中 spinner -->
           <view class="upload-overlay-spinner" wx:if="{{post._isUploading && !post._uploadFailed}}"></view>
           <!-- 上传失败：错误信息 + 操作按钮 -->
