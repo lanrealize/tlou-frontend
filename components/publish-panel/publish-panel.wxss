@@ -7,14 +7,22 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(6px);
   z-index: 998;
-  animation: maskFadeIn 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
 }
 
-@keyframes maskFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.publish-panel-mask.mask-show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.publish-panel-mask.mask-hide {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* 弹出层容器 */

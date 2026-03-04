@@ -1,6 +1,6 @@
 <!--components/user-info-popup/user-info-popup.wxml-->
 <!-- 遮罩层 -->
-<view class="user-info-popup-mask" wx:if="{{visible}}" bindtap="onMaskTap" catchtouchmove="preventMove"></view>
+<view class="user-info-popup-mask {{visible ? 'mask-show' : 'mask-hide'}}" bindtap="onMaskTap" catchtouchmove="preventMove"></view>
 
 <!-- 弹出层 -->
 <view class="user-info-popup {{visible ? 'show' : ''}}">

@@ -1,14 +1,28 @@
 /* components/user-info-popup/user-info-popup.wxss */
 
-/* 遮罩层 - 完全透明，不影响背景 */
+/* 遮罩层 */
 .user-info-popup-mask {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: transparent;
+  background: rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(6px);
   z-index: 998;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.user-info-popup-mask.mask-show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.user-info-popup-mask.mask-hide {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* 弹出层容器 */

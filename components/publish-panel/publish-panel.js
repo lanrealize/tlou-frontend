@@ -3,6 +3,8 @@ const { storeBindingsBehavior } = require('mobx-miniprogram-bindings');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const api = require('../../utils/api');
 const util = require('../../utils/util');
+const quotaCache = require('../../utils/quotaCache');
+const gatekeeper = require('../../utils/gatekeeper');
 const { getCurrentUser, isProfileComplete, getCurrentUserId } = require('../../utils/checkUserActionPermission');
 
 Component({
@@ -11,29 +13,14 @@ Component({
   properties: {
     circleId: { type: String, value: '' },
     show: { type: Boolean, value: false },
-    anonymousMode: { type: Boolean, value: false },
-    initialImage: { type: String, value: '' },  // 预填充图片（onboarding 拍照传入）
   },
 
   observers: {
     'show': function(val) {
       if (val) {
         this.setData({ circleId: this.properties.circleId });
-        if (!this.properties.anonymousMode) {
-          this.loadCircleInfo();
-        }
+        this.loadCircleInfo();
         this.setData({ userInfo: getCurrentUser(), isProfileComplete: isProfileComplete() });
-        // 预填充 onboarding 拍摄的图片
-        if (this.properties.initialImage) {
-          this.setData({ tempImages: [this.properties.initialImage] });
-          // 计算图片尺寸
-          wx.getImageInfo({
-            src: this.properties.initialImage,
-            success: (info) => {
-              this.calculateImageDisplaySize(info.width, info.height);
-            }
-          });
-        }
         setTimeout(() => this.setData({ slideIn: true }), 50);
       } else {
         this.setData({ slideIn: false });
@@ -329,7 +316,6 @@ Component({
         });
       }
       
-      // 已登录用户用 userId，未登录（trial 模式）用 Storage 里的 openid
       const userId = getCurrentUserId() || wx.getStorageSync('openid');
 
       // 如果没有获取到用户ID，说明资料未完善
@@ -439,11 +425,6 @@ Component({
       return;
     }
 
-    // anonymousMode 下跳过登录检查，走 trial 接口
-    if (this.properties.anonymousMode) {
-      return this._publishTrialPost();
-    }
-
     // ✅ 修复：使用统一的状态检查函数
     const isComplete = isProfileComplete();
 
@@ -452,7 +433,7 @@ Component({
     });
 
     if (!isComplete) {
-      util.showToast('请先完善资料');
+      this.triggerEvent('needUserInfo');
       return;
     }
 
@@ -506,48 +487,6 @@ Component({
     }
   },
 
-  // 🆕 Trial 匿名发布流程（onboarding 专用）
-  async _publishTrialPost() {
-    if (this.data.isPublishing) return;
-    this.setData({ isPublishing: true });
-
-    try {
-      // 1. 上传图片
-      let uploadedImages = [];
-      if (this.data.tempImages.length > 0) {
-        uploadedImages = await this.uploadImages();
-      }
-
-      // 2. 创建试用朋友圈（后端自动创建 TempUser，已有则复用）
-      const circleRes = await api.trial.createCircle();
-      const circleId = circleRes.data.circle._id;
-
-      // 3. 发帖
-      const postRes = await api.trial.createPost({
-        circleId,
-        content: this.data.content.trim(),
-        images: uploadedImages,
-      });
-      const post = postRes.data.post;
-
-      // 4. 插入 postStore，让 details 页面立即看到帖子
-      const { postStore } = require('../../store/postStore');
-      postStore.prependPost(circleId, post);
-
-      wx.showToast({ title: '发布成功', icon: 'success', duration: 1500 });
-      setTimeout(() => {
-        this.triggerEvent('close', { published: true, circleId });
-      }, 500);
-
-    } catch (error) {
-      console.error('Trial 发布失败:', error);
-      const msg = error?.response?.data?.message || error.message || '发布失败，请重试';
-      util.showToast(msg);
-    } finally {
-      this.setData({ isPublishing: false });
-    }
-  },
-
   // 🚀 在后台上传帖子（不阻塞UI）
   async uploadPostInBackground(tempId, circleId, content, tempImages, postStore) {
     try {
@@ -565,6 +504,9 @@ Component({
       const response = await api.posts.create({ circleId, content, images: uploadedImages });
       postStore.updatePostUploadProgress(tempId, 100);
 
+      // 更新配额快照
+      if (response.quota) quotaCache.write(response.quota);
+
       if (response.data && response.data.post) {
         // preserveImages: true 保留本地图片路径，避免替换时图片闪烁
         postStore.replaceOptimisticPost(tempId, response.data.post, true);
@@ -580,6 +522,9 @@ Component({
     } catch (error) {
       console.error('❌ 后台上传失败:', error);
 
+      // 429：更新配额快照（quota_exceeded 或 rate_limited）
+      if (error.status === 429 && error.data?.quota) quotaCache.write(error.data.quota);
+
       if (error.response?.status === 422 && error.response?.data?.violationDetails) {
         postStore.markPostUploadFailed(tempId, '图片内容不符合规范', true);
         wx.showModal({
@@ -594,34 +539,6 @@ Component({
       }
     } finally {
       this.setData({ isPublishing: false });
-    }
-  },
-
-  // 🎯 方案二：通知details页面帖子数据已变更
-  notifyDetailsPostChanged() {
-    const pages = getCurrentPages();
-    
-    // 查找details页面实例
-    const detailsPage = pages.find(page => 
-      page.route.includes('details') && 
-      page.data && page.data.circleId === this.data.circleId
-    );
-    
-    if (detailsPage && typeof detailsPage.markDataNeedsRefresh === 'function') {
-      console.log('📢 通知details页面帖子列表已更新');
-      detailsPage.markDataNeedsRefresh();
-    } else {
-      console.log('⚠️ 未找到对应的details页面实例');
-    }
-    
-    // 同时更新MobX Store状态（如果使用）
-    try {
-      const { postStore } = require('../../store/postStore');
-      if (postStore && typeof postStore.markDataChanged === 'function') {
-        postStore.markDataChanged('post_created', this.data.circleId);
-      }
-    } catch (error) {
-      console.log('ℹ️ PostStore未启用markDataChanged方法');
     }
   },
 

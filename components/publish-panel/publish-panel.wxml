@@ -1,6 +1,6 @@
 <!--components/publish-panel/publish-panel.wxml-->
 <!-- 遮罩层 -->
-<view class="publish-panel-mask" wx:if="{{show}}" bindtap="onMaskTap" catchtouchmove="preventMove"></view>
+<view class="publish-panel-mask {{slideIn ? 'mask-show' : 'mask-hide'}}" bindtap="onMaskTap" catchtouchmove="preventMove"></view>
 
 <!-- 弹出层 -->
 <view class="publish-panel {{slideIn ? 'show' : ''}}" catchtouchmove="preventMove">

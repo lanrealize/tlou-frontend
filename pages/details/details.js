@@ -5,7 +5,9 @@ const { when } = require('mobx-miniprogram');
 const api = require('../../utils/api');
 const util = require('../../utils/util');
 const navigationHelper = require('../../utils/navigationHelper');
-const { checkAndHandle } = require('../../utils/checkUserActionPermission');
+const { isProfileComplete } = require('../../utils/checkUserActionPermission');
+const quotaCache = require('../../utils/quotaCache');
+const gatekeeper = require('../../utils/gatekeeper');
 const { ShareAnimationController, SHARE_ANIMATION_CONFIG } = require('./shareAnimationController');
 
 Page({
@@ -501,8 +503,9 @@ Page({
   async onPostLike(e) {
     const { postId } = e.detail;
 
-    // 权限检查：点赞需要注册
-    if (!checkAndHandle('likePost', { circleId: this.data.circleId })) {
+    // 权限检查：点赞需要完善资料
+    if (!isProfileComplete()) {
+      this.setData({ userInfoPopupVisible: true });
       return;
     }
 
@@ -518,12 +521,12 @@ Page({
   onPostComment(e) {
     const { postId } = e.detail;
 
-    // 权限检查：评论需要注册
-    if (!checkAndHandle('commentPost', { circleId: this.data.circleId })) {
+    // 权限检查：评论需要完善资料
+    if (!isProfileComplete()) {
+      this.setData({ userInfoPopupVisible: true });
       return;
     }
 
-    // 显示评论输入框
     this.setData({
       showCommentInput: true,
       selectedPostId: postId,
@@ -537,8 +540,9 @@ Page({
   onPostReplyComment(e) {
     const { postId, replyToUser } = e.detail;
 
-    // 权限检查：回复需要注册
-    if (!checkAndHandle('commentPost', { circleId: this.data.circleId })) {
+    // 权限检查：回复需要完善资料
+    if (!isProfileComplete()) {
+      this.setData({ userInfoPopupVisible: true });
       return;
     }
 
@@ -617,10 +621,7 @@ Page({
   },
 
   navigateToPublish() {
-    // 权限检查：第二次发帖需要注册
-    if (!checkAndHandle('publishPost', { circleId: this.data.circleId })) {
-      return;
-    }
+    // 入口检查已在 onAddClick 完成，此处直接打开
     this.setData({ showPublish: true });
   },
 
@@ -715,6 +716,13 @@ Page({
     }
   },
 
+  onPublishNeedUserInfo() {
+    this.setData({
+      showPublish: false,
+      userInfoPopupVisible: true
+    });
+  },
+
   // 评论输入
   onCommentInput(e) {
     const value = e.detail.value;
@@ -739,26 +747,28 @@ Page({
       return;
     }
 
+    if (!gatekeeper.check('sendComment', this)) return;
+
     this.setData({ isSendingComment: true });
 
     try {
-      // ✅ 后端参数名：replyToUserOpenid
       const data = {
         content: commentText.trim(),
         replyToUserOpenid: replyToUser ? replyToUser.id : undefined,
         replyToUsername: replyToUser ? replyToUser.username : undefined
       };
 
-      await this.addComment(selectedPostId, data);
+      const response = await this.addComment(selectedPostId, data);
 
-      // 手动同步 postStore.posts 到页面 data，确保 post-item 收到更新
+      // 更新配额快照
+      if (response && response.quota) quotaCache.write(response.quota);
+
       const { postStore } = require('../../store/postStore');
       const plainPosts = JSON.parse(JSON.stringify(postStore.posts));
       this.setData({ posts: plainPosts });
 
       util.showToast('评论成功');
 
-      // 隐藏输入框并清空内容
       this.setData({
         showCommentInput: false,
         commentText: '',
@@ -769,6 +779,8 @@ Page({
       });
 
     } catch (error) {
+      // 429：更新配额快照
+      if (error.status === 429 && error.data?.quota) quotaCache.write(error.data.quota);
       util.showToast('评论失败');
       this.setData({ isSendingComment: false });
     }
@@ -1020,6 +1032,12 @@ Page({
   },
 
   onAddClick() {
+    // 权限检查前移到入口：用户选照片前就拦截，避免写完内容才报错
+    if (!isProfileComplete()) {
+      this.setData({ userInfoPopupVisible: true });
+      return;
+    }
+    if (!gatekeeper.check('publishPost', this)) return;
     this.setData({ showPublish: true });
   },
 

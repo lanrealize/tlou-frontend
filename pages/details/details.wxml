@@ -201,4 +201,5 @@
   anonymousMode="{{showOnboarding}}"
   initialImage="{{onboardingInitialImage}}"
   bind:close="onPublishClose"
+  bind:needUserInfo="onPublishNeedUserInfo"
 ></publish-panel>

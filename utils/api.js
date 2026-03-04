@@ -96,10 +96,8 @@ class API {
           
           // 接受所有2xx状态码（200-299）作为成功
           if (res.statusCode >= 200 && res.statusCode < 300) {
-            // 检查响应是否表示失败
-            // 1. 如果有 success 字段且为 false，表示失败
-            // 2. 如果有 status 字段且为 "fail"，表示失败
-            if (res.data.success === false || res.data.status === 'fail') {
+            // 检查响应是否表示失败：success 字段为 false
+            if (res.data.success === false) {
               if (DEBUG_API) {
                 console.error('❌ 请求失败:', res.data.message);
               }
@@ -258,22 +256,13 @@ class API {
     delete: (postId) => this.delete(`/posts/${postId}`),
     
     // 点赞/取消点赞
-    like: (postId) => this.post(`/posts/${postId}/like`),
+    like: (postId) => this.post(`/posts/${postId}/react`),
     
     // 添加评论
     addComment: (postId, data) => this.post(`/posts/${postId}/comments`, data),
     
     // 删除评论
     deleteComment: (postId, commentId) => this.delete(`/posts/${postId}/comments/${commentId}`)
-  };
-
-  // 🆕 Trial（游客试用）相关API
-  trial = {
-    // 创建试用朋友圈（自动创建 TempUser）
-    createCircle: (data = {}) => this.post('/public/trial/circle', data),
-
-    // 在试用朋友圈发帖
-    createPost: (data) => this.post('/public/trial/post', data),
   };
 
   // 微信认证相关API

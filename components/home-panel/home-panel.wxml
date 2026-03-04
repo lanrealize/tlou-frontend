@@ -1,6 +1,6 @@
 <!--components/home-panel/home-panel.wxml-->
 <!-- 遮罩层 -->
-<view class="home-panel-mask" wx:if="{{visible}}" bindtap="onMaskTap" catchtouchmove="preventMove"></view>
+<view class="home-panel-mask {{visible ? 'mask-show' : 'mask-hide'}}" bindtap="onMaskTap" catchtouchmove="preventMove"></view>
 
 <!-- 弹出层 -->
 <view class="home-panel {{visible ? 'show' : ''}}">

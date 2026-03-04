@@ -1,6 +1,7 @@
 const { observable, action } = require('mobx-miniprogram');
 const api = require('../utils/api');
 const util = require('../utils/util');
+const quotaCache = require('../utils/quotaCache');
 
 // 🎯 帖子状态常量定义
 const POST_STATUS = {
@@ -99,6 +100,9 @@ const postStore = observable({
       });
 
       const newPosts = response.data.posts || [];
+
+      // 冷启动：更新配额快照
+      if (response.quota) quotaCache.write(response.quota);
       
       // 格式化帖子数据
       const formattedPosts = this._formatPosts(newPosts);
