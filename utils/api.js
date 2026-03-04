@@ -274,7 +274,10 @@ class API {
     
     // 获取用户信息
     getUserInfo: (openid) => this.post('/wechat/get-user-info', { openid }),
-    
+
+    // 标记 onboarding 完成
+    markOnboardingDone: (openid) => this.post('/wechat/onboarding-done', { openid }),
+
     // 完善用户资料
     register: (openid, username, avatar) => this.post('/wechat/complete-profile', { openid, username, avatar })
   };

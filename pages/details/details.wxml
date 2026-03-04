@@ -193,6 +193,7 @@
     wx:if="{{showOnboarding === true && !showPublish}}"
     id="onboarding-guide"
     class="onboarding-layer {{onboardingExiting ? 'onboarding-exiting' : ''}}"
+    final-frame-mode="{{onboardingFinalFrame}}"
     bind:takePhoto="onOnboardingTakePhoto"
   ></onboarding-guide>
 

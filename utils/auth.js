@@ -135,6 +135,22 @@ const initUserAuthInStorage = async () => {
   }
 };
 
+const markOnboardingDone = async () => {
+  const api = require('./api');
+  try {
+    const openid = wx.getStorageSync('openid');
+    await api.wechat.markOnboardingDone(openid);
+  } catch (e) {
+    console.warn('[auth] markOnboardingDone API failed:', e);
+  }
+  // 无论接口是否成功，本地都更新，避免网络抖动让用户反复看 onboarding
+  try {
+    const userInfo = wx.getStorageSync('userInfo') || {};
+    userInfo.onboardingDone = true;
+    wx.setStorageSync('userInfo', userInfo);
+  } catch (e) {}
+};
+
 const completeUserProfile = async () => {
   try {
     // 1. 确保有openid（预先获取）
@@ -158,5 +174,6 @@ const completeUserProfile = async () => {
 module.exports = {
   getOpenid,
   initUserAuthInStorage,
-  completeUserProfile
+  completeUserProfile,
+  markOnboardingDone
 };

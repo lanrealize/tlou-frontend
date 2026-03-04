@@ -106,6 +106,7 @@
       <video
         id="onboarding-video"
         src="{{post.videoUrl}}"
+        poster="{{post.videoPoster || ''}}"
         muted
         show-play-btn="{{false}}"
         show-center-play-btn="{{false}}"

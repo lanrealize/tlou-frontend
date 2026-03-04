@@ -59,8 +59,7 @@ Page({
     showPublish: false,
     showOnboarding: null,  // 🎯 初始为 null，避免触发 CSS 显示逻辑
     onboardingExiting: false, // 过渡动画中：onboarding 正在淡出
-    onboardingInitialImage: '',  // onboarding 拍照后预填充到 publish-panel 的图片
-    
+    onboardingFinalFrame: false, // 跳过动画，直接展示 onboarding 最终帧
     // 顶部间距（基于胶囊按钮位置计算）
     topSpacing: 0,  // 帖子列表顶部间距
     
@@ -71,47 +70,73 @@ Page({
     quotaPanelVisible: false,
   },
 
-  onLoad(options) {
+  async onLoad(options) {
     this.setupStoreBindings();
     this.calculateTopSpacing();
-    
+    this.shareAnimationController = new ShareAnimationController(this);
+
     const { circleId, onboarding } = options;
 
-    // 没有任何参数时（直接从首页启动），默认进入 onboarding
-    const showOnboarding = onboarding === 'true' || (!circleId && !onboarding);
-
-    // onboarding 模式下不需要 circleId（发布时动态创建）
-    if (!circleId && !showOnboarding) {
-      util.showToast('ID不能为空');
-      wx.navigateBack();
+    // ─── 情况1：URL 带 circleId（分享/邀请链接直达） ───────────────
+    if (circleId) {
+      this.setData({
+        circleId,
+        showOnboarding: false,
+        isFromShare: false,
+        shareAnimationState: 'idle',
+        showShareAnimation: false,
+        hideFirstPostImage: false,
+        shareAnimationClass: '',
+        shareGradientClass: '',
+        shareAnimationImageUrl: '',
+        shareAnimationCompleted: false
+      });
+      this.loadCircleDetail();
       return;
     }
 
-    console.log('[details] circleId:', circleId, 'onboarding:', showOnboarding);
+    // ─── 情况2：强制 onboarding URL 参数（保留兼容） ────────────────
+    if (onboarding === 'true') {
+      this.setData({ showOnboarding: true });
+      return;
+    }
 
-    const isFromShare = false;
-    
-    // 🎬 创建动画控制器
-    this.shareAnimationController = new ShareAnimationController(this);
-    
-    this.setData({
-      circleId,
-      isFromShare,
-      showOnboarding,
-      shareAnimationState: 'idle',
-      showShareAnimation: false,
-      hideFirstPostImage: false,
-      shareAnimationClass: '',
-      shareGradientClass: '',
-      shareAnimationImageUrl: '',
-      shareAnimationCompleted: false
-    });
+    // ─── 情况3：默认入口，根据 onboardingDone + circles 判断 ────────
+    const userInfo = wx.getStorageSync('userInfo') || {};
 
-    // onboarding 模式下不加载任何朋友圈数据，等发布完成后再加载
-    if (showOnboarding) return;
+    if (!userInfo.onboardingDone) {
+      // 新用户，播动画
+      this.setData({ showOnboarding: true });
+      return;
+    }
 
-    // 加载朋友圈数据
-    this.loadCircleDetail();
+    // onboardingDone = true，拉用户的 circle
+    try {
+      const res = await api.circles.getMy();
+      const circles = res.data?.circles || [];
+      if (circles.length > 0) {
+        const myCircleId = circles[0]._id;
+        this.setData({
+          circleId: myCircleId,
+          showOnboarding: false,
+          isFromShare: false,
+          shareAnimationState: 'idle',
+          showShareAnimation: false,
+          hideFirstPostImage: false,
+          shareAnimationClass: '',
+          shareGradientClass: '',
+          shareAnimationImageUrl: '',
+          shareAnimationCompleted: false
+        });
+        this.loadCircleDetail();
+      } else {
+        // 完成过 onboarding 但还没有 circle（发帖失败/取消），展示最终帧
+        this.setData({ showOnboarding: true, onboardingFinalFrame: true });
+      }
+    } catch (e) {
+      console.error('[details] 拉取 circle 失败，回退到 onboarding:', e);
+      this.setData({ showOnboarding: true });
+    }
   },
 
   onUnload() {

@@ -1,8 +1,11 @@
 // components/onboarding-guide/onboarding-guide.js
+const auth = require('../../utils/auth');
 const navigationHelper = require('../../utils/navigationHelper');
 
 Component({
-  properties: {},
+  properties: {
+    finalFrameMode: { type: Boolean, value: false }
+  },
 
   data: {
     headerTop: 0,
@@ -21,6 +24,7 @@ Component({
       formattedTime: '刚刚',
       images: [],
       videoUrl: 'https://tlou.images.wltech-service.site/videos/onboarding-vedio-slides.mp4',
+        videoPoster: 'https://tlou.images.wltech-service.site/videos/onboarding-vedio-poster.png',
       content: '',
       comments: [
         {
@@ -46,7 +50,11 @@ Component({
     },
     ready() {
       setTimeout(() => this._initAvatarCanvases(), 100);
-      this._startAnimation();
+      if (this.data.finalFrameMode) {
+        this.showFinalFrame();
+      } else {
+        this._startAnimation();
+      }
     },
     detached() {
       this._clearTimers();
@@ -79,7 +87,10 @@ Component({
     },
 
     onCommentsDone() {
-      this._t_footer = setTimeout(() => this.setData({ footerVisible: true }), 800);
+      this._t_footer = setTimeout(() => {
+        this.setData({ footerVisible: true });
+        auth.markOnboardingDone();
+      }, 800);
     },
 
     onToggleAvatarMode() {
@@ -87,6 +98,37 @@ Component({
     },
 
     onTapDemoPost() {},
+
+    showFinalFrame() {
+      this._clearTimers();
+      this.setData({
+        headerVisible: true,
+        postVisible: true,
+        hideComments: false,
+        footerVisible: true,
+        'demoPost.comments': [
+          {
+            _id: 'c1',
+            author: { _id: 'ai', username: 'AI', avatar: '/assets/onboarding/ai-avatar.png', isAI: true },
+            content: '小时候过年放烟花，又兴奋又怕烫。守岁的时候困得睁不开眼，但就是不肯睡'
+          },
+          {
+            _id: 'c2',
+            author: { _id: 'ai', username: 'AI', avatar: '/assets/onboarding/ai-avatar.png', isAI: true },
+            content: '每张照片都很漂亮，再拍一张试试？'
+          }
+        ]
+      }, () => {
+        const postItem = this.selectComponent('#demo-post-item');
+        if (!postItem) return;
+        postItem.setData({
+          videoReady: true,
+          visibleCommentIds: { c1: true, c2: true },
+          'aiHeaderStates.c1': { showStatus: false, showTime: true, statusAnim: '', timeAnim: '' },
+          'aiHeaderStates.c2': { showStatus: false, showTime: true, statusAnim: '', timeAnim: '' },
+        });
+      });
+    },
 
     _startAnimation() {
       this._clearTimers();
