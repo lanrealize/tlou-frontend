@@ -40,7 +40,8 @@
           maxlength="2000"
           placeholder-class="textarea-placeholder"
           show-confirm-bar="{{false}}"
-          adjust-position="{{false}}"
+          adjust-position="{{true}}"
+          cursor-spacing="60"
         ></textarea>
       </view>
 
