@@ -189,7 +189,7 @@
 
 /* 三点操作按钮 */
 .actions-menu-btn {
-  width: 60rpx;
+  width: 45rpx;
   height: 45rpx;
   display: flex;
   align-items: center;
@@ -276,6 +276,12 @@
   justify-content: flex-start;
   padding: 24rpx 40rpx 24rpx 36rpx;
   min-width: 200rpx;
+}
+
+.dropdown-menu .dropdown-item {
+  justify-content: flex-start;
+  padding: 24rpx 40rpx 24rpx 36rpx;
+  min-width: 160rpx;
 }
 
 .dropdown-item {

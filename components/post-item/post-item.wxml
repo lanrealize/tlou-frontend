@@ -46,12 +46,7 @@
         <image class="menu-dots-icon" src="/assets/icons/more.svg" mode="aspectFit"></image>
       </view>
       
-      <view class="dropdown-menu {{showActions && showActionsMenu ? 'show' : 'hide'}} {{isLiked ? 'wide-menu' : 'narrow-menu'}}">
-        <view id="likeBtn" class="dropdown-item" catchtap="onLikeFromPopup">
-          <view class="dropdown-icon-wrap"><image class="dropdown-icon like-icon-dropdown" src="/assets/icons/like.svg" mode="aspectFit"></image></view>
-          <text class="dropdown-text">{{isLiked ? '取消点赞' : '点赞'}}</text>
-        </view>
-
+      <view class="dropdown-menu {{showActions && showActionsMenu ? 'show' : 'hide'}}">
         <view id="commentBtn" class="dropdown-item" catchtap="onCommentFromPopup">
           <view class="dropdown-icon-wrap"><image class="dropdown-icon comment-icon" src="/assets/icons/edit.svg" mode="aspectFit"></image></view>
           <text class="dropdown-text">评论</text>
@@ -196,18 +191,9 @@
     
     <!-- 🗑️ 已移除：普通模式的帖子时间地点和操作按钮（AI-only 模式只使用时间轴布局） -->
 
-      <!-- 帖子底部：点赞和评论 -->
-      <view class="post-footer" wx:if="{{(post.likes && post.likes.length > 0) || (post.comments && post.comments.length > 0)}}">
-        <!-- 点赞列表 -->
-        <view class="likes-section" wx:if="{{post.likes && post.likes.length > 0}}">
-          <view class="likes-container">
-            <image class="like-icon" src="/assets/icons/like.svg" mode="aspectFit"></image>
-            <view class="likes-text">
-              <text wx:if="{{post.likedUsers && post.likedUsers.length > 0}}"><text wx:for="{{post.likedUsers}}" wx:for-item="user" wx:key="_id" wx:for-index="idx"><text class="liked-username">{{user.username}}</text><text wx:if="{{idx < post.likedUsers.length - 1}}" decode="{{true}}">&nbsp;&nbsp;</text></text><text decode="{{true}}">&nbsp;&nbsp;&nbsp;</text>觉得很赞</text>
-              <text wx:else>{{post.likes.length}}人觉得很赞</text>
-            </view>
-          </view>
-        </view>
+      <!-- 帖子底部：评论 -->
+      <view class="post-footer" wx:if="{{post.comments && post.comments.length > 0}}">
+        <!-- 点赞列表已隐藏（MVP 暂不开放）-->
 
         <!-- 评论列表 -->
         <view class="comments-section" wx:if="{{!hideComments && post.comments && post.comments.length > 0}}">

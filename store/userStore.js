@@ -47,11 +47,13 @@ const userStore = observable({
         this._syncToGlobal(status, null);
         break;
         
-      case USER_STATUS.INCOMPLETE:
-        this.userInfo = null;
+      case USER_STATUS.INCOMPLETE: {
+        const openid = wx.getStorageSync('openid');
+        this.userInfo = openid ? { _id: openid } : null;
         this.errorMessage = data.message || '';
-        this._syncToGlobal(status, null);
+        this._syncToGlobal(status, this.userInfo);
         break;
+      }
     }
   },
 

@@ -170,7 +170,7 @@ const postStore = observable({
   
       
       const response = await api.posts.like(postId);
-      const { liked } = response.data;
+      const liked = response.data.reacted;
 
       // 更新本地状态 - 创建新对象以触发 MobX 响应式更新
       const updatedPosts = [...this.posts];
