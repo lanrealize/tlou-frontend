@@ -522,10 +522,21 @@ Component({
     } catch (error) {
       console.error('❌ 后台上传失败:', error);
 
-      // 429：更新配额快照（quota_exceeded 或 rate_limited）
-      if (error.status === 429 && error.data?.quota) quotaCache.write(error.data.quota);
-
-      if (error.response?.status === 422 && error.response?.data?.violationDetails) {
+      if (error.reason === 'quota_exceeded') {
+        quotaCache.write({ post: { remaining: 0, resetAt: error.resetAt } });
+        postStore.removeOptimisticPost(tempId);
+        const pages = getCurrentPages();
+        const detailsPage = pages.find(p => p.route === 'pages/details/details');
+        if (detailsPage) detailsPage.setData({ quotaPanelVisible: true });
+      } else if (error.reason === 'rate_limited') {
+        postStore.markPostUploadFailed(tempId, '发太快了，稍等一下', false);
+        wx.showModal({
+          title: '发太快了',
+          content: `还需等待：${error.retryAfter || 60} 秒`,
+          showCancel: false,
+          confirmText: '好的'
+        });
+      } else if (error.response?.status === 422 && error.response?.data?.violationDetails) {
         postStore.markPostUploadFailed(tempId, '图片内容不符合规范', true);
         wx.showModal({
           title: '内容审核未通过',
@@ -534,7 +545,7 @@ Component({
           confirmText: '我知道了'
         });
       } else {
-        postStore.markPostUploadFailed(tempId, error.message || '上传失败，请重试', false);
+        postStore.markPostUploadFailed(tempId, '发布失败，请重试', false);
         wx.showToast({ title: '发布失败', icon: 'none', duration: 2000 });
       }
     } finally {

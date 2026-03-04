@@ -182,6 +182,9 @@
 
   <!-- Home Panel -->
   <home-panel visible="{{showHomePanel}}" bind:close="onHomePanelClose" />
+
+  <!-- Quota Panel -->
+  <quota-panel visible="{{quotaPanelVisible}}" bind:close="onQuotaPanelClose" />
   </view>
   <!-- 🎯 Details 内容容器结束 -->
 
@@ -196,10 +199,9 @@
 </view>
 
 <publish-panel
+  id="publishPanel"
   circleId="{{circleId}}"
   show="{{showPublish}}"
-  anonymousMode="{{showOnboarding}}"
-  initialImage="{{onboardingInitialImage}}"
   bind:close="onPublishClose"
   bind:needUserInfo="onPublishNeedUserInfo"
 ></publish-panel>

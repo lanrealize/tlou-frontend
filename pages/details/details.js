@@ -66,6 +66,9 @@ Page({
     
     // Home Panel
     showHomePanel: false,  // 是否显示 home panel
+
+    // Quota Panel
+    quotaPanelVisible: false,
   },
 
   onLoad(options) {
@@ -578,7 +581,10 @@ Page({
     const { postStore } = require('../../store/postStore');
     try {
       const postData = await postStore.retryOptimisticPost(tempId);
-      this._publishOnboardingPost(postData.tempId, postData.tempImages[0], postStore);
+      const publishPanel = this.selectComponent('#publishPanel');
+      if (publishPanel) {
+        publishPanel.uploadPostInBackground(postData.tempId, postData.circleId, postData.content, postData.tempImages, postStore);
+      }
     } catch (error) {
       console.error('重试失败:', error);
     }
@@ -683,8 +689,21 @@ Page({
 
     } catch (error) {
       console.error('Onboarding 发帖失败:', error);
-      const msg = error?.response?.data?.message || error.message || '发布失败，请重试';
-      postStore.markPostUploadFailed(tempId, msg, false);
+      if (error.reason === 'rate_limited') {
+        postStore.markPostUploadFailed(tempId, '发太快了，稍等一下', false);
+        wx.showModal({
+          title: '发太快了',
+          content: `还需等待：${error.retryAfter || 60} 秒`,
+          showCancel: false,
+          confirmText: '好的'
+        });
+      } else if (error.reason === 'quota_exceeded') {
+        quotaCache.write({ post: { remaining: 0, resetAt: error.resetAt } });
+        postStore.removeOptimisticPost(tempId);
+        this.setData({ quotaPanelVisible: true });
+      } else {
+        postStore.markPostUploadFailed(tempId, '发布失败，请重试', false);
+      }
     }
   },
 
@@ -779,9 +798,19 @@ Page({
       });
 
     } catch (error) {
-      // 429：更新配额快照
-      if (error.status === 429 && error.data?.quota) quotaCache.write(error.data.quota);
-      util.showToast('评论失败');
+      if (error.reason === 'quota_exceeded') {
+        quotaCache.write({ comment: { remaining: 0, resetAt: error.resetAt } });
+        this.setData({ quotaPanelVisible: true });
+      } else if (error.reason === 'rate_limited') {
+        wx.showModal({
+          title: '评论太快了',
+          content: `还需等待：${error.retryAfter || 60} 秒`,
+          showCancel: false,
+          confirmText: '好的'
+        });
+      } else {
+        util.showToast('评论失败');
+      }
       this.setData({ isSendingComment: false });
     }
   },
@@ -1049,6 +1078,10 @@ Page({
     this.setData({
       showHomePanel: false
     });
+  },
+
+  onQuotaPanelClose() {
+    this.setData({ quotaPanelVisible: false });
   }
 
 });

@@ -1,0 +1,84 @@
+/* components/quota-panel/quota-panel.wxss */
+
+/* 遮罩层 */
+.quota-panel-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(6px);
+  z-index: 998;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.quota-panel-mask.mask-show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.quota-panel-mask.mask-hide {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 弹出层容器 */
+.quota-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+.quota-panel.show {
+  transform: translateY(0);
+  opacity: 1;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s ease;
+}
+
+.quota-panel:not(.show) {
+  transform: translateY(100%);
+  opacity: 0;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 1, 1),
+              opacity 0.2s ease;
+}
+
+/* 弹出内容 */
+.panel-content {
+  background-color: #ffffff;
+  border-radius: 32rpx 32rpx 0 0;
+  box-shadow: 0px -2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  max-height: 90vh;
+  min-height: 60vh;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.quota-panel.show .panel-content {
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 内容区域 */
+.content-area {
+  padding: 40rpx;
+  min-height: 60vh;
+}

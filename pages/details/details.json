@@ -11,7 +11,8 @@
     "publish-panel": "/components/publish-panel/publish-panel",
     "onboarding-guide": "/components/onboarding-guide/onboarding-guide",
     "top-nav-bar": "/components/top-nav-bar/top-nav-bar",
-    "home-panel": "/components/home-panel/home-panel"
+    "home-panel": "/components/home-panel/home-panel",
+    "quota-panel": "/components/quota-panel/quota-panel"
   },
   "backgroundColor": "#f5f5f5"
 }

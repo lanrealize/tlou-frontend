@@ -132,7 +132,9 @@ class API {
               status: res.statusCode,
               data: res.data
             };
-            error.code = res.data.code; // 保存错误代码（如 QUOTA_EXCEEDED）
+            error.reason = res.data.reason;         // 'rate_limited' | 'quota_exceeded' | ...
+            error.retryAfter = res.data.retryAfter; // 秒数（rate_limited 时有值）
+            error.resetAt = res.data.resetAt;       // ISO 时间（quota_exceeded 时有值）
             reject(error);
           }
         },

@@ -2,6 +2,7 @@
  * Gatekeeper - 统一动作门控
  *
  * 只读 quotaCache，不写。写快照由业务层（publishPost/sendComment/refreshPosts）负责。
+ * rate limit 不在前端检查，依赖后端 429 响应。
  *
  * 用法：
  *   const gatekeeper = require('../../utils/gatekeeper');
@@ -11,21 +12,6 @@
 const config = require('../config/gatekeeper');
 const quotaCache = require('./quotaCache');
 
-// ─── 工具 ──────────────────────────────────────────────────
-
-function thisMinute() {
-  const d = new Date();
-  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}-${d.getHours()}-${d.getMinutes()}`;
-}
-
-function storageGet(key) {
-  try { return wx.getStorageSync(key) || null; } catch(e) { return null; }
-}
-
-function storageSet(key, value) {
-  try { wx.setStorageSync(key, value); } catch(e) {}
-}
-
 // ─── 配额门（只读 quotaCache） ─────────────────────────────
 
 function checkQuota(resource) {
@@ -33,56 +19,15 @@ function checkQuota(resource) {
   if (!gate.enabled) return { allowed: true };
 
   const snapshot = quotaCache.read();
-  if (!snapshot || !snapshot[resource]) return { allowed: true }; // 无快照，放行
+  if (!snapshot || !snapshot[resource]) return { allowed: true };
 
   const { remaining, resetAt } = snapshot[resource];
 
-  // 快照已过期（新的计费周期），放行
   if (resetAt && new Date() >= new Date(resetAt)) return { allowed: true };
 
   if (remaining <= 0) {
-    const resetTime = resetAt ? new Date(resetAt) : null;
-    const resetHint = resetTime
-      ? `${resetTime.getHours().toString().padStart(2,'0')}:${resetTime.getMinutes().toString().padStart(2,'0')} 恢复`
-      : '明天恢复';
-    return {
-      allowed: false,
-      reason: 'quota',
-      message: `今日${resource === 'post' ? '发帖' : '评论'}次数已用完，${resetHint}`,
-    };
+    return { allowed: false, reason: 'quota', popup: 'quota' };
   }
-
-  return { allowed: true };
-}
-
-// ─── 频率限制门 ────────────────────────────────────────────
-
-const RATE_KEY_PREFIX = 'gk_rate';
-
-function checkRateLimit(resource) {
-  const gate = config.gates.rateLimit;
-  if (!gate.enabled) return { allowed: true };
-
-  const limit = gate.perMinute[resource];
-  if (!limit) return { allowed: true };
-
-  const key = `${RATE_KEY_PREFIX}_${resource}`;
-  const record = storageGet(key);
-  const minute = thisMinute();
-
-  if (record && record.minute === minute && record.count >= limit) {
-    return {
-      allowed: false,
-      reason: 'rateLimit',
-      message: '操作太频繁了，稍等一下再试',
-    };
-  }
-
-  // 通过后记录本次（rate limit 是纯本地防护，不依赖后端，在 check 时即消费）
-  storageSet(key, {
-    minute,
-    count: (record && record.minute === minute ? record.count : 0) + 1,
-  });
 
   return { allowed: true };
 }
@@ -106,7 +51,6 @@ function checkPurchase() {
   const gate = config.gates.purchase;
   if (!gate.enabled) return { allowed: true };
 
-  // TODO: 接入购买状态检查
   return { allowed: false, reason: 'purchase', popup: gate.popup };
 }
 
@@ -115,6 +59,8 @@ function checkPurchase() {
 function handleDenied(result, pageInstance) {
   if (result.popup === 'userInfo' && pageInstance) {
     pageInstance.setData({ userInfoPopupVisible: true });
+  } else if (result.popup === 'quota' && pageInstance) {
+    pageInstance.setData({ quotaPanelVisible: true });
   } else if (result.popup === 'purchase' && pageInstance) {
     pageInstance.setData({ purchasePopupVisible: true });
   } else if (result.message) {
@@ -144,7 +90,6 @@ function check(action, pageInstance) {
     if (gateType === 'profileComplete') result = checkProfileComplete();
     else if (gateType === 'purchase')   result = checkPurchase();
     else if (gateType === 'quota')      result = checkQuota(resource);
-    else if (gateType === 'rateLimit')  result = checkRateLimit(resource);
     else continue;
 
     if (!result.allowed) {
